@@ -103,17 +103,17 @@ MOVE_SPECS = {
 }
 
 RULES = """CONCEPT KITCHEN — rules
-A round deals a SEED and one MOVE. You answer with a spark: title :: why it connects :: try next.
+A round deals a SEED and one MOVE. You answer with a spark: title :: because ... :: do this first.
 
 Four axes, 25 points each (100 total):
   1 MOVE DISCIPLINE  name the one dimension you changed (flip: assumption/role/property/
                      sequence/success/resource · shift: actor/scale/time/setting/medium).
                      Flip and shift also want the default you moved away from.
-  2 MECHANISM        say why the transfer works: because / which lets / by turning.
-                     A distant noun with no bridge is not an idea, it is a coincidence.
-  3 ACTIONABILITY    try-next starts with a verb and carries a bound (one, by Friday, under $50).
+  2 MECHANISM        say why it works: because / which lets / by turning.
+                     A distant noun with no reason is a coincidence, not an idea.
+  3 ACTIONABILITY    the first move starts with a verb and carries a bound (one, by Friday, under $50).
   4 NOVELTY          token overlap against the whole table. Too close = derivative.
-                     Too far without a bridge = noise, and it costs you 15%.
+                     Too far without a reason = noise, and it costs you 15%.
 
 Penalties: slop words (synergy, seamless, unlock...) −10 each (max −20) · three or more
 dimensions at once −15 · restating the seed −10 · over the word budget −10 · two or more
@@ -273,7 +273,7 @@ def score(submission: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
     else:
         novelty = 15
         distance = "far"
-        notes.append("nothing on the table overlaps it — the bridge carries the whole claim")
+        notes.append("nothing on the table overlaps it — the reason has to carry it")
     if j_seed >= 0.55:
         novelty = min(novelty, 10)
         notes.append("mostly restates the seed")
@@ -295,7 +295,7 @@ def score(submission: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
     total = raw + sum(p for _, p in penalties)
     if distance == "far" and mechanism < 15:
         total = int(round(total * 0.85))
-        notes.append("distant but unbridged — cost 15%")
+        notes.append("distant but unexplained — cost 15%")
     if hint:
         total -= 8
         notes.append("hint taken (−8)")

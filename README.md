@@ -1,11 +1,11 @@
-# Concept Kitchen
+# Antemuse Concept Kitchen
 
 A CLI minigame about creative moves, played identically by humans and agents.
 
 A round deals a **seed** and one **move**. You answer with a spark:
 
 ```
-title :: why it connects :: try next
+title :: because … :: do this first
 ```
 
 A deterministic judge scores four 25-point axes — move discipline, mechanism
@@ -20,8 +20,8 @@ typing.
 ## Install
 
 ```bash
-ln -s ~/concept-kitchen ~/.hermes/plugins/concept-kitchen
-hermes plugins enable concept-kitchen
+ln -s ~/antemuse-kitchen ~/.hermes/plugins/antemuse-kitchen
+hermes plugins enable antemuse-kitchen
 ```
 
 Tools are assembled per session, so start a new session (or restart the gateway)
@@ -60,7 +60,7 @@ the OS user on the command side.
 | Axis | 25 points for |
 | --- | --- |
 | Move discipline | naming exactly one changed dimension, and for flip/shift, the default you moved away from |
-| Mechanism | `because` / `which lets` / `by turning`, with a why that says more than the title |
+| Mechanism | `because` / `which lets` / `by turning`, with a reason that says more than the title |
 | Actionability | try-next opens with a verb and carries a bound (`one`, `by Friday`, `under $50`) |
 | Novelty | 0.08–0.40 token Jaccard against the table; derivative sparks score zero |
 
@@ -97,10 +97,10 @@ tests/                 12 tests: judge fairness, chaining, parity, engine failur
 ## Verify
 
 ```bash
-hermes plugins doctor ~/concept-kitchen
+hermes plugins doctor ~/antemuse-kitchen
 CONCEPT_KITCHEN_HOME=$(mktemp -d) uvx pytest tests/ -q
 hermes chat -q '/cook play'
 ```
 
-State lives in the profile's plugin data dir (`plugins.plugin_storage.plugin_data_dir("concept-kitchen")`),
+State lives in the profile's plugin data dir (`plugins.plugin_storage.plugin_data_dir("antemuse-kitchen")`),
 overridable with `CONCEPT_KITCHEN_HOME` for tests.

@@ -1,11 +1,11 @@
 ---
-name: concept-kitchen
+name: kitchen
 description: Play Concept Kitchen, a five-round creative-move minigame with a deterministic judge. Use when the user asks to play, when a task needs a defensible novel idea, or when you need to escape a stale answer without sounding clever.
 ---
 
-# Concept Kitchen
+# Antemuse Concept Kitchen
 
-A round deals a **seed** and one **move**. You answer with a spark: `title :: why it connects :: try next`.
+A round deals a **seed** and one **move**. You answer with a spark: `title :: because ... :: do this first`.
 The judge is deterministic; it does not reward length, confidence, or vocabulary.
 
 ## Play (agent surface)
@@ -26,7 +26,7 @@ Humans use the same verbs as `/cook start`, `/cook submit …`, `/cook hint`, `/
 1. **Name the dimension you changed.** flip: assumption / role / property / sequence / success /
    resource. shift: actor / scale / time / setting / medium. One only.
 2. **Say what the default was** ("instead of…", "normally…"). Flip and shift score that separately.
-3. **Bridge the transfer**: because / which lets / by turning. A distant noun with no bridge loses 15%
+3. **Give the reason**: because / which lets / by turning. A distant noun with no reason loses 15%
    and reads as noise.
 4. **try-next starts with a verb and carries a bound**: "write one sentence", "call two customers by
    Friday".

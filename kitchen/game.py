@@ -101,7 +101,7 @@ def submit(p: Dict[str, str], text: str) -> str:
     parts = _split(text)
     if parts is None:
         return (render.header("SUBMISSION NEEDS THREE PARTS")
-                + "\n" + render._line("/cook submit <title> :: <why it connects> :: <try next>")
+                + "\n" + render._line("/cook submit <title> :: <because ...> :: <do this first>")
                 + "\n" + render._line("Separate with :: or |. All three are required — that is the game.")
                 + "\n" + render.rule("═"))
     title, why, try_next = parts

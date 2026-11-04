@@ -39,7 +39,7 @@ def brief(state: Dict[str, Any], player: Dict[str, str]) -> str:
     src = state.get("source") or "deck"
     par = len(state.get("par") or [])
     lines = [
-        header("CONCEPT KITCHEN", f"round {state['round']}/{state['rounds']}"),
+        header("ANTEMUSE KITCHEN", f"round {state['round']}/{state['rounds']}"),
         _line(f"player {player['name']} · {player['kind']} · service {state['service']}"),
         rule(),
         _line(f"SEED  {state['seed']}"),
@@ -52,7 +52,7 @@ def brief(state: Dict[str, Any], player: Dict[str, str]) -> str:
         lines.append(_line(f"      engine unavailable: {state['par_error']}"))
     lines += [
         rule(),
-        _line("answer  /cook submit <title> :: <why it connects> :: <try next>"),
+        _line("answer  /cook submit <title> :: <because ...> :: <do this first>"),
         _line("        hint −8 · pass · board · rules"),
         rule("═"),
     ]
@@ -70,7 +70,7 @@ def score_card(result: Dict[str, Any], state: Dict[str, Any], title: str) -> str
     }.get(move, "named the move")
     rows = [
         ("move", axes["move_discipline"], move_gloss),
-        ("why", axes["mechanism"], "made the transfer legible"),
+        ("why", axes["mechanism"], "said why it works"),
         ("next", axes["actionability"], "verb + bound"),
         ("new", axes["novelty"], f"distance {result.get('distance', '?')}"),
     ]
@@ -93,9 +93,9 @@ def score_card(result: Dict[str, Any], state: Dict[str, Any], title: str) -> str
 def _verdict_line(result: Dict[str, Any]) -> str:
     verdict = result["verdict"]
     tail = {
-        "NEW SAUCE": "the table has nothing like it and the bridge is explicit.",
+        "NEW SAUCE": "the table has nothing like it and the reason is explicit.",
         "SEASONED": "usable. One axis is holding it back; the notes say which.",
-        "EDIBLE": "the idea is real but the move is mush. Name the dimension.",
+        "EDIBLE": "the idea is real but the move is mush. Name the one thing you changed.",
         "UNDERCOOKED": "it reads as advice, not a spark. Commit to a next action.",
         "RAW": "no move, no mechanism, no next step. Reroll or take the hint.",
     }.get(verdict, "")

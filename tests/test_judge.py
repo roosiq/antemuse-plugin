@@ -90,14 +90,14 @@ def test_hint_costs_points():
     assert hinted["total"] == plain["total"] - 8
 
 
-def test_far_without_bridge_is_penalised():
+def test_far_without_a_reason_is_penalised():
     sub = {
         "title": "Borrow the migratory pattern of arctic terns",
         "why": "It is different and fresh.",
         "try_next": "Write one note by Friday.",
     }
     result = judge.score(sub, ctx(move="connect"))
-    assert "unbridged" in " ".join(result["notes"]) or result["total"] < 60
+    assert "unexplained" in " ".join(result["notes"]) or result["total"] < 60
 
 
 def test_try_next_with_a_label_still_opens_with_a_verb():

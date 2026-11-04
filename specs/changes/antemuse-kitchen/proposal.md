@@ -1,7 +1,7 @@
 # concept-kitchen — proposal
 
-Change id: `concept-kitchen`
-Repo: `/home/ryan/concept-kitchen` (standalone Hermes plugin)
+Change id: `antemuse-kitchen`
+Repo: `/home/ryan/antemuse-kitchen` (brand: Antemuse) (standalone Hermes plugin)
 Derived from: `/home/ryan/concept.cooking` (moves, SparkCard contract, quality rules)
 
 ## Goal
@@ -22,7 +22,7 @@ humans and agents, filling the marketplace's empty ideation/creativity lane
 - Five rounds per service; moves fixed as unpack → flip → shift → connect → flip;
   distance ladder near → lateral → lateral → far → far.
 - Round *n+1* seed is the player's round-*n* spark (`title — try_next`).
-- Submission is exactly three parts: `title :: why it connects :: try next`.
+- Submission is exactly three parts: `title :: because … :: do this first`.
 - Judge is deterministic: move discipline / mechanism / actionability / novelty,
   25 each, plus the published penalty list. No model call, no randomness.
 - One open service per profile at a time; both surfaces share it.
@@ -30,7 +30,7 @@ humans and agents, filling the marketplace's empty ideation/creativity lane
 
 ## Acceptance criteria
 
-1. `hermes plugins doctor ~/concept-kitchen` passes: discovery, manifest, import, registration.
+1. `hermes plugins doctor ~/antemuse-kitchen` passes: discovery, manifest, import, registration.
 2. `uvx pytest tests/ -q` passes, covering: strong spark ≥ 72, generic advice < 40,
    one dimension beating three, derivative spark scoring 0 novelty, connect
    requiring source + mechanism, hint −8, label-prefixed fields parsed, five-round

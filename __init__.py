@@ -20,7 +20,7 @@ COOK_SCHEMA: Dict[str, Any] = {
     "name": "cook",
     "description": (
         "Play Concept Kitchen, a five-round creative-move game with a deterministic judge. "
-        "action=start deals a seed and one move; action=submit takes 'title :: why it connects :: try next' "
+        "action=start deals a seed and one move; action=submit takes 'title :: because ... :: do this first' "
         "and returns a scored card (move discipline, mechanism, actionability, novelty); hint costs 8 points; "
         "pass ends the service; board shows the human+agent leaderboard; rules prints the scoring contract. "
         "Each round's seed is your previous spark, so a generative idea scores better than a clever one."
@@ -35,7 +35,7 @@ COOK_SCHEMA: Dict[str, Any] = {
             },
             "text": {
                 "type": "string",
-                "description": "For action=submit: 'title :: why it connects :: try next'. All three parts are required.",
+                "description": "For action=submit: 'title :: because ... :: do this first'. All three parts are required.",
             },
             "seed": {
                 "type": "string",
@@ -100,7 +100,7 @@ def _command(raw_args: str) -> str:
 def register(ctx) -> None:
     cfg = None
     try:
-        cfg = ctx.config.get("concept-kitchen")
+        cfg = ctx.config.get("antemuse-kitchen")
     except Exception:
         cfg = None
     game.configure(cfg)
@@ -124,7 +124,7 @@ def register(ctx) -> None:
     try:
         from pathlib import Path
         ctx.register_skill(
-            "concept-kitchen",
+            "kitchen",
             Path(__file__).resolve().parent / "SKILL.md",
             description="Play Concept Kitchen: the five-round creative-move minigame and its scoring contract.",
         )
