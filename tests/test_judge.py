@@ -112,3 +112,23 @@ def test_try_next_with_a_label_still_opens_with_a_verb():
     assert why.startswith("the follow-up")
     result = judge.score({"title": title, "why": why, "try_next": nxt}, ctx())
     assert result["axes"]["actionability"] == 25, result
+
+
+def test_short_needles_need_word_boundaries():
+    # "happens" used to match the SHIFT medium needle "app"
+    result = judge.score({
+        "title": "Stage the pricing conversation in a repair shop",
+        "why": "Normally pricing happens at a checkout; shift the setting to a repair counter, because the setting supplies the justification a price list cannot.",
+        "try_next": "Draft one counter script and read it to two buyers by Friday.",
+    }, ctx(move="shift"))
+    assert result["dims"] == ["setting"], result["dims"]
+    assert result["axes"]["move_discipline"] == 25, result
+
+
+def test_connect_credits_a_held_window_mechanism():
+    result = judge.score({
+        "title": "Borrow the pawn shop's hold period",
+        "why": "Borrowed from how a pawn shop holds an item for a fixed window before selling it, the page holds the second thought for seven days.",
+        "try_next": "Set one seven-day hold on the next offer.",
+    }, ctx(move="connect"))
+    assert result["axes"]["move_discipline"] == 25, result

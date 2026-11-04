@@ -85,7 +85,13 @@ SHIFT_DIMS: Dict[str, Tuple[str, ...]] = {
 }
 
 CONNECT_MARKERS = ("from", "borrowed", "the way", "in the way that", "like how", "steal", "adapt", "port", "transplant")
-CONNECT_MECHANISMS = ("routes", "sorts", "queues", "meters", "certifies", "prunes", "composts", "triages", "batches", "tunes", "rehearses", "audits", "rations", "seasons", "ferments", "indexes", "escrows")
+CONNECT_MECHANISMS = (
+    "routes", "sorts", "queues", "meters", "certifies", "prunes", "composts",
+    "triages", "batches", "tunes", "rehearses", "audits", "rations", "seasons",
+    "ferments", "indexes", "escrows", "holds", "keeps", "reserves", "waits",
+    "ages", "cures", "locks", "rents", "lends", "trades", "grades", "weighs",
+    "matches", "pairs", "chunks", "invoices", "stamps", "pawned", "recycles",
+)
 
 UNPACK_MARKERS = ("ingredient", "assumption", "tension", "overlooked", "taken for granted", "hidden", "cost of", "dependency", "unspoken", "quietly")
 
@@ -137,14 +143,21 @@ def containment(a: Iterable[str], b: Iterable[str]) -> float:
     return len(sa & sb) / min(len(sa), len(sb))
 
 
+def _hit(low: str, needle: str) -> bool:
+    """Short needles need word boundaries: 'app' must not match 'happens'."""
+    if len(needle) <= 4 and needle.isalpha():
+        return re.search(rf"(?<![a-z]){re.escape(needle)}(?![a-z])", low) is not None
+    return needle in low
+
+
 def _match_dims(text: str, dims: Dict[str, Tuple[str, ...]]) -> List[str]:
     low = text.lower()
-    return [name for name, needles in dims.items() if any(n in low for n in needles)]
+    return [name for name, needles in dims.items() if any(_hit(low, n) for n in needles)]
 
 
 def _has_any(text: str, needles: Sequence[str]) -> bool:
     low = text.lower()
-    return any(n in low for n in needles)
+    return any(_hit(low, n) for n in needles)
 
 
 def _words(text: str) -> List[str]:
