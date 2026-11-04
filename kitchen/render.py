@@ -132,13 +132,13 @@ def state_rounds_short(total: int) -> bool:
 
 
 def board(rows: List[Dict[str, Any]]) -> str:
-    lines = [header("LEADERBOARD", f"{len(rows)} players"), rule()]
+    lines = [header("LEADERBOARD", f"{len(rows)} players · cumulative"), rule()]
     if not rows:
         lines.append(_line("no sparks yet"))
     for i, row in enumerate(rows, 1):
         kind = row["kind"]
         model = f" · {row['model']}" if row.get("model") else ""
-        lines.append(f"  {i:2d}. {row['player'][:18]:18s} {kind:6s} {row['total']:5d}  best {row['best']:3d}  n={row['sparks']}{model}")
+        lines.append(f"  {i:2d}. {row['player'][:16]:16s} {kind:6s} {row['total']:5d}  avg {row['avg']:4.1f}  best {row['best']:3d}  n={row['sparks']}{model}")
     lines.append(rule("═"))
     return "\n".join(lines)
 
