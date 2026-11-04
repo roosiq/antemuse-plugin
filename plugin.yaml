@@ -1,0 +1,35 @@
+name: concept-kitchen
+label: Concept Kitchen
+kind: standalone
+version: 0.1.0
+author: Ryan Cook
+homepage: https://concept.cooking
+description: >
+  Concept Kitchen is a CLI minigame about creative moves, played identically by
+  humans and agents. A round deals a seed and one move (unpack, flip, shift,
+  connect); the player answers with a spark that must name the dimension it
+  reversed or shifted. A deterministic judge scores move discipline, mechanism
+  legibility, actionability, and novelty against the table, so nobody wins by
+  verbosity. Five rounds chain into a service: each round's seed is your own
+  previous spark. Scores land on one local leaderboard shared by humans and
+  agents. Optional engine deal uses the Concept Cooking MCP; when the engine is
+  unreachable the round is dealt from the bundled deck and labelled as such.
+requires_hermes: ">=0.21.6"
+provides_tools:
+  - cook
+provides_hooks: []
+config_schema:
+  use_engine:
+    type: bool
+    default: true
+    label: Deal from the Concept Cooking engine
+    description: When on, rounds ask https://concept.cooking/mcp for reference cards (the par you are playing against). When it fails, the round is dealt from the bundled deck and marked "deck" instead of "engine". No starter-fallback cards are ever shown as engine output.
+  engine_url:
+    type: str
+    default: "https://concept.cooking/mcp"
+    label: Engine MCP endpoint
+  word_budget:
+    type: int
+    default: 60
+    label: Word budget per submission
+    description: Submissions over this budget take a penalty. Lower it for a meaner game.
