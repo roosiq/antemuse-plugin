@@ -107,3 +107,37 @@ their own timing.
 Live WebGL at 60 fps inside a terminal is not a thing: one headless render costs
 ~0.65 s. For real images rather than blocks, the same PNGs can go through the
 kitty graphics protocol or sixel where the terminal supports it.
+
+## Channel awareness
+
+The card is sized to the client, not to the terminal:
+
+| channel | width (cols) | fence | budget |
+|---|---|---|---|
+| Discord (mobile / unknown) | 40 | yes | 1800 chars |
+| Discord desktop | 56 | yes | 1800 chars |
+| Matrix | 52 | yes | 4000 |
+| Telegram | 40 | yes | 3800 |
+| Slack | 46 | yes | 3800 |
+| plain text / LM | 72 | no | — |
+
+The channel is learned from the turn's `platform` (recorded in `pre_llm_call`)
+and `state(card)` picks the plan automatically; `state(card, name="discord_desktop")`
+forces one. Cards are fenced in a code block because a proportional font destroys
+spaced art, and `_shrink` drops art rows from the middle when the message would
+exceed the channel budget.
+
+## Scenes
+
+One scene per state, rendered from `tools/scene.html`:
+
+- **walk** — a figure walking away from camera toward a low sun on a perspective grid
+- **daydream** — slow, translucent low-poly blobs drifting past each other
+- **dissociate** — the same knot twice: one solid and near, one wireframe and far, the gap breathing
+- **dream** — two coloured spheres merging and separating inside a slow dust field
+- **doomscroll** — feed cards with text bars streaming toward the camera, tilted and accelerating
+
+```bash
+python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-states &
+python3 tools/render_three.py          # 5 scenes x 8 frames, ~0.6 s each
+```

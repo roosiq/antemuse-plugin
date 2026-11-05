@@ -129,7 +129,7 @@ def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[s
     art_cols = 44 if w >= 104 else 0
     art: List[str] = []
     if active and art_cols:
-        bank = three_backdrop.frames(art_cols, 14)
+        bank = three_backdrop.frames(art_cols, 14, active["key"])
         if bank:
             art = bank[tick % len(bank)]
 

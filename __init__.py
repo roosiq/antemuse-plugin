@@ -59,7 +59,8 @@ def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
     if action == "watch":
         return tui.run()
     if action == "card":
-        return surfaces.card(engine.watch_state(), str(a.get("name") or "discord"))
+        return surfaces.card(engine.watch_state(),
+                             str(a.get("name") or engine.platform() or "discord"))
     if action == "image":
         return f"MEDIA:{surfaces.snapshot_path(engine.watch_state(), str(a.get('name') or 'discord'))}\n" + surfaces.record(engine.watch_state())
     return panel.render(engine.watch_state())
@@ -67,7 +68,8 @@ def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
 
 # ------------------------------------------------------------------ hooks
 
-def _pre_llm_call(**kwargs: Any) -> str | None:
+def _pre_llm_call(platform: str = "", **kwargs: Any) -> str | None:
+    engine.remember_platform(platform)
     engine.tick()
     return engine.inject()
 
@@ -102,7 +104,9 @@ def _state(_raw: str) -> str:
 
 
 def _states(_raw: str) -> str:
-    return tui.run() if sys.stdout.isatty() else surfaces.card(engine.watch_state(), "discord")
+    if sys.stdout.isatty():
+        return tui.run()
+    return surfaces.card(engine.watch_state(), engine.platform() or "discord")
 
 
 def _note(raw: str) -> str:

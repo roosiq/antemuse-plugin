@@ -199,6 +199,21 @@ def status() -> str:
     return "\n".join(lines)
 
 
+def remember_platform(platform: str) -> None:
+    """The channel a turn arrived on, so renders can size themselves to it."""
+    if not platform:
+        return
+    with _LOCK:
+        data = _load()
+        data["platform"] = platform
+        _save(data)
+
+
+def platform() -> str:
+    with _LOCK:
+        return _load().get("platform") or ""
+
+
 def record(who: str, text: str) -> None:
     """Keep what the agent and the person each produced in the same state."""
     who = "person" if who in ("person", "human", "you") else "agent"

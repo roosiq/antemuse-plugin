@@ -72,13 +72,21 @@ def _ansi(grid, floor: float = FLOOR) -> List[str]:
     return lines
 
 
-def frames(cols: int = 46, rows: int = 14) -> List[List[str]]:
-    key = (cols, rows)
-    if key in CACHE:
-        return CACHE[key]
+def _pngs(scene: str = "") -> List[Path]:
     if not available():
         return []
-    pngs = sorted(_dir().glob("*.png"))
+    sub = _dir() / scene
+    pngs = sorted(sub.glob("*.png")) if scene and sub.is_dir() else []
+    return pngs or sorted(_dir().glob("*.png"))
+
+
+def frames(cols: int = 46, rows: int = 14, scene: str = "") -> List[List[str]]:
+    key = (cols, rows, scene)
+    if key in CACHE:
+        return CACHE[key]
+    pngs = _pngs(scene)
+    if not pngs:
+        return []
     built = [_ansi(_grid(p, cols, rows)) for p in pngs]
     CACHE[key] = built
     return built

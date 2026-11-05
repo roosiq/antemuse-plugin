@@ -23,19 +23,32 @@ RAMP = " .:-=+*#%@"
 ASCII_RAMP = " .:-=+*#"
 
 PROFILES: Dict[str, Dict[str, Any]] = {
-    "terminal": {"ansi": True, "color": True, "animate": True, "width": None, "image": False},
-    "discord": {"ansi": False, "color": False, "animate": False, "width": 56, "image": True},
-    "matrix": {"ansi": False, "color": False, "animate": False, "width": 56, "image": True},
-    "telegram": {"ansi": False, "color": False, "animate": False, "width": 44, "image": True},
-    "slack": {"ansi": False, "color": False, "animate": False, "width": 52, "image": True},
-    "text": {"ansi": False, "color": False, "animate": False, "width": 72, "image": False},
+    "terminal": {"ansi": True, "color": True, "animate": True, "width": None, "image": False, "fence": False, "max_chars": 0},
+    # Discord: mobile renders ~40 monospace columns before wrapping, desktop ~56.
+    # 2000-char cap per message, so the card carries its own budget.
+    "discord": {"ansi": False, "color": False, "animate": False, "width": 40, "image": True, "fence": True, "max_chars": 1800},
+    "discord_desktop": {"ansi": False, "color": False, "animate": False, "width": 56, "image": True, "fence": True, "max_chars": 1800},
+    "matrix": {"ansi": False, "color": False, "animate": False, "width": 52, "image": True, "fence": True, "max_chars": 4000},
+    "telegram": {"ansi": False, "color": False, "animate": False, "width": 40, "image": True, "fence": True, "max_chars": 3800},
+    "slack": {"ansi": False, "color": False, "animate": False, "width": 46, "image": True, "fence": True, "max_chars": 3800},
+    "text": {"ansi": False, "color": False, "animate": False, "width": 72, "image": False, "fence": False, "max_chars": 0},
 }
 
+# how many art rows fit in a chat card at each width, before the message gets tall
+ART_ROWS = {40: 8, 46: 9, 52: 10, 56: 12, 72: 14}
 
-def profile(name: str = "text", width: int | None = None) -> Dict[str, Any]:
-    base = dict(PROFILES.get(name, PROFILES["text"]))
+
+def profile(name: str = "text", width: int | None = None, narrow: bool = False) -> Dict[str, Any]:
+    """Resolve a destination to an encoding plan. `narrow` picks the mobile width."""
+    key = name
+    if narrow and name == "discord":
+        key = "discord"
+    base = dict(PROFILES.get(key, PROFILES["text"]))
     if width:
-        base["width"] = width
+        base["width"] = max(24, min(96, width))
+    if narrow and not width:
+        base["width"] = 36
+    base["art_rows"] = ART_ROWS.get(base["width"], 8)
     return base
 
 
@@ -47,9 +60,13 @@ def _frames_dir() -> Path:
     return store.data_dir() / "three_frames"
 
 
-def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP) -> List[str]:
+def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
+        scene: str = "") -> List[str]:
     """Luminance-ramp ASCII of a rendered three.js frame: no colour, no escapes."""
-    pngs = sorted(_frames_dir().glob("*.png")) if _frames_dir().is_dir() else []
+    sub = _frames_dir() / scene if scene else None
+    pngs = sorted(sub.glob("*.png")) if sub is not None and sub.is_dir() else []
+    if not pngs:
+        pngs = sorted(_frames_dir().glob("*.png")) if _frames_dir().is_dir() else []
     if not pngs:
         return []
     im = Image.open(pngs[index % len(pngs)]).convert("L")
@@ -90,9 +107,10 @@ def _wrap(s: str, n: int, limit: int = 3) -> List[str]:
     return lines[:limit]
 
 
-def card(state: Dict[str, Any], name: str = "discord") -> str:
-    """A snapshot any chat client can render: monospaced block, no ANSI, fixed width."""
-    p = profile(name)
+def card(state: Dict[str, Any], name: str = "discord", width: int | None = None,
+         narrow: bool = False, fence: bool | None = None) -> str:
+    """A snapshot for one channel: monospaced, no ANSI, sized to that client's view."""
+    p = profile(name, width, narrow)
     w = p["width"] or 56
     active = state.get("active")
     journal = state.get("journal", [])
@@ -109,8 +127,7 @@ def card(state: Dict[str, Any], name: str = "discord") -> str:
     if active:
         frac = active["seconds_left"] / max(1, active.get("total_seconds") or active["seconds_left"])
         lines.append(_bar(frac, w))
-        art_rows = 10 if w < 50 else 12
-        for row in art(cols=w, rows=art_rows):
+        for row in art(cols=w, rows=p["art_rows"], scene=active["key"]):
             lines.append(row)
         lines.append("")
         tools = "closed" if active["tools"] == [] else (
@@ -136,6 +153,26 @@ def card(state: Dict[str, Any], name: str = "discord") -> str:
     if residue:
         lines.append("─" * w)
         lines += _wrap("residue · " + " · ".join(residue), w, 2)
+
+    text = "\n".join(l.rstrip() for l in lines)
+    if p.get("max_chars") and len(text) > p["max_chars"]:
+        text = _shrink(text, p["max_chars"])
+    if (fence if fence is not None else p.get("fence")):
+        # a chat client in a proportional font turns spaced art into mush
+        text = "```\n" + text + "\n```"
+    return text
+
+
+def _shrink(text: str, cap: int) -> str:
+    """Drop rows from the middle of the art block until the message fits the cap."""
+    lines = text.splitlines()
+    art_idx = [i for i, l in enumerate(lines) if l and set(l) <= set(" .:-=+*#%@")]
+    while len("\n".join(lines)) > cap and art_idx:
+        drop = art_idx.pop(len(art_idx) // 2)
+        lines.pop(drop)
+        art_idx = [i if i < drop else i - 1 for i in art_idx]
+    while len("\n".join(lines)) > cap and len(lines) > 6:
+        lines.pop(-2)
     return "\n".join(lines)
 
 

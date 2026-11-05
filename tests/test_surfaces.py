@@ -43,10 +43,23 @@ def test_chat_card_has_no_escape_codes():
 
 
 def test_chat_card_fits_its_width():
-    for name in ("discord", "telegram", "slack", "text"):
+    for name in ("discord", "discord_desktop", "telegram", "slack", "text"):
         w = surfaces.profile(name)["width"]
         out = surfaces.card(state(), name)
-        assert max(len(l) for l in out.splitlines()) <= w + 2, name
+        body = [l for l in out.splitlines() if l != "```"]
+        assert max(len(l) for l in body) <= w + 2, name
+
+
+def test_chat_cards_are_fenced_but_terminal_is_not():
+    assert surfaces.card(state(), "discord").startswith("```")
+    assert not surfaces.card(state(), "text").startswith("```")
+
+
+def test_narrow_mode_is_mobile_safe():
+    out = surfaces.card(state(), "discord", narrow=True)
+    body = [l for l in out.splitlines() if l != "```"]
+    assert max(len(l) for l in body) <= 38
+    assert len(out) < 1800
 
 
 def test_card_names_the_state_and_both_sides():
