@@ -61,7 +61,7 @@ def test_both_columns_appear_with_their_entries():
 
 
 def test_bar_drains_as_time_passes():
-    engine.enter("walk")
+    engine.enter("daydream")
     state = engine.watch_state()
     state["active"]["seconds_left"] = state["active"]["total_seconds"]
     full = "\n".join(_visible(tui.render_frame(state, 100, 30, 0)))
@@ -71,7 +71,7 @@ def test_bar_drains_as_time_passes():
 
 
 def test_spinner_moves():
-    engine.enter("walk")
+    engine.enter("daydream")
     a = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 0)))
     b = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 1)))
     assert a != b

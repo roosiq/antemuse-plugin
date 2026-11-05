@@ -17,7 +17,7 @@ import time
 import tty
 from typing import Any, Dict, List
 
-from . import definitions, engine, panel, three_backdrop
+from . import atlas, definitions, engine, panel, three_backdrop
 
 BG = (14, 12, 11)
 INK = (242, 234, 225)
@@ -108,8 +108,52 @@ def _entries(journal: List[Dict[str, Any]], who: str, width: int, limit: int) ->
     return out
 
 
+def walk_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0, pan: int = 0) -> List[str]:
+    """The walk gets the whole screen: a side-scrolling map instead of a backdrop."""
+    active = state.get("active") or {}
+    canvas = bg(BG) + fg(INK)
+    inner = w - 4
+    rows: List[str] = []
+
+    def line(s: str = "") -> None:
+        rows.append(pad(canvas + s, w - 1))
+
+    brand = "A N T E M U S E"
+    line(fg(MUTED) + " " + brand + " " * max(1, inner - len(brand) - len(active.get("label", "")))
+         + fg(AMBER) + active.get("label", "") + fg(INK) + " ")
+    line(fg(FAINT) + " " + "─" * inner)
+
+    map_h = max(8, h - 12)
+    for row in atlas.render(state, inner, map_h, tick):
+        line(" " + row + fg(INK))
+
+    mins, secs = divmod(int(active.get("seconds_left", 0)), 60)
+    tools = "tools closed" if active.get("tools") == [] else "tools open"
+    line()
+    line(" " + fg(AMBER) + f"{mins:02d}:{secs:02d}" + fg(MUTED) + " left   "
+         + fg(INK) + active.get("contract", "") + fg(FAINT) + "  ·  " + tools
+         + f"  ·  {active.get('turns_left', 0)} turn(s)")
+
+    journal = state.get("journal", [])
+    recent = [e for e in journal if e.get("who") == "state"][-1:]
+    for e in recent:
+        stamp = time.strftime("%H:%M:%S", time.localtime(e["at"]))
+        line(" " + fg(FAINT) + stamp + " " + fg(AMBER) + "· " + fg(MUTED) + _clip(e["text"], inner - 12))
+    agent = [e for e in journal if e.get("who") == "agent"][-1:]
+    person = [e for e in journal if e.get("who") == "person"][-1:]
+    line(" " + fg(INK) + "AGENT " + fg(MUTED) + _clip(agent[0]["text"], inner // 2 - 8) if agent
+         else " " + fg(FAINT) + "AGENT has not spoken yet")
+    if person:
+        line(" " + fg(INK) + "YOU   " + fg(MUTED) + _clip(person[0]["text"], inner - 8))
+    while len(rows) < h:
+        rows.append(pad(canvas, w - 1))
+    return rows[:h]
+
+
 def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[str]:
     active = state.get("active")
+    if active and active.get("key") == "walk" and w >= 80 and h >= 20:
+        return walk_frame(state, w, h, tick)
     canvas = bg(BG) + fg(INK)
     left = 3
     inner = w - left - 2
@@ -241,6 +285,19 @@ def _tty_fd() -> int | None:
         return None
 
 
+def _word_gloss(word: str) -> str:
+    """One lookup so the person's own step carries a sense, like the walk's do."""
+    try:
+        from . import sources
+        wn = sources._wn()
+        syns = wn.synsets(word)
+        if not syns:
+            return " · no sense in wordnet"
+        return " · " + (syns[0].definition() or "").split(";")[0][:70]
+    except Exception:
+        return ""
+
+
 def run() -> str:
     """Take over the terminal until the user quits; return a one-line summary."""
     tty_fd = _tty_fd()
@@ -248,6 +305,8 @@ def run() -> str:
         return panel.render(engine.watch_state())
     old = termios.tcgetattr(tty_fd)
     note_mode = False
+    join_mode = False
+    pan = 0
     buffer = ""
     frames = 0
     try:
@@ -257,8 +316,13 @@ def run() -> str:
             w, h = os.get_terminal_size(tty_fd)
             state = engine.watch_state()
             frame = render_frame(state, w, h, frames)
-            if note_mode:
-                frame[-1] = pad(bg(BG) + fg(AMBER) + " note › " + buffer + "▏", w)
+            if not (state.get("active") or {}).get("key") == "walk":
+                pan = 0
+            if (state.get("active") or {}).get("key") == "walk":
+                frame = walk_frame(state, w, h, frames, pan=pan)
+            if note_mode or join_mode:
+                label = " your word › " if join_mode else " note › "
+                frame[-1] = pad(bg(BG) + fg(AMBER) + label + buffer + "▏", w)
             _draw(tty_fd, w, h, frame)
             frames += 1
 
@@ -266,12 +330,16 @@ def run() -> str:
             if not ready:
                 continue
             ch = os.read(tty_fd, 1).decode("utf-8", "ignore")
-            if note_mode:
+            if note_mode or join_mode:
                 if ch in ("\r", "\n"):
-                    engine.record("person", buffer)
-                    buffer, note_mode = "", False
+                    if join_mode and buffer.strip():
+                        engine.record("person", buffer.strip() + _word_gloss(buffer.strip()),
+                                      event="walk_person")
+                    elif not join_mode:
+                        engine.record("person", buffer)
+                    buffer, note_mode, join_mode = "", False, False
                 elif ch == "\x1b":
-                    buffer, note_mode = "", False
+                    buffer, note_mode, join_mode = "", False, False
                 elif ch in ("\x7f", "\b"):
                     buffer = buffer[:-1]
                 elif ch.isprintable():
@@ -283,6 +351,14 @@ def run() -> str:
                 engine.stop()
             elif ch == "n":
                 note_mode, buffer = True, ""
+            elif ch == "j":
+                join_mode, buffer = True, ""
+            elif ch in ("h", "H"):
+                pan = min(120, pan + 6)
+            elif ch in ("l", "L"):
+                pan = max(0, pan - 6)
+            elif ch == "0":
+                pan = 0
             elif ch in "12345" and int(ch) <= len(definitions.STATES):
                 engine.enter(list(definitions.STATES)[int(ch) - 1])
             elif ch in ("w", "W"):

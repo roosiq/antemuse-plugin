@@ -163,3 +163,33 @@ Corpora live in `~/nltk_data` (`wordnet`, `framenet_v17`) and are found through
 in `walk_cursor.json` and refuses to step straight back where it came from.
 
 `dissociate` is gone — replaced by doomscroll.
+
+## The walk, as a place
+
+`/walk` takes over the screen with a side-scrolling map instead of a looping
+backdrop. The map is not decorative: it is parsed straight from the journal, so
+every node on screen is a WordNet step that actually happened.
+
+```
+├ +4
+├ +3                                    │SENSE
+├ +2    ──○─ entity    ──●─ entity·2    │  a separate and self-contained
+├ +1 ───     ───    ───└───┘            │  entity
+├  0                       ──▮  thing   │PATH
+▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁ │  ↓ abstraction ↑ entity
+```
+
+- **Camera follows x and depth.** The newest node sits right of centre; a climb
+  scrolls the older nodes down instead of off the top.
+- **The depth ladder** on the left is the hypernym altitude, so `+3` means three
+  levels above where the walk started.
+- **Fog ahead** of the walker is the part of the graph not walked yet — the map
+  only ever shows what has been traversed.
+- **The right panel** carries the current sense and the last four steps, so the
+  definition stays on screen for the whole turn instead of scrolling past.
+- **Edges are the relation**: teal climbs (hypernym/holonym), amber descends
+  (hyponym/meronym), grey crosses (antonym/sibling).
+
+Keys: `h`/`l` pan the camera, `0` resets, `j` adds your own word — it lands on
+the map as a `◆` at the current depth and is scored against WordNet like any
+other step, so the person walks the same path rather than watching one.
