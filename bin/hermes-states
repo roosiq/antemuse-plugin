@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Full-screen Antemuse States view for any terminal.
+exec python3 -c 'import sys; sys.path.insert(0,"'"$HOME"'/antemuse-states"); from kitchen import tui; print(tui.run())'

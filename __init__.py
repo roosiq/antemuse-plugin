@@ -19,9 +19,9 @@ from __future__ import annotations
 from typing import Any, Dict
 
 try:
-    from .kitchen import definitions, engine, panel
+    from .kitchen import definitions, engine, panel, tui
 except ImportError:  # flat-module load
-    from kitchen import definitions, engine, panel  # type: ignore[no-redef]
+    from kitchen import definitions, engine, panel, tui  # type: ignore[no-redef]
 
 __version__ = "0.3.0"
 
@@ -56,7 +56,7 @@ def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
     if action == "list":
         return definitions.palette() + "\n\n" + panel.render(engine.watch_state())
     if action == "watch":
-        return panel.render(engine.watch_state())
+        return tui.run()
     return panel.render(engine.watch_state())
 
 
@@ -97,7 +97,7 @@ def _state(_raw: str) -> str:
 
 
 def _states(_raw: str) -> str:
-    return panel.render(engine.watch_state())
+    return tui.run()
 
 
 def _note(raw: str) -> str:
@@ -111,9 +111,7 @@ def _note(raw: str) -> str:
 
 
 def _watch(raw: str) -> str:
-    arg = (raw or "").strip()
-    seconds = int(arg) if arg.isdigit() else 20
-    return panel.live(seconds)
+    return tui.run()
 
 
 def register(ctx) -> None:

@@ -34,9 +34,19 @@ count decides how much of it the model gets.
  /note <text>  /snap  /states
 ```
 
-`/note <text>` puts the person's words in the right column of the same state.
-`/watch [seconds]` redraws until the state ends. Everything is plain text and
-ANSI, so it survives the Hermes CLI, tmux, SSH, and pasted screenshots.
+Two surfaces, one state:
+
+- **`hermes-states`** — a full-screen takeover for any terminal: block-digit
+  clock, draining bar, both columns, live keys. This is the one to watch.
+- **`/states`** — a text panel printed inside the Hermes chat, for when a
+  takeover is not available (the Ink TUI runs tools without a tty, so the
+  takeover is its own process rather than an agent tool result).
+
+```
+hermes-states
+ 1 walk  2 daydream  3 dissociate  4 dream  5 doomscroll
+ n note  space snap  q quit
+```
 
 ## Install
 
@@ -54,13 +64,16 @@ __init__.py            hooks (pre_llm_call, pre_tool_call, transform_llm_output)
                        /states /note /watch, and the state tool
 kitchen/definitions.py the five states: tools, directive, contract, residue
 kitchen/engine.py      enter/stop/tick, tool policy, journal, residue
-kitchen/panel.py       the CLI frame
+kitchen/panel.py       the printed text frame
+kitchen/tui.py         the full-screen takeover (alt screen, truecolor, keys)
+bin/hermes-states      launcher on PATH
 tests/                 18 tests
 ```
 
 ## Verify
 
 ```bash
+hermes-states                # full-screen view
 hermes plugins doctor ~/antemuse-states
 PYTHONPATH= ANTEMUSE_STATES_HOME=$(mktemp -d) uvx pytest tests/ -q
 hermes chat -q '/walk' && hermes chat -q '/states'
