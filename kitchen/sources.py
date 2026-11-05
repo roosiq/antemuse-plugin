@@ -1,25 +1,33 @@
 """Where a state's material comes from.
 
-Everything here reads something real on this machine or on the wire, and says so
-when it cannot. No generated filler: if the graph, the memories, or the feed are
-missing, the event says which one was missing.
+WordNet is the concept graph: 117k synsets joined by hypernym, hyponym, part,
+domain and antonym links, so a step can say *why* it was taken and where the
+last step ended. FrameNet is the scene grammar: 1,221 frames of roles and
+lexical units, recombined during sleep. Memories and live feeds fill the rest.
+
+Everything fails loudly: a missing corpus says so rather than inventing content.
 """
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
-import sqlite3
 import time
 import urllib.request
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
-ONTOLOGY = Path("/home/ryan/world-ontology/var/quickstart.sqlite3")
-MEMORY = Path.home() / ".hermes/memories/MEMORY.md"
-USER = Path.home() / ".hermes/memories/USER.md"
-FEED_CACHE = Path.home() / ".hermes/plugin-data/antemuse-states/feed.json"
-LOCAL_CORPUS = Path.home() / ".hermes"
+HOME = Path.home()
+NLTK_HOME = HOME / "nltk_data"
+DATA = HOME / ".hermes/plugin-data/antemuse-states"
+WALK_CURSOR = DATA / "walk_cursor.json"
+FEED_CACHE = DATA / "feed.json"
+MEMORY = HOME / ".hermes/memories/MEMORY.md"
+USER = HOME / ".hermes/memories/USER.md"
+
+if NLTK_HOME.is_dir():
+    os.environ.setdefault("NLTK_DATA", str(NLTK_HOME))
 
 FEEDS = [
     "https://feeds.arstechnica.com/arstechnica/index",
@@ -32,47 +40,149 @@ of to in on at for with from by as it its it's their there here we you i he she 
 not no yes do does did have has had will would can could should may might must about into
 over under more most less very just also so such only own same other some any each""".split())
 
+RNG = random.SystemRandom()
 
-# --------------------------------------------------------------- concept graph
+SEEDS = ["walk", "dream", "light", "river", "memory", "door", "signal", "salt", "night", "hand"]
 
-def concepts() -> List[Dict[str, str]]:
-    if not ONTOLOGY.exists():
-        return []
+
+# ------------------------------------------------------------------- wordnet
+
+def _wn():
+    from nltk.corpus import wordnet as wn  # imported late: 117k synsets, slow to load
+    return wn
+
+
+def _lemma(syn) -> str:
+    return syn.lemma_names()[0].replace("_", " ")
+
+
+def _pos(syn) -> str:
+    return {"n": "noun", "v": "verb", "a": "adj", "s": "adj", "r": "adv"}.get(syn.pos(), syn.pos())
+
+
+def _cursor_data() -> dict:
     try:
-        con = sqlite3.connect(f"file:{ONTOLOGY}?mode=ro", uri=True)
-        rows = con.execute(
-            "select canonical_label, definition, super_concept_iri, domain_iri, kind from concepts "
-            "where status='active' and canonical_label is not null"
-        ).fetchall()
-        con.close()
+        data = json.loads(WALK_CURSOR.read_text())
+        return data if isinstance(data, dict) else {}
     except Exception:
-        return []
-    return [{"label": r[0], "definition": r[1] or "", "parent": r[2] or "", "domain": r[3] or "",
-             "kind": r[4] or ""} for r in rows]
+        return {}
 
 
-def concept_walk(steps: int = 1) -> List[str]:
-    """Walk the graph one concept at a time, naming why the step was taken."""
-    pool = concepts()
-    if len(pool) < 2:
-        return [f"graph unavailable · {ONTOLOGY} has no usable concepts"]
+def cursor() -> str:
+    value = _cursor_data().get("synset") or ""
+    return value if isinstance(value, str) else ""
+
+
+def _save_cursor(name: str, prev: str = "") -> None:
+    DATA.mkdir(parents=True, exist_ok=True)
+    WALK_CURSOR.write_text(json.dumps({"synset": name, "prev": prev, "at": time.time()}))
+
+
+def _edges(syn) -> List[tuple]:
+    """Every relation WordNet exposes for this synset, with the verb for the step."""
+    out = []
+    probes = [
+        ("hypernym", lambda s: s.hypernyms(), "went up to its"),
+        ("hyponym", lambda s: s.hyponyms(), "went down into a"),
+        ("holonym", lambda s: s.part_holonyms() + s.member_holonyms() + s.substance_holonyms(), "stepped into the"),
+        ("meronym", lambda s: s.part_meronyms() + s.member_meronyms() + s.substance_meronyms(), "opened up its"),
+        ("similar", lambda s: getattr(s, "similar_tos", lambda: [])(), "bent toward its"),
+        ("also", lambda s: s.also_sees(), "ran alongside its"),
+        ("antonym", lambda s: [a.synset() for l in s.lemmas() for a in l.antonyms()], "turned against its"),
+    ]
+    for name, fn, verb in probes:
+        try:
+            targets = [t for t in fn(syn) if t is not None]
+        except Exception:
+            targets = []
+        if targets:
+            out.append((name, targets, verb))
+    return out
+
+
+def walk_step(steps: int = 1) -> List[str]:
+    """One step along a real WordNet edge, starting from where the last step ended."""
+    try:
+        wn = _wn()
+        first = wn.synsets(RNG.choice(SEEDS))[0]
+    except Exception as exc:
+        return [f"wordnet unavailable · {str(exc).splitlines()[0][:90]}"]
+    out: List[str] = []
+    seed = cursor()
+    try:
+        syn = wn.synset(seed) if seed else first
+    except Exception:
+        syn = first
+    for _ in range(steps):
+        options = _edges(syn)
+        if not options:
+            out.append(f"{_lemma(syn)} · no edge out of this synset — the walk stops here")
+            break
+        name, targets, verb = RNG.choice(options)
+        back = _cursor_data().get("prev")
+        forward = [t for t in targets if t.name() != back]
+        nxt = RNG.choice(forward or targets)
+        gloss = (nxt.definition() or "").split(";")[0][:90]
+        out.append(
+            f"{_lemma(syn)} ({_pos(syn)}) → {_lemma(nxt)} ({_pos(nxt)}) · {verb} {name}"
+            + (f" · “{gloss}”" if gloss else "")
+        )
+        prev_name, syn = syn.name(), nxt
+    _save_cursor(syn.name(), prev_name)
+    return out
+
+
+# ------------------------------------------------------------------ framenet
+
+_FRAMES: List[Any] = []
+
+
+def _frames() -> List[Any]:
+    global _FRAMES
+    if _FRAMES:
+        return _FRAMES
+    from nltk.corpus import framenet as fn
+    _FRAMES = [f for f in fn.frames() if len(f.FE) >= 3 and f.lexUnit]
+    return _FRAMES
+
+
+def _lu(frame) -> str:
+    lu = RNG.choice(list(frame.lexUnit.values()))
+    return str(getattr(lu, "name", "thing")).split(".")[0].replace("_", " ")
+
+
+def _roles(frame, n: int = 3) -> List[str]:
+    names = [fe.name for fe in frame.FE.values() if fe.name != "Lexical_unit"]
+    return RNG.sample(names, min(n, len(names))) if names else ["thing"]
+
+
+DREAM_FORMS = [
+    "a {frame} in which the {a} is really the {b}",
+    "the {a} of {frame}, kept after the {b} is gone",
+    "something that {lu}s, but only where the {a} and the {b} trade places",
+    "a {frame} missing its {a}, so every {b} has to stand in for it",
+    "an object that holds the {a} of {frame} the way a jar holds weather",
+    "a {b} that has been given the {a}'s work in {frame} and does it badly, on purpose",
+]
+
+
+def dream_recombine(steps: int = 1) -> List[str]:
+    """FrameNet gives the roles; the recombination is the part that never existed."""
+    try:
+        frames = _frames()
+    except Exception as exc:
+        return [f"framenet unavailable · {str(exc).splitlines()[0][:90]}"]
+    if not frames:
+        return ["framenet unavailable · no frames with roles and lexical units"]
     out = []
     for _ in range(steps):
-        a = random.SystemRandom().choice(pool)
-        kin = [c for c in pool if c is not a and c["parent"] and c["parent"] == a["parent"]]
-        same_domain = [c for c in pool if c is not a and c["domain"] and c["domain"] == a["domain"]]
-        both = [c for c in pool if c is not a and c["kind"] == a["kind"]]
-        if kin:
-            b, why = random.SystemRandom().choice(kin), "same parent class"
-        elif same_domain:
-            b, why = random.SystemRandom().choice(same_domain), "same domain"
-        elif both:
-            plural = {"property": "properties", "class": "classes"}.get(a["kind"], a["kind"] + "s")
-            b, why = random.SystemRandom().choice(both), f"both are {plural}"
-        else:
-            b, why = random.SystemRandom().choice([c for c in pool if c is not a]), "no shared parent — a guess"
-        gloss = (b["definition"] or "").split(".")[0][:90]
-        out.append(f"{a['label']} → {b['label']} · {why}" + (f" · “{gloss}”" if gloss else ""))
+        frame = RNG.choice(frames)
+        roles = _roles(frame, 2) + ["thing", "thing"]
+        out.append("invented · " + RNG.choice(DREAM_FORMS).format(
+            frame=frame.name.replace("_", " ").lower(),
+            a=roles[0].replace("_", " ").lower(),
+            b=roles[1].replace("_", " ").lower(),
+            lu=_lu(frame)))
     return out
 
 
@@ -101,29 +211,12 @@ def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
         return ["no memories on disk · looked in MEMORY.md and USER.md"]
     out = []
     for _ in range(steps):
-        a, b = random.SystemRandom().sample(pool, 2)
+        a, b = RNG.sample(pool, 2)
         shared = _words(a) & _words(b)
         if len(shared) >= join_threshold:
             out.append(f"JOINED · {a[:70]}… ↔ {b[:70]}… · shared: {', '.join(sorted(shared)[:4])}")
         else:
             out.append(f"adjacent · {a[:70]}… ↔ {b[:70]}… · only {len(shared)} shared terms")
-    return out
-
-
-def invent(steps: int = 1) -> List[str]:
-    """A disparate connection turned into a thing: three concepts, one object."""
-    pool = concepts()
-    if len(pool) < 3:
-        return ["graph unavailable · cannot recombine concepts"]
-    out = []
-    verbs = ["measure", "carry", "predict", "repair", "hide", "trade", "teach", "sort"]
-    for _ in range(steps):
-        a, b, c = random.SystemRandom().sample(pool, 3)
-        craft = random.SystemRandom().choice(["made of", "grown from", "built out of"])
-        out.append(
-            f"invented · a {a['label'].lower()} {craft} {b['label'].lower()}, "
-            f"used to {random.SystemRandom().choice(verbs)} what a {c['label'].lower()} holds"
-        )
     return out
 
 
@@ -134,7 +227,7 @@ def _strip_xml(s: str) -> str:
 
 
 def _fetch_feed(url: str, limit: int = 12) -> List[Dict[str, str]]:
-    req = urllib.request.Request(url, headers={"User-Agent": "antemuse-states/0.5"})
+    req = urllib.request.Request(url, headers={"User-Agent": "antemuse-states/0.6"})
     with urllib.request.urlopen(req, timeout=8) as r:
         body = r.read().decode("utf-8", "replace")
     items = []
@@ -142,13 +235,15 @@ def _fetch_feed(url: str, limit: int = 12) -> List[Dict[str, str]]:
         t = re.search(r"<title[^>]*>(.*?)</title>", block, re.S)
         l = re.search(r"<link[^>]*>(.*?)</link>", block, re.S)
         if t:
-            items.append({"title": _strip_xml(t.group(1))[:140], "link": _strip_xml(l.group(1))[:200] if l else "",
+            items.append({"title": _strip_xml(t.group(1))[:140],
+                          "link": _strip_xml(l.group(1))[:200] if l else "",
                           "source": url.split("/")[2]})
     if not items:
         for block in re.findall(r"<entry[^>]*>(.*?)</entry>", body, re.S)[:limit]:
             t = re.search(r"<title[^>]*>(.*?)</title>", block, re.S)
             if t:
-                items.append({"title": _strip_xml(t.group(1))[:140], "link": "", "source": url.split("/")[2]})
+                items.append({"title": _strip_xml(t.group(1))[:140], "link": "",
+                              "source": url.split("/")[2]})
     return items
 
 
@@ -178,14 +273,14 @@ def feed_pick(steps: int = 1) -> List[str]:
     if not items:
         return ["feed unavailable · no network and no cache"]
     out = []
-    for item in random.SystemRandom().sample(items, min(steps, len(items))):
+    for item in RNG.sample(items, min(steps, len(items))):
         out.append(f"{item['source']} · {item['title']}")
     return out
 
 
 PROVIDERS = {
-    "walk": concept_walk,
+    "walk": walk_step,
     "daydream": memory_pairs,
-    "dream": invent,
+    "dream": dream_recombine,
     "doomscroll": feed_pick,
 }
