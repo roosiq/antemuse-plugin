@@ -16,12 +16,13 @@ Surfaces:
 """
 from __future__ import annotations
 
+import sys
 from typing import Any, Dict
 
 try:
-    from .kitchen import definitions, engine, panel, tui
+    from .kitchen import definitions, engine, panel, surfaces, tui
 except ImportError:  # flat-module load
-    from kitchen import definitions, engine, panel, tui  # type: ignore[no-redef]
+    from kitchen import definitions, engine, panel, surfaces, tui  # type: ignore[no-redef]
 
 __version__ = "0.3.0"
 
@@ -37,7 +38,7 @@ STATE_SCHEMA: Dict[str, Any] = {
     "parameters": {
         "type": "object",
         "properties": {
-            "action": {"type": "string", "enum": ["enter", "exit", "status", "list", "watch"]},
+            "action": {"type": "string", "enum": ["enter", "exit", "status", "list", "watch", "card", "image"]},
             "name": {"type": "string", "description": "State to enter: walk, daydream, dissociate, dream, doomscroll."},
             "minutes": {"type": "integer", "description": "Optional override for how long the state lasts."},
         },
@@ -57,6 +58,10 @@ def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
         return definitions.palette() + "\n\n" + panel.render(engine.watch_state())
     if action == "watch":
         return tui.run()
+    if action == "card":
+        return surfaces.card(engine.watch_state(), str(a.get("name") or "discord"))
+    if action == "image":
+        return f"MEDIA:{surfaces.snapshot_path(engine.watch_state(), str(a.get('name') or 'discord'))}\n" + surfaces.record(engine.watch_state())
     return panel.render(engine.watch_state())
 
 
@@ -97,7 +102,7 @@ def _state(_raw: str) -> str:
 
 
 def _states(_raw: str) -> str:
-    return tui.run()
+    return tui.run() if sys.stdout.isatty() else surfaces.card(engine.watch_state(), "discord")
 
 
 def _note(raw: str) -> str:
