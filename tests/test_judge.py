@@ -101,8 +101,8 @@ def test_far_without_a_reason_is_penalised():
 
 
 def test_try_next_with_a_label_still_opens_with_a_verb():
-    from kitchen import game
-    parts = game._split(
+    from kitchen import room as room_mod
+    parts = room_mod.split_submission(
         "Title: Charge for the second thought :: Why: the follow-up is the paid thought. :: "
         "Try next: add one line to the price page by Friday."
     )

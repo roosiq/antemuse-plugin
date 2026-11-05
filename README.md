@@ -1,106 +1,85 @@
-# Antemuse Concept Kitchen
+# Antemuse Room
 
-A CLI minigame about creative moves, played identically by humans and agents.
+Not a game. A room that cycles through phases of **concept discovery** and
+**movement**, and shows you what it accumulated.
 
-A round deals a **seed** and one **move**. You answer with a spark:
+One tick advances one phase:
+
+- **Move phases** — `discover`, `flip`, `shift`, `connect` — hand out a seed and
+  one constraint, and take a spark: `title :: because … :: do this first`.
+- **State phases** — `walk`, `daydream`, `dream`, `dissociate`, `doomscroll` —
+  change the seed, the distance expectation, or the debt. They resolve without a
+  model call, so automation never stalls.
+- **Converge** keeps the best spark of the arc and opens the next arc from the
+  winner's next action.
+
+Because state phases are self-resolving, the same machine runs from a slash
+command, an agent tool call, or a cron tick.
+
+## Two projections, one state
+
+Every room renders twice, from the same `Frame`:
+
+| Projection | For | What it is |
+|---|---|---|
+| poster | humans, vision models | 1200×1500 PNG: height = score, ring count = distance, every number drawn as text |
+| transcript | language models | one line per spark, totals, shape, keepers |
+
+Neither is derived from the other; both are derived from `Frame`, so the numbers
+cannot disagree. A test asserts it.
+
+## Surfaces
 
 ```
-title :: because … :: do this first
+/room step                  advance one phase, get the brief
+/room commit T :: because … :: do this first
+/room poster                transcript + MEDIA: png path
+/room phases                the palette and rotation
+/room walk                  jump straight into a phase
+/room reset [seed]          new room
 ```
 
-A deterministic judge scores four 25-point axes — move discipline, mechanism
-legibility, actionability, novelty against the whole table — so nobody wins by
-verbosity, confidence, or vocabulary. Five rounds make a service, and round *n+1*
-is seeded by your own round-*n* spark, so a spark that generates beats a spark
-that merely sounds good.
-
-Humans and agents write to the same leaderboard. The judge does not know who is
-typing.
+Agents use the `room` tool with `action=step|commit|status|poster|phases|phase|reset`.
 
 ## Install
 
 ```bash
-ln -s ~/antemuse-kitchen ~/.hermes/plugins/antemuse-kitchen
-hermes plugins enable antemuse-kitchen
+ln -s ~/antemuse-room ~/.hermes/plugins/antemuse-room
+hermes plugins enable antemuse-room
 ```
 
-Tools are assembled per session, so start a new session (or restart the gateway)
-after enabling. A running gateway reloads commands immediately, but it keeps the
-module it already imported — reload with `hermes plugins disable && enable` while
-developing.
-
-## Play
-
-Human (CLI or any Hermes chat surface):
-
-```
-/cook play
-/cook submit Title: … :: Why: … :: Try next: …
-/cook hint        (costs 8)
-/cook pass
-/cook board
-/cook rules
-```
-
-Agent:
-
-```python
-cook(action="start")
-cook(action="submit", text="Title :: why :: try next", player="terra", model="gpt-5.6-terra")
-cook(action="hint")
-cook(action="board")
-cook(action="rules")
-```
-
-Both surfaces call the same functions with the same schema. `player` defaults to
-the OS user on the command side.
-
-## Scoring
-
-| Axis | 25 points for |
-| --- | --- |
-| Move discipline | naming exactly one changed dimension, and for flip/shift, the default you moved away from |
-| Mechanism | `because` / `which lets` / `by turning`, with a reason that says more than the title |
-| Actionability | try-next opens with a verb and carries a bound (`one`, `by Friday`, `under $50`) |
-| Novelty | 0.08–0.40 token Jaccard against the table; derivative sparks score zero |
-
-Penalties: slop words −10 each (max −20) · three dimensions at once −15 ·
-restating the seed −10 · over the word budget −10 · two hedges −8 · hint −8.
-A far-distance spark with no mechanism loses 15%.
-
-## The engine is optional
-
-By default a round asks `https://concept.cooking/mcp` for reference cards — the
-par you are playing against. If the engine is unreachable, the round is dealt
-from the bundled deck and the brief says so, including the error. Starter
-directions are never presented as engine output: that is how the live site
-currently degrades (its Worker `SERVER_API_KEY` returns 401 while the gateway's
-own key works), and importing that failure into the game would corrupt both the
-novelty axis and the player's trust.
-
-Turn it off with `use_engine: false` in the plugin config for a fully offline game.
+Tools are assembled per session. A running gateway reloads commands on enable
+but keeps modules it already imported — iterate with `disable && enable`.
 
 ## Layout
 
 ```
-plugin.yaml            manifest, config schema
-__init__.py            register(): cook tool, /cook command, bundled skill
-kitchen/judge.py       deterministic scoring + the printed rules
-kitchen/deck.py        seed deck, five-round ladder, chaining
-kitchen/engine.py      optional Concept Cooking MCP deal (fails closed to the deck)
-kitchen/game.py        round loop shared by tool and command
-kitchen/store.py       active round (JSON) + board (SQLite via plugin_data_dir)
-kitchen/render.py      ASCII briefs, score cards, leaderboard
-tests/                 12 tests: judge fairness, chaining, parity, engine failure
+plugin.yaml            manifest, pillow dependency
+__init__.py            room tool, /room command, bundled skill
+kitchen/phases.py      phase definitions, rotation, palette
+kitchen/room.py        the machine: step, commit, converge, state effects
+kitchen/visual.py      two projections of one Frame
+kitchen/judge.py       deterministic scoring of a spark
+kitchen/deck.py        seed deck
+kitchen/store.py       profile data dir
+tests/                 21 tests: rotation, state effects, converge, projections
 ```
 
 ## Verify
 
 ```bash
-hermes plugins doctor ~/antemuse-kitchen
-CONCEPT_KITCHEN_HOME=$(mktemp -d) uvx pytest tests/ -q
-hermes chat -q '/cook play'
+hermes plugins doctor ~/antemuse-room
+PYTHONPATH= ANTEMUSE_ROOM_HOME=$(mktemp -d) uvx --with pillow pytest tests/ -q
+/room step
 ```
 
-State lives in the profile's plugin data dir (`plugins.plugin_storage.plugin_data_dir("antemuse-kitchen")`),
-overridable with `CONCEPT_KITCHEN_HOME` for tests.
+## Notes
+
+- PIL renders the poster; `pillow` is declared in the manifest and the Hermes
+  runtime ships a working copy.
+- A `PYTHONPATH` inherited from the Hermes install venv breaks a 3.12 pytest run
+  (`PIL._imaging` mismatch); clear it when testing.
+- Data lives in the profile's plugin data dir, overridable with
+  `ANTEMUSE_ROOM_HOME`.
+- The old `/cook` command and the five-round game are gone; the judge and the
+  seed deck survive underneath.

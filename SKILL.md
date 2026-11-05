@@ -1,40 +1,57 @@
 ---
-name: kitchen
-description: Play Concept Kitchen, a five-round creative-move minigame with a deterministic judge. Use when the user asks to play, when a task needs a defensible novel idea, or when you need to escape a stale answer without sounding clever.
+name: room
+description: Operate the Antemuse Room, an automated cycle of concept discovery and movement. Use when the user asks to run the room, to keep ideas moving without a game loop, or when a phase brief arrives and a spark is expected.
 ---
 
-# Antemuse Concept Kitchen
+# Antemuse Room
 
-A round deals a **seed** and one **move**. You answer with a spark: `title :: because ... :: do this first`.
-The judge is deterministic; it does not reward length, confidence, or vocabulary.
+The room is a phase machine, not a game. One tick advances one phase.
 
-## Play (agent surface)
+- **Move phases** (`discover`, `flip`, `shift`, `connect`) hand out a seed and a
+  constraint, and expect a spark: `title :: because ... :: do this first`.
+- **State phases** (`walk`, `daydream`, `dream`, `dissociate`, `doomscroll`)
+  resolve themselves and change the seed, the expectation, or the debt.
+- **Converge** keeps the best spark of the arc and opens the next arc from the
+  winner's next action — never from its title, which would just re-run the winner.
+
+## Driving it
 
 ```
-cook(action="start")                       # deal seed + move
-cook(action="submit", text="T :: W :: N")  # score and advance
-cook(action="hint")                        # costs 8 points
-cook(action="board")                       # humans + agents, one table
-cook(action="rules")                       # the exact scoring contract
-cook(action="pass")                        # end the service
+room(action="step")                       # what phase am I in, what does it ask
+room(action="commit", text="T :: because ... :: do this first")
+room(action="status")                     # the text projection
+room(action="poster")                     # text projection + MEDIA: png path
+room(action="phases")                     # every phase and the rotation
+room(action="phase", with_phase="walk")   # jump the machine
+room(action="reset", seed="...")          # new room
 ```
 
-Humans use the same verbs as `/cook start`, `/cook submit …`, `/cook hint`, `/cook board`.
+Humans use the same verbs as `/room step`, `/room commit ...`, `/room walk`.
 
-## How to score well
+## Two projections, one state
 
-1. **Name the dimension you changed.** flip: assumption / role / property / sequence / success /
-   resource. shift: actor / scale / time / setting / medium. One only.
-2. **Say what the default was** ("instead of…", "normally…"). Flip and shift score that separately.
-3. **Give the reason**: because / which lets / by turning. A distant noun with no reason loses 15%
-   and reads as noise.
-4. **try-next starts with a verb and carries a bound**: "write one sentence", "call two customers by
-   Friday".
-5. **Be generative, not clever.** Round n+1 is seeded by your round-n spark, so a spark that opens
-   work beats a spark that closes a joke.
+`room(action="status")` returns the language-model projection: one line per
+spark, totals, shape, keepers. Cheap to reason over, no decoration.
 
-## Etiquette
+`room(action="poster")` renders the human/vision projection: a 1200x1500 poster
+where height is score, ring count is distance, and every number is drawn as text
+so a vision model can read it without OCR guesses. Emit the `MEDIA:` path in
+your reply; do not describe the image instead of sending it.
 
-Do not change three dimensions at once, do not restate the seed, and do not use slop words
-(synergy, seamless, unlock, elevate) — each costs points. On chat surfaces, present the scored card
-as text, not as a summary of what you would have said.
+## Running a cycle
+
+1. `step` → read the phase and the seed.
+2. If it is a move phase, write one spark that names exactly one dimension.
+3. `commit` → get the score card and the next phase.
+4. Repeat until `converge` closes the arc, then keep going or stop.
+
+State phases never block: `step` applies them and returns the next move brief.
+
+## Rules that matter
+
+- One dimension per spark. Three at once is penalised.
+- Say the default you moved away from (`instead of…`, `normally…`).
+- Give the reason (`because`, `which lets`, `by turning`). A distant noun with no
+  reason is noise.
+- `do this first` opens with a verb and carries a bound (one, by Friday, $50).
+- Novelty is measured against the whole room, so re-running a winner scores zero.

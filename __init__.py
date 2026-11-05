@@ -1,132 +1,145 @@
-"""Concept Kitchen plugin entry point.
+"""Antemuse Room — an automated cycle of concept discovery and movement.
 
-Registers:
-  - the ``cook`` tool (agents play here, action=start|submit|hint|pass|board|rules|status)
-  - the ``/cook`` slash command (humans play here, same actions)
-  - a bundled skill so an agent can learn the game without a tutorial round
+Surfaces:
+  tool  room(action=...)      agents drive the machine
+  cmd   /room <verb>          humans drive the same machine
+
+Phases alternate between movement (discover/unpack, flip, shift, connect) and
+state (walk, daydream, dream, dissociate, doomscroll), with converge closing an
+arc. One tick advances one phase; a state phase resolves itself, a move phase
+hands out a brief and waits for a spark.
 """
 from __future__ import annotations
 
 from typing import Any, Dict
 
 try:
-    from .kitchen import game
-except ImportError:  # loaded as a flat module
-    from kitchen import game  # type: ignore[no-redef]
+    from .kitchen import phases, room as room_mod, store
+except ImportError:  # flat-module load
+    from kitchen import phases, room as room_mod, store  # type: ignore[no-redef]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-COOK_SCHEMA: Dict[str, Any] = {
-    "name": "cook",
+ROOM_SCHEMA: Dict[str, Any] = {
+    "name": "room",
     "description": (
-        "Play Concept Kitchen, a five-round creative-move game with a deterministic judge. "
-        "action=start deals a seed and one move; action=submit takes 'title :: because ... :: do this first' "
-        "and returns a scored card (move discipline, mechanism, actionability, novelty); hint costs 8 points; "
-        "pass ends the service; board shows the human+agent leaderboard; rules prints the scoring contract. "
-        "Each round's seed is your previous spark, so a generative idea scores better than a clever one."
+        "Antemuse Room: an automated room that cycles through phases of concept discovery and movement. "
+        "action=step advances one phase and returns what to write; a state phase (walk, daydream, dream, "
+        "dissociate, doomscroll) resolves itself, a move phase (discover, flip, shift, connect) expects a spark. "
+        "action=commit takes 'title :: because ... :: do this first', scores it, places it in the room, and "
+        "advances the phase. action=poster returns a PNG path for humans and vision models; action=status returns "
+        "the text projection for language models. Keep calling step/commit to let the room run."
     ),
     "parameters": {
         "type": "object",
         "properties": {
             "action": {
                 "type": "string",
-                "enum": ["start", "submit", "hint", "pass", "board", "rules", "status"],
-                "description": "What to do in the kitchen.",
+                "enum": ["step", "commit", "status", "poster", "phases", "phase", "reset"],
+                "description": "What to do in the room.",
             },
-            "text": {
-                "type": "string",
-                "description": "For action=submit: 'title :: because ... :: do this first'. All three parts are required.",
-            },
-            "seed": {
-                "type": "string",
-                "description": "Optional first seed for action=start. Omit to deal from the deck.",
-            },
-            "player": {
-                "type": "string",
-                "description": "Leaderboard name for this player. Defaults to the OS user.",
-            },
-            "model": {
-                "type": "string",
-                "description": "Optional model label shown on the board row.",
-            },
+            "text": {"type": "string", "description": "For action=commit: 'title :: because ... :: do this first'."},
+            "with_phase": {"type": "string", "description": "For action=phase: jump to this phase key."},
+            "seed": {"type": "string", "description": "For action=reset: optional first seed."},
         },
         "required": ["action"],
     },
 }
 
 
+def _room_or_new(seed: str | None = None) -> Dict[str, Any]:
+    existing = room_mod.load()
+    return existing or room_mod.create(seed)
+
+
 def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
     a = args or {}
     action = str(a.get("action") or "status").lower()
-    p = game.player(a.get("player"), kind="agent", model=str(a.get("model") or ""))
-    if action == "start":
-        return game.start(p, a.get("seed"))
-    if action == "submit":
-        return game.submit(p, str(a.get("text") or ""))
-    if action == "hint":
-        return game.hint(p)
-    if action == "pass":
-        return game.pass_service(p)
-    if action == "board":
-        return game.board(p)
-    if action == "rules":
-        return game.rules(p)
-    return game.status(p)
+
+    if action == "reset":
+        room_mod.save(None)
+        return "room cleared.\n\n" + room_mod.step(room_mod.create(a.get("seed")))
+
+    if action == "phases":
+        return phases.palette()
+
+    room = _room_or_new(a.get("seed"))
+
+    if action == "phase":
+        key = phases.resolve(str(a.get("with_phase") or ""))
+        if not key:
+            return f"unknown phase. one of: {', '.join(phases.PHASES)}"
+        room["phase"] = key
+        room_mod.save(room)
+        return room_mod.step(room)
+
+    if action == "step":
+        return room_mod.step(room)
+
+    if action == "commit":
+        card, _spark = room_mod.commit(room, str(a.get("text") or ""))
+        nxt = room_mod.step(room)
+        return card + "\n\n" + nxt
+
+    if action == "poster":
+        path = room_mod.poster(room)
+        return room_mod.transcript(room) + f"\n\nMEDIA:{path}"
+
+    return room_mod.transcript(room)
 
 
 def _command(raw_args: str) -> str:
-    """Slash-command surface: /cook <verb> [args]."""
     raw = (raw_args or "").strip()
     verb, _, rest = raw.partition(" ")
     verb = verb.lower() or "status"
-    p = game.player(None, kind="human")
-    if verb in ("play", "start", "deal", "new"):
-        return game.start(p, rest.strip() or None)
-    if verb in ("submit", "s", "answer"):
-        return game.submit(p, rest)
-    if verb in ("hint", "h"):
-        return game.hint(p)
-    if verb in ("pass", "skip", "end"):
-        return game.pass_service(p)
-    if verb in ("board", "leaderboard", "scores"):
-        return game.board(p)
-    if verb in ("rules", "how"):
-        return game.rules(p)
-    if verb in ("status", "now", ""):
-        return game.status(p)
-    return game.status(p)
+
+    if verb in ("phases", "help", "how"):
+        return phases.palette()
+    if verb in ("reset", "clear", "new"):
+        room_mod.save(None)
+        return "room cleared.\n\n" + room_mod.step(room_mod.create(rest.strip() or None))
+    if verb in ("step", "tick", "next"):
+        return room_mod.step(_room_or_new())
+    if verb in ("commit", "say", "spark"):
+        room = _room_or_new()
+        card, _ = room_mod.commit(room, rest)
+        return card + "\n\n" + room_mod.step(room)
+    if verb in ("poster", "image", "show"):
+        room = _room_or_new()
+        path = room_mod.poster(room)
+        return room_mod.transcript(room) + f"\n\nMEDIA:{path}"
+
+    key = phases.resolve(verb)
+    if key:
+        room = _room_or_new()
+        room["phase"] = key
+        room_mod.save(room)
+        return room_mod.step(room)
+
+    return room_mod.transcript(_room_or_new())
 
 
 def register(ctx) -> None:
-    cfg = None
-    try:
-        cfg = ctx.config.get("antemuse-kitchen")
-    except Exception:
-        cfg = None
-    game.configure(cfg)
-
     ctx.register_tool(
-        name="cook",
-        toolset="kitchen",
-        description=COOK_SCHEMA["description"],
+        name="room",
+        toolset="room",
+        description=ROOM_SCHEMA["description"],
         handler=_handler,
-        schema=COOK_SCHEMA,
+        schema=ROOM_SCHEMA,
     )
-
     ctx.register_command(
-        name="cook",
+        name="room",
         handler=_command,
-        description="Concept Kitchen — a five-round creative-move minigame for humans and agents",
-        args_hint="play|submit|hint|pass|board|rules",
+        description="Antemuse Room — an automated cycle of concept discovery and movement",
+        args_hint="step|commit|poster|phases|walk|flip",
         argument_mode="text",
     )
-
     try:
         from pathlib import Path
         ctx.register_skill(
-            "kitchen",
+            "room",
             Path(__file__).resolve().parent / "SKILL.md",
-            description="Play Concept Kitchen: the five-round creative-move minigame and its scoring contract.",
+            description="Operate the Antemuse Room: phases, ticks, sparks, and the two projections.",
         )
     except Exception:
         pass
