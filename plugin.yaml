@@ -1,7 +1,7 @@
 name: antemuse-states
 label: Antemuse States
 kind: standalone
-version: "0.6.0"
+version: "0.7.0"
 author: Antemuse
 homepage: https://antemuse.com
 description: >

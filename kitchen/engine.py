@@ -54,18 +54,19 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     return False
 
 
-def enter(key: str, minutes: int | None = None) -> str:
+def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
     spec_key = definitions.resolve(key)
     if not spec_key:
         return f"no such state. try: {', '.join(definitions.STATES)}"
     spec = definitions.STATES[spec_key]
     with _LOCK:
         data = _load()
-        previous = data.get("active")
+        previous = data.get("active") or {}
         now = time.time()
         duration = float(minutes if minutes else spec["minutes"])
         data["active"] = {
             "key": spec_key,
+            "walk": walk or (previous.get("walk") if previous and previous["key"] == spec_key else "wander"),
             "entered_at": now,
             "ends_at": now + duration * 60,
             "turns_left": spec["turns"],
@@ -265,6 +266,7 @@ def watch_state() -> Dict[str, Any]:
         spec = definitions.STATES[active["key"]]
         out["active"] = {
             "key": active["key"],
+            "walk": active.get("walk") or "wander",
             "label": spec["label"],
             "contract": spec["contract"],
             "directive": spec["directive"],

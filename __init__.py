@@ -20,9 +20,9 @@ import sys
 from typing import Any, Dict
 
 try:
-    from .kitchen import definitions, engine, panel, surfaces, tui
+    from .kitchen import definitions, engine, panel, surfaces, tui, walks
 except ImportError:  # flat-module load
-    from kitchen import definitions, engine, panel, surfaces, tui  # type: ignore[no-redef]
+    from kitchen import definitions, engine, panel, surfaces, tui, walks  # type: ignore[no-redef]
 
 __version__ = "0.3.0"
 
@@ -30,28 +30,65 @@ STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
     "description": (
         "Enter or leave a cognitive state for the agent itself. "
-        "state(action='enter', name='walk'|'daydream'|'dissociate'|'dream'|'doomscroll') changes what tools "
+        "state(action='enter', name='walk'|'daydream'|'dream'|'doomscroll') changes what tools "
         "you may use and what shape your next replies take, for a bounded number of minutes and turns. "
         "state(action='exit') ends it and keeps the residue. state(action='status') reports what you are in. "
-        "state(action='list') shows every state with its tools, duration, and contract."
+        "state(action='list') shows every state with its tools, duration, and contract. "
+        "Walks are user-definable: state(action='walks') lists them, "
+        "state(action='walk_new') saves one, state(action='walk_del') removes your own."
     ),
     "parameters": {
         "type": "object",
         "properties": {
-            "action": {"type": "string", "enum": ["enter", "exit", "status", "list", "watch", "card", "image"]},
-            "name": {"type": "string", "description": "State to enter: walk, daydream, dissociate, dream, doomscroll."},
+            "action": {"type": "string",
+                       "enum": ["enter", "exit", "status", "list", "watch", "card", "image",
+                                "walks", "walk_new", "walk_del"]},
+            "name": {"type": "string",
+                     "description": "State to enter (walk, daydream, dream, doomscroll) or the walk to use."},
             "minutes": {"type": "integer", "description": "Optional override for how long the state lasts."},
+            "walk": {"type": "string", "description": "Which walk to traverse: wander, upward, downward, lateral, or one you saved."},
+            "spec": {"type": "object",
+                     "description": ("A walk definition: {name, graph: wordnet|manual, relations, seed: "
+                                     "{mode: continue|random|word|fixed, word|node}, avoid_backtrack, edges, labels}.")},
         },
         "required": ["action"],
     },
 }
 
 
+def _walks_report() -> str:
+    active = (engine.watch_state() or {}).get("active") or {}
+    current = active.get("walk") or "wander"
+    lines = ["WALKS" + ("   (in the walk: " + current + ")" if active.get("key") == "walk" else "")]
+    for w in walks.list_walks(walks.CURSOR):
+        mark = "*" if w["name"] == current else " "
+        lines.append(f" {mark} {w['name']:<12} {w['graph']:<8} {'/'.join(w['relations'])[:44]}")
+        lines.append(f"     {w['title']}")
+    lines.append("")
+    lines.append(" define your own: state(action='walk_new', spec={...}) or a JSON file in "
+                 + str(walks.walks_dir(walks.CURSOR)))
+    return "\n".join(lines)
+
+
 def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
     a = args or {}
     action = str(a.get("action") or "status").lower()
     if action == "enter":
-        return engine.enter(str(a.get("name") or ""), a.get("minutes"))
+        return engine.enter(str(a.get("name") or ""), a.get("minutes"), a.get("walk"))
+    if action == "walks":
+        return _walks_report()
+    if action == "walk_new":
+        try:
+            spec = dict(a.get("spec") or {})
+            spec.setdefault("name", a.get("name") or "")
+            saved = walks.save(spec, walks.CURSOR)
+        except Exception as exc:
+            return f"walk not saved · {exc}"
+        return f"saved walk '{saved['name']}' · {saved['graph']} · {'/'.join(saved['relations'])}\n" + _walks_report()
+    if action == "walk_del":
+        name = str(a.get("name") or "")
+        ok = walks.remove(name, walks.CURSOR)
+        return (f"removed walk '{name}'" if ok else f"'{name}' is built-in or does not exist") + "\n" + _walks_report()
     if action == "exit":
         return engine.stop()
     if action == "list":
@@ -90,6 +127,12 @@ def _transform(response_text: str = "", **kwargs: Any) -> str | None:
 def _enter(key: str, minutes: int | None = None):
     def handler(raw_args: str) -> str:
         arg = (raw_args or "").strip()
+        arg = (arg or "").strip()
+        if arg and not arg.isdigit():
+            # /walk upward  →  walk that graph; /walk 5  →  five minutes
+            if key != "walk":
+                return f"only /walk takes a walk name (got '{arg}')"
+            return engine.enter(key, minutes, walk=arg) + "\n" + definitions.palette()
         override = int(arg) if arg.isdigit() else minutes
         return engine.enter(key, override) + "\n" + definitions.palette()
     return handler

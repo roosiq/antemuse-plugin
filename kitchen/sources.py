@@ -278,9 +278,28 @@ def feed_pick(steps: int = 1) -> List[str]:
     return out
 
 
+# ------------------------------------------------------- walks and scrolling
+
+def walk_text(steps: int = 1) -> List[str]:
+    """Run the walk the active state selected, not a hard-coded one."""
+    from . import engine, walks
+    state = engine.watch_state() or {}
+    name = ((state.get("active") or {}).get("walk") or "wander")
+    walk = walks.get(name)
+    try:
+        return walk.step(steps)
+    except Exception as exc:
+        return [f"walk '{name}' failed · {str(exc).splitlines()[0][:90]}"]
+
+
+def scroll_text(steps: int = 1) -> List[str]:
+    from . import social
+    return social.pick(steps)
+
+
 PROVIDERS = {
-    "walk": walk_step,
+    "walk": walk_text,
     "daydream": memory_pairs,
     "dream": dream_recombine,
-    "doomscroll": feed_pick,
+    "doomscroll": scroll_text,
 }
