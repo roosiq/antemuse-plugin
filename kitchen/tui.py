@@ -17,7 +17,7 @@ import time
 import tty
 from typing import Any, Dict, List
 
-from . import definitions, engine, panel
+from . import definitions, engine, panel, three_backdrop
 
 BG = (14, 12, 11)
 INK = (242, 234, 225)
@@ -111,7 +111,9 @@ def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[s
     rows: List[str] = []
 
     def line(s: str = "", colour: tuple[int, int, int] = INK) -> None:
-        rows.append(pad(canvas + fg(colour) + s, w))
+        # one column short of the terminal width: writing exactly w chars leaves a
+        # pending wrap that turns the next newline into an extra blank line
+        rows.append(pad(canvas + fg(colour) + s, w - 1))
 
     brand = "A N T E M U S E"
     if active:
@@ -124,28 +126,52 @@ def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[s
     line(fg(FAINT) + "─" * inner)
     line()
 
+    art_cols = 44 if w >= 104 else 0
+    art: List[str] = []
+    if active and art_cols:
+        bank = three_backdrop.frames(art_cols, 14)
+        if bank:
+            art = bank[tick % len(bank)]
+
     if active:
         digits = clock_big(active["seconds_left"])
         width_digits = max(len(r) for r in digits)
-        x0 = max(4, (w - width_digits) // 2)
+        slot = (w - art_cols - 3) if art_cols else w
+        x0 = max(4, (slot - width_digits) // 2)
         spin = SPINNER[tick % len(SPINNER)]
+        hero: List[str] = []
         for i, row in enumerate(digits):
             gutter = fg(AMBER) + (spin if i == 2 else " ") + "  "
-            line(" " * (x0 - 3) + gutter + fg(AMBER) + row)
-        line()
+            hero.append(" " * max(1, (x0 - 3)) + gutter + fg(AMBER) + row)
+        hero.append("")
         total = max(1, active.get("total_seconds") or active["seconds_left"])
         frac = active["seconds_left"] / total
-        cells = min(inner - 8, width_digits + 12)
+        cells = min(slot - 8, width_digits + 12)
         filled = int(round(cells * frac))
-        lead = " " * max(2, (w - cells) // 2)
-        line(lead + fg(AMBER) + "█" * filled + fg(FAINT) + "░" * (cells - filled))
-        line()
+        lead = " " * max(2, (slot - cells) // 2)
+        hero.append(lead + fg(AMBER) + "█" * filled + fg(FAINT) + "░" * (cells - filled))
+        hero.append("")
         tools = "tools closed" if active["tools"] == [] else (
             "tools open" if active["tools"] is None else "tools " + ", ".join(active["tools"]))
-        line("  " + fg(MUTED) + active["contract"] + "   " + fg(FAINT) + "·  " + tools
-             + f"  ·  {active['turns_left']} turn(s)")
+        hero.append("  " + fg(MUTED) + active["contract"] + "   " + fg(FAINT) + "·  " + tools
+                    + f"  ·  {active['turns_left']} turn(s)")
+
+        if art:
+            left_w = w - art_cols - 3
+            for i in range(max(len(hero), len(art))):
+                l = hero[i] if i < len(hero) else ""
+                r = art[i] if i < len(art) else ""
+                line(pad(l, left_w) + "  " + r)
+            # hero rows already drawn; skip the plain lines below
+            rows_before_columns = True
+        else:
+            for h_ in hero:
+                line(h_)
+            rows_before_columns = True
     else:
         line("  " + fg(MUTED) + "no state running — pick one; you enter it at the same time as the agent")
+        rows_before_columns = True
+
     line()
 
     colw = max(18, (inner - 5) // 2)

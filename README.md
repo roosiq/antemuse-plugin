@@ -87,3 +87,23 @@ hermes chat -q '/walk' && hermes chat -q '/states'
 - State is profile-wide, not per-session: the metaphor is about the agent.
 - Data lives in the profile plugin data dir, overridable with
   `ANTEMUSE_STATES_HOME`.
+
+## three.js backdrop
+
+The takeover can carry a real 3D animation. WebGL does not run in a terminal, so
+the pipeline is: headless Chromium + swiftshader renders the scene to PNG, the
+PNG is quantised to upper-half blocks (`▀` = two vertical pixels per cell), and
+the takeover replays the cached frames at animation speed.
+
+```bash
+cd ~/antemuse-states && python3 tools/render_three.py    # 12 frames, ~0.65 s each
+```
+
+Frames land in `<plugin data>/three_frames/`; `kitchen/three_backdrop.py` loads
+them at whatever cell size the terminal can afford (44x14 in the takeover, 96x26
+full-screen). Playback is free — pre-built strings, so the clock and spinner keep
+their own timing.
+
+Live WebGL at 60 fps inside a terminal is not a thing: one headless render costs
+~0.65 s. For real images rather than blocks, the same PNGs can go through the
+kitty graphics protocol or sixel where the terminal supports it.
