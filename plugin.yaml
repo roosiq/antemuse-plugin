@@ -1,37 +1,21 @@
-name: antemuse-room
-label: Antemuse Room
+name: antemuse-states
+label: Antemuse States
 kind: standalone
-version: "0.2.0"
+version: "0.4.0"
 author: Antemuse
 homepage: https://antemuse.com
 description: >
-  Antemuse Room is an automated room that cycles through phases of concept
-  discovery and movement. Movement phases (discover/unpack, flip, shift,
-  connect) take a spark named "title :: because ... :: do this first"; state
-  phases (walk, daydream, dream, dissociate, doomscroll) change the seed without
-  producing anything, and converge keeps the best spark of an arc. One tick
-  advances one phase, so a cron tick, an agent tool call, or a slash command can
-  all drive it. Every state renders twice: a poster for humans and vision
-  models, and a dense text record for language models.
+  Antemuse States lets the agent itself take a walk, daydream, dissociate,
+  dream, or doomscroll. A state is a bounded change to behaviour, not a place:
+  it decides which tools are still allowed, what shape the next replies take,
+  and what residue the agent carries when the state ends. States expire on
+  minutes and turns, are injected into the turn they govern, block forbidden
+  tools before they run, and mark the reply so the human can see which state
+  produced it. No network, no model calls, no scoring.
 requires_hermes: ">=0.21.6"
 provides_tools:
-  - room
-provides_hooks: []
-config_schema:
-  use_engine:
-    type: bool
-    default: true
-    label: Deal from the Concept Cooking engine
-    description: When on, rounds ask https://concept.cooking/mcp for reference cards (the par you are playing against). When it fails, the round is dealt from the bundled deck and marked "deck" instead of "engine". No starter-fallback cards are ever shown as engine output.
-  engine_url:
-    type: str
-    default: "https://concept.cooking/mcp"
-    label: Engine MCP endpoint
-  word_budget:
-    type: int
-    default: 60
-    label: Word budget per submission
-    description: Submissions over this budget take a penalty. Lower it for a meaner game.
-
-python_dependencies:
-  - "pillow>=10,<14"
+  - state
+provides_hooks:
+  - pre_llm_call
+  - pre_tool_call
+  - transform_llm_output

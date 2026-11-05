@@ -13,12 +13,12 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-PLUGIN_NAME = "antemuse-room"
+PLUGIN_NAME = "antemuse-states"
 
 
 def data_dir() -> Path:
-    override = (os.environ.get("ANTEMUSE_ROOM_HOME") or os.environ.get("ANTEMUSE_KITCHEN_HOME")
-                or os.environ.get("CONCEPT_KITCHEN_HOME"))
+    override = (os.environ.get("ANTEMUSE_STATES_HOME") or os.environ.get("ANTEMUSE_ROOM_HOME")
+                or os.environ.get("ANTEMUSE_KITCHEN_HOME"))
     if override:
         path = Path(override)
         path.mkdir(parents=True, exist_ok=True)
@@ -27,7 +27,7 @@ def data_dir() -> Path:
         from plugins.plugin_storage import plugin_data_dir  # type: ignore
         return plugin_data_dir(PLUGIN_NAME)
     except Exception:  # standalone/test use
-        path = Path.home() / ".antemuse-room"
+        path = Path.home() / ".antemuse-states"
         path.mkdir(parents=True, exist_ok=True)
         return path
 

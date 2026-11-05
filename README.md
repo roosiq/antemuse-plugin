@@ -1,85 +1,76 @@
-# Antemuse Room
+# Antemuse States
 
-Not a game. A room that cycles through phases of **concept discovery** and
-**movement**, and shows you what it accumulated.
+The agent can take a walk, daydream, dissociate, dream, or doomscroll — and a
+person can watch it happen in the CLI and take the same state beside it.
 
-One tick advances one phase:
+A state is a bounded change to behaviour, not a place:
 
-- **Move phases** — `discover`, `flip`, `shift`, `connect` — hand out a seed and
-  one constraint, and take a spark: `title :: because … :: do this first`.
-- **State phases** — `walk`, `daydream`, `dream`, `dissociate`, `doomscroll` —
-  change the seed, the distance expectation, or the debt. They resolve without a
-  model call, so automation never stalls.
-- **Converge** keeps the best spark of the arc and opens the next arc from the
-  winner's next action.
+- **tools** — what the agent may still touch (a walk takes everything away)
+- **directive** — injected into the turn the state governs
+- **contract** — the one line the reply is held to
+- **residue** — what it carries back when the state ends
 
-Because state phases are self-resolving, the same machine runs from a slash
-command, an agent tool call, or a cron tick.
+States expire on minutes *and* turns; the clock decides when it ends, the turn
+count decides how much of it the model gets.
 
-## Two projections, one state
+## The panel
 
-Every room renders twice, from the same `Frame`:
-
-| Projection | For | What it is |
-|---|---|---|
-| poster | humans, vision models | 1200×1500 PNG: height = score, ring count = distance, every number drawn as text |
-| transcript | language models | one line per spark, totals, shape, keepers |
-
-Neither is derived from the other; both are derived from `Frame`, so the numbers
-cannot disagree. A test asserts it.
-
-## Surfaces
+`/states` renders one frame in the terminal:
 
 ```
-/room step                  advance one phase, get the brief
-/room commit T :: because … :: do this first
-/room poster                transcript + MEDIA: png path
-/room phases                the palette and rotation
-/room walk                  jump straight into a phase
-/room reset [seed]          new room
+ ANTEMUSE · STATES                                    WALKING  07:52
+ ──────────────────────────────────────────────────────────────────
+ ██████████████████████████████████████████████████████████████████
+ observations, not conclusions
+
+ THE AGENT                            YOU
+ 14:39  walk                          14:39  walk
+   I notice I have no sidewalk, no     the fridge stopping mid-hum,
+   weather, no sound — so anything     then starting again
+   I said about a street would be
+ ──────────────────────────────────────────────────────────────────
+ tools  closed
+ turns  2
+ /note <text>  /snap  /states
 ```
 
-Agents use the `room` tool with `action=step|commit|status|poster|phases|phase|reset`.
+`/note <text>` puts the person's words in the right column of the same state.
+`/watch [seconds]` redraws until the state ends. Everything is plain text and
+ANSI, so it survives the Hermes CLI, tmux, SSH, and pasted screenshots.
 
 ## Install
 
 ```bash
-ln -s ~/antemuse-room ~/.hermes/plugins/antemuse-room
-hermes plugins enable antemuse-room
+ln -s ~/antemuse-states ~/.hermes/plugins/antemuse-states
+hermes plugins enable antemuse-states
 ```
-
-Tools are assembled per session. A running gateway reloads commands on enable
-but keeps modules it already imported — iterate with `disable && enable`.
 
 ## Layout
 
 ```
-plugin.yaml            manifest, pillow dependency
-__init__.py            room tool, /room command, bundled skill
-kitchen/phases.py      phase definitions, rotation, palette
-kitchen/room.py        the machine: step, commit, converge, state effects
-kitchen/visual.py      two projections of one Frame
-kitchen/judge.py       deterministic scoring of a spark
-kitchen/deck.py        seed deck
-kitchen/store.py       profile data dir
-tests/                 21 tests: rotation, state effects, converge, projections
+plugin.yaml            manifest: 1 tool, 3 hooks
+__init__.py            hooks (pre_llm_call, pre_tool_call, transform_llm_output),
+                       /walk /daydream /dissociate /dream /doomscroll /snap
+                       /states /note /watch, and the state tool
+kitchen/definitions.py the five states: tools, directive, contract, residue
+kitchen/engine.py      enter/stop/tick, tool policy, journal, residue
+kitchen/panel.py       the CLI frame
+tests/                 18 tests
 ```
 
 ## Verify
 
 ```bash
-hermes plugins doctor ~/antemuse-room
-PYTHONPATH= ANTEMUSE_ROOM_HOME=$(mktemp -d) uvx --with pillow pytest tests/ -q
-/room step
+hermes plugins doctor ~/antemuse-states
+PYTHONPATH= ANTEMUSE_STATES_HOME=$(mktemp -d) uvx pytest tests/ -q
+hermes chat -q '/walk' && hermes chat -q '/states'
 ```
 
 ## Notes
 
-- PIL renders the poster; `pillow` is declared in the manifest and the Hermes
-  runtime ships a working copy.
-- A `PYTHONPATH` inherited from the Hermes install venv breaks a 3.12 pytest run
-  (`PIL._imaging` mismatch); clear it when testing.
-- Data lives in the profile's plugin data dir, overridable with
-  `ANTEMUSE_ROOM_HOME`.
-- The old `/cook` command and the five-round game are gone; the judge and the
-  seed deck survive underneath.
+- The `state` tool is exempt from every block, so `/snap` can always end a state.
+  An earlier build blocked its own escape hatch and locked the agent out of its
+  tools until the clock ran down.
+- State is profile-wide, not per-session: the metaphor is about the agent.
+- Data lives in the profile plugin data dir, overridable with
+  `ANTEMUSE_STATES_HOME`.
