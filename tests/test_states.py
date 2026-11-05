@@ -36,12 +36,13 @@ def test_doomscroll_allows_reading_but_blocks_writing():
     assert "doomscrolling" in blocked["message"]
 
 
-def test_dissociate_allows_tools_and_forbids_first_person():
-    engine.enter("dissociate")
-    assert engine.policy("terminal") is None
+def test_doomscroll_is_read_only_and_random():
+    engine.enter("doomscroll")
+    assert engine.policy("web_search") is None
+    assert engine.policy("terminal")["action"] == "block"
     directive = engine.inject()
-    assert "Never write I, me, my, we, or our" in directive
-    assert "who pays for it" in directive
+    assert "random" in directive.lower()
+    assert "do not produce anything" in directive
 
 
 def test_state_expires_on_turns_and_leaves_residue():

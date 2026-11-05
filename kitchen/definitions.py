@@ -12,76 +12,69 @@ from typing import Dict, List
 STATES: Dict[str, Dict] = {
     "walk": {
         "label": "WALKING",
-        "minutes": 8,
-        "turns": 3,
-        "tools": [],  # no tools: a walk is not research
+        "minutes": 12,
+        "turns": 4,
+        "cadence": 18,
+        "tools": [],
+        "scene": "walk",
         "directive": (
-            "You are walking. You took the problem outside and left the desk. "
-            "Do not plan, do not enumerate, do not use tools. Report only what you notice, "
-            "in the first person, in at most 120 words. One observation must be concrete "
-            "(a thing, a sound, a person, a number). If you have nothing to notice, say so."
+            "You are walking. The walk is a path through the concept graph: each event is one step, "
+            "concept to concept, and you say what happened. Do not use tools, do not plan, do not "
+            "conclude. React to the step you were given and let the next one arrive."
         ),
-        "contract": "observations, not conclusions",
-        "residue": "walked: the problem was carried, not solved",
+        "contract": "concept to concept · no destination",
+        "residue": "walked: a path through the graph, no destination",
     },
     "daydream": {
         "label": "DAYDREAMING",
-        "minutes": 10,
-        "turns": 2,
-        "tools": [],
-        "directive": (
-            "You are daydreaming: undemanding, associative, no evaluation. "
-            "Produce five fragments that touch the problem sideways. No ranking, no "
-            "recommendations, no next steps, no tools. Fragments may be a phrase, an image, "
-            "a comparison, or a half-sentence. Do not explain them."
-        ),
-        "contract": "five unranked fragments, no recommendations",
-        "residue": "daydreamed: five fragments kept, none chosen",
-    },
-    "dissociate": {
-        "label": "DISSOCIATED",
         "minutes": 3,
         "turns": 2,
-        "tools": None,  # tools allowed
-        "directive": (
-            "You are dissociated from this: describe the situation from outside it, as an "
-            "operator of the system or a stranger reading the log. Never write I, me, my, we, "
-            "or our. Name whose problem this actually is and who pays for it. Stay concrete; "
-            "distance is not vagueness."
-        ),
-        "contract": "third person only, names who pays",
-        "residue": "dissociated: the problem was described from outside",
-    },
-    "dream": {
-        "label": "DREAMING",
-        "minutes": 480,
-        "turns": 1,
+        "cadence": 10,
         "tools": [],
+        "scene": "daydream",
         "directive": (
-            "You are dreaming on this session: no tools, no lookup. Recombine two things "
-            "already present in this conversation into one proposal that neither contained. "
-            "State the two sources by their own words, then the recombination in one sentence, "
-            "then the smallest test. Nothing else."
+            "You are daydreaming: short, undemanding, associative. Two memories surface at a time. "
+            "Say what they touch. Join them only when the join actually holds; otherwise say it does "
+            "not and move on. No recommendations, no tools."
         ),
-        "contract": "one recombination from two sources already in the session",
-        "residue": "dreamed: one recombination kept",
+        "contract": "two memories · join only if it holds",
+        "residue": "daydreamed: memories met, some joined",
     },
     "doomscroll": {
         "label": "DOOMSCROLLING",
-        "minutes": 20,
+        "minutes": 8,
         "turns": 3,
+        "cadence": 6,
         "tools": ["web_search", "web_extract", "read_file", "search_files", "browser_exec"],
+        "scene": "doomscroll",
         "directive": (
-            "You are doomscrolling: consuming, not producing. Read but do not write, edit, or "
-            "run anything. End the reply by naming exactly what you consumed and which of it "
-            "you are about to copy. Be honest: the cost of this state is fixation."
+            "You are doomscrolling: content arrives at random from social and news feeds. Consume it, "
+            "do not produce anything. Read only. At the end of a turn, name what you consumed and what "
+            "you are about to copy. The randomness is the point; do not tidy it."
         ),
-        "contract": "read-only, must name what it consumed and would copy",
-        "residue": "doomscrolled: fixation risk — the next idea may be borrowed",
+        "contract": "random feed · consume, do not synthesize",
+        "residue": "doomscrolled: random feed consumed",
+    },
+    "dream": {
+        "label": "DREAMING",
+        "minutes": 30,
+        "turns": 2,
+        "cadence": 40,
+        "tools": [],
+        "scene": "dream",
+        "directive": (
+            "You are dreaming: long, slow, unconstrained. Stored concepts are recombined into things "
+            "that do not exist — objects, stories, mechanisms. When a recombination lands, keep it and "
+            "say what it is for. No tools, no ranking."
+        ),
+        "contract": "recombine stored concepts into new things",
+        "residue": "dreamed: recombinations kept",
     },
 }
 
 ALIASES = {
+    "dissociate": "doomscroll",
+    "dscroll": "doomscroll",
     "take_a_walk": "walk",
     "take-a-walk": "walk",
     "walking": "walk",
@@ -106,4 +99,6 @@ def palette() -> str:
         lines.append(f"  /{key:<10} {s['minutes']:>3} min · {s['turns']} turn(s) · {tools}")
         lines.append(f"             {s['contract']}")
     lines.append("  /snap       end the current state and keep the residue")
+    lines.append("")
+    lines.append("  events arrive on a timer: walk 18s · daydream 10s · doomscroll 6s · dream 40s")
     return "\n".join(lines)

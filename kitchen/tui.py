@@ -80,6 +80,11 @@ def clock_big(seconds: int) -> List[str]:
     return block_text(f"{seconds // 60:02d}:{seconds % 60:02d}")
 
 
+def _clip(s: str, n: int) -> str:
+    s = " ".join((s or "").split())
+    return s if len(s) <= n else s[: max(0, n - 1)] + "…"
+
+
 def _wrap(text: str, width: int, limit: int) -> List[str]:
     words, lines, cur = text.split(), [], ""
     for w in words:
@@ -97,7 +102,7 @@ def _wrap(text: str, width: int, limit: int) -> List[str]:
 
 def _entries(journal: List[Dict[str, Any]], who: str, width: int, limit: int) -> List[List[str]]:
     out: List[List[str]] = []
-    for e in [x for x in journal if x["who"] == who][-limit:]:
+    for e in [x for x in journal if x.get("who") == who][-limit:]:
         stamp = time.strftime("%H:%M", time.localtime(e["at"]))
         out.append([f"{stamp}  {e['state']}"] + _wrap(e["text"], width, 6))
     return out
@@ -174,9 +179,18 @@ def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[s
 
     line()
 
+    journal = state.get("journal", [])
+    stream = [e for e in journal if e.get("who") == "state"][-3:]
+    if stream:
+        line("  " + fg(FAINT) + "EVENTS")
+        for e in stream:
+            stamp = time.strftime("%H:%M:%S", time.localtime(e["at"]))
+            line("  " + fg(FAINT) + stamp + "  " + fg(AMBER) + "· " + fg(MUTED)
+                 + _clip(e["text"], inner - 14))
+        line()
+
     colw = max(18, (inner - 5) // 2)
     line("  " + fg(INK) + "THE AGENT" + " " * (colw + 3 - 9) + fg(INK) + "YOU")
-    journal = state.get("journal", [])
     a_rows = _entries(journal, "agent", colw - 2, 2)
     y_rows = _entries(journal, "person", colw - 2, 2)
     block: List[str] = []
@@ -200,8 +214,8 @@ def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[s
     if residue:
         line("  " + fg(FAINT) + "residue " + fg(MUTED) + " · ".join(residue))
     else:
-        line("  " + fg(FAINT) + "1 walk  2 daydream  3 dissociate  4 dream  5 doomscroll"
-             + fg(MUTED) + "   n note   space snap   q quit")
+        menu = "  ".join(f"{i} {k}" for i, k in enumerate(definitions.STATES, 1))
+        line("  " + fg(FAINT) + menu + fg(MUTED) + "   n note   space snap   q quit")
     return rows
 
 
@@ -269,7 +283,7 @@ def run() -> str:
                 engine.stop()
             elif ch == "n":
                 note_mode, buffer = True, ""
-            elif ch in "12345":
+            elif ch in "12345" and int(ch) <= len(definitions.STATES):
                 engine.enter(list(definitions.STATES)[int(ch) - 1])
             elif ch in ("w", "W"):
                 engine.enter("walk")

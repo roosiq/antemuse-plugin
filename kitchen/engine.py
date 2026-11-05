@@ -45,6 +45,11 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     if active["turns_left"] <= 0 or now >= active["ends_at"]:
         data["residue"].append({"text": definitions.STATES[active["key"]]["residue"], "turns_left": 2})
         data["active"] = None
+        try:
+            from . import ticker
+            ticker.stop()
+        except Exception:
+            pass
         return True
     return False
 
@@ -68,6 +73,8 @@ def enter(key: str, minutes: int | None = None) -> str:
             "total_seconds": duration * 60,
         }
         _save(data)
+    from . import ticker
+    ticker.start(spec_key)
     note = ""
     if previous and previous["key"] != spec_key:
         note = f" (left {previous['key']}; no residue kept)"
@@ -84,6 +91,8 @@ def stop() -> str:
         data["residue"].append({"text": spec["residue"], "turns_left": 2})
         data["active"] = None
         _save(data)
+    from . import ticker
+    ticker.stop()
     return f"{spec['label']} ended · residue: {spec['residue']}"
 
 
@@ -214,9 +223,14 @@ def platform() -> str:
         return _load().get("platform") or ""
 
 
-def record(who: str, text: str) -> None:
-    """Keep what the agent and the person each produced in the same state."""
-    who = "person" if who in ("person", "human", "you") else "agent"
+def record(who: str, text: str, event: str = "") -> None:
+    """Keep what the agent, the person, and the state itself produced."""
+    if who in ("person", "human", "you"):
+        who = "person"
+    elif who in ("state", "tick"):
+        who = "state"
+    else:
+        who = "agent"
     with _LOCK:
         data = _load()
         active = data.get("active")
@@ -225,6 +239,7 @@ def record(who: str, text: str) -> None:
         data["journal"].append({
             "who": who,
             "state": active["key"],
+            "event": event or active["key"],
             "text": (text or "").strip()[:800],
             "at": time.time(),
         })

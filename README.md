@@ -141,3 +141,20 @@ One scene per state, rendered from `tools/scene.html`:
 python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-states &
 python3 tools/render_three.py          # 5 scenes x 8 frames, ~0.6 s each
 ```
+
+## What each state actually does
+
+States are not moods: each one pulls real material on a timer and writes it into
+the journal as an event (`who="state"`), so the panel fills while you watch.
+
+| state | length | cadence | material | done with it |
+|---|---|---|---|---|
+| **walk** | 12 min | 18 s | concepts from `world-ontology/var/quickstart.sqlite3` (77 concepts, with definitions) | one step per event, concept → concept, with the reason for the step (same parent, same domain, same kind) and a gloss of where it landed |
+| **daydream** | 3 min | 10 s | `MEMORY.md` + `USER.md` | two memories surface; they are joined only when they share enough terms, otherwise reported adjacent |
+| **doomscroll** | 8 min | 6 s | live RSS (Ars Technica, The Verge, HN), cached 30 min | random items, no synthesis — the feed talks, you consume |
+| **dream** | 30 min | 40 s | the concept graph, three disparate concepts | recombined into an object that does not exist: "a X built out of Y, used to Z what a W holds" |
+
+Sources are honest about failure: a missing graph says `graph unavailable`, an
+unreachable feed says `feed unavailable`, and neither invents content.
+
+`dissociate` is gone — replaced by doomscroll.

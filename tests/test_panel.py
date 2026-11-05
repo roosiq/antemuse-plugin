@@ -26,7 +26,7 @@ def test_active_panel_shows_state_clock_and_contract():
     engine.enter("walk")
     out = panel.render(engine.watch_state(), w=88, color=False)
     assert "WALKING" in out
-    assert "observations, not conclusions" in out
+    assert "concept to concept" in out
     assert "closed" in out
     assert "█" in out or "░" in out
 

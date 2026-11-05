@@ -23,7 +23,11 @@ def _dir() -> Path:
 
 
 def available() -> bool:
-    return _dir().is_dir() and any(_dir().glob("*.png"))
+    if not _dir().is_dir():
+        return False
+    if any(_dir().glob("*.png")):
+        return True
+    return any(d.is_dir() and any(d.glob("*.png")) for d in _dir().iterdir())
 
 
 def _lum(c) -> float:
@@ -93,4 +97,8 @@ def frames(cols: int = 46, rows: int = 14, scene: str = "") -> List[List[str]]:
 
 
 def count() -> int:
-    return len(list(_dir().glob("*.png"))) if available() else 0
+    if not available():
+        return 0
+    return len(list(_dir().glob("*.png"))) or sum(
+        1 for d in _dir().iterdir() if d.is_dir() for _ in d.glob("*.png")
+    )

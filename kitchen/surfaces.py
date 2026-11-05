@@ -65,8 +65,10 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
     """Luminance-ramp ASCII of a rendered three.js frame: no colour, no escapes."""
     sub = _frames_dir() / scene if scene else None
     pngs = sorted(sub.glob("*.png")) if sub is not None and sub.is_dir() else []
-    if not pngs:
-        pngs = sorted(_frames_dir().glob("*.png")) if _frames_dir().is_dir() else []
+    if not pngs and _frames_dir().is_dir():
+        pngs = sorted(_frames_dir().glob("*.png")) or [
+            p for d in sorted(_frames_dir().iterdir()) if d.is_dir() for p in sorted(d.glob("*.png"))[:1]
+        ]
     if not pngs:
         return []
     im = Image.open(pngs[index % len(pngs)]).convert("L")
@@ -138,8 +140,13 @@ def card(state: Dict[str, Any], name: str = "discord", width: int | None = None,
         lines.append("no state running.")
         lines.append("1 walk · 2 daydream · 3 dissociate · 4 dream · 5 doomscroll")
 
-    agent = [e for e in journal if e["who"] == "agent"]
-    person = [e for e in journal if e["who"] == "person"]
+    stream = [e for e in journal if e.get("who") == "state"][-2:]
+    if stream:
+        lines.append("")
+        for e in stream:
+            lines += _wrap("· " + e["text"], w, 2)
+    agent = [e for e in journal if e.get("who") == "agent"]
+    person = [e for e in journal if e.get("who") == "person"]
     lines.append("─" * w)
     for label, entries in (("AGENT", agent), ("YOU", person)):
         if entries:
@@ -190,7 +197,7 @@ def record(state: Dict[str, Any]) -> str:
     else:
         lines.append("state none")
     for e in state.get("journal", []):
-        lines.append(f"{e['who']} {e['state']} :: {e['text']}")
+        lines.append(f"{e.get('who','agent')} {e['state']} :: {e['text']}")
     for r in state.get("residue", []):
         lines.append(f"residue :: {r}")
     return "\n".join(lines)

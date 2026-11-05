@@ -8,7 +8,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-tui-")
 
-from kitchen import engine, tui  # noqa: E402
+from kitchen import definitions, engine, tui  # noqa: E402
 
 
 def setup_function(_):
@@ -35,17 +35,17 @@ def test_block_clock_renders_five_rows():
 
 
 def test_active_frame_names_the_state_and_hides_the_menu():
-    engine.enter("dissociate")
+    engine.enter("doomscroll")
     text = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 3)))
-    assert "DISSOCIATED" in text
-    assert "third person only" in text
-    assert "tools open" in text
+    assert "DOOMSCROLLING" in text
+    assert "random feed" in text
+    assert "web_search" in text
 
 
 def test_idle_frame_offers_every_state():
     text = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 0)))
     assert "no state running" in text
-    for key in ("walk", "daydream", "dissociate", "dream", "doomscroll"):
+    for key in definitions.STATES:
         assert key in text
     assert "q quit" in text
 

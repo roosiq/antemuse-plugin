@@ -91,8 +91,13 @@ def render(state: Dict[str, Any], w: int | None = None, color: bool | None = Non
 
     cw = max(20, (inner - 5) // 2)
     journal = state.get("journal", [])
-    agent = [e for e in journal if e["who"] == "agent"]
-    person = [e for e in journal if e["who"] == "person"]
+    stream = [e for e in journal if e.get("who") == "state"][-3:]
+    for e in stream:
+        out.append(" " + _paint("· " + _clip(e["text"], inner - 4), DIM, on))
+    if stream:
+        out.append("")
+    agent = [e for e in journal if e.get("who") == "agent"]
+    person = [e for e in journal if e.get("who") == "person"]
     head_a = _paint("THE AGENT", BOLD, on)
     head_y = _paint("YOU", BOLD, on)
     out.append(" " + head_a + " " * (cw + 3 - 9) + head_y)
