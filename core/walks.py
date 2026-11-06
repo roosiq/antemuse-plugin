@@ -48,6 +48,14 @@ if NLTK_HOME.is_dir():
 ALL_RELATIONS = ["hypernym", "hyponym", "holonym", "meronym", "similar", "also", "antonym"]
 
 BUILTIN: Dict[str, Dict[str, Any]] = {
+    "outer": {
+        "title": "Outer — jumps to the farthest concept each step, not the nearest",
+        "graph": "wordnet",
+        "relations": ALL_RELATIONS,
+        "jump": "far",
+        "seed": {"mode": "continue"},
+        "avoid_backtrack": False,
+    },
     "wander": {
         "title": "Wander — every WordNet edge, no direction",
         "graph": "wordnet",
@@ -110,6 +118,7 @@ class WordNetGraph(Graph):
 
     def __init__(self) -> None:
         self._wn = None
+        self._words: Optional[List[str]] = None
 
     def wn(self):
         if self._wn is None:
@@ -146,6 +155,37 @@ class WordNetGraph(Graph):
         except Exception:
             return None
         return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
+
+    def far_from(self, node: Dict[str, Any], samples: int = 32) -> Optional[Dict[str, Any]]:
+        """The farthest synset in a small random sample — a jump, not a step.
+
+        Distance is WordNet's own path similarity; a candidate with no path at
+        all (different root) counts as 0.0, which is as far as this measures.
+        """
+        wn = self.wn()
+        try:
+            cur = wn.synset(node["id"])
+        except Exception:
+            return None
+        if self._words is None:
+            self._words = list(wn.words())      # a corpus view is not a sequence
+        best, best_sim = None, 2.0
+        for _ in range(samples):
+            try:
+                cand = wn.synsets(RNG.choice(self._words))[0]
+            except Exception:
+                continue
+            if cand.name() == cur.name():
+                continue
+            sim = cur.path_similarity(cand)
+            score = 0.0 if sim is None else sim
+            if score < best_sim:
+                best, best_sim = cand, score
+                if score == 0.0:
+                    break
+        if best is None:
+            return None
+        return self._node(best.name(), best.lemma_names()[0].replace("_", " "), best.pos(), best.definition())
 
     def edges(self, node: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
         syn = self.wn().synset(node["id"])
@@ -215,6 +255,7 @@ class GraphWalk:
         self.relations = spec.get("relations") or default_rel
         self.avoid_backtrack = bool(spec.get("avoid_backtrack", True))
         self.seed_spec = spec.get("seed") or {"mode": "continue"}
+        self.jump = spec.get("jump")
 
     # -- cursor, per walk name, so two walks never fight over one place
     def _cursors(self) -> Dict[str, Dict[str, Any]]:
@@ -264,6 +305,15 @@ class GraphWalk:
         prev_id = self._read_cursor().get("prev", "")
         out: List[str] = []
         for _ in range(steps):
+            if self.jump == "far" and hasattr(self.graph, "far_from"):
+                far = self.graph.far_from(node)
+                if far is not None:
+                    gloss = (far.get("gloss") or "").split(";")[0][:90]
+                    out.append(f"{node['label']} ({node['pos'] or 'thing'}) → {far['label']} "
+                               f"({far['pos'] or 'thing'}) · took its far edge"
+                               + (f" · “{gloss}”" if gloss else ""))
+                    prev_id, node = node["id"], far
+                    continue
             options = [(rel, n) for rel, n in self.graph.edges(node) if rel in self.relations]
             if not options:
                 # a dead end is not the end of the walk unless the graph is exhausted

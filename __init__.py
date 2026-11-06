@@ -62,7 +62,7 @@ STATE_SCHEMA: Dict[str, Any] = {
 
 def _walks_report() -> str:
     active = (engine.watch_state() or {}).get("active") or {}
-    current = active.get("walk") or "wander"
+    current = active.get("walk") or "outer"
     lines = ["WALKS" + ("   (in the walk: " + current + ")" if active.get("key") == "walk" else "")]
     for w in walks.list_walks(walks.CURSOR):
         mark = "*" if w["name"] == current else " "

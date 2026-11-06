@@ -190,7 +190,7 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
         duration = float(minutes if minutes else spec["minutes"])
         data["active"] = {
             "key": spec_key,
-            "walk": walk or (previous.get("walk") if previous and previous["key"] == spec_key else "wander"),
+            "walk": walk or (previous.get("walk") if previous and previous["key"] == spec_key else "outer"),
             "entered_at": now,
             "ends_at": now + duration * 60,
             "turns_left": spec["turns"],

@@ -90,3 +90,46 @@ def test_cursor_is_namespaced_per_walk(cursor):
     walks.get("one", cursor).step(1)
     data = json.loads(cursor.read_text())
     assert "one" in data and "wander" not in data
+
+
+def test_the_outer_walk_jumps_instead_of_stepping(cursor):
+    """The default walk goes far on every hop, and never to a neighbour."""
+    import json
+    from nltk.corpus import wordnet as wn
+    from core import walks
+    cursor.write_text(json.dumps({"outer": {"node": wn.synsets("hand")[0].name(), "prev": "", "at": 0}}))
+    walk = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, cursor)
+    steps = walk.step(6)
+    assert all("far edge" in s for s in steps), steps
+
+    graph = walks.WordNetGraph()
+    node = graph.resume(wn.synsets("hand")[0].name())
+    neighbours = {n["id"] for _, n in graph.edges(node)}
+    far = graph.far_from(node)
+    assert far is not None and far["id"] not in neighbours, "a far hop must not be an edge"
+
+
+def test_outer_hops_are_farther_than_wander_hops(cursor):
+    import json
+    import re
+    import statistics
+    from nltk.corpus import wordnet as wn
+    from core import walks
+    STEP = re.compile(r"^(?P<a>.+?) \([a-z]+\) → (?P<b>.+?) \([a-z]+\)")
+
+    def mean_similarity(name, n=12):
+        cursor.write_text(json.dumps({name: {"node": wn.synsets("hand")[0].name(), "prev": "", "at": 0}}))
+        walk = walks.GraphWalk({"name": name, **walks.BUILTIN[name]}, cursor)
+        sims = []
+        for step in walk.step(n):
+            m = STEP.match(step)
+            if not m:
+                continue
+            a, b = wn.synsets(m.group("a")), wn.synsets(m.group("b"))
+            if not a or not b:
+                continue
+            v = a[0].path_similarity(b[0])
+            sims.append(0.0 if v is None else v)
+        return statistics.mean(sims)
+
+    assert mean_similarity("outer") + 0.1 < mean_similarity("wander")
