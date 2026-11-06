@@ -1,0 +1,7 @@
+node_modules/
+real/
+postcards/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.png
