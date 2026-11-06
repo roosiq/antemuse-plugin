@@ -1,7 +1,7 @@
 # Spec change: state-return-report
 
 Status: implemented
-Kind: behaviour change to `kitchen/engine.py` (no interface changes to `/walk`, `/dream`, `/snap`, `state`)
+Kind: behaviour change to `core/engine.py` (no interface changes to `/walk`, `/dream`, `/snap`, `state`)
 
 ## Goal
 
@@ -67,7 +67,7 @@ the residue list may assume every entry is a string.
 
 ## Affected paths
 
-- `kitchen/engine.py` — `_account`, `_expire`, `stop`, `inject`
+- `core/engine.py` — `_account`, `_expire`, `stop`, `inject`
 - `tests/test_report.py` — new
 
 ## Must not change

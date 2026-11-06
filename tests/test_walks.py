@@ -10,7 +10,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("NLTK_DATA", os.path.expanduser("~/nltk_data"))
 
-from kitchen import walks  # noqa: E402
+from core import walks  # noqa: E402
 
 
 @pytest.fixture()
@@ -33,11 +33,11 @@ def test_builtins_are_listed_with_their_relations(cursor):
 
 
 def test_manual_walk_is_saved_and_walked(cursor):
-    saved = walks.save({"name": "kitchen", "graph": "manual",
+    saved = walks.save({"name": "hearth", "graph": "manual",
                         "edges": {"salt": ["brine"], "brine": ["fish"], "fish": ["salt"]},
                         "seed": {"mode": "fixed", "node": "salt"}}, cursor)
     assert saved["graph"] == "manual"
-    walk = walks.get("kitchen", cursor)
+    walk = walks.get("hearth", cursor)
     steps = walk.step(3)
     assert "salt" in steps[0] and "brine" in steps[0]
     assert "fish" in steps[2]

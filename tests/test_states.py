@@ -10,7 +10,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-test-")
 
-from kitchen import definitions, engine  # noqa: E402
+from core import states, engine  # noqa: E402
 
 
 def setup_function(_):
@@ -95,14 +95,14 @@ def test_unknown_state_is_refused():
 
 
 def test_every_state_declares_a_contract_and_a_residue():
-    for key, spec in definitions.STATES.items():
+    for key, spec in states.STATES.items():
         assert spec["contract"], key
         assert spec["residue"], key
         assert spec["directive"], key
 
 
 def test_palette_lists_the_commands():
-    out = definitions.palette()
-    for key in definitions.STATES:
+    out = states.palette()
+    for key in states.STATES:
         assert f"/{key}" in out
     assert "/snap" in out

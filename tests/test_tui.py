@@ -8,7 +8,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-tui-")
 
-from kitchen import definitions, engine, tui  # noqa: E402
+from core import states, engine, tui  # noqa: E402
 
 
 def setup_function(_):

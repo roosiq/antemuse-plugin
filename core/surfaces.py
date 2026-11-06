@@ -17,7 +17,7 @@ from typing import Any, Dict, List
 
 from PIL import Image
 
-from . import store
+from . import storage
 
 RAMP = " .:-=+*#%@"
 ASCII_RAMP = " .:-=+*#"
@@ -57,7 +57,7 @@ def strip(s: str) -> str:
 
 
 def _frames_dir() -> Path:
-    return store.data_dir() / "three_frames"
+    return storage.data_dir() / "three_frames"
 
 
 def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
@@ -177,6 +177,6 @@ def snapshot_path(state: Dict[str, Any], name: str = "discord") -> Path:
     d = ImageDraw.Draw(im)
     for i, line in enumerate(lines):
         d.text((pad, pad + i * lh), line, font=font, fill=(242, 234, 225))
-    path = store.data_dir() / "state_card.png"
+    path = storage.data_dir() / "state_card.png"
     im.save(path)
     return path

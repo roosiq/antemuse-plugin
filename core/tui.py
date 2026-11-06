@@ -19,7 +19,7 @@ import time
 import tty
 from typing import Any, Dict, List
 
-from . import atlas, definitions, engine, image, panel, realimagery, store, three_backdrop
+from . import backdrop, engine, panel, photographs, states, storage, walk_map
 
 BG = (14, 12, 11)
 INK = (242, 234, 225)
@@ -115,7 +115,7 @@ _FADE = 12          # ticks a dissolve lasts (~1s at the loop rate)
 
 
 def _scene_pngs(key: str) -> List[Any]:
-    base = three_backdrop._dir()
+    base = backdrop._dir()
     sub = base / key
     pngs = sorted(sub.glob("*.png")) if key and sub.is_dir() else []
     return pngs or sorted(base.glob("*.png"))
@@ -127,7 +127,7 @@ def _overlay(state: Dict[str, Any], cols: int, rows: int, tick: int, pan: int) -
         return None
     import re
     return [re.sub(r"\x1b\[[0-9;]*m", "", r) for r in
-            atlas.render(state, cols, rows, tick, pan=pan)]
+            walk_map.render(state, cols, rows, tick, pan=pan)]
 
 
 def imagery_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0, pan: int = 0) -> List[str]:
@@ -138,29 +138,29 @@ def imagery_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0, pan: int
     seconds = tick / 10.0
 
     # photographs first: they are the point of the thing
-    if active.get("key") and realimagery.available(active["key"]):
-        shot = realimagery.frame(active["key"], cols, height, seconds)
+    if active.get("key") and photographs.available(active["key"]):
+        shot = photographs.frame(active["key"], cols, height, seconds)
         if shot is not None:
-            realimagery.remember(active["key"], shot, seconds)
-            return realimagery.to_rows(shot)
+            photographs.remember(active["key"], shot, seconds)
+            return photographs.to_rows(shot)
 
     pngs = _scene_pngs(active.get("key") or "")
     if pngs:
-        frame = image.cells(pngs[tick % len(pngs)], cols, height)
+        frame = photographs.cells(pngs[tick % len(pngs)], cols, height)
     else:
-        frame = [[(14, 12, 11) for _ in range(cols)] for _ in range(height)]
+        frame = photographs.solid((14, 12, 11), cols, height)
 
     if _LAST["key"] is not None and _LAST["key"] != key and _LAST["cells"] is not None:
         _LAST["transition"] = (_LAST["cells"], tick)
     if _LAST.get("transition"):
         prev, start = _LAST["transition"]
         t = (tick - start) / _FADE
-        frame = image.blend(prev, frame, min(1.0, t))
+        frame = photographs.blend(prev, frame, min(1.0, t))
         if t >= 1:
             _LAST["transition"] = None
 
     _LAST["key"], _LAST["cells"] = key, frame
-    return image.to_rows(frame, _overlay(state, cols, height, tick, pan))
+    return photographs.to_rows(frame, _overlay(state, cols, height, tick, pan))
 
 
 def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[str]:
@@ -207,7 +207,7 @@ LIVE = os.path.join(ROOT, "tools", "term_scene.cjs")
 
 
 def _scene_file() -> str:
-    path = os.path.join(str(store.data_dir()), "scene.json")
+    path = os.path.join(str(storage.data_dir()), "scene.json")
     return path
 
 
@@ -221,7 +221,7 @@ def _write_scene(key: str) -> None:
 
 def _keyframed(key: str | None) -> bool:
     """Photographs win: only fall back to the live 3D scene when none exist."""
-    return bool(key) and not realimagery.available(key)
+    return bool(key) and not photographs.available(key)
 
 
 def _spawn_renderer(tty_fd: int, w: int, h: int, key: str):
@@ -239,7 +239,7 @@ def _spawn_renderer(tty_fd: int, w: int, h: int, key: str):
         )
     except Exception as exc:
         try:
-            with open(os.path.join(str(store.data_dir()), "render_error.txt"), "w") as fh:
+            with open(os.path.join(str(storage.data_dir()), "render_error.txt"), "w") as fh:
                 fh.write(f"{type(exc).__name__}: {exc}\n")
         except Exception:
             pass
@@ -303,8 +303,8 @@ def run() -> str:
                     join_mode, buffer, typed = True, "", True
                     _kill_renderer(renderer)
                     renderer = None
-                elif ch in "12345" and int(ch) <= len(definitions.STATES):
-                    engine.enter(list(definitions.STATES)[int(ch) - 1])
+                elif ch in "12345" and int(ch) <= len(states.STATES):
+                    engine.enter(list(states.STATES)[int(ch) - 1])
                 continue
             if not renderer and _keyframed(key) and not typed:
                 renderer = _spawn_renderer(tty_fd, w, h, key)
@@ -354,8 +354,8 @@ def run() -> str:
                 pan = max(0, pan - 6)
             elif ch == "0":
                 pan = 0
-            elif ch in "12345" and int(ch) <= len(definitions.STATES):
-                engine.enter(list(definitions.STATES)[int(ch) - 1])
+            elif ch in "12345" and int(ch) <= len(states.STATES):
+                engine.enter(list(states.STATES)[int(ch) - 1])
             elif ch in ("w", "W"):
                 engine.enter("walk")
             elif ch in ("d", "D"):

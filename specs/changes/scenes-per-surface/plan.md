@@ -5,10 +5,10 @@ aspirational.
 
 ## Current state
 
-- `kitchen/realimagery.py`: photographs from `<data>/real/<state>/*.png`,
+- `core/realimagery.py`: photographs from `<data>/real/<state>/*.png`,
   two pixels per cell (`▀` fg=top, bg=bottom), global `HOLD_S=11`, `FADE_S=2.4`,
   one drift oscillation over 26 s, Bayer-8 dissolve.
-- `kitchen/surfaces.py`: `PROFILES` per client; terminal `animate: true`, chat
+- `core/surfaces.py`: `PROFILES` per client; terminal `animate: true`, chat
   `image: true` but still rendering ASCII art from `three_frames`.
 - `tools/gen_frames.py`: 768×384 SD1.5 renders at 22 steps, ~9.5 s each, six per
   state, letterbox-cropped.
@@ -97,7 +97,7 @@ The plugin never sends. It only returns strings — hook context, command output
 tool results — and Hermes routes those back to the turn that produced them. That
 gives origin binding for free, provided three things hold:
 
-1. No delivery helper exists. Nothing in `kitchen/` calls a gateway send API or
+1. No delivery helper exists. Nothing in `core/` calls a gateway send API or
    names a channel; `surfaces.py` stays a pure encoder.
 2. Entry records its origin: `{session_id, platform, project}` on the active
    state, captured from `pre_llm_call(session_id=…, platform=…)` — the hook

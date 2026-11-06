@@ -8,7 +8,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-panel-")
 
-from kitchen import engine, panel  # noqa: E402
+from core import engine, panel  # noqa: E402
 
 
 def setup_function(_):

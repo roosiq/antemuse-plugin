@@ -20,11 +20,11 @@ import sys
 from typing import Any, Dict
 
 try:
-    from .kitchen import definitions, engine, panel, surfaces, tui, walks
+    from .core import engine, panel, states, surfaces, tui, walks
 except ImportError:  # flat-module load
-    from kitchen import definitions, engine, panel, surfaces, tui, walks  # type: ignore[no-redef]
+    from core import engine, panel, states, surfaces, tui, walks  # type: ignore[no-redef]
 
-__version__ = "0.3.0"
+__version__ = "0.9.0"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
@@ -92,7 +92,7 @@ def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
     if action == "exit":
         return engine.stop()
     if action == "list":
-        return definitions.palette() + "\n\n" + panel.render(engine.watch_state())
+        return states.palette() + "\n\n" + panel.render(engine.watch_state())
     if action == "watch":
         return tui.run()
     if action == "card":
@@ -132,9 +132,9 @@ def _enter(key: str, minutes: int | None = None):
             # /walk upward  →  walk that graph; /walk 5  →  five minutes
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
-            return engine.enter(key, minutes, walk=arg) + "\n" + definitions.palette()
+            return engine.enter(key, minutes, walk=arg) + "\n" + states.palette()
         override = int(arg) if arg.isdigit() else minutes
-        return engine.enter(key, override) + "\n" + definitions.palette()
+        return engine.enter(key, override) + "\n" + states.palette()
     return handler
 
 
@@ -181,11 +181,11 @@ def register(ctx) -> None:
         schema=STATE_SCHEMA,
     )
 
-    for key in definitions.STATES:
+    for key in states.STATES:
         ctx.register_command(
             name=key,
             handler=_enter(key),
-            description=f"Enter the {key} state ({definitions.STATES[key]['contract']})",
+            description=f"Enter the {key} state ({states.STATES[key]['contract']})",
             args_hint="[minutes]",
             argument_mode="text",
         )
@@ -200,7 +200,7 @@ def register(ctx) -> None:
     try:
         from pathlib import Path
         ctx.register_skill(
-            "states",
+            "antemuse",
             Path(__file__).resolve().parent / "SKILL.md",
             description="Take and leave agent states: walk, daydream, dissociate, dream, doomscroll.",
         )

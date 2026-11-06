@@ -9,7 +9,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("NLTK_DATA", os.path.expanduser("~/nltk_data"))
 
-from kitchen import sources  # noqa: E402
+from core import sources  # noqa: E402
 
 
 def _has(corpus: str) -> bool:
@@ -60,5 +60,5 @@ def test_memory_pairs_report_the_join():
 
 
 def test_providers_cover_every_state():
-    from kitchen import definitions
-    assert set(sources.PROVIDERS) == set(definitions.STATES)
+    from core import states
+    assert set(sources.PROVIDERS) == set(states.STATES)

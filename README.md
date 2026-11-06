@@ -36,14 +36,14 @@ count decides how much of it the model gets.
 
 Two surfaces, one state:
 
-- **`hermes-states`** — a full-screen takeover for any terminal: block-digit
+- **`antemuse`** — a full-screen takeover for any terminal: block-digit
   clock, draining bar, both columns, live keys. This is the one to watch.
 - **`/states`** — a text panel printed inside the Hermes chat, for when a
   takeover is not available (the Ink TUI runs tools without a tty, so the
   takeover is its own process rather than an agent tool result).
 
 ```
-hermes-states
+antemuse
  1 walk  2 daydream  3 dissociate  4 dream  5 doomscroll
  n note  space snap  q quit
 ```
@@ -51,7 +51,7 @@ hermes-states
 ## Install
 
 ```bash
-ln -s ~/antemuse ~/.hermes/plugins/antemuse
+ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
 hermes plugins enable antemuse
 ```
 
@@ -62,19 +62,28 @@ plugin.yaml            manifest: 1 tool, 3 hooks
 __init__.py            hooks (pre_llm_call, pre_tool_call, transform_llm_output),
                        /walk /daydream /dissociate /dream /doomscroll /snap
                        /states /note /watch, and the state tool
-kitchen/definitions.py the five states: tools, directive, contract, residue
-kitchen/engine.py      enter/stop/tick, tool policy, journal, residue
-kitchen/panel.py       the printed text frame
-kitchen/tui.py         the full-screen takeover (alt screen, truecolor, keys)
-bin/hermes-states      launcher on PATH
-tests/                 18 tests
+core/states.py         the five states: tools, directive, contract, residue
+core/engine.py         enter/stop/tick, tool policy, journal, residue
+core/storage.py        the one active record, and the data dir it lives in
+core/walks.py          walks as data: graphs and the rules for moving on them
+core/sources.py        material: WordNet steps, FrameNet frames, memories, feeds
+core/social.py         the live feeds a doomscroll eats
+core/ticker.py         the timer that delivers material while a state runs
+core/panel.py          the printed text frame
+core/photographs.py    terminal images: cells, dissolves, drift
+core/walk_map.py       the walk drawn as a side-scrolling place
+core/backdrop.py       pre-rendered three.js frames, replayed as blocks
+core/surfaces.py       one frame, encoded per client
+core/tui.py            the full-screen takeover (alt screen, truecolor, keys)
+bin/antemuse           launcher on PATH
+tests/                 71 tests
 ```
 
 ## Verify
 
 ```bash
-hermes-states                # full-screen view
-hermes plugins doctor ~/antemuse
+antemuse                     # full-screen view
+hermes plugins doctor ~/antemuse-plugin
 PYTHONPATH= ANTEMUSE_STATES_HOME=$(mktemp -d) uvx pytest tests/ -q
 hermes chat -q '/walk' && hermes chat -q '/states'
 ```
@@ -96,10 +105,10 @@ PNG is quantised to upper-half blocks (`▀` = two vertical pixels per cell), an
 the takeover replays the cached frames at animation speed.
 
 ```bash
-cd ~/antemuse && python3 tools/render_three.py    # 12 frames, ~0.65 s each
+cd ~/antemuse-plugin && python3 tools/render_three.py    # 12 frames, ~0.65 s each
 ```
 
-Frames land in `<plugin data>/three_frames/`; `kitchen/three_backdrop.py` loads
+Frames land in `<plugin data>/three_frames/`; `core/backdrop.py` loads
 them at whatever cell size the terminal can afford (44x14 in the takeover, 96x26
 full-screen). Playback is free — pre-built strings, so the clock and spinner keep
 their own timing.
@@ -138,7 +147,7 @@ One scene per state, rendered from `tools/scene.html`:
 - **doomscroll** — feed cards with text bars streaming toward the camera, tilted and accelerating
 
 ```bash
-python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse &
+python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-plugin &
 python3 tools/render_three.py          # 5 scenes x 8 frames, ~0.6 s each
 ```
 
@@ -171,7 +180,7 @@ from a template: state, minutes, step count, and the trail, condensed to four-wo
 heads.
 
 ```
-WALKING ended · walk 1m · 3 step(s) · kitchen to hinge → hinge to river → river to door
+WALKING ended · walk 1m · 3 step(s) · salt to brine → brine to fish → fish to salt
 Come back and tell the person what happened in there.
 ```
 
@@ -219,10 +228,10 @@ A walk is a graph plus the rules for moving on it — no code, no model calls.
 ```python
 state(action="walks")                     # list built-ins and yours
 state(action="walk_new", spec={           # save your own
-    "name": "kitchen", "graph": "manual",
+    "name": "hearth", "graph": "manual",
     "edges": {"salt": ["brine"], "brine": ["fish"], "fish": ["salt"]},
     "seed": {"mode": "fixed", "node": "salt"}})
-state(action="enter", name="walk", walk="kitchen")
+state(action="enter", name="walk", walk="hearth")
 ```
 
 or just `/walk upward`. Built-ins: `wander` (all edges), `upward` (hypernyms +
@@ -230,10 +239,10 @@ wholes), `downward` (hyponyms + parts), `lateral` (similar / also-see /
 antonym). User walks live as JSON in `<data>/walks/<name>.json`, so they can be
 edited by hand or generated by an agent.
 
-`GraphWalk` (in `kitchen/walks.py`) owns the policy: which relations count, what
+`GraphWalk` (in `core/walks.py`) owns the policy: which relations count, what
 seed to start from (`continue`, `random`, `word`, `fixed`), whether to avoid
 stepping back, and where it stopped. Cursors are namespaced per walk, so `upward`
-and `kitchen` each remember their own place. A dead end does not end the walk —
+and `salt circle` each remember their own place. A dead end does not end the walk —
 it picks up at another node and says so.
 
 Graphs so far: `wordnet` (117,659 synsets, seven named relations) and `manual`

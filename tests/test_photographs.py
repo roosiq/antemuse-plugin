@@ -1,26 +1,30 @@
-"""Images in the terminal: cells, dissolves, and no words."""
+"""Pictures in the terminal: cells, dissolves, and no words."""
 from __future__ import annotations
 
 import os
 import sys
-import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("NLTK_DATA", os.path.expanduser("~/nltk_data"))
 
-from kitchen import image, tui  # noqa: E402
+from core import photographs, tui  # noqa: E402
 
 
 def _cells(colour, cols=12, rows=4):
-    return [[colour for _ in range(cols)] for _ in range(rows)]
+    """A field of cells with the same colour on both halves of each cell."""
+    return photographs.solid(colour, cols, rows)
+
+
+def _is(cell, colour):
+    return cell == (colour, colour)
 
 
 def test_blend_is_a_dissolve_between_two_images():
     a, b = _cells((0, 0, 0)), _cells((255, 255, 255))
-    assert image.blend(a, b, 0.0) == a
-    assert image.blend(a, b, 1.0) == b
-    mid = image.blend(a, b, 0.5)
-    blacks = sum(1 for row in mid for c in row if c == (0, 0, 0))
+    assert photographs.blend(a, b, 0.0) == a
+    assert photographs.blend(a, b, 1.0) == b
+    mid = photographs.blend(a, b, 0.5)
+    blacks = sum(1 for row in mid for c in row if _is(c, (0, 0, 0)))
     total = sum(len(r) for r in mid)
     assert 0.25 < blacks / total < 0.75, "half-way should be roughly half of each"
 
@@ -29,21 +33,28 @@ def test_blend_advances_monotonically():
     a, b = _cells((0, 0, 0)), _cells((255, 255, 255))
     counts = []
     for step in range(9):
-        cells = image.blend(a, b, step / 8)
-        counts.append(sum(1 for row in cells for c in row if c == (255, 255, 255)))
+        cells = photographs.blend(a, b, step / 8)
+        counts.append(sum(1 for row in cells for c in row if _is(c, (255, 255, 255))))
     assert counts == sorted(counts)
     assert counts[0] == 0 and counts[-1] == 48
 
 
 def test_rows_use_truecolor_half_blocks():
-    rows = image.to_rows(_cells((10, 20, 30), cols=4, rows=2))
+    rows = photographs.to_rows(_cells((10, 20, 30), cols=4, rows=2))
     assert len(rows) == 2
     assert "\x1b[38;2;10;20;30m" in rows[0]
+    assert "\x1b[48;2;10;20;30m" in rows[0]
     assert "▀" in rows[0]
 
 
+def test_rows_paint_top_and_bottom_differently():
+    cell = ((10, 20, 30), (40, 50, 60))
+    rows = photographs.to_rows([[cell]])
+    assert "\x1b[38;2;10;20;30m\x1b[48;2;40;50;60m" in rows[0]
+
+
 def test_overlay_draws_glyphs_instead_of_pixels():
-    rows = image.to_rows(_cells((0, 0, 0), cols=6, rows=1), overlay=["  ●  ▮ "])
+    rows = photographs.to_rows(_cells((0, 0, 0), cols=6, rows=1), overlay=["  ●  ▮ "])
     assert "●" in rows[0] and "▮" in rows[0]
 
 

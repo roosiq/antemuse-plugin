@@ -12,6 +12,8 @@ from typing import Dict, List, Tuple
 
 from PIL import Image
 
+from . import storage
+
 
 def _fit(im, w: int, h: int):
     """Crop to the cell aspect before scaling, so scenes are not stretched."""
@@ -28,14 +30,12 @@ def _fit(im, w: int, h: int):
         im = im.crop((0, top, iw, top + new_h))
     return im
 
-from . import store
-
 CACHE: Dict[Tuple[int, int], List[List[str]]] = {}
 FLOOR = 21.0
 
 
 def _dir() -> Path:
-    return store.data_dir() / "three_frames"
+    return storage.data_dir() / "three_frames"
 
 
 def available() -> bool:

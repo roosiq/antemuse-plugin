@@ -10,7 +10,7 @@ import threading
 import time
 from typing import Dict, Optional
 
-from . import definitions, engine, sources
+from . import states, engine, sources
 
 _LOCK = threading.Lock()
 _STOP: Optional[threading.Event] = None
@@ -39,7 +39,7 @@ def start(key: str, cadence: Optional[float] = None) -> bool:
     """Start emitting for `key`; replaces any previous ticker."""
     global _STOP, _THREAD, _KEY
     stop()
-    spec = definitions.STATES.get(key)
+    spec = states.STATES.get(key)
     if not spec:
         return False
     delay = float(cadence if cadence is not None else spec.get("cadence", 20))

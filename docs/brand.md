@@ -104,5 +104,5 @@ not fit.
 1. `/snap` — keep or rename. Recommendation: keep.
 2. Propose a `cognition` category upstream, or file under `productivity` and say
    so. Recommendation: file, and raise the category gap separately.
-3. Version: 0.8.0 → 0.9.0 at the end of the scenes-per-surface work, not now —
-   the rename changed no behaviour.
+3. Version: 0.9.0 shipped with the internal consolidation (package `core/`,
+   dead board removed). `scenes-per-surface` therefore lands as 1.0.0.

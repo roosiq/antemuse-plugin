@@ -44,8 +44,8 @@ def test_a_frame_is_truecolor_half_blocks(tmp_path):
 
 @pytest.mark.skipif(not _ready(), reason="node or the renderer's packages are missing")
 def test_scene_switch_is_written_where_the_renderer_looks(tmp_path, monkeypatch):
-    from kitchen import tui
-    monkeypatch.setattr(tui.store, "data_dir", lambda: tmp_path)
+    from core import tui
+    monkeypatch.setattr(tui.storage, "data_dir", lambda: tmp_path)
     tui._write_scene("dream")
     import json
     assert json.loads((tmp_path / "scene.json").read_text())["scene"] == "dream"

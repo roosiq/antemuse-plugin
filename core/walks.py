@@ -3,8 +3,8 @@
 The built-ins cover WordNet (up, down, across, wander), but a user can drop a
 JSON file in `$ANTEMUSE_STATES_HOME/walks/` and walk their own graph:
 
-    {"name": "kitchen",
-     "title": "Kitchen walk",
+    {"name": "hearth",
+     "title": "Hearth walk",
      "graph": "manual",
      "edges": {"salt": ["brine", "cure"], "brine": ["salt", "fish"]},
      "seed": {"mode": "fixed", "node": "salt"},
@@ -29,8 +29,8 @@ HOME = Path.home()
 
 def _data_dir() -> Path:
     try:
-        from . import store
-        return store.data_dir()
+        from . import storage
+        return storage.data_dir()
     except Exception:
         return HOME / ".hermes/plugin-data/antemuse"
 

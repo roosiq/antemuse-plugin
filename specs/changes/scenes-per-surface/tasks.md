@@ -4,15 +4,15 @@ Dependency ordered. Each task is independently verifiable and names its check.
 `T7` is the carried-over item from `state-return-report`.
 
 ## T0 — origin binding
-`kitchen/engine.py::enter` records `{session_id, platform, project}`; artifacts
+`core/engine.py::enter` records `{session_id, platform, project}`; artifacts
 resolve to `<project>/.antemuse/` when `ANTEMUSE_STATES_HOME` is unset; no module
-under `kitchen/` may reference a channel or a send call.
+under `core/` may reference a channel or a send call.
 **Check:** entry from session A then `stop()` in session B produces nothing in B;
-a grep test asserts `kitchen/` contains no `chat_id`, `thread_id`, or send API;
+a grep test asserts `core/` contains no `chat_id`, `thread_id`, or send API;
 artifact path follows the project root.
 
 ## T1 — motion profiles
-`kitchen/realimagery.py`: replace `HOLD_S`/`FADE_S` with
+`core/realimagery.py`: replace `HOLD_S`/`FADE_S` with
 `MOTION = {state: {hold, fade, kind}}`; `frame()` takes the profile from the
 state key; implement `kind` in `cut`, `drift`, `push` terms.
 **Check:** `frame("doomscroll", …)` at consecutive seconds changes frame index
@@ -20,13 +20,13 @@ without any blended output; `frame("dream", …)` crosses exactly one dissolve i
 20 s. New `tests/test_realimagery.py::test_motion_profiles`.
 
 ## T2 — progress grade
-`kitchen/realimagery.py`: `grade(cells, state, g)` applying exposure, warmth, and
+`core/realimagery.py`: `grade(cells, state, g)` applying exposure, warmth, and
 veil per D2, applied to 8-bit cell values before `to_rows`.
 **Check:** walk at `g=0` vs `g=0.9` differs in mean luminance ≥ 12; doomscroll
 grade is flat within 2. Test asserts the numbers, not the vibes.
 
 ## T3 — dual scoring
-`tools/gen_frames.py --score` and `kitchen/realimagery.py::score(path, target)`;
+`tools/gen_frames.py --score` and `core/realimagery.py::score(path, target)`;
 sidecar `<data>/real/scores.json`.
 **Check:** the known-bad doomscroll frame (`f002`, phone on a pale wall) is
 ranked below a face-lit frame for the terminal target while possibly ranking
@@ -34,7 +34,7 @@ above it for chat — the test asserts the two rankings *disagree*, which is the
 point of having both.
 
 ## T4 — postcard
-`kitchen/surfaces.py::postcard(state, index=None)` → 4:5 720×900 PNG under
+`core/surfaces.py::postcard(state, index=None)` → 4:5 720×900 PNG under
 `<data>/postcards/`; `state` tool `action="image"` returns the postcard for
 image-capable platforms and the wide frame for others.
 **Check:** aspect within 1 px of 4:5; no alphanumeric text in the file's caption
@@ -56,7 +56,7 @@ session B asks next (R10).
 `card()` output for `discord` contains no art rows.
 
 ## T7 — walk accounts name the relation
-`kitchen/engine.py::_account`: trail entries carry `[relation]` for walk steps,
+`core/engine.py::_account`: trail entries carry `[relation]` for walk steps,
 capped at five heads.
 **Check:** the `state-return-report` acceptance case 1 gains `[hyponym]`-style
 brackets; all six original criteria still pass. Update
@@ -65,7 +65,7 @@ scenes-per-surface T7".
 
 ## T8 — docs, version, commit
 README: per-surface table (terminal continuous / chat postcard / text record),
-motion table, scoring note. `plugin.yaml` → 0.9.0. `.gitignore`: `node_modules/`,
+motion table, scoring note. `plugin.yaml` → 1.0.0. `.gitignore`: `node_modules/`,
 `real/`, `postcards/`.
 **Check:** fresh clone renders nothing without data and does not crash.
 

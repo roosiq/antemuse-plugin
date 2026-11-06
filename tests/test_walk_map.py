@@ -7,7 +7,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from kitchen import atlas  # noqa: E402
+from core import walk_map  # noqa: E402
 
 
 def _event(a, b, how, gloss="", at=None):
@@ -20,7 +20,7 @@ def _state(events):
 
 
 def test_parse_tracks_depth_by_relation():
-    nodes = atlas.parse([
+    nodes = walk_map.parse([
         _event("hand", "extremity", "went up to its hypernym"),
         _event("extremity", "external body part", "went up to its hypernym"),
         _event("external body part", "body part", "went down into a hyponym"),
@@ -35,28 +35,28 @@ def test_parse_ignores_other_states_and_bad_lines():
         {"who": "agent", "event": "walk", "text": "hand → foot", "at": 0},
         _event("hand", "extremity", "went up to its hypernym"),
     ]
-    assert len(atlas.parse(events)) == 1
+    assert len(walk_map.parse(events)) == 1
 
 
 def test_person_step_joins_the_same_path():
     events = [_event("hand", "extremity", "went up to its hypernym"),
               {"who": "person", "event": "walk_person", "text": "salt · a seasoning", "at": time.time()}]
-    nodes = atlas.parse(events)
+    nodes = walk_map.parse(events)
     assert nodes[-1]["person"] is True
     assert nodes[-1]["label"] == "salt"
-    rows = atlas.strip(atlas.render(_state(events), 100, 20))
+    rows = walk_map.strip(walk_map.render(_state(events), 100, 20))
     assert any("◆" in r for r in rows)
 
 
 def test_frame_is_exactly_the_requested_size():
-    rows = atlas.render(_state([_event("hand", "extremity", "went up to its hypernym")]), 96, 18)
+    rows = walk_map.render(_state([_event("hand", "extremity", "went up to its hypernym")]), 96, 18)
     assert len(rows) == 18
-    assert all(len(atlas.strip([r])[0]) <= 96 for r in rows)
+    assert all(len(walk_map.strip([r])[0]) <= 96 for r in rows)
 
 
 def test_empty_walk_shows_a_single_marker_and_no_words():
     import re
-    rows = atlas.strip(atlas.render(_state([]), 80, 12))
+    rows = walk_map.strip(walk_map.render(_state([]), 80, 12))
     text = "\n".join(rows)
     assert "◌" in text or "○" in text
     assert not re.search(r"[A-Za-z]{2,}", text)
@@ -66,7 +66,7 @@ def test_bare_map_has_no_instrumentation():
     import re
     events = [_event("hand", "extremity", "went up to its hypernym"),
               _event("extremity", "body part", "went down into a hyponym")]
-    bare = "\n".join(atlas.strip(atlas.render(_state(events), 100, 20)))
+    bare = "\n".join(walk_map.strip(walk_map.render(_state(events), 100, 20)))
     assert not re.search(r"[A-Za-z]{2,}", bare)
-    debug = "\n".join(atlas.strip(atlas.render(_state(events), 100, 20, bare=False)))
+    debug = "\n".join(walk_map.strip(walk_map.render(_state(events), 100, 20, bare=False)))
     assert "STEP 02" in debug and "DEPTH" in debug

@@ -10,14 +10,14 @@ import threading
 import time
 from typing import Any, Dict, List
 
-from . import definitions, store
+from . import states, storage
 
 FILE = "state.json"
 _LOCK = threading.Lock()
 
 
 def _load() -> Dict[str, Any]:
-    path = store.data_dir() / FILE
+    path = storage.data_dir() / FILE
     if not path.exists():
         return {"active": None, "residue": [], "journal": []}
     try:
@@ -31,7 +31,7 @@ def _load() -> Dict[str, Any]:
 
 
 def _save(data: Dict[str, Any]) -> None:
-    path = store.data_dir() / FILE
+    path = storage.data_dir() / FILE
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=2))
     tmp.replace(path)
@@ -87,10 +87,10 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
 
 
 def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
-    spec_key = definitions.resolve(key)
+    spec_key = states.resolve(key)
     if not spec_key:
-        return f"no such state. try: {', '.join(definitions.STATES)}"
-    spec = definitions.STATES[spec_key]
+        return f"no such state. try: {', '.join(states.STATES)}"
+    spec = states.STATES[spec_key]
     with _LOCK:
         data = _load()
         previous = data.get("active") or {}
@@ -120,7 +120,7 @@ def stop() -> str:
         active = data.get("active")
         if not active:
             return "not in a state."
-        spec = definitions.STATES[active["key"]]
+        spec = states.STATES[active["key"]]
         report = _account(data, active)
         data["residue"].append({**report, "kind": "report", "turns_left": 2})
         data["journal"].append({
@@ -175,7 +175,7 @@ def inject() -> str | None:
         return None
     lines: List[str] = []
     if active:
-        spec = definitions.STATES[active["key"]]
+        spec = states.STATES[active["key"]]
         left = max(0, int((active["ends_at"] - time.time()) / 60))
         allowed = spec["tools"]
         tool_rule = (
@@ -216,7 +216,7 @@ def policy(tool_name: str) -> Dict[str, Any] | None:
         active = data.get("active")
     if not active:
         return None
-    spec = definitions.STATES[active["key"]]
+    spec = states.STATES[active["key"]]
     allowed = spec["tools"]
     if allowed == []:
         return {"action": "block",
@@ -235,7 +235,7 @@ def annotate(text: str) -> str | None:
         active = data.get("active")
     if not active:
         return None
-    spec = definitions.STATES[active["key"]]
+    spec = states.STATES[active["key"]]
     left = max(0, int((active["ends_at"] - time.time()) / 60))
     return f"{text}\n\n— {spec['label'].lower()}, {left} min left · /snap to come back"
 
@@ -252,7 +252,7 @@ def status() -> str:
     if not active:
         lines = ["not in a state."]
     else:
-        spec = definitions.STATES[active["key"]]
+        spec = states.STATES[active["key"]]
         left = max(0, int((active["ends_at"] - time.time()) / 60))
         lines = [
             f"{spec['label']} · {left} min left · {active['turns_left']} turn(s)",
@@ -322,7 +322,7 @@ def watch_state() -> Dict[str, Any]:
         "now": time.time(),
     }
     if active:
-        spec = definitions.STATES[active["key"]]
+        spec = states.STATES[active["key"]]
         out["active"] = {
             "key": active["key"],
             "walk": active.get("walk") or "wander",

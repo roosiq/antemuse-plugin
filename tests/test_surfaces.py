@@ -9,7 +9,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-surfaces-")
 
-from kitchen import surfaces  # noqa: E402
+from core import surfaces  # noqa: E402
 from pathlib import Path  # noqa: E402
 import shutil  # noqa: E402
 

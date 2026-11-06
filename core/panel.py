@@ -66,15 +66,15 @@ def _block(entries: List[Dict[str, Any]], cw: int, empty: str, colour: str, on: 
 
 def render(state: Dict[str, Any], w: int | None = None, color: bool | None = None) -> str:
     """Fallback surface: the same imagery, no words, for anywhere without a tty."""
-    from . import atlas, three_backdrop
+    from . import walk_map, backdrop
     on = _color_on() if color is None else color
     w = width(w)
     h = 18
     active = state.get("active") or {}
     if active.get("key") == "walk" or not active:
-        rows = atlas.render(state, w - 1, h, 0)
+        rows = walk_map.render(state, w - 1, h, 0)
     else:
-        bank = three_backdrop.frames(w - 1, h, active.get("key", ""))
+        bank = backdrop.frames(w - 1, h, active.get("key", ""))
         rows = bank[0] if bank else [" " * (w - 1)] * h
     if not on:
         import re

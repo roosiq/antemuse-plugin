@@ -1,5 +1,5 @@
 ---
-name: states
+name: antemuse
 description: Take and leave agent states — walk, daydream, dream, doomscroll — and watch them as imagery. Use when the user asks the agent to step away from the desk, work at a distance, or when a state is already active and governs this turn.
 ---
 

@@ -93,10 +93,10 @@ is dropped rather than routed elsewhere.
 
 ## Affected paths
 
-- `kitchen/realimagery.py` — motion profiles, progress grade, per-target scoring
-- `kitchen/surfaces.py` — `postcard()`, aspect crop, removal of ASCII art from
+- `core/realimagery.py` — motion profiles, progress grade, per-target scoring
+- `core/surfaces.py` — `postcard()`, aspect crop, removal of ASCII art from
   image-capable profiles
-- `kitchen/tui.py` — stop drawing the old ASCII bank when photographs exist
+- `core/tui.py` — stop drawing the old ASCII bank when photographs exist
 - `tools/gen_frames.py` — square-crop companion output, score sidecar
 - `tests/test_realimagery.py` — new
 - `tests/test_surfaces.py` — postcard cases

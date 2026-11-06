@@ -1,1 +1,0 @@
-"""Concept Kitchen core modules."""

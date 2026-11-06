@@ -12,7 +12,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-report-")
 
-from kitchen import engine  # noqa: E402
+from core import engine  # noqa: E402
 
 
 def setup_function(_):
@@ -21,14 +21,14 @@ def setup_function(_):
 
 def test_stop_returns_an_account_with_the_steps():
     engine.enter("walk")
-    engine.record("state", "kitchen to hinge", event="walk")
+    engine.record("state", "salt to brine", event="walk")
     engine.record("state", "hinge to river", event="walk")
     engine.record("state", "river to door", event="walk")
 
     msg = engine.stop()
     assert "WALKING ended" in msg
     assert "3 step(s)" in msg
-    assert "kitchen" in msg and "river" in msg
+    assert "salt" in msg and "river" in msg
     assert "tell the person" in msg.lower()
 
 
