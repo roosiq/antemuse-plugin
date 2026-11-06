@@ -76,7 +76,7 @@ core/backdrop.py       pre-rendered three.js frames, replayed as blocks
 core/surfaces.py       one frame, encoded per client
 core/tui.py            the full-screen takeover (alt screen, truecolor, keys)
 bin/antemuse           launcher on PATH
-tests/                 71 tests
+tests/                 74 tests (6 need `npm ci` for the renderer)
 ```
 
 ## Verify
@@ -87,6 +87,9 @@ hermes plugins doctor ~/antemuse-plugin
 PYTHONPATH= ANTEMUSE_STATES_HOME=$(mktemp -d) uvx pytest tests/ -q
 hermes chat -q '/walk' && hermes chat -q '/states'
 ```
+
+A fresh clone runs 68 of the 74 tests; the six renderer tests skip until
+`npm ci` has fetched three and the software renderer.
 
 ## Notes
 

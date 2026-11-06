@@ -1,7 +1,7 @@
 {
-  "name": "antemuse-states-render",
+  "name": "antemuse-render",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.9.0",
   "type": "module",
   "dependencies": {
     "three": "0.82.1",
