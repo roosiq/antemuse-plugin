@@ -3,6 +3,14 @@
 Dependency ordered. Each task is independently verifiable and names its check.
 `T7` is the carried-over item from `state-return-report`.
 
+## T0 — origin binding
+`kitchen/engine.py::enter` records `{session_id, platform, project}`; artifacts
+resolve to `<project>/.antemuse/` when `ANTEMUSE_STATES_HOME` is unset; no module
+under `kitchen/` may reference a channel or a send call.
+**Check:** entry from session A then `stop()` in session B produces nothing in B;
+a grep test asserts `kitchen/` contains no `chat_id`, `thread_id`, or send API;
+artifact path follows the project root.
+
 ## T1 — motion profiles
 `kitchen/realimagery.py`: replace `HOLD_S`/`FADE_S` with
 `MOTION = {state: {hold, fade, kind}}`; `frame()` takes the profile from the
@@ -36,8 +44,10 @@ path; `tests/test_surfaces.py::test_postcard_geometry`.
 Entry response and `stop()` result append `MEDIA:<postcard>` for image-capable
 profiles; ticker sets `pending_postcard` for states > 15 min at the halfway
 point; `engine.inject()` surfaces it once and clears it.
-**Check:** `/daydream` produces exactly one image; a 30-minute dream produces
-entry + midpoint + resolution = 3; no duplicate when the platform lacks images.
+**Check:** `/daydream` produces exactly one image *in the session that started
+it*; a 30-minute dream produces entry + midpoint + resolution = 3 there and zero
+elsewhere; a midpoint recorded for session A is dropped, not delivered, when
+session B asks next (R10).
 
 ## T6 — retire ASCII art for image profiles
 `surfaces.card()` untouched for `text`/terminal; chat profiles stop emitting the
@@ -65,4 +75,5 @@ motion table, scoring note. `plugin.yaml` → 0.9.0. `.gitignore`: `node_modules
 - T4 depends on T3 only for choosing which frame becomes the postcard.
 - T5 depends on T4.
 - T6 depends on T5 being wired, so a chat surface always has something to show.
-- T7 is independent of all of it and can ship first.
+- T0 comes first: every later task inherits its origin rules.
+- T7 is independent of all of it and can ship first if T0 is not yet in place.

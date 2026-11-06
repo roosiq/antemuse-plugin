@@ -91,6 +91,32 @@ relation. Format inside the existing trail:
 Rejected: renaming the relations to plain English — WordNet's names are the
 material and the agent can gloss them.
 
+### D8 — origin binding, by construction
+
+The plugin never sends. It only returns strings — hook context, command output,
+tool results — and Hermes routes those back to the turn that produced them. That
+gives origin binding for free, provided three things hold:
+
+1. No delivery helper exists. Nothing in `kitchen/` calls a gateway send API or
+   names a channel; `surfaces.py` stays a pure encoder.
+2. Entry records its origin: `{session_id, platform, project}` on the active
+   state, captured from `pre_llm_call(session_id=…, platform=…)` — the hook
+   passes `session_id`, `task_id`, `turn_id`, `sender_id`, and `parent_session_id`
+   but **not** `chat_id`, so session identity is the strongest handle available.
+   Chat routing is the gateway's job and needs no chat id from us.
+3. A pending postcard is gated on `session_id` equality at delivery time and
+   dropped when the session's state ends.
+
+`project` is the nearest ancestor containing `.git` from the working directory at
+entry; artifacts go to that project's `.antemuse/` when `ANTEMUSE_STATES_HOME` is
+unset, and the global data dir otherwise. The state record itself stays single
+and global — policy is agent-wide, and a second copy per project would let the
+agent walk in one directory and be free in another.
+
+Rejected: passing chat ids through plugin config. It would work, but it makes
+the plugin responsible for routing, which is exactly the coupling this design
+avoids.
+
 ## Risks
 
 - **Frame selection can still pick a subjectless frame.** D3 fixes brightness

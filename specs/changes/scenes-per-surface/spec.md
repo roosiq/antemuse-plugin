@@ -59,6 +59,19 @@ message.
 **R8 — one place at a time.** The frame shown on any surface is derived from the
 same elapsed-time index, so two windows on the same state agree.
 
+**R9 — the origin is the destination.** Everything an action produces — the
+moving frame, the postcard, the return report — is returned on the response to
+the turn or command that started it, and the plugin never chooses a destination
+of its own. No home channel, no background send, no second surface. A state
+entered in a chat answers in that chat; a state entered in a terminal renders in
+that terminal; a state entered inside a project writes its artifacts under that
+project.
+
+**R10 — nothing outlives its conversation silently.** A midpoint postcard is
+delivered only on a later turn of the *same* session, identified by the
+`session_id` captured at entry. If that session never speaks again, the postcard
+is dropped rather than routed elsewhere.
+
 ## Acceptance criteria
 
 1. Entering walk and rendering at t=0 and t=0.9×duration on the terminal yields
@@ -73,6 +86,10 @@ same elapsed-time index, so two windows on the same state agree.
 5. With no active state, terminal and chat both render nothing.
 6. Frame choice is stable: the same (state, elapsed) yields the same frame index
    across processes.
+7. Entering a state in one chat and finishing it produces no output in any
+   other chat: the report and postcard appear only in the originating session.
+8. A pending midpoint postcard recorded under session A is not delivered to
+   session B, and expires when A ends.
 
 ## Affected paths
 
