@@ -1,38 +1,59 @@
-# Probe: is the walking agent more creative?
+# Probing for a sweet spot: dose and direction
 
-First cheap test of the claim the whole design rests on. One run per condition,
-same prompt, same model: *"Give me 8 unusual uses for a brick. One per line,
-numbered, no explanation."* — the Alternate Uses shape.
+Question: does the walk help ideation, and if so at what dose? Two Cheap
+Alternate-Uses runs, same model, WordNet over the nouns each answer uses.
 
-Proxies, computed with WordNet over the nouns each list actually uses:
+## 1. Dose sweep (n = 1 per cell, exploratory)
 
-| | ideas | distinct nouns | WordNet categories | mean pairwise similarity |
-|---|---|---|---|---|
-| idle | 8 | 27 | 7 | 0.426 |
-| walking | 8 | 30 | **12** | **0.269** |
+Four doses of real WordNet hops injected into the turn (0, 1, 3, 6), two prompts.
 
-Lower similarity and more categories means the second list drew from farther
-apart. The walking list reached `act` (Foley thud), `substance` (thermal mass),
-`person` (body-fall), `group` (spawning structure); the idle list stayed in
-artifact, food, event, phenomenon.
+| dose | brick: categories / similarity | paperclip: categories / similarity | hops used |
+|---|---|---|---|
+| 0 | 9 / 0.37 | 9 / 0.36 | 0 |
+| 1 | 9 / 0.31 | 5 / 0.37 | 0 |
+| 3 | 10 / 0.32 | 9 / 0.29 | 0 |
+| 6 | 13 / 0.31 | 7 / 0.38 | 1 |
 
-## The part that argues against reading much into it
+The brick column looks monotone, the paperclip column does not. n = 1, so this is
+a shape worth testing, not a finding.
 
-The walk's own material was `lights-out → bedtime → hour → canonical hour` — time
-of day. **None of that appears in the ideas.** The first idea in both lists is a
-bed warmer. So whatever produced the wider spread, it was not the walk's concepts
-being used; at most the state changed register.
+## 2. Paired repeat at the extremes (n = 5 pairs)
 
-n = 1 per column. The proxy measures word spread, which reward lists that wander
-and punishes lists that cohere — an incoherent list can score as "creative". It
-is a cheap instrument, not a creativity test.
+Idle vs six hops, same prompt, alternating within each pair.
 
-## What a real test needs
+| pair | categories idle→walk | similarity idle→walk | hops used |
+|---|---|---|---|
+| 0 | 10 → 12 | 0.28 → 0.31 | 0 |
+| 1 | 13 → 7 | 0.28 → 0.36 | 0 |
+| 2 | 14 → 8 | 0.27 → 0.36 | 0 |
+| 3 | 11 → 11 | 0.30 → 0.36 | 1 |
+| 4 | 9 → 9 | 0.29 → 0.35 | 0 |
 
-Paired design (same task, N ≥ 20 state/no-state pairs), blind scoring by more
-than one judge or a validated rubric, semantic distance computed from embeddings
-rather than WordNet, and a pre-declared effect size — the same discipline the
-Toslop measurements use. Until then the honest claim is: the design is based on
-published incubation work (`docs/creativity-exercises.md`: a walking break lifted
-Alternate Uses scores for 81% of participants vs 23% on a convergent task), and
-this implementation has not been shown to reproduce it.
+Mean categories **11.4 idle vs 9.4 walking** (paired difference −2.0; walking won
+1 of 5, tied 2, lost 2). Mean similarity **0.29 vs 0.35** — the walking answers
+are *more* clustered, i.e. less divergent on this proxy.
+
+The earlier single-run signal (walking wider: 12 vs 7 categories) did not
+replicate. That is the point of running pairs: one run is a coin flip.
+
+## What this says about a sweet spot
+
+At these doses there is no curve to find. The effect is indistinguishable from
+noise, and in the direction that exists it is slightly negative.
+
+The sharper observation is uptake: **1 of 30 delivered hops appeared in any
+answer.** The material is not being used at all, so dose cannot matter yet. The
+directive currently permits ignoring it ("say nothing about it if it does not
+[belong]"), which is honest but makes the state decorative for ideation.
+
+Before tuning length or cadence, the dial worth testing is whether the step must
+be engaged — e.g. "use one step or say why none fits" — and whether that raises
+uptake without wrecking the answer. That is one variable, and it can be measured
+with the same instrument.
+
+## Standing limits
+
+- Proxy measures word spread, not quality; an incoherent answer can score well.
+- n = 5 pairs is enough to kill the n = 1 claim, not enough to establish the
+  reverse.
+- One model, one task shape, one session's budget.
