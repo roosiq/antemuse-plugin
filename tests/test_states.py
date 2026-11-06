@@ -191,3 +191,11 @@ def test_ready_explains_a_missing_nltk(monkeypatch):
     monkeypatch.setattr(importlib.util, "find_spec", lambda name, *a, **k: None)
     why = sources.ready("walk")
     assert why and "nltk" in why and "uv pip install" in why
+
+
+def test_the_trail_does_not_end_on_a_dangling_separator():
+    engine.enter("walk", minutes=5)
+    engine.record("state", "hand (n) → palm (n) · took its meronym", event="walk")
+    out = engine.stop()
+    trail = out.splitlines()[0].split("· ", 2)[-1]
+    assert not trail.rstrip().endswith("·"), trail

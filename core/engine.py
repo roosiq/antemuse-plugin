@@ -57,7 +57,7 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     mins = max(1, int(round((ended - started) / 60)))
     trail: List[str] = []
     for e in steps:
-        head = " ".join(e["text"].split()[:6]).rstrip(",.;:")
+        head = " ".join(e["text"].split()[:6]).rstrip(",.;:· ")
         if head and head not in trail:
             trail.append(head)
     body = " → ".join(trail[:5]) if trail else "nothing arrived"
