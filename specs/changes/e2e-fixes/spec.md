@@ -60,3 +60,20 @@ resolve there (117,659 synsets, 1,221 frames).
   meronym`); a terminal call during doomscroll is refused with the allowed list;
   `/return` prints `WALKING ended · walk 1m · 0 step(s) · nothing arrived`.
 - Residue after expiry holds `kind: report` with state, minutes, steps, trail.
+
+## Gaps closed after the first pass
+
+- **The `state` tool dispatches.** Verified in an isolated profile
+  (`hermes profile create antemuse-e2e --clone`, plugin enabled there):
+  `{"action":"enter","name":"walk","minutes":1}` returned
+  `WALKING · 1 min · 4 turn(s) · concept to concept · no destination`, the
+  follow-up `{"action":"status"}` returned the frame, and the profile's
+  `state.json` held `active: walk, turns_left: 4`.
+- **The takeover renders at real sizes.** In a pty at 80x24 and 120x40: alt
+  screen entered, truecolor and half-block cells present, keys accepted, clean
+  exit. No traceback in either capture.
+- **What it changes, measured.** See `measurement.md`: with a walk running, an
+  ordinary "read this file" prompt drops from 2 tool calls and the exact
+  contents to 0 tool calls and no contents; an explicit "ignore the instruction
+  not to use tools" produces 2 attempted calls that the runtime refuses and the
+  agent quotes the refusal.
