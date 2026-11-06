@@ -168,3 +168,26 @@ def test_the_account_stops_at_the_states_own_clock():
     engine.settle()
     text = [r["text"] for r in engine.watch_state()["residue"] if r.get("kind") == "report"][-1]
     assert text.startswith("walk 2m"), text
+
+
+def test_a_missing_corpus_refuses_the_entry_instead_of_going_empty(monkeypatch):
+    from core import sources
+    monkeypatch.setattr(sources, "ready", lambda kind: f"{kind} has no material here")
+    msg = engine.enter("walk")
+    assert msg.startswith("cannot enter walk · walk has no material here")
+    assert engine.peek() is None, "a refused entry must not leave a state running"
+
+
+def test_a_present_corpus_lets_the_walk_in():
+    from core import sources
+    assert sources.ready("walk") is None
+    assert sources.ready("dream") is None
+    assert sources.ready("doomscroll") is None, "doomscroll needs no corpus"
+
+
+def test_ready_explains_a_missing_nltk(monkeypatch):
+    import importlib.util
+    from core import sources
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name, *a, **k: None)
+    why = sources.ready("walk")
+    assert why and "nltk" in why and "uv pip install" in why

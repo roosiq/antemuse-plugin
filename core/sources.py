@@ -45,6 +45,40 @@ RNG = random.SystemRandom()
 SEEDS = ["walk", "dream", "light", "river", "memory", "door", "signal", "salt", "night", "hand"]
 
 
+# ---------------------------------------------------------------------- ready
+
+NEEDS = {"walk": ("wordnet",), "dream": ("framenet_v17", "framenet"), "daydream": None}
+
+
+def ready(kind: str) -> str | None:
+    """Why a state could not run, or None. Cheap: no corpus is loaded.
+
+    A walk whose material cannot be produced is an empty room with a locked
+    door; better to refuse the entry and say what is missing.
+    """
+    import importlib.util
+
+    if importlib.util.find_spec("nltk") is None:
+        return ("nltk is not importable in the interpreter Hermes runs. "
+                "Install it there, then restart Hermes: "
+                "uv pip install --python \"$(python3 -c 'import sys;print(sys.executable)')\" "
+                "'nltk>=3.8,<4'")
+    corpora = NEEDS.get(kind)
+    if not corpora:
+        return None
+    import nltk
+
+    for corpus in corpora:
+        for target in (f"corpora/{corpus}", f"corpora/{corpus}.zip"):
+            try:
+                nltk.data.find(target)
+                return None
+            except Exception:
+                continue
+    return (f"the {corpora[0]} corpus is not installed for nltk. "
+            f"Run: python3 -c \"import nltk; nltk.download('{corpora[0]}')\"")
+
+
 # ------------------------------------------------------------------- wordnet
 
 def _wn():

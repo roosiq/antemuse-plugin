@@ -108,6 +108,10 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
     spec_key = states.resolve(key)
     if not spec_key:
         return f"no such state. try: {', '.join(states.STATES)}"
+    from . import sources
+    why_not = sources.ready(spec_key)
+    if why_not:
+        return f"cannot enter {spec_key} · {why_not}"
     spec = states.STATES[spec_key]
     with _LOCK:
         data = _load()

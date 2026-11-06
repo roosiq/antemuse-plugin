@@ -61,6 +61,19 @@ resolve there (117,659 synsets, 1,221 frames).
   `/return` prints `WALKING ended · walk 1m · 0 step(s) · nothing arrived`.
 - Residue after expiry holds `kind: report` with state, minutes, steps, trail.
 
+## A dependency failure now happens at the door
+
+`nltk` missing used to surface as an empty walk whose journal said
+`walk 'wander' failed · No module named 'nltk'` — the state still entered, took
+the agent's tools away, and delivered nothing. `sources.ready(kind)` probes the
+interpreter and the corpus (cheaply, no corpus load) and `engine.enter` refuses
+with the fact and the command that fixes it:
+
+```
+cannot enter walk · nltk is not importable in the interpreter Hermes runs.
+Install it there, then restart Hermes: uv pip install --python "…" 'nltk>=3.8,<4'
+```
+
 ## Gaps closed after the first pass
 
 - **The `state` tool dispatches.** Verified in an isolated profile
