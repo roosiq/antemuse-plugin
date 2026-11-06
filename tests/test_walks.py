@@ -117,8 +117,8 @@ def test_outer_hops_are_farther_than_wander_hops(cursor):
     from core import walks
     STEP = re.compile(r"^(?P<a>.+?) \([a-z]+\) → (?P<b>.+?) \([a-z]+\)")
 
-    def mean_similarity(name, n=12):
-        cursor.write_text(json.dumps({name: {"node": wn.synsets("hand")[0].name(), "prev": "", "at": 0}}))
+    def mean_similarity(name, n=16, seed="hand"):
+        cursor.write_text(json.dumps({name: {"node": wn.synsets(seed)[0].name(), "prev": "", "at": 0}}))
         walk = walks.GraphWalk({"name": name, **walks.BUILTIN[name]}, cursor)
         sims = []
         for step in walk.step(n):
@@ -130,6 +130,8 @@ def test_outer_hops_are_farther_than_wander_hops(cursor):
                 continue
             v = a[0].path_similarity(b[0])
             sims.append(0.0 if v is None else v)
+        if len(sims) < 3:                      # a dead-end start yields no pairs
+            return mean_similarity(name, n, seed="river")
         return statistics.mean(sims)
 
     assert mean_similarity("outer") + 0.1 < mean_similarity("wander")

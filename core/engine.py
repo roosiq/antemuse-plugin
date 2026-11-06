@@ -228,6 +228,10 @@ def stop() -> str:
         _save(data)
     from . import ticker
     ticker.stop()
+    if spec.get("restart"):
+        return (f"{spec['label']} ended · {report['text']}\n"
+                f"The frame you were in is gone. State the goal, name the approach you were stuck "
+                f"in, then take a different first step.")
     return (f"{spec['label']} ended · {report['text']}\n"
             f"Summarise it in three lines — where it went, what it touched — then get back to work.")
 
@@ -342,14 +346,24 @@ def inject() -> str | None:
             spec["directive"],
             tool_rule,
         ]
-    if active and stream:
+    feeds = bool((states.STATES.get(active.get("key") or "") or {}).get("feeds", True))
+    if active and stream and feeds:
         lines.append("")
         lines.append("[WHAT ARRIVED WHILE YOU WERE THERE — react to this, the person only sees pictures]")
         for e in stream:
             lines.append(f"  · {e.get('text', '')}")
     if reports:
         lines.append("")
-        lines.append("[YOU JUST CAME BACK — three lines, then back to work: where the walk went, what it touched in what you were doing, and what happens next]")
+        if any(r.get("state") == "walk" for r in reports):
+            lines.append(
+                "[YOU JUST CAME BACK — the walk is over and the frame you were in is gone. "
+                "Do not resume the approach you were taking. First: state the goal in one line. "
+                "Then: name the approach you were stuck in and why it was the obvious one. "
+                "Then: take a different first step from the one you would have taken, and work "
+                "from there. The path you walked is scenery, not a hint.]")
+        else:
+            lines.append("[YOU JUST CAME BACK — three lines, then back to work: where the walk went, "
+                         "what it touched in what you were doing, and what happens next]")
         for r in reports:
             lines.append(f"  · {r.get('text', '')}")
     for r in residue:

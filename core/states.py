@@ -17,15 +17,19 @@ STATES: Dict[str, Dict] = {
         "cadence": 9,
         "tools": None,
         "scene": "walk",
+        # The human evidence is subtraction: the problem is removed, the fixation
+        # decays, the gain shows on return. So a walk supplies no material to the
+        # working turn — it takes the frame away and makes you come back different.
+        "feeds": False,
+        "restart": True,
         "directive": (
-            "You are walking while you work. Keep the task moving: use whatever tools it needs, "
-            "answer what you were asked, and make progress. A step through the concept graph will "
-            "arrive every minute or two — when one does, let it brush against the work if it "
-            "belongs there, or say nothing about it if it does not. Never stop working to describe "
-            "the walk, and never pad a reply with it."
+            "You are walking while you work. Keep the task moving and answer what you were asked. "
+            "The walk does not supply ideas and will not hand you anything to react to: it is the "
+            "time away from the frame, not new material. Do not describe the walk, do not pad a "
+            "reply with it, and do not wait for it to tell you something."
         ),
-        "contract": "work continues · a step may interrupt",
-        "residue": "walked: a path through the graph while working",
+        "contract": "work continues · the frame is elsewhere",
+        "residue": "walked: a path taken while the work carried on",
     },
     "daydream": {
         "label": "DAYDREAMING",

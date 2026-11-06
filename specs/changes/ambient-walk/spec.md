@@ -99,3 +99,33 @@ interrupt`; steps landed at 23:12:57 and 23:13:06 (`sliding door → paneling
 [meronym]`, `paneling → swing door [holonym]`); `/return` reported both.
 A test now pins the invariant rather than the numbers: dose 20, cadence ≤ 10 s,
 duration ≤ 3 min.
+
+
+## Revision 3: subtraction, not addition
+
+The mechanism was wrong. Human walking helps because it *removes* the problem and
+the fixation decays — the gain shows **on return**. This walk was built the other
+way round: it injected ten concepts into the working turn while the problem and
+all prior reasoning stayed put. Measured consequence: uptake 1 of 36 hops, and
+three configurations of nulls.
+
+So the walk now subtracts:
+
+- **`feeds: False`.** No `[WHAT ARRIVED …]` block in a walking turn; the steps
+  exist for the person's imagery and for the account, and explicitly not as
+  material ("the walk does not supply ideas and will not hand you anything to
+  react to"). `dream` and `doomscroll` still feed.
+- **`restart: True`.** On return the block is no longer "summarise what happened";
+  it is: state the goal in one line, name the approach you were stuck in and why
+  it was the obvious one, then take a **different first step** — "the path you
+  walked is scenery, not a hint."
+- The account stays (it is the residue), the tool policy stays, the takeover stays.
+
+Verified: a walking turn's injection contains no step text; a dream's still does;
+`stop()` says "different first step" for a walk and "Summarise it in three lines"
+for a dream. 107 tests pass.
+
+What this does not do: it cannot delete the transcript, so "the frame is gone" is
+an instruction rather than a fact. The honest analogue of fixation decay would be
+context compaction, which the plugin cannot perform — this is the closest it gets
+without asking Hermes to drop the working history.

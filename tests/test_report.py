@@ -29,7 +29,7 @@ def test_stop_returns_an_account_with_the_steps():
     assert "WALKING ended" in msg
     assert "3 step(s)" in msg
     assert "salt" in msg and "river" in msg
-    assert "get back to work" in msg.lower()
+    assert "different first step" in msg.lower()
 
 
 def test_the_account_is_kept_as_residue_and_journalled():

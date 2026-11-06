@@ -208,13 +208,15 @@ def test_the_trail_does_not_end_on_a_dangling_separator():
 
 
 def test_a_turn_brings_material_that_the_dead_thread_missed():
-    """One turn per process: without this a three-minute walk delivers one step."""
+    """One turn per process: without this a state delivers one step, not several.
+
+    Dream still feeds material; a walk deliberately does not."""
     from core import sources
-    engine.enter("walk", minutes=5)
+    engine.enter("dream", minutes=5)
     monkeypatch_calls = []
     import core.engine as eng
     class Fake:
-        PROVIDERS = {"walk": lambda n: ["salt (n) → brine (n) · took its hyponym"]}
+        PROVIDERS = {"dream": lambda n: ["salt (n) → brine (n) · took its hyponym"]}
     import sys
     real = sources.PROVIDERS
     sources.PROVIDERS = Fake.PROVIDERS
@@ -225,3 +227,36 @@ def test_a_turn_brings_material_that_the_dead_thread_missed():
         assert "salt (n) → brine (n)" in text
     finally:
         sources.PROVIDERS = real
+
+
+def test_a_walk_supplies_nothing_to_the_working_turn():
+    """Subtraction, not addition: no material is handed over while walking."""
+    engine.enter("walk", 3)
+    engine.record("state", "hand (n) → palm (n) · took its far edge", event="walk")
+    text = engine.inject() or ""
+    assert "[WHAT ARRIVED" not in text
+    assert "palm" not in text, "the step must not reach the working turn"
+
+
+def test_a_dream_still_hands_its_material_over():
+    engine.enter("dream", 3)
+    engine.record("state", "invented · a sell missing its rate", event="dream")
+    assert "[WHAT ARRIVED" in (engine.inject() or "")
+
+
+def test_a_walk_ends_by_taking_the_frame_away():
+    engine.enter("walk", 3)
+    engine.record("state", "hand (n) → palm (n) · took its far edge", event="walk")
+    engine.inject()
+    out = engine.stop()
+    assert "different first step" in out
+    text = engine.inject() or ""
+    assert "frame you were in is gone" in text
+    assert "different first step" in text
+    assert "scenery, not a hint" in text
+
+
+def test_a_dream_ends_by_asking_for_a_summary():
+    engine.enter("dream", 3)
+    out = engine.stop()
+    assert "Summarise it in three lines" in out
