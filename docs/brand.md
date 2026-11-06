@@ -48,7 +48,7 @@ Copy in place:
 
 ```
 catalog     Antemuse — let the agent walk, daydream, dream, or doomscroll.
-blocked     the agent is walking; no tools while it walks. /snap to bring it back.
+blocked     the agent is walking; no tools while it walks. /return to bring it back.
 ending      WALKING ended · walked · 1m · 3 step(s) · body part → loins → torso
 idle        not in a state.
 ```
@@ -57,14 +57,18 @@ idle        not in a state.
 
 ```
 /walk  /daydream  /dream  /doomscroll     enter
-/snap                                     leave, keep the account
+/return                                   leave, keep the account
 /states                                   what is happening now
 ```
 
-`/snap` is the one contested name. It is short, it is what you say to someone
-spacing out, and it fits on a key. Alternatives considered and rejected:
-`/back` (ambiguous with navigation), `/wake` (implies sleep, and dream is the
-state where sleep actually makes sense), `/end` (generic).
+`/return` is the name, and it was bought with a bug: Hermes ships `/snapshot`
+with the alias `/snap`, so the plugin's `/snap` was rejected at registration and
+silently never existed — the escape hatch every blocked-tool message pointed at.
+Renamed to `/return`, which is also what the residue contract says ("come back
+and tell the person what happened in there"). Rejected: `/back` (ambiguous with
+navigation), `/wake` (implies sleep), `/end` (generic). A plugin command that
+collides with a built-in is dropped with a warning, not an error, so this class
+of breakage is silent — check the command actually appears after registering.
 
 ## Look
 
@@ -101,7 +105,7 @@ not fit.
 
 ## Open
 
-1. `/snap` — keep or rename. Recommendation: keep.
+1. `/return` — settled; `/snap` was unavailable (built-in alias collision).
 2. Propose a `cognition` category upstream, or file under `productivity` and say
    so. Recommendation: file, and raise the category gap separately.
 3. Version: 0.9.0 shipped with the internal consolidation (package `core/`,

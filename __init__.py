@@ -11,7 +11,7 @@ Surfaces:
   pre_llm_call         inject the active state into the turn
   pre_tool_call        block tools the state forbids
   transform_llm_output make the state visible on the reply
-  commands             /walk /daydream /dissociate /dream /doomscroll /snap /state
+  commands             /walk /daydream /dissociate /dream /doomscroll /return /state
   tool                 state(action=enter|exit|status|list)
 """
 from __future__ import annotations
@@ -138,7 +138,7 @@ def _enter(key: str, minutes: int | None = None):
     return handler
 
 
-def _snap(_raw: str) -> str:
+def _return(_raw: str) -> str:
     return engine.stop()
 
 
@@ -167,7 +167,7 @@ def _watch(raw: str) -> str:
 
 
 def register(ctx) -> None:
-    engine.clear()
+    engine.settle()
 
     ctx.register_hook("pre_llm_call", _pre_llm_call)
     ctx.register_hook("pre_tool_call", _pre_tool_call)
@@ -193,7 +193,8 @@ def register(ctx) -> None:
                          description="Watch the state in the CLI, redrawing until it ends", args_hint="[seconds]")
     ctx.register_command(name="note", handler=_note,
                          description="Put down what you noticed while in the same state", args_hint="<text>")
-    ctx.register_command(name="snap", handler=_snap, description="End the current state and keep its residue")
+    ctx.register_command(name="return", handler=_return,
+                         description="End the current state and keep its residue")
     ctx.register_command(name="state", handler=_state, description="What state the agent is in")
     ctx.register_command(name="states", handler=_states, description="List every agent state")
 

@@ -31,7 +31,7 @@ count decides how much of it the model gets.
  ──────────────────────────────────────────────────────────────────
  tools  closed
  turns  2
- /note <text>  /snap  /states
+ /note <text>  /return  /states
 ```
 
 Two surfaces, one state:
@@ -45,7 +45,7 @@ Two surfaces, one state:
 ```
 antemuse
  1 walk  2 daydream  3 dissociate  4 dream  5 doomscroll
- n note  space snap  q quit
+ n note  space return  q quit
 ```
 
 ## Install
@@ -60,7 +60,7 @@ hermes plugins enable antemuse
 ```
 plugin.yaml            manifest: 1 tool, 3 hooks
 __init__.py            hooks (pre_llm_call, pre_tool_call, transform_llm_output),
-                       /walk /daydream /dissociate /dream /doomscroll /snap
+                       /walk /daydream /dissociate /dream /doomscroll /return
                        /states /note /watch, and the state tool
 core/states.py         the five states: tools, directive, contract, residue
 core/engine.py         enter/stop/tick, tool policy, journal, residue
@@ -93,7 +93,7 @@ A fresh clone runs 68 of the 74 tests; the six renderer tests skip until
 
 ## Notes
 
-- The `state` tool is exempt from every block, so `/snap` can always end a state.
+- The `state` tool is exempt from every block, so a state can always be ended even when every other tool is closed.
   An earlier build blocked its own escape hatch and locked the agent out of its
   tools until the clock ran down.
 - State is profile-wide, not per-session: the metaphor is about the agent.
@@ -190,7 +190,7 @@ Come back and tell the person what happened in there.
 The account is kept as residue (`kind: "report"`), journalled as an event named
 `report`, and the next turn opens with
 `[YOU JUST CAME BACK — say what happened in there, in your own words, before
-anything else]`. Expiry and `/snap` produce it identically; a state that
+anything else]`. Expiry and `/return` produce it identically; a state that
 received nothing says `nothing arrived`. What the material meant is still the
 agent's to say. Spec: `specs/changes/state-return-report/spec.md`.
 
@@ -271,7 +271,7 @@ refuse unauthenticated JSON reads (403 / 422), so they are not used.
 
 Nothing the person sees is written. No titles, counters, labels, captions or
 explanations — the walk is a place, the dream is weather, the scroll is a feed
-passing by. Keys still work (`j` join, `h`/`l` pan, `space` snap, `q` quit),
+passing by. Keys still work (`j` join, `h`/`l` pan, `space` return, `q` quit),
 they just do not advertise themselves.
 
 The words go where they belong: the state's material is injected into the

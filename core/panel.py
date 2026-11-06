@@ -137,7 +137,7 @@ def debug(state: Dict[str, Any], w: int | None = None, color: bool | None = None
     residue = [r.get("text", "") if isinstance(r, dict) else str(r) for r in (state.get("residue") or [])]
     if residue:
         out.append(" " + _paint("residue ", FAINT, on) + _paint(" · ".join(residue), DIM, on))
-    out.append(" " + _paint("/note <text>  /snap  /states", FAINT, on))
+    out.append(" " + _paint("/note <text>  /return  /states", FAINT, on))
     return "\n".join(out)
 
 

@@ -16,7 +16,7 @@ A state is a bounded change to how the agent behaves, not a place it goes.
 
 ```
 /walk [minutes]      /daydream      /dissociate
-/dream               /doomscroll    /snap
+/dream               /doomscroll    /return
 /states              the panel      /note <text>
 ```
 
@@ -35,7 +35,7 @@ the state ends.
 - Never enter a state to avoid work; enter it to change what the work looks like.
 - Obey the contract literally — a walk that plans is a desk with extra steps.
 - When the state ends, say what it left behind. Residue is the only output.
-- A state that blocks tools also blocks you; `/snap` is always available and is
+- A state that blocks tools also blocks you; `/return` is always available and is
   exempt from the block.
 
 

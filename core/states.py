@@ -98,7 +98,7 @@ def palette() -> str:
         tools = "no tools" if not s["tools"] else ("tools: " + ", ".join(s["tools"]) if s["tools"] != "all" else "all tools")
         lines.append(f"  /{key:<10} {s['minutes']:>3} min · {s['turns']} turn(s) · {tools}")
         lines.append(f"             {s['contract']}")
-    lines.append("  /snap       end the current state and keep the residue")
+    lines.append("  /return     end the current state and keep the residue")
     lines.append("")
     lines.append("  events arrive on a timer: walk 18s · daydream 10s · doomscroll 6s · dream 40s")
     return "\n".join(lines)

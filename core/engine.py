@@ -49,17 +49,22 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
         e for e in data.get("journal", [])
         if e.get("state") == key and e.get("at", 0) >= started and e.get("text")
     ]
-    mins = max(1, int(round((time.time() - started) / 60)))
+    # the account is the material the state delivered, not the agent's own prose:
+    # counting replies as "steps" made a five-step walk report ten.
+    steps = [e for e in events if e.get("who") == "state"]
+    # the clock stops when the state ends, not when someone notices it ended
+    ended = min(time.time(), active.get("ends_at") or time.time())
+    mins = max(1, int(round((ended - started) / 60)))
     trail: List[str] = []
-    for e in events:
+    for e in steps:
         head = " ".join(e["text"].split()[:6]).rstrip(",.;:")
         if head and head not in trail:
             trail.append(head)
     body = " → ".join(trail[:5]) if trail else "nothing arrived"
     return {
         "state": key,
-        "text": f"{key} {mins}m · {len(events)} step(s) · {body[:180]}",
-        "steps": len(events),
+        "text": f"{key} {mins}m · {len(steps)} step(s) · {body[:180]}",
+        "steps": len(steps),
     }
 
 
@@ -84,6 +89,19 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
             pass
         return True
     return False
+
+
+def settle() -> None:
+    """On load: expire a state whose clock ran out, leave a live one alone.
+
+    Registration happens in every new process, so this cannot be a turn
+    (that would spend a turn per CLI invocation) and must not be a clear
+    (that would drop a state the person is still inside, and its residue).
+    """
+    with _LOCK:
+        data = _load()
+        if _expire(data):
+            _save(data)
 
 
 def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
@@ -166,9 +184,16 @@ def inject() -> str | None:
     with _LOCK:
         data = _load()
         _expire(data)
-        active = data.get("active")
+        active = data.get("active") or {}
         residue = list(data.get("residue", []))
-        stream = [e for e in data.get("journal", []) if e.get("who") == "state"][-6:]
+        # only what THIS state delivered: a doomscroll was reporting the previous
+        # walk's WordNet steps as things it had consumed.
+        started = active.get("entered_at", 0) or 0
+        stream = [
+            e for e in data.get("journal", [])
+            if e.get("who") == "state" and e.get("state") == active.get("key")
+            and e.get("at", 0) >= started
+        ][-6:]
     reports = [r for r in residue if r.get("kind") == "report"]
     residue = [r for r in residue if r.get("kind") != "report"]
     if not active and not residue and not reports:
@@ -220,10 +245,10 @@ def policy(tool_name: str) -> Dict[str, Any] | None:
     allowed = spec["tools"]
     if allowed == []:
         return {"action": "block",
-                "message": f"the agent is {spec['label'].lower()}; no tools in this state. /snap to return."}
+                "message": f"the agent is {spec['label'].lower()}; no tools in this state. /return to come back."}
     if isinstance(allowed, list) and tool_name not in allowed:
         return {"action": "block",
-                "message": f"{spec['label'].lower()}: only {', '.join(allowed)} are available. /snap to return."}
+                "message": f"{spec['label'].lower()}: only {', '.join(allowed)} are available. /return to come back."}
     return None
 
 
@@ -237,7 +262,7 @@ def annotate(text: str) -> str | None:
         return None
     spec = states.STATES[active["key"]]
     left = max(0, int((active["ends_at"] - time.time()) / 60))
-    return f"{text}\n\n— {spec['label'].lower()}, {left} min left · /snap to come back"
+    return f"{text}\n\n— {spec['label'].lower()}, {left} min left · /return to come back"
 
 
 def status() -> str:
