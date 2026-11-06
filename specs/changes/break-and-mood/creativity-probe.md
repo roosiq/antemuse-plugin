@@ -85,3 +85,25 @@ events), not in the walk.
 clock changed nothing measurable, which is exactly what the earlier nulls
 predicted. The expense of a walk is now a state entry, a few hundred characters
 per turn, and three minutes — not half an hour.
+
+## 4. The far walk (`outer`) — n = 3 pairs
+
+Same prompt, same instrument. The material this time was genuinely far:
+`wall rue → royal tennis → guereza → papilloma → Appaloosa → accessory nerve → anoa`.
+
+| pair | categories idle→walk | similarity idle→walk |
+|---|---|---|
+| 100 | 12 → 12 | 0.35 → 0.28 |
+| 101 | 13 → 8 | 0.31 → 0.37 |
+| 102 | 12 → 12 | 0.28 → 0.37 |
+
+Mean **12.3 idle vs 10.7 walking** (paired −1.7, walk better in **0 of 3**);
+similarity **0.311 vs 0.341**. Same direction and size as both previous
+configurations, and this time the jump was enormous per hop.
+
+Uptake: **0 of 6 hops appeared in any answer**. The ideas stayed in doors, heat,
+weights and anvils — exactly the neighbourhood the walk had just left.
+
+That makes three configurations (six seeded hops, fast wander, fast outer) and
+three nulls. The distance of the material is not the binding constraint; whether
+anything reaches the answer is, and nothing so far moves it.
