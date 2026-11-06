@@ -7,9 +7,9 @@ Decisions, not options. Anything still open is listed at the bottom.
 **Antemuse.** The plugin is not a product inside Antemuse; it is the part of
 Antemuse that touches the agent, so it carries the brand name undecorated.
 
-Retired: `concept-kitchen`, `antemuse-kitchen`, `antemuse-room`,
-`antemuse-states`. Each described a metaphor we dropped — a kitchen, a room, a
-sub-brand.
+Earlier names are retired and appear nowhere in the repo: each described a
+metaphor we dropped — a room, a workspace, a sub-brand — or a suffix that made
+the plugin look like a feature of itself. The name is Antemuse, undecorated.
 
 Repo directory: `/home/ryan/antemuse-plugin`. It cannot be `~/antemuse` because
 that path is the public site repository.

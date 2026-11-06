@@ -56,3 +56,22 @@ def test_no_document_points_at_a_command_that_cannot_register():
             if hit in text:
                 offenders.append(f"{path.relative_to(ROOT)}: {hit.strip()}")
     assert not offenders, offenders
+
+
+def test_the_retired_package_name_appears_nowhere():
+    """The name is Antemuse. The old one is not spelled anywhere, this file included."""
+    needle = "kit" + "chen"          # never written whole, so this check passes itself
+    skip = {"node_modules", ".git", "__pycache__", ".pytest_cache", "test-results"}
+    offenders = []
+    for path in pathlib.Path(ROOT).rglob("*"):
+        if not path.is_file() or skip & set(path.parts):
+            continue
+        if path.suffix in {".png", ".jpg", ".jpeg", ".zip", ".pyc", ".ico"}:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore").lower()
+        except Exception:
+            continue
+        if needle in text:
+            offenders.append(str(path.relative_to(ROOT)))
+    assert not offenders, offenders

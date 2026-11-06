@@ -9,9 +9,9 @@ tool schema, or rendered output.
 The plugin's internals still carry the names of concepts it has since dropped.
 A stranger opening the repo should be able to name every module by what it does.
 
-- The package is `core/` — the last surviving fragment of `concept-kitchen`,
-  a minigame that no longer exists. Its `__init__.py` docstring still says
-  "Concept Kitchen core modules."
+- The package was `core/`'s predecessor, named after a minigame that no longer
+  exists; its `__init__.py` docstring still called the modules by that minigame's
+  name.
 - `store.py` is half dead: the `sparks`/`services` SQLite board, leaderboard,
   and round bookkeeping are minigame leftovers with no caller.
 - `definitions.py` names a file after its verb, not its content.
@@ -20,7 +20,7 @@ A stranger opening the repo should be able to name every module by what it does.
 - `image.py` and `realimagery.py` both implement a Bayer dissolve, both build
   ANSI half-block rows, and both crop-to-cell-aspect. Two cell models
   (`(r,g,b)` and `((r,g,b),(r,g,b))`) for one idea.
-- `data_dir()` still honours `ANTEMUSE_ROOM_HOME` and `ANTEMUSE_KITCHEN_HOME`.
+- `data_dir()` still honours two retired environment aliases from earlier names.
 
 ## Non-goals
 
@@ -50,7 +50,7 @@ frame. No second copy of any of these exists in the package.
 **R4 — dead code removed.**
 `storage.py` keeps `data_dir`, `load_active`, `save_active` only. The SQLite
 board, sparks, services, leaderboard, and round bookkeeping are deleted, as are
-the `ANTEMUSE_ROOM_HOME` and `ANTEMUSE_KITCHEN_HOME` aliases.
+the retired environment aliases from earlier names.
 
 **R5 — no stale identity.**
 `__version__` matches `plugin.yaml`. Registered skill name matches the plugin
@@ -69,7 +69,8 @@ repo relative to itself rather than a hardcoded `~/antemuse-states`.
 - `env -u PYTHONPATH NLTK_DATA=~/nltk_data ANTEMUSE_STATES_HOME=<tmp> pytest tests/ -q`
 - `hermes plugins doctor ~/antemuse-plugin`
 - one real CLI run of the panel plus one tool call (`state(action="status")`)
-- `grep -rn "kitchen\|realimagery\|three_backdrop\|record_spark\|leaderboard"` over
+- `grep -rni` for the retired package name, `realimagery`, `three_backdrop`,
+  `record_spark`, `leaderboard` over
   Python outside `docs/brand.md` and `specs/` returns nothing
 
 ## Must not change

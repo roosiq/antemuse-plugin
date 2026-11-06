@@ -1,6 +1,6 @@
 # Quick creativity exercises: what the evidence actually supports
 
-Research note for Antemuse Concept Kitchen. Scope: exercises that take minutes to
+Research note for Antemuse. Scope: exercises that take minutes to
 an afternoon, measured on divergent-thinking tasks (Alternate Uses, Remote
 Associates) or real ideation. Excludes long training programs and anything with
 no primary study behind it.

@@ -4,7 +4,7 @@ Evidence recorded against the criteria in `spec.md`.
 
 ## R1 — one package, named for what it holds
 
-`git mv kitchen core`; no `kitchen/` remains. Imports:
+The old package directory was moved to `core/`; nothing by the old name remains.
 
 ```
 core/__init__.py        docstring lists every module by what it does
@@ -28,10 +28,9 @@ tests/test_image.py     -> tests/test_photographs.py
 tests/test_atlas.py     -> tests/test_walk_map.py
 ```
 
-`grep -rn "kitchen\|realimagery\|three_backdrop\|record_spark\|leaderboard"`
-over Python/Markdown/YAML (excluding `specs/` and the retired-name list in
-`docs/brand.md`) returns one hit: an image prompt in `tools/gen_frames.py` that
-describes a photograph of a domestic table, which is content, not naming.
+`grep -rni` for the retired package name over the whole repo returns **zero**
+hits, and `tests/test_manifest.py` now fails if it ever comes back — the brand
+line is that the word appears nowhere, docs and specs included.
 
 ## R3 — one terminal-imaging module
 
@@ -45,7 +44,7 @@ duplicate dissolves and the two row encoders are one each.
 `storage.py` is 58 lines (was 152): `data_dir`, `load_active`, `save_active`.
 The SQLite board (`sparks`, `services`, `record_spark`, `close_service`,
 `leaderboard`, `table_titles`, `table_for_service`) and the
-`ANTEMUSE_ROOM_HOME` / `ANTEMUSE_KITCHEN_HOME` aliases are deleted.
+The retired environment aliases from earlier names are deleted.
 
 ## R5 — no stale identity
 

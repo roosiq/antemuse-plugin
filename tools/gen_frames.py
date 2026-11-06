@@ -45,7 +45,7 @@ PROMPTS = {
     "daydream": [
         "empty sunlit room, dust drifting in a shaft of afternoon light, curtain lifting, warm haze",
         "close detail of a window with rain on glass, soft bokeh lights beyond, warm interior glow",
-        "quiet kitchen table in half light, a cooling cup, long shadows, memories of a place once lived in",
+        "quiet table in half light, a cooling cup, long shadows, memories of a place once lived in",
         "soft focus field of tall grass in summer wind, sun flare, dreamy overexposure",
         "stairwell at dusk, one warm lamp, worn banister, long soft shadows",
         "bedroom ceiling with light from a streetlamp moving slowly across it, dust, quiet",
