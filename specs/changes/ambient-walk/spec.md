@@ -71,3 +71,18 @@ Run on the pelican session (`--resume`), with the plugin reloaded:
 - Next turn opened with exactly three lines — where the walk went, what it touched in the drawing ("brachial veins are the ones running down the thing that grips a bar… the grip read as flat"), and what happens next — then went straight back to editing (11,912 → 12,484 B, six vision passes on the grip).
 
 **Timing note:** that resume turn exceeded a 300 s harness timeout and was interrupted mid-verification. Ambient walking plus an exacting visual task can run for minutes; the walk did not cause it (the agent was doing vision checks on the drawing). Give long turns a longer ceiling.
+
+## Revision: sped up, same dose
+
+Measured first, then tuned. The creativity probe found no dose-response and almost
+no uptake (1 of 30 delivered hops used), so the half-hour length bought nothing
+measurable. It also overshot the evidence it was based on: the walking study in
+`docs/creativity-exercises.md` ran **eight minutes**, not thirty.
+
+`walk` is now **10 minutes at one step every 30 s** — still 20 steps, the same
+dose, in a third of the time and inside a single work session. Turns 12 → 8.
+
+Verified: `/walk` reports `WALKING · 10 min · 8 turn(s) · work continues · a step
+may interrupt`; the palette agrees; a unit test pins the arithmetic
+(`minutes * 60 // cadence == 20`) and another proves material waits the cadence
+and then arrives again. 101 tests pass.

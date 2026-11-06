@@ -164,7 +164,7 @@ the journal as an event (`who="state"`), so the panel fills while you watch.
 
 | state | length | cadence | material | done with it |
 |---|---|---|---|---|
-| **walk** | 30 min | 90 s | **WordNet** — 117,659 synsets | one step per event along a named edge (hypernym, hyponym, holonym, meronym, similar, also-see, antonym), continuing from where the last step ended, with the destination's definition |
+| **walk** | 10 min | 30 s | **WordNet** — 117,659 synsets | one step per event along a named edge (hypernym, hyponym, holonym, meronym, similar, also-see, antonym), continuing from where the last step ended, with the destination's definition |
 | **daydream** | 3 min | 10 s | `MEMORY.md` + `USER.md` | two memories surface; they are joined only when they share enough terms, otherwise reported adjacent |
 | **doomscroll** | 8 min | 6 s | live RSS (Ars Technica, The Verge, HN), cached 30 min | random items, no synthesis — the feed talks, you consume |
 | **dream** | 30 min | 40 s | **FrameNet** — 1,221 frames | a frame's roles and lexical units recombined into a thing that does not exist: "a {frame} missing its {agent}, so every {patient} has to stand in for it" |

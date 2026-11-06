@@ -120,3 +120,24 @@ def test_a_profile_that_has_never_run_anything_can_still_report():
     assert engine.record_mood("tired").startswith("mood: tired")
     assert "break:" in engine.take_break()
     assert engine.break_view()["due"] in ("carry on", "break due", "break overdue")
+
+
+def test_the_walk_is_a_ten_minute_twenty_step_walk():
+    """Sped up to the evidence's own dose: the walking study ran eight minutes."""
+    spec = states.STATES["walk"]
+    assert spec["minutes"] == 10
+    assert spec["cadence"] == 30
+    assert spec["minutes"] * 60 // spec["cadence"] == 20, "same dose as the half-hour version"
+
+
+def test_material_waits_for_the_cadence_and_then_arrives_again():
+    engine.enter("walk", 10)
+    assert engine.deliver_if_due() >= 1, "the first turn of a state gets material"
+    assert engine.deliver_if_due() == 0, "not due again immediately"
+    import json
+    import pathlib
+    path = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
+    data = json.loads(path.read_text())
+    data["journal"][-1]["at"] -= 31          # one cadence later
+    path.write_text(json.dumps(data))
+    assert engine.deliver_if_due() >= 1
