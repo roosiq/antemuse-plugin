@@ -57,7 +57,7 @@ def test_residue_survives_into_the_next_panel_debug():
     engine.stop()
     out = panel.debug(engine.watch_state(), w=88, color=False)
     assert "residue" in out
-    assert "walked" in out
+    assert "walk" in out
 
 
 def test_clock_and_bar_helpers():

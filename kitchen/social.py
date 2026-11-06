@@ -19,9 +19,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 RNG = random.SystemRandom()
-CACHE = Path.home() / ".hermes/plugin-data/antemuse-states/social.json"
+CACHE = Path.home() / ".hermes/plugin-data/antemuse/social.json"
 TTL = 600
-UA = "antemuse-states/0.7 (+https://antemuse.com)"
+UA = "antemuse/0.9 (+https://antemuse.com)"
 TIMEOUT = 8
 
 SOURCES = {

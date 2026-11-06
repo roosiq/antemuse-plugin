@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 
 HOME = Path.home()
 NLTK_HOME = HOME / "nltk_data"
-DATA = HOME / ".hermes/plugin-data/antemuse-states"
+DATA = HOME / ".hermes/plugin-data/antemuse"
 WALK_CURSOR = DATA / "walk_cursor.json"
 FEED_CACHE = DATA / "feed.json"
 MEMORY = HOME / ".hermes/memories/MEMORY.md"
@@ -227,7 +227,7 @@ def _strip_xml(s: str) -> str:
 
 
 def _fetch_feed(url: str, limit: int = 12) -> List[Dict[str, str]]:
-    req = urllib.request.Request(url, headers={"User-Agent": "antemuse-states/0.6"})
+    req = urllib.request.Request(url, headers={"User-Agent": "antemuse/0.9"})
     with urllib.request.urlopen(req, timeout=8) as r:
         body = r.read().decode("utf-8", "replace")
     items = []

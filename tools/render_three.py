@@ -2,7 +2,7 @@
 
     python3 tools/render_three.py            # all five states, 8 frames each
 
-Requires a local static server on 127.0.0.1:40813 rooted at ~/antemuse-states:
+Requires a local static server on 127.0.0.1:40813 rooted at ~/antemuse-plugin:
 
     python3 -m http.server 8795 --bind 127.0.0.1
 """
@@ -14,11 +14,11 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = Path.home() / ".hermes/plugin-data/antemuse-states/three_frames"
+OUT = Path.home() / ".hermes/plugin-data/antemuse/three_frames"
 CHROME = "chromium-browser"
 FLAGS = [
     "--headless=new", "--no-sandbox", "--use-gl=angle", "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader", "--hide-scrollbars", "--window-size=240,140",
+    "--enable-unsafe-swiftshader", "--hide-scrollbars", "--window-size=1600,420",
     "--virtual-time-budget=8000",
 ]
 STATES = ["walk", "daydream", "dissociate", "dream", "doomscroll"]

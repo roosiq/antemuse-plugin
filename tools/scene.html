@@ -1,14 +1,15 @@
 <!doctype html><html><head><meta charset=utf-8><style>
 html,body{margin:0;background:#0e0c0b;overflow:hidden}canvas{display:block}
-</style></head><body><canvas id="c" width="240" height="140"></canvas>
+</style></head><body><canvas id="c"></canvas>
 <script>window.addEventListener("error",e=>{document.title="ERR "+e.message;});</script>
 <script type="module">
 const THREE = await import('./three.module.js');
-const W = 240, H = 140;
+const W = Math.max(320, window.innerWidth || 960);
+const H = Math.max(180, window.innerHeight || 540);
 const renderer = new THREE.WebGLRenderer({canvas: document.getElementById('c'), antialias: true});
 renderer.setSize(W, H, false); renderer.setPixelRatio(1);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.35;
+renderer.toneMappingExposure = 2.05;
 
 const params = new URLSearchParams(location.search);
 const NAME = params.get('scene') || 'walk';

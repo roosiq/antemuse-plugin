@@ -134,7 +134,7 @@ def debug(state: Dict[str, Any], w: int | None = None, color: bool | None = None
         closes = "closed" if active["tools"] == [] else ("open" if active["tools"] is None else ", ".join(active["tools"]))
         out.append(" " + _paint("tools  ", FAINT, on) + _paint(closes, DIM, on))
         out.append(" " + _paint("turns  ", FAINT, on) + _paint(str(active["turns_left"]), DIM, on))
-    residue = state.get("residue") or []
+    residue = [r.get("text", "") if isinstance(r, dict) else str(r) for r in (state.get("residue") or [])]
     if residue:
         out.append(" " + _paint("residue ", FAINT, on) + _paint(" · ".join(residue), DIM, on))
     out.append(" " + _paint("/note <text>  /snap  /states", FAINT, on))

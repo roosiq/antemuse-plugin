@@ -1,9 +1,9 @@
 ---
 name: states
-description: Take and leave agent states — walk, daydream, dissociate, dream, doomscroll — and show the shared panel. Use when the user asks the agent to step away from the desk, work at a distance, or when a state is already active and governs this turn.
+description: Take and leave agent states — walk, daydream, dream, doomscroll — and watch them as imagery. Use when the user asks the agent to step away from the desk, work at a distance, or when a state is already active and governs this turn.
 ---
 
-# Antemuse States
+# Antemuse
 
 A state is a bounded change to how the agent behaves, not a place it goes.
 
@@ -37,3 +37,19 @@ the state ends.
 - When the state ends, say what it left behind. Residue is the only output.
 - A state that blocks tools also blocks you; `/snap` is always available and is
   exempt from the block.
+
+
+## Verifying in this environment
+
+The shell exports a `PYTHONPATH` pointing at a Python 3.14 site-packages, which
+breaks both `pytest` collection and `PIL` inside any other interpreter. Clear it
+for every test run:
+
+```bash
+env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data ANTEMUSE_STATES_HOME=/tmp/check \
+  uvx --with pillow --with nltk --quiet pytest tests/ -q
+```
+
+And always point `ANTEMUSE_STATES_HOME` somewhere temporary during verification —
+the plugin shares one state file with the live agent, so a test that enters a
+state will lock the agent's own tools until it exits.

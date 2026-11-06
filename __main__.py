@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 
 if __package__ in (None, ""):
-    sys.path.insert(0, "/home/ryan/antemuse-states")
+    sys.path.insert(0, "/home/ryan/antemuse-plugin")
 
 from kitchen import tui
 

@@ -1,4 +1,4 @@
-# Antemuse States
+# Antemuse
 
 The agent can take a walk, daydream, dissociate, dream, or doomscroll — and a
 person can watch it happen in the CLI and take the same state beside it.
@@ -51,8 +51,8 @@ hermes-states
 ## Install
 
 ```bash
-ln -s ~/antemuse-states ~/.hermes/plugins/antemuse-states
-hermes plugins enable antemuse-states
+ln -s ~/antemuse ~/.hermes/plugins/antemuse
+hermes plugins enable antemuse
 ```
 
 ## Layout
@@ -74,7 +74,7 @@ tests/                 18 tests
 
 ```bash
 hermes-states                # full-screen view
-hermes plugins doctor ~/antemuse-states
+hermes plugins doctor ~/antemuse
 PYTHONPATH= ANTEMUSE_STATES_HOME=$(mktemp -d) uvx pytest tests/ -q
 hermes chat -q '/walk' && hermes chat -q '/states'
 ```
@@ -96,7 +96,7 @@ PNG is quantised to upper-half blocks (`▀` = two vertical pixels per cell), an
 the takeover replays the cached frames at animation speed.
 
 ```bash
-cd ~/antemuse-states && python3 tools/render_three.py    # 12 frames, ~0.65 s each
+cd ~/antemuse && python3 tools/render_three.py    # 12 frames, ~0.65 s each
 ```
 
 Frames land in `<plugin data>/three_frames/`; `kitchen/three_backdrop.py` loads
@@ -138,7 +138,7 @@ One scene per state, rendered from `tools/scene.html`:
 - **doomscroll** — feed cards with text bars streaming toward the camera, tilted and accelerating
 
 ```bash
-python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-states &
+python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse &
 python3 tools/render_three.py          # 5 scenes x 8 frames, ~0.6 s each
 ```
 
@@ -163,6 +163,24 @@ Corpora live in `~/nltk_data` (`wordnet`, `framenet_v17`) and are found through
 in `walk_cursor.json` and refuses to step straight back where it came from.
 
 `dissociate` is gone — replaced by doomscroll.
+
+### Coming back
+
+Every state ends with an account of itself, built from the journal rather than
+from a template: state, minutes, step count, and the trail, condensed to four-word
+heads.
+
+```
+WALKING ended · walk 1m · 3 step(s) · kitchen to hinge → hinge to river → river to door
+Come back and tell the person what happened in there.
+```
+
+The account is kept as residue (`kind: "report"`), journalled as an event named
+`report`, and the next turn opens with
+`[YOU JUST CAME BACK — say what happened in there, in your own words, before
+anything else]`. Expiry and `/snap` produce it identically; a state that
+received nothing says `nothing arrived`. What the material meant is still the
+agent's to say. Spec: `specs/changes/state-return-report/spec.md`.
 
 ## The walk, as a place
 

@@ -1,12 +1,11 @@
-name: antemuse-states
-label: Antemuse States
+name: antemuse
+label: Antemuse
 kind: standalone
 version: "0.8.0"
 author: Antemuse
 homepage: https://antemuse.com
 description: >
-  Antemuse States lets the agent itself take a walk, daydream, dream, or
-  doomscroll. A state is a bounded change to behaviour, not a place:
+  Antemuse lets the agent itself take a walk, daydream, dream, or doomscroll. A state is a bounded change to behaviour, not a place:
   it decides which tools are still allowed, what shape the next replies take,
   and what residue the agent carries when the state ends. States expire on
   minutes and turns, are injected into the turn they govern, block forbidden

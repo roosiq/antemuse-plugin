@@ -37,13 +37,45 @@ def _save(data: Dict[str, Any]) -> None:
     tmp.replace(path)
 
 
+def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
+    """What happened while the agent was away, in one line it can speak from.
+
+    The plugin knows the facts — how long, how many steps, which material
+    arrived. It does not know what the walk meant; that is the agent's to say.
+    """
+    key = active["key"]
+    started = active.get("entered_at", 0) or 0
+    events = [
+        e for e in data.get("journal", [])
+        if e.get("state") == key and e.get("at", 0) >= started and e.get("text")
+    ]
+    mins = max(1, int(round((time.time() - started) / 60)))
+    trail: List[str] = []
+    for e in events:
+        head = " ".join(e["text"].split()[:6]).rstrip(",.;:")
+        if head and head not in trail:
+            trail.append(head)
+    body = " → ".join(trail[:5]) if trail else "nothing arrived"
+    return {
+        "state": key,
+        "text": f"{key} {mins}m · {len(events)} step(s) · {body[:180]}",
+        "steps": len(events),
+    }
+
+
 def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     active = data.get("active")
     if not active:
         return False
     now = now if now is not None else time.time()
     if active["turns_left"] <= 0 or now >= active["ends_at"]:
-        data["residue"].append({"text": definitions.STATES[active["key"]]["residue"], "turns_left": 2})
+        report = _account(data, active)
+        data["residue"].append({**report, "kind": "report", "turns_left": 2})
+        data.setdefault("journal", []).append({
+            "who": "state", "state": active["key"], "event": "report",
+            "text": report["text"], "at": now,
+        })
+        data["journal"] = data["journal"][-60:]
         data["active"] = None
         try:
             from . import ticker
@@ -89,12 +121,19 @@ def stop() -> str:
         if not active:
             return "not in a state."
         spec = definitions.STATES[active["key"]]
-        data["residue"].append({"text": spec["residue"], "turns_left": 2})
+        report = _account(data, active)
+        data["residue"].append({**report, "kind": "report", "turns_left": 2})
+        data["journal"].append({
+            "who": "state", "state": active["key"], "event": "report",
+            "text": report["text"], "at": time.time(),
+        })
+        data["journal"] = data["journal"][-60:]
         data["active"] = None
         _save(data)
     from . import ticker
     ticker.stop()
-    return f"{spec['label']} ended · residue: {spec['residue']}"
+    return (f"{spec['label']} ended · {report['text']}\n"
+            f"Come back and tell the person what happened in there.")
 
 
 def tick() -> Dict[str, Any] | None:
@@ -128,9 +167,11 @@ def inject() -> str | None:
         data = _load()
         _expire(data)
         active = data.get("active")
-        residue = [r["text"] for r in data.get("residue", [])]
+        residue = list(data.get("residue", []))
         stream = [e for e in data.get("journal", []) if e.get("who") == "state"][-6:]
-    if not active and not residue:
+    reports = [r for r in residue if r.get("kind") == "report"]
+    residue = [r for r in residue if r.get("kind") != "report"]
+    if not active and not residue and not reports:
         return None
     lines: List[str] = []
     if active:
@@ -152,8 +193,13 @@ def inject() -> str | None:
         lines.append("[WHAT ARRIVED WHILE YOU WERE THERE — react to this, the person only sees pictures]")
         for e in stream:
             lines.append(f"  · {e.get('text', '')}")
+    if reports:
+        lines.append("")
+        lines.append("[YOU JUST CAME BACK — say what happened in there, in your own words, before anything else]")
+        for r in reports:
+            lines.append(f"  · {r.get('text', '')}")
     for r in residue:
-        lines.append(f"[RESIDUE: {r}]")
+        lines.append(f"[RESIDUE: {r.get('text', '')}]")
     return "\n".join(lines)
 
 
@@ -199,7 +245,10 @@ def status() -> str:
         data = _load()
         _expire(data)
         active = data.get("active")
-        residue = [r["text"] for r in data.get("residue", [])]
+        residue = [
+            r if isinstance(r, dict) else {"kind": "legacy", "text": str(r)}
+            for r in data.get("residue", [])
+        ]
     if not active:
         lines = ["not in a state."]
     else:
@@ -211,7 +260,8 @@ def status() -> str:
             f"  {spec['directive']}",
         ]
     if residue:
-        lines.append("residue: " + "; ".join(residue))
+        lines.append("residue: " + "; ".join(
+            r.get("text", "") if isinstance(r, dict) else str(r) for r in residue))
     return "\n".join(lines)
 
 
@@ -261,7 +311,10 @@ def watch_state() -> Dict[str, Any]:
         _expire(data)
         active = data.get("active")
         journal = list(data.get("journal", []))
-        residue = [r["text"] for r in data.get("residue", [])]
+        residue = [
+            r if isinstance(r, dict) else {"kind": "legacy", "text": str(r)}
+            for r in data.get("residue", [])
+        ]
     out: Dict[str, Any] = {
         "active": None,
         "journal": journal,

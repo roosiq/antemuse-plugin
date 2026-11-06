@@ -32,7 +32,7 @@ def _data_dir() -> Path:
         from . import store
         return store.data_dir()
     except Exception:
-        return HOME / ".hermes/plugin-data/antemuse-states"
+        return HOME / ".hermes/plugin-data/antemuse"
 
 
 def cursor_path() -> Path:

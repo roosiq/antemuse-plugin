@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-PLUGIN_NAME = "antemuse-states"
+PLUGIN_NAME = "antemuse"
 
 
 def data_dir() -> Path:
@@ -27,7 +27,7 @@ def data_dir() -> Path:
         from plugins.plugin_storage import plugin_data_dir  # type: ignore
         return plugin_data_dir(PLUGIN_NAME)
     except Exception:  # standalone/test use
-        path = Path.home() / ".antemuse-states"
+        path = Path.home() / ".antemuse"
         path.mkdir(parents=True, exist_ok=True)
         return path
 

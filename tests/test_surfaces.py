@@ -16,7 +16,7 @@ import shutil  # noqa: E402
 
 def setup_module(_):
     """The art renderer reads pre-rendered frames; seed the temp profile with one."""
-    src = Path("/home/ryan/.hermes/plugin-data/antemuse-states/three_frames")
+    src = Path("/home/ryan/.hermes/plugin-data/antemuse/three_frames")
     dst = Path(os.environ["ANTEMUSE_STATES_HOME"]) / "three_frames"
     dst.mkdir(parents=True, exist_ok=True)
     cands = sorted(src.glob("*.png")) or [

@@ -155,7 +155,8 @@ def record(state: Dict[str, Any]) -> str:
     for e in state.get("journal", []):
         lines.append(f"{e.get('who','agent')} {e['state']} :: {e['text']}")
     for r in state.get("residue", []):
-        lines.append(f"residue :: {r}")
+        text = r.get("text", "") if isinstance(r, dict) else str(r)
+        lines.append(f"residue :: {text}")
     return "\n".join(lines)
 
 

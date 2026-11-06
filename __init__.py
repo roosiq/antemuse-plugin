@@ -1,4 +1,4 @@
-"""Antemuse States — the agent can take a walk, daydream, dissociate, dream.
+"""Antemuse — the agent can take a walk, daydream, dissociate, dream.
 
 A state is a temporary change to how the agent behaves, not a place it goes:
 

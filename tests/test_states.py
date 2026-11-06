@@ -51,7 +51,7 @@ def test_state_expires_on_turns_and_leaves_residue():
     assert engine.tick() is not None
     assert engine.tick() is None                     # spent
     assert engine.peek() is None
-    assert "daydreamed" in engine.inject()
+    assert "daydream" in engine.inject()
 
 
 def test_state_expires_on_clock():
@@ -63,7 +63,7 @@ def test_state_expires_on_clock():
     data["active"]["ends_at"] = time.time() - 1
     path.write_text(json.dumps(data))
     assert engine.peek() is None
-    assert "walked" in engine.inject()
+    assert "walk" in engine.inject()
 
 
 def test_snap_ends_the_state_and_keeps_residue():
@@ -71,7 +71,7 @@ def test_snap_ends_the_state_and_keeps_residue():
     out = engine.stop()
     assert "ended" in out
     assert engine.peek() is None
-    assert "walked" in engine.status()
+    assert "walk" in engine.status() and "ended" not in engine.status()
 
 
 def test_annotate_marks_the_reply_only_while_active():

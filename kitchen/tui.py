@@ -1,4 +1,4 @@
-"""A full-screen CLI takeover for Antemuse States.
+"""A full-screen CLI takeover for Antemuse.
 
 Draws on the controlling terminal (/dev/tty) so it paints over the Hermes CLI
 instead of being captured as command output: alternate screen, hidden cursor,
@@ -7,9 +7,11 @@ restored exactly as it was.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import select
+import subprocess
 import shutil
 import sys
 import termios
@@ -17,7 +19,7 @@ import time
 import tty
 from typing import Any, Dict, List
 
-from . import atlas, definitions, engine, panel, three_backdrop
+from . import atlas, definitions, engine, image, panel, realimagery, store, three_backdrop
 
 BG = (14, 12, 11)
 INK = (242, 234, 225)
@@ -108,33 +110,57 @@ def _entries(journal: List[Dict[str, Any]], who: str, width: int, limit: int) ->
     return out
 
 
+_LAST: Dict[str, Any] = {"key": None, "cells": None}
+_FADE = 12          # ticks a dissolve lasts (~1s at the loop rate)
+
+
+def _scene_pngs(key: str) -> List[Any]:
+    base = three_backdrop._dir()
+    sub = base / key
+    pngs = sorted(sub.glob("*.png")) if key and sub.is_dir() else []
+    return pngs or sorted(base.glob("*.png"))
+
+
+def _overlay(state: Dict[str, Any], cols: int, rows: int, tick: int, pan: int) -> List[str] | None:
+    """The walk's path, drawn over its scene — shapes only, never words."""
+    if (state.get("active") or {}).get("key") != "walk":
+        return None
+    import re
+    return [re.sub(r"\x1b\[[0-9;]*m", "", r) for r in
+            atlas.render(state, cols, rows, tick, pan=pan)]
+
+
 def imagery_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0, pan: int = 0) -> List[str]:
-    """The person gets pictures. No labels, no counters, no explanation."""
+    """A full image, then a dissolve when the state changes."""
     active = state.get("active") or {}
-    canvas = bg(BG) + fg(INK)
-    rows: List[str] = []
-    if active.get("key") == "walk":
-        art = atlas.render(state, w - 1, h, tick, pan=pan)
+    key = active.get("key") or "idle"
+    cols, height = w - 1, h
+    seconds = tick / 10.0
+
+    # photographs first: they are the point of the thing
+    if active.get("key") and realimagery.available(active["key"]):
+        shot = realimagery.frame(active["key"], cols, height, seconds)
+        if shot is not None:
+            realimagery.remember(active["key"], shot, seconds)
+            return realimagery.to_rows(shot)
+
+    pngs = _scene_pngs(active.get("key") or "")
+    if pngs:
+        frame = image.cells(pngs[tick % len(pngs)], cols, height)
     else:
-        art = []
-        if active:
-            bank = three_backdrop.frames(w - 1, h, active["key"])
-            if bank:
-                art = bank[tick % len(bank)]
-        if not art:
-            # nothing pre-rendered: a slow field of dust, still no words
-            art = []
-            for y in range(h):
-                row = []
-                for x in range(w - 1):
-                    lit = (x * 7 + y * 13 + tick // 3) % 97 == 0
-                    row.append("·" if lit else " ")
-                art.append("".join(row))
-    for row in art[:h]:
-        rows.append(pad(canvas + row, w - 1))
-    while len(rows) < h:
-        rows.append(pad(canvas, w - 1))
-    return rows[:h]
+        frame = [[(14, 12, 11) for _ in range(cols)] for _ in range(height)]
+
+    if _LAST["key"] is not None and _LAST["key"] != key and _LAST["cells"] is not None:
+        _LAST["transition"] = (_LAST["cells"], tick)
+    if _LAST.get("transition"):
+        prev, start = _LAST["transition"]
+        t = (tick - start) / _FADE
+        frame = image.blend(prev, frame, min(1.0, t))
+        if t >= 1:
+            _LAST["transition"] = None
+
+    _LAST["key"], _LAST["cells"] = key, frame
+    return image.to_rows(frame, _overlay(state, cols, height, tick, pan))
 
 
 def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[str]:
@@ -176,6 +202,63 @@ def _word_gloss(word: str) -> str:
         return ""
 
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LIVE = os.path.join(ROOT, "tools", "term_scene.cjs")
+
+
+def _scene_file() -> str:
+    path = os.path.join(str(store.data_dir()), "scene.json")
+    return path
+
+
+def _write_scene(key: str) -> None:
+    try:
+        with open(_scene_file(), "w") as fh:
+            json.dump({"scene": key or "walk"}, fh)
+    except Exception:
+        pass
+
+
+def _keyframed(key: str | None) -> bool:
+    """Photographs win: only fall back to the live 3D scene when none exist."""
+    return bool(key) and not realimagery.available(key)
+
+
+def _spawn_renderer(tty_fd: int, w: int, h: int, key: str):
+    """three.js, rendered live by the software rasteriser in node."""
+    node = shutil.which("node")
+    if not node or not os.path.exists(LIVE):
+        return None
+    _write_scene(key)
+    try:
+        return subprocess.Popen(
+            [node, LIVE, "--watch", _scene_file(), "--cols", str(w - 1),
+             "--rows", str(h), "--fps", "12"],
+            stdout=tty_fd, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
+            close_fds=True, start_new_session=True,
+        )
+    except Exception as exc:
+        try:
+            with open(os.path.join(str(store.data_dir()), "render_error.txt"), "w") as fh:
+                fh.write(f"{type(exc).__name__}: {exc}\n")
+        except Exception:
+            pass
+        return None
+
+
+def _kill_renderer(proc) -> None:
+    if proc is None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=2)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
 def run() -> str:
     """Take over the terminal until the user quits; return a one-line summary."""
     tty_fd = _tty_fd()
@@ -190,9 +273,44 @@ def run() -> str:
     try:
         tty.setcbreak(tty_fd)
         os.write(tty_fd, b"\x1b[?1049h\x1b[?25l")
+        w, h = os.get_terminal_size(tty_fd)
+        live_key = (engine.watch_state().get("active") or {}).get("key")
+        renderer = _spawn_renderer(tty_fd, w, h, live_key) if _keyframed(live_key) else None
+        typed = False
         while True:
             w, h = os.get_terminal_size(tty_fd)
             state = engine.watch_state()
+            key = (state.get("active") or {}).get("key")
+            if renderer and (key != live_key):
+                _write_scene(key or "walk")
+                live_key = key
+            if renderer and key and not typed:
+                # the renderer owns the screen; we only watch for keys
+                ready, _, _ = select.select([tty_fd], [], [], 0.08)
+                if not ready:
+                    continue
+                ch = os.read(tty_fd, 1).decode("utf-8", "ignore")
+                if ch in ("q", "Q", "\x1b"):
+                    break
+                if ch == " ":
+                    engine.stop()
+                    key = None
+                elif ch == "n":
+                    note_mode, buffer, typed = True, "", True
+                    _kill_renderer(renderer)
+                    renderer = None
+                elif ch == "j":
+                    join_mode, buffer, typed = True, "", True
+                    _kill_renderer(renderer)
+                    renderer = None
+                elif ch in "12345" and int(ch) <= len(definitions.STATES):
+                    engine.enter(list(definitions.STATES)[int(ch) - 1])
+                continue
+            if not renderer and _keyframed(key) and not typed:
+                renderer = _spawn_renderer(tty_fd, w, h, key)
+                live_key = key
+                if renderer:
+                    continue
             frame = imagery_frame(state, w, h, frames, pan=pan)
             if (state.get("active") or {}).get("key") != "walk":
                 pan = 0
@@ -208,6 +326,7 @@ def run() -> str:
             ch = os.read(tty_fd, 1).decode("utf-8", "ignore")
             if note_mode or join_mode:
                 if ch in ("\r", "\n"):
+                    typed = False
                     if join_mode and buffer.strip():
                         engine.record("person", buffer.strip() + _word_gloss(buffer.strip()),
                                       event="walk_person")
@@ -215,7 +334,7 @@ def run() -> str:
                         engine.record("person", buffer)
                     buffer, note_mode, join_mode = "", False, False
                 elif ch == "\x1b":
-                    buffer, note_mode, join_mode = "", False, False
+                    buffer, note_mode, join_mode, typed = "", False, False, False
                 elif ch in ("\x7f", "\b"):
                     buffer = buffer[:-1]
                 elif ch.isprintable():
