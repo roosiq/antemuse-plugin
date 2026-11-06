@@ -108,159 +108,37 @@ def _entries(journal: List[Dict[str, Any]], who: str, width: int, limit: int) ->
     return out
 
 
-def walk_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0, pan: int = 0) -> List[str]:
-    """The walk gets the whole screen: a side-scrolling map instead of a backdrop."""
+def imagery_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0, pan: int = 0) -> List[str]:
+    """The person gets pictures. No labels, no counters, no explanation."""
     active = state.get("active") or {}
     canvas = bg(BG) + fg(INK)
-    inner = w - 4
     rows: List[str] = []
-
-    def line(s: str = "") -> None:
-        rows.append(pad(canvas + s, w - 1))
-
-    brand = "A N T E M U S E"
-    line(fg(MUTED) + " " + brand + " " * max(1, inner - len(brand) - len(active.get("label", "")))
-         + fg(AMBER) + active.get("label", "") + fg(INK) + " ")
-    line(fg(FAINT) + " " + "─" * inner)
-
-    map_h = max(8, h - 12)
-    for row in atlas.render(state, inner, map_h, tick):
-        line(" " + row + fg(INK))
-
-    mins, secs = divmod(int(active.get("seconds_left", 0)), 60)
-    tools = "tools closed" if active.get("tools") == [] else "tools open"
-    line()
-    line(" " + fg(AMBER) + f"{mins:02d}:{secs:02d}" + fg(MUTED) + " left   "
-         + fg(INK) + active.get("contract", "") + fg(FAINT) + "  ·  " + tools
-         + f"  ·  {active.get('turns_left', 0)} turn(s)")
-
-    journal = state.get("journal", [])
-    recent = [e for e in journal if e.get("who") == "state"][-1:]
-    for e in recent:
-        stamp = time.strftime("%H:%M:%S", time.localtime(e["at"]))
-        line(" " + fg(FAINT) + stamp + " " + fg(AMBER) + "· " + fg(MUTED) + _clip(e["text"], inner - 12))
-    agent = [e for e in journal if e.get("who") == "agent"][-1:]
-    person = [e for e in journal if e.get("who") == "person"][-1:]
-    line(" " + fg(INK) + "AGENT " + fg(MUTED) + _clip(agent[0]["text"], inner // 2 - 8) if agent
-         else " " + fg(FAINT) + "AGENT has not spoken yet")
-    if person:
-        line(" " + fg(INK) + "YOU   " + fg(MUTED) + _clip(person[0]["text"], inner - 8))
+    if active.get("key") == "walk":
+        art = atlas.render(state, w - 1, h, tick, pan=pan)
+    else:
+        art = []
+        if active:
+            bank = three_backdrop.frames(w - 1, h, active["key"])
+            if bank:
+                art = bank[tick % len(bank)]
+        if not art:
+            # nothing pre-rendered: a slow field of dust, still no words
+            art = []
+            for y in range(h):
+                row = []
+                for x in range(w - 1):
+                    lit = (x * 7 + y * 13 + tick // 3) % 97 == 0
+                    row.append("·" if lit else " ")
+                art.append("".join(row))
+    for row in art[:h]:
+        rows.append(pad(canvas + row, w - 1))
     while len(rows) < h:
         rows.append(pad(canvas, w - 1))
     return rows[:h]
 
 
 def render_frame(state: Dict[str, Any], w: int, h: int, tick: int = 0) -> List[str]:
-    active = state.get("active")
-    if active and active.get("key") == "walk" and w >= 80 and h >= 20:
-        return walk_frame(state, w, h, tick)
-    canvas = bg(BG) + fg(INK)
-    left = 3
-    inner = w - left - 2
-    rows: List[str] = []
-
-    def line(s: str = "", colour: tuple[int, int, int] = INK) -> None:
-        # one column short of the terminal width: writing exactly w chars leaves a
-        # pending wrap that turns the next newline into an extra blank line
-        rows.append(pad(canvas + fg(colour) + s, w - 1))
-
-    brand = "A N T E M U S E"
-    if active:
-        right = f"{active['label']}   {int((time.time()*2)) % 9 * ' '}"
-        head_right = active["label"]
-        line(fg(MUTED) + brand + " " * max(1, inner - len(brand) - len(head_right) - 1)
-             + fg(AMBER) + head_right)
-    else:
-        line(fg(MUTED) + brand + " " * max(1, inner - len(brand) - 5) + fg(MUTED) + "IDLE")
-    line(fg(FAINT) + "─" * inner)
-    line()
-
-    art_cols = 44 if w >= 104 else 0
-    art: List[str] = []
-    if active and art_cols:
-        bank = three_backdrop.frames(art_cols, 14, active["key"])
-        if bank:
-            art = bank[tick % len(bank)]
-
-    if active:
-        digits = clock_big(active["seconds_left"])
-        width_digits = max(len(r) for r in digits)
-        slot = (w - art_cols - 3) if art_cols else w
-        x0 = max(4, (slot - width_digits) // 2)
-        spin = SPINNER[tick % len(SPINNER)]
-        hero: List[str] = []
-        for i, row in enumerate(digits):
-            gutter = fg(AMBER) + (spin if i == 2 else " ") + "  "
-            hero.append(" " * max(1, (x0 - 3)) + gutter + fg(AMBER) + row)
-        hero.append("")
-        total = max(1, active.get("total_seconds") or active["seconds_left"])
-        frac = active["seconds_left"] / total
-        cells = min(slot - 8, width_digits + 12)
-        filled = int(round(cells * frac))
-        lead = " " * max(2, (slot - cells) // 2)
-        hero.append(lead + fg(AMBER) + "█" * filled + fg(FAINT) + "░" * (cells - filled))
-        hero.append("")
-        tools = "tools closed" if active["tools"] == [] else (
-            "tools open" if active["tools"] is None else "tools " + ", ".join(active["tools"]))
-        hero.append("  " + fg(MUTED) + active["contract"] + "   " + fg(FAINT) + "·  " + tools
-                    + f"  ·  {active['turns_left']} turn(s)")
-
-        if art:
-            left_w = w - art_cols - 3
-            for i in range(max(len(hero), len(art))):
-                l = hero[i] if i < len(hero) else ""
-                r = art[i] if i < len(art) else ""
-                line(pad(l, left_w) + "  " + r)
-            # hero rows already drawn; skip the plain lines below
-            rows_before_columns = True
-        else:
-            for h_ in hero:
-                line(h_)
-            rows_before_columns = True
-    else:
-        line("  " + fg(MUTED) + "no state running — pick one; you enter it at the same time as the agent")
-        rows_before_columns = True
-
-    line()
-
-    journal = state.get("journal", [])
-    stream = [e for e in journal if e.get("who") == "state"][-3:]
-    if stream:
-        line("  " + fg(FAINT) + "EVENTS")
-        for e in stream:
-            stamp = time.strftime("%H:%M:%S", time.localtime(e["at"]))
-            line("  " + fg(FAINT) + stamp + "  " + fg(AMBER) + "· " + fg(MUTED)
-                 + _clip(e["text"], inner - 14))
-        line()
-
-    colw = max(18, (inner - 5) // 2)
-    line("  " + fg(INK) + "THE AGENT" + " " * (colw + 3 - 9) + fg(INK) + "YOU")
-    a_rows = _entries(journal, "agent", colw - 2, 2)
-    y_rows = _entries(journal, "person", colw - 2, 2)
-    block: List[str] = []
-    for i in range(max(len(a_rows), len(y_rows))):
-        a = a_rows[i] if i < len(a_rows) else []
-        y = y_rows[i] if i < len(y_rows) else []
-        for j in range(max(len(a), len(y))):
-            av = a[j] if j < len(a) else ""
-            yv = y[j] if j < len(y) else ""
-            colour_a = TEAL if j else FAINT
-            colour_y = TEAL if j else FAINT
-            line("  " + fg(colour_a) + pad(av, colw) + fg(FAINT) + " │ " + fg(colour_y) + yv)
-    if not a_rows:
-        line("  " + fg(FAINT) + pad("has not spoken yet", colw) + fg(FAINT) + " │ " + fg(FAINT)
-             + "press n to write your side")
-    while len(rows) < h - 4:
-        line()
-    line(fg(FAINT) + "─" * inner)
-
-    residue = state.get("residue") or []
-    if residue:
-        line("  " + fg(FAINT) + "residue " + fg(MUTED) + " · ".join(residue))
-    else:
-        menu = "  ".join(f"{i} {k}" for i, k in enumerate(definitions.STATES, 1))
-        line("  " + fg(FAINT) + menu + fg(MUTED) + "   n note   space snap   q quit")
-    return rows
+    return imagery_frame(state, w, h, tick)
 
 
 def _draw(tty_fd: int, w: int, h: int, frame: List[str]) -> None:
@@ -315,11 +193,9 @@ def run() -> str:
         while True:
             w, h = os.get_terminal_size(tty_fd)
             state = engine.watch_state()
-            frame = render_frame(state, w, h, frames)
-            if not (state.get("active") or {}).get("key") == "walk":
+            frame = imagery_frame(state, w, h, frames, pan=pan)
+            if (state.get("active") or {}).get("key") != "walk":
                 pan = 0
-            if (state.get("active") or {}).get("key") == "walk":
-                frame = walk_frame(state, w, h, frames, pan=pan)
             if note_mode or join_mode:
                 label = " your word › " if join_mode else " note › "
                 frame[-1] = pad(bg(BG) + fg(AMBER) + label + buffer + "▏", w)

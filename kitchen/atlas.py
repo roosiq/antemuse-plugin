@@ -98,7 +98,7 @@ def _line(g, c, x0: int, y0: int, x1: int, y1: int, color: str) -> None:
 
 
 def render(state: Dict, w: int, h: int, tick: int = 0, now: float | None = None,
-           pan: int = 0) -> List[str]:
+           pan: int = 0, bare: bool = True) -> List[str]:
     """One frame of the walk. Pure function of the journal and the clock."""
     now = now or time.time()
     nodes = parse(state.get("journal", []))
@@ -111,28 +111,37 @@ def render(state: Dict, w: int, h: int, tick: int = 0, now: float | None = None,
         _put(g, c, sx, sy, "·" if i % 3 else "˙", FAINT)
 
     if not nodes:
-        msg = "the path begins · waiting for the first step"
-        _text(g, c, max(0, (w - len(msg)) // 2), h // 2, msg, MUTED)
+        # no prose: a single breathing marker where the walk will start
+        cx, cy = w // 2, h // 2
+        _put(g, c, cx, cy, "◌" if (tick // 4) % 2 else "○", MUTED)
         return ["".join(r) for r in g]
 
-    panel_w = 30 if w >= 78 else 0
+    panel_w = (30 if w >= 78 else 0) if not bare else 0
     pw = w - panel_w - 2                      # width of the walking area
     # ---- camera keeps the newest node right of centre, with unexplored fog ahead
-    last_x = (len(nodes) - 1) * STEP_CHARS
+    step = max(10, min(20, (pw - 24) // max(1, len(nodes))))
+    last_x = (len(nodes) - 1) * step
     cam = max(0, last_x - (pw - 22) + pan)
     # ---- the camera also follows height, so a climb never walks off the top
     apex = nodes[-1]["depth"]
-    base_y = h - 6
+    base_y = h - 7
 
     def screen(i: int, depth: int) -> Tuple[int, int]:
-        return i * STEP_CHARS - cam, base_y - (depth - apex) * LEVEL_CHARS
+        return i * step - cam, base_y - (depth - apex) * LEVEL_CHARS
 
     # ---- fog ahead of the walker: the part of the graph not walked yet
-    fog_x = min(pw - 4, last_x - cam + 3)
-    for x in range(max(0, fog_x), min(pw, fog_x + 4)):
-        for y in range(3, h - 3):
-            if (x * 7 + y * 3 + tick // 4) % 5 == 0:
-                _put(g, c, x, y, "░", FAINT)
+    fog_x = min(pw - 6, last_x - cam + 3)
+    for x in range(max(0, fog_x), min(pw, fog_x + 6)):
+        for y in range(max(2, base_y - 3), min(h - 2, base_y + 3)):
+            if (x * 7 + y * 3 + tick // 4) % 7 == 0:
+                _put(g, c, x, y, "▒" if (x + y) % 3 else "░", FAINT)
+
+    # ---- horizon light: a disc the walk moves toward, no words attached
+    sx, sy, r = min(pw - 4, max(10, last_x - cam + 10)), max(3, base_y - 2), 3
+    for dy in range(-r, r + 1):
+        for dx in range(-r * 2, r * 2 + 1):
+            if (dx / 2) ** 2 + dy ** 2 <= r * r:
+                _put(g, c, sx + dx, sy + dy, "·", AMBER if abs(dy) < r else FAINT)
 
     # ---- ground
     for x in range(pw):
@@ -166,6 +175,8 @@ def render(state: Dict, w: int, h: int, tick: int = 0, now: float | None = None,
             glyph = "◉" if newest else ("●" if len(nodes) - i < 4 else "○")
             color = AMBER if newest else (INK if len(nodes) - i < 4 else MUTED)
         _put(g, c, x, y, glyph, color)
+        if bare:
+            continue
         label = n["label"]
         seen = sum(1 for m in nodes[:i] if m["label"] == n["label"])
         if seen:
@@ -187,19 +198,21 @@ def render(state: Dict, w: int, h: int, tick: int = 0, now: float | None = None,
         wy += 1 if int(tick / 2) % 2 else 0
     else:
         wx, wy = x1 + 2, y1
-    _put(g, c, wx, wy - 1, "▮", INK)      # the walker's body
-    _put(g, c, wx, wy, "▰", TEAL)         # its shadow on the edge
+    _put(g, c, wx, wy + 1, "▮", INK)      # the walker walks under the path
+    _put(g, c, wx, wy + 2, "▰", TEAL)
 
-    # ---- rails
+    # ---- rails (debug only)
     for y in range(3, h - 2):
-        _put(g, c, 0, y, "│", FAINT)
-    for level in range(-4, 5):
-        ly = base_y - level * LEVEL_CHARS
-        if 3 <= ly < h - 2 and abs(level) <= 4:
-            mark = f"{level:+d}" if level else " 0"
-            _text(g, c, 2, ly, mark, TEAL if level == 0 else FAINT)
+        if not bare:
+            _put(g, c, 0, y, "│", FAINT)
+    if not bare:
+        for level in range(-4, 5):
+            ly = base_y - level * LEVEL_CHARS
+            if 3 <= ly < h - 2 and abs(level) <= 4:
+                mark = f"{level:+d}" if level else " 0"
+                _text(g, c, 2, ly, mark, TEAL if level == 0 else FAINT)
 
-    if panel_w:
+    if panel_w and not bare:
         px = pw + 2
         _put(g, c, px - 1, 2, "│", FAINT)
         _text(g, c, px, 2, "SENSE", FAINT)
@@ -223,13 +236,14 @@ def render(state: Dict, w: int, h: int, tick: int = 0, now: float | None = None,
                   AMBER if i == len(nodes[-4:]) - 1 else MUTED)
         _text(g, c, px, 16, f"steps {len(nodes)}", FAINT)
 
-    # ---- HUD
-    depth = nodes[-1]["depth"]
-    arrow = "↑" if nodes[-1]["delta"] > 0 else ("↓" if nodes[-1]["delta"] < 0 else "→")
-    hud = f" STEP {len(nodes):02d}   DEPTH {depth:+d}   {arrow} {nodes[-1]['how'][:26]}"
-    _text(g, c, 1, 0, hud, INK)
-    legend = "↑ up · hypernym   ↓ down · hyponym   → across · antonym   ◆ your step   h/l pan   j join"
-    _text(g, c, 1, 1, legend[: w - 2], FAINT)
+    # ---- HUD (debug only: the person sees imagery, not instrumentation)
+    if not bare:
+        depth = nodes[-1]["depth"]
+        arrow = "↑" if nodes[-1]["delta"] > 0 else ("↓" if nodes[-1]["delta"] < 0 else "→")
+        hud = f" STEP {len(nodes):02d}   DEPTH {depth:+d}   {arrow} {nodes[-1]['how'][:26]}"
+        _text(g, c, 1, 0, hud, INK)
+        legend = "↑ up · hypernym   ↓ down · hyponym   → across · antonym   ◆ your step   h/l pan   j join"
+        _text(g, c, 1, 1, legend[: w - 2], FAINT)
     rows = []
     for y in range(h):
         row = "".join(g[y]).rstrip()

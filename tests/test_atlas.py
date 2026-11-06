@@ -54,14 +54,19 @@ def test_frame_is_exactly_the_requested_size():
     assert all(len(atlas.strip([r])[0]) <= 96 for r in rows)
 
 
-def test_empty_walk_says_so():
+def test_empty_walk_shows_a_single_marker_and_no_words():
+    import re
     rows = atlas.strip(atlas.render(_state([]), 80, 12))
-    assert any("path begins" in r for r in rows)
+    text = "\n".join(rows)
+    assert "◌" in text or "○" in text
+    assert not re.search(r"[A-Za-z]{2,}", text)
 
 
-def test_hud_reports_step_and_depth():
+def test_bare_map_has_no_instrumentation():
+    import re
     events = [_event("hand", "extremity", "went up to its hypernym"),
               _event("extremity", "body part", "went down into a hyponym")]
-    text = "\n".join(atlas.strip(atlas.render(_state(events), 100, 20)))
-    assert "STEP 02" in text
-    assert "DEPTH" in text
+    bare = "\n".join(atlas.strip(atlas.render(_state(events), 100, 20)))
+    assert not re.search(r"[A-Za-z]{2,}", bare)
+    debug = "\n".join(atlas.strip(atlas.render(_state(events), 100, 20, bare=False)))
+    assert "STEP 02" in debug and "DEPTH" in debug

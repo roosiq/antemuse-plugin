@@ -34,44 +34,22 @@ def test_block_clock_renders_five_rows():
     assert "█" in "".join(rows)
 
 
-def test_active_frame_names_the_state_and_hides_the_menu():
+def test_active_frame_is_pictures_only():
+    import re
     engine.enter("doomscroll")
     text = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 3)))
-    assert "DOOMSCROLLING" in text
-    assert "random feed" in text
-    assert "web_search" in text
+    assert not re.search(r"[A-Za-z]{2,}", text), "no prose on screen"
 
 
-def test_idle_frame_offers_every_state():
+def test_idle_frame_is_pictures_only():
+    import re
     text = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 0)))
-    assert "no state running" in text
-    for key in definitions.STATES:
-        assert key in text
-    assert "q quit" in text
+    assert not re.search(r"[A-Za-z]{2,}", text)
 
 
-def test_both_columns_appear_with_their_entries():
+def test_the_stream_is_not_on_screen_but_reaches_the_agent():
     engine.enter("daydream")
-    engine.record("agent", "a vending machine that only takes expired coins")
-    engine.record("person", "the fridge stopping mid-hum")
-    text = "\n".join(_visible(tui.render_frame(engine.watch_state(), 110, 34, 0)))
-    assert "THE AGENT" in text and "YOU" in text
-    assert "vending machine" in text
-    assert "fridge stopping" in text
-
-
-def test_bar_drains_as_time_passes():
-    engine.enter("daydream")
-    state = engine.watch_state()
-    state["active"]["seconds_left"] = state["active"]["total_seconds"]
-    full = "\n".join(_visible(tui.render_frame(state, 100, 30, 0)))
-    state["active"]["seconds_left"] = 60
-    low = "\n".join(_visible(tui.render_frame(state, 100, 30, 0)))
-    assert full.count("█") > low.count("█")
-
-
-def test_spinner_moves():
-    engine.enter("daydream")
-    a = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 0)))
-    b = "\n".join(_visible(tui.render_frame(engine.watch_state(), 100, 30, 1)))
-    assert a != b
+    engine.record("state", "JOINED · two memories, one shared term", event="daydream")
+    frame = "\n".join(_visible(tui.render_frame(engine.watch_state(), 110, 34, 0)))
+    assert "JOINED" not in frame
+    assert "JOINED" in (engine.inject() or "")

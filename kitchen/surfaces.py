@@ -111,61 +111,17 @@ def _wrap(s: str, n: int, limit: int = 3) -> List[str]:
 
 def card(state: Dict[str, Any], name: str = "discord", width: int | None = None,
          narrow: bool = False, fence: bool | None = None) -> str:
-    """A snapshot for one channel: monospaced, no ANSI, sized to that client's view."""
+    """What a chat client shows: only the picture, sized to that client's view."""
     p = profile(name, width, narrow)
     w = p["width"] or 56
-    active = state.get("active")
-    journal = state.get("journal", [])
-    lines: List[str] = []
-
-    if active:
-        head = f"ANTEMUSE · {active['label']}"
-        right = _clock(active["seconds_left"])
-        lines.append(head + " " * max(1, w - len(head) - len(right)) + right)
-    else:
-        lines.append("ANTEMUSE · IDLE")
-    lines.append("─" * w)
-
-    if active:
-        frac = active["seconds_left"] / max(1, active.get("total_seconds") or active["seconds_left"])
-        lines.append(_bar(frac, w))
-        for row in art(cols=w, rows=p["art_rows"], scene=active["key"]):
-            lines.append(row)
-        lines.append("")
-        tools = "closed" if active["tools"] == [] else (
-            "open" if active["tools"] is None else ", ".join(active["tools"]))
-        lines += _wrap(active["contract"], w, 2)
-        lines.append(f"tools {tools} · {active['turns_left']} turn(s)")
-    else:
-        lines.append("no state running.")
-        lines.append("1 walk · 2 daydream · 3 dissociate · 4 dream · 5 doomscroll")
-
-    stream = [e for e in journal if e.get("who") == "state"][-2:]
-    if stream:
-        lines.append("")
-        for e in stream:
-            lines += _wrap("· " + e["text"], w, 2)
-    agent = [e for e in journal if e.get("who") == "agent"]
-    person = [e for e in journal if e.get("who") == "person"]
-    lines.append("─" * w)
-    for label, entries in (("AGENT", agent), ("YOU", person)):
-        if entries:
-            body = _wrap(entries[-1]["text"], w - 8, 3)
-            lines.append(f"{label:<6}{body[0]}")
-            for extra in body[1:]:
-                lines.append(" " * 6 + extra)
-        else:
-            lines.append(f"{label:<6}—")
-    residue = state.get("residue") or []
-    if residue:
-        lines.append("─" * w)
-        lines += _wrap("residue · " + " · ".join(residue), w, 2)
-
-    text = "\n".join(l.rstrip() for l in lines)
+    active = state.get("active") or {}
+    rows = art(cols=w, rows=p["art_rows"], scene=active.get("key", ""))
+    if not rows:
+        rows = [" " * w for _ in range(p["art_rows"])]
+    text = "\n".join(r.rstrip() for r in rows)
     if p.get("max_chars") and len(text) > p["max_chars"]:
-        text = _shrink(text, p["max_chars"])
+        text = text[: p["max_chars"]]
     if (fence if fence is not None else p.get("fence")):
-        # a chat client in a proportional font turns spaced art into mush
         text = "```\n" + text + "\n```"
     return text
 

@@ -235,3 +235,22 @@ over the scroll:
 Cached 10 minutes in `social.json`. A source that fails is listed by name in the
 `feed unavailable` event; nothing is invented. Reddit and mastodon.social both
 refuse unauthenticated JSON reads (403 / 422), so they are not used.
+
+
+## On screen: pictures only
+
+Nothing the person sees is written. No titles, counters, labels, captions or
+explanations — the walk is a place, the dream is weather, the scroll is a feed
+passing by. Keys still work (`j` join, `h`/`l` pan, `space` snap, `q` quit),
+they just do not advertise themselves.
+
+The words go where they belong: the state's material is injected into the
+agent's context on every turn, so the agent reads the concepts, the memories,
+the posts — and reacts to them. The person gets the experience; the model gets
+the content.
+
+```
+[WHAT ARRIVED WHILE YOU WERE THERE — react to this, the person only sees pictures]
+  · hand (noun) → extremity (noun) · took its hypernym · "that part of a limb…"
+  · bluesky · @someone · the thing nobody says about the feed
+```

@@ -65,17 +65,16 @@ def test_narrow_mode_is_mobile_safe():
     assert len(out) < 1800
 
 
-def test_card_names_the_state_and_both_sides():
+def test_card_is_only_a_picture():
+    import re
     out = surfaces.card(state(), "discord")
-    assert "WALKING" in out
-    assert "AGENT" in out and "YOU" in out
-    assert "fridge stopping" in out
+    assert not re.search(r"[A-Za-z]{2,}", out), "the person must not see prose"
 
 
-def test_idle_card_offers_the_menu():
+def test_idle_card_is_still_only_a_picture():
+    import re
     out = surfaces.card(state(False), "discord")
-    assert "IDLE" in out
-    assert "walk" in out and "doomscroll" in out
+    assert not re.search(r"[A-Za-z]{2,}", out)
 
 
 def test_ascii_art_is_plain_and_non_empty():
@@ -95,6 +94,6 @@ def test_record_is_dense_and_plain():
 
 def test_snapshot_writes_a_png():
     path = surfaces.snapshot_path(state(), "discord")
-    assert path.exists() and path.stat().st_size > 2000
+    assert path.exists() and path.stat().st_size > 500
     with open(path, "rb") as fh:
         assert fh.read(8) == b"\x89PNG\r\n\x1a\n"

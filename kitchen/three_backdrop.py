@@ -12,6 +12,22 @@ from typing import Dict, List, Tuple
 
 from PIL import Image
 
+
+def _fit(im, w: int, h: int):
+    """Crop to the cell aspect before scaling, so scenes are not stretched."""
+    target = (w / max(1, h)) * 0.5          # a cell is about twice as tall as wide
+    iw, ih = im.size
+    ratio = iw / ih
+    if ratio > target:
+        new_w = int(ih * target)
+        left = (iw - new_w) // 2
+        im = im.crop((left, 0, left + new_w, ih))
+    elif ratio < target:
+        new_h = int(iw / target)
+        top = (ih - new_h) // 2
+        im = im.crop((0, top, iw, top + new_h))
+    return im
+
 from . import store
 
 CACHE: Dict[Tuple[int, int], List[List[str]]] = {}
@@ -38,6 +54,7 @@ def _grid(png: Path, cols: int, rows: int):
     im = Image.open(png).convert("RGB")
     w0, h0 = im.size
     im = im.crop((int(w0 * 0.20), int(h0 * 0.12), int(w0 * 0.80), int(h0 * 0.88)))
+    im = _fit(im, cols, rows)
     w, h = im.size
     px = im.load()
     step_x, step_y = w / cols, h / (rows * 2)

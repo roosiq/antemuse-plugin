@@ -129,6 +129,7 @@ def inject() -> str | None:
         _expire(data)
         active = data.get("active")
         residue = [r["text"] for r in data.get("residue", [])]
+        stream = [e for e in data.get("journal", []) if e.get("who") == "state"][-6:]
     if not active and not residue:
         return None
     lines: List[str] = []
@@ -146,6 +147,11 @@ def inject() -> str | None:
             spec["directive"],
             tool_rule,
         ]
+    if active and stream:
+        lines.append("")
+        lines.append("[WHAT ARRIVED WHILE YOU WERE THERE — react to this, the person only sees pictures]")
+        for e in stream:
+            lines.append(f"  · {e.get('text', '')}")
     for r in residue:
         lines.append(f"[RESIDUE: {r}]")
     return "\n".join(lines)
