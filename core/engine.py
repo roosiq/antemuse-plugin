@@ -183,8 +183,51 @@ def peek() -> Dict[str, Any] | None:
         return data.get("active")
 
 
+def _last_material(key: str, data: Dict[str, Any]) -> float:
+    times = [e.get("at", 0) for e in data.get("journal", [])
+             if e.get("who") == "state" and e.get("state") == key]
+    return max(times) if times else 0.0
+
+
+def deliver_if_due() -> int:
+    """Bring material up to date at the top of a turn.
+
+    The ticker is a thread in this process, so a conversation driven one turn per
+    process — every CLI invocation — would otherwise walk a minute and receive a
+    single step. On a long-lived gateway the ticker already keeps up and this is
+    a no-op.
+    """
+    from . import sources
+    with _LOCK:
+        data = _load()
+        active = data.get("active") or {}
+        key = active.get("key")
+        if not key:
+            return 0
+        spec = states.STATES.get(key) or {}
+        cadence = float(spec.get("cadence", 20))
+        started = active.get("entered_at", 0) or 0
+        last = _last_material(key, data)
+        # the first turn of a state always gets material: an empty first step is
+        # what a walk with nothing to react to looks like
+        if last > started and time.time() - last < cadence:
+            return 0
+    provider = sources.PROVIDERS.get(key)
+    if provider is None:
+        return 0
+    try:
+        lines = provider(1)
+    except Exception as exc:  # a provider failing must not kill the turn
+        record("state", f"{key} provider failed · {exc}", event=key)
+        return 1
+    for line in lines:
+        record("state", line, event=key)
+    return len(lines)
+
+
 def inject() -> str | None:
     """The block pre_llm_call adds to this turn's user message."""
+    deliver_if_due()
     with _LOCK:
         data = _load()
         _expire(data)

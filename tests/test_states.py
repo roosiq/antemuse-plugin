@@ -199,3 +199,23 @@ def test_the_trail_does_not_end_on_a_dangling_separator():
     out = engine.stop()
     trail = out.splitlines()[0].split("· ", 2)[-1]
     assert not trail.rstrip().endswith("·"), trail
+
+
+def test_a_turn_brings_material_that_the_dead_thread_missed():
+    """One turn per process: without this a three-minute walk delivers one step."""
+    from core import sources
+    engine.enter("walk", minutes=5)
+    monkeypatch_calls = []
+    import core.engine as eng
+    class Fake:
+        PROVIDERS = {"walk": lambda n: ["salt (n) → brine (n) · took its hyponym"]}
+    import sys
+    real = sources.PROVIDERS
+    sources.PROVIDERS = Fake.PROVIDERS
+    try:
+        assert eng.deliver_if_due() == 1, "the first turn of a state gets material"
+        assert eng.deliver_if_due() == 0, "not due twice in a row"
+        text = engine.inject() or ""
+        assert "salt (n) → brine (n)" in text
+    finally:
+        sources.PROVIDERS = real
