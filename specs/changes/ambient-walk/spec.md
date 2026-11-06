@@ -86,3 +86,16 @@ Verified: `/walk` reports `WALKING · 10 min · 8 turn(s) · work continues · a
 may interrupt`; the palette agrees; a unit test pins the arithmetic
 (`minutes * 60 // cadence == 20`) and another proves material waits the cadence
 and then arrives again. 101 tests pass.
+
+## Revision 2: three minutes
+
+Sped up again on request — same twenty steps, now at 9 s cadence over 3 minutes.
+The cadence is deliberately below a turn's own duration, so a working turn sees
+two or three steps instead of one, which is what "faster" has to mean once the
+material is delivered per turn rather than by a background thread.
+
+Measured live: `/walk` → `WALKING · 3 min · 6 turn(s) · work continues · a step may
+interrupt`; steps landed at 23:12:57 and 23:13:06 (`sliding door → paneling
+[meronym]`, `paneling → swing door [holonym]`); `/return` reported both.
+A test now pins the invariant rather than the numbers: dose 20, cadence ≤ 10 s,
+duration ≤ 3 min.

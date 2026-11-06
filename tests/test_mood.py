@@ -122,12 +122,12 @@ def test_a_profile_that_has_never_run_anything_can_still_report():
     assert engine.break_view()["due"] in ("carry on", "break due", "break overdue")
 
 
-def test_the_walk_is_a_ten_minute_twenty_step_walk():
-    """Sped up to the evidence's own dose: the walking study ran eight minutes."""
+def test_the_walk_keeps_its_dose_but_runs_fast():
+    """Always 20 steps; the wall clock has been squeezed three times now."""
     spec = states.STATES["walk"]
-    assert spec["minutes"] == 10
-    assert spec["cadence"] == 30
-    assert spec["minutes"] * 60 // spec["cadence"] == 20, "same dose as the half-hour version"
+    assert spec["minutes"] * 60 // spec["cadence"] == 20, "the dose is fixed"
+    assert spec["cadence"] <= 10, "a step should arrive faster than a turn takes"
+    assert spec["minutes"] <= 3
 
 
 def test_material_waits_for_the_cadence_and_then_arrives_again():

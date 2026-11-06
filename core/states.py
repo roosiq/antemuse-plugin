@@ -12,9 +12,9 @@ from typing import Dict, List
 STATES: Dict[str, Dict] = {
     "walk": {
         "label": "WALKING",
-        "minutes": 10,
-        "turns": 8,
-        "cadence": 30,
+        "minutes": 3,
+        "turns": 6,
+        "cadence": 9,
         "tools": None,
         "scene": "walk",
         "directive": (
