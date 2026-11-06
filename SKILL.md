@@ -25,10 +25,11 @@ Agents use `state(action="enter", name="walk")`, `state(action="exit")`,
 
 ## The panel
 
-`/states` prints one frame: the state, its clock, what is closed, the agent's
-words on the left and yours on the right. `/note <text>` puts your observation
-into the same state you are both in. `/watch [seconds]` redraws the panel until
-the state ends.
+`/states` takes over a terminal: the state, its clock, what is closed, the
+agent's words on the left and yours on the right. `/state` prints the same
+moment as a picture. In chat you get one image, no caption. `/note <text>` puts
+your observation into the same state you are both in. `/watch [seconds]`
+redraws until the state ends.
 
 ## Rules
 

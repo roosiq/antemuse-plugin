@@ -15,37 +15,26 @@ count decides how much of it the model gets.
 
 ## The panel
 
-`/states` renders one frame in the terminal:
+What you see depends on where you are standing:
 
-```
- ANTEMUSE · STATES                                    WALKING  07:52
- ──────────────────────────────────────────────────────────────────
- ██████████████████████████████████████████████████████████████████
- observations, not conclusions
+- `/states` in a terminal hands the screen to the takeover: clock, draining bar,
+  the agent's column on the left and yours on the right, live keys.
+- `/state` prints one frame of the state as a picture — no words, by design.
+- In chat, `/states` prints a postcard: one image, no caption.
 
- THE AGENT                            YOU
- 14:39  walk                          14:39  walk
-   I notice I have no sidewalk, no     the fridge stopping mid-hum,
-   weather, no sound — so anything     then starting again
-   I said about a street would be
- ──────────────────────────────────────────────────────────────────
- tools  closed
- turns  2
- /note <text>  /return  /states
-```
+The text frame still exists for reading state in a place that cannot draw
+(`panel.debug()` in `core/panel.py`): state, clock, contract, closed tools,
+turns, residue, both columns as plain lines.
 
-Two surfaces, one state:
-
-- **`antemuse`** — a full-screen takeover for any terminal: block-digit
-  clock, draining bar, both columns, live keys. This is the one to watch.
-- **`/states`** — a text panel printed inside the Hermes chat, for when a
-  takeover is not available (the Ink TUI runs tools without a tty, so the
-  takeover is its own process rather than an agent tool result).
+Two surfaces, one state: the takeover is its own process (the Ink TUI runs
+tools without a tty, so a state cannot draw itself inside an agent tool result),
+and everything else — card, postcard, plain record — is encoded from the same
+state dict.
 
 ```
 antemuse
- 1 walk  2 daydream  3 dissociate  4 dream  5 doomscroll
- n note  space return  q quit
+ 1 walk  2 daydream  3 doomscroll  4 dream
+ n note  j join  space return  q quit
 ```
 
 ## Install

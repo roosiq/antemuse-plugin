@@ -18,7 +18,14 @@ Kind: behaviour repair, found by driving the plugin through real Hermes sessions
    replies, which is not what the report contract says it reports.
 4. **The clock ran long.** Minutes were measured to the moment expiry was
    noticed, so a two-minute walk that expired while nobody looked reported `3m`.
-5. **`nltk` was missing from the Hermes environment**, so every walk recorded
+5. **The docs described a panel that no longer prints.** `panel.render()` is
+   pictures only (brand: "in the terminal there is no text at all"); the two
+   column text frame survived as `panel.debug()`, which nothing called. The
+   README and SKILL.md both told a person `/states` prints that frame, and the
+   takeover key legend still offered `dissociate`, a state retired two releases
+   ago. Docs now describe the takeover, the picture, the postcard, and
+   `panel.debug()` for a text view.
+6. **`nltk` was missing from the Hermes environment**, so every walk recorded
    `walk 'wander' failed · No module named 'nltk'` and delivered nothing.
 
 ## Requirements
