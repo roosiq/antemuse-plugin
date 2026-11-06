@@ -51,6 +51,15 @@ env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data ANTEMUSE_STATES_HOME=/tmp/check
   uvx --with pillow --with nltk --quiet pytest tests/ -q
 ```
 
+The plugin declares `pillow` and `nltk`, but Hermes does not install plugin
+dependencies into its own interpreter: if a state enters and every walk records
+`failed · No module named 'nltk'`, install them where Hermes runs:
+
+```bash
+uv pip install --python "$(hermes --version >/dev/null; python3 -c 'import sys;print(sys.executable)')" \
+  "pillow>=10,<14" "nltk>=3.8,<4"
+```
+
 And always point `ANTEMUSE_STATES_HOME` somewhere temporary during verification —
 the plugin shares one state file with the live agent, so a test that enters a
 state will lock the agent's own tools until it exits.
