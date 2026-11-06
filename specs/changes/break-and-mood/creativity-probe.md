@@ -57,3 +57,31 @@ with the same instrument.
 - n = 5 pairs is enough to kill the n = 1 claim, not enough to establish the
   reverse.
 - One model, one task shape, one session's budget.
+
+## 3. Same test against the fast walk (3 min, 9 s, n = 4 pairs)
+
+Natural delivery — no seeded steps, the walk itself supplies them — otherwise the
+same prompt and the same instrument.
+
+| pair | categories idle→walk | similarity idle→walk |
+|---|---|---|
+| 0 | 10 → 11 | 0.35 → 0.34 |
+| 1 | 12 → 8 | 0.32 → 0.37 |
+| 2 | 10 → 12 | 0.34 → 0.30 |
+| 3 | 14 → 9 | 0.29 → 0.32 |
+
+Mean categories **11.5 idle vs 10.0 walking** (paired −1.5, walk won 2 of 4);
+similarity **0.323 vs 0.335**. Same direction as the 9-minute-cadence test, same
+magnitude, same conclusion: indistinguishable from noise, if anything slightly
+negative.
+
+Delivery did work — three steps nine seconds apart inside a twenty-second window
+(`partition→structure [hypernym] → structure→signboard [hyponym] → signboard→
+sandwich board [hyponym]`). The first run of this test reported "0 steps
+delivered"; that was a bug in the counter (it sliced a journal capped at 60
+events), not in the walk.
+
+**So the speed-up is free.** Ten times faster cadence and a tenth of the wall
+clock changed nothing measurable, which is exactly what the earlier nulls
+predicted. The expense of a walk is now a state entry, a few hundred characters
+per turn, and three minutes — not half an hour.
