@@ -1,0 +1,17 @@
+{
+  "id": "collider_selective_autophagy",
+  "kind": "collider_example",
+  "family": "cell_biology",
+  "title": "Selective autophagy",
+  "mechanism": "Cells tag damaged components with ubiquitin markers that attract autophagy machinery to engulf and digest them; the cell eats its broken parts to stay healthy.",
+  "bridge_question": "How might idea systems selectively digest failed concepts to fuel new generation?",
+  "body": "1. **Selective autophagy** — An autophagy researcher studying cellular recycling — whose work reveals that cells tag damaged components with ubiquitin markers that attract autophagy machinery to engulf and digest them. The cell eats its broken parts to stay healthy. How might idea systems selectively digest failed concepts to fuel new generation?",
+  "provenance": {
+    "repository": "CL-ML/open-collider-research",
+    "pinned_commit": "6ed948a",
+    "path": "OC_data/creativity_engine/T03_fresh_DS11_23d8845b/prompt.md",
+    "license": "unverified_research_artifact"
+  },
+  "verification_status": "generated_example",
+  "content_hash": "sha256:f62754e80f3160d2329952023d3fd4e5eea9906025856540bbaddf1370f4e06c"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "collider_acoustic_niche_hypothesis",
+  "kind": "collider_example",
+  "family": "bioacoustics",
+  "title": "Acoustic niche hypothesis",
+  "mechanism": "Species partition a shared acoustic space by vocalizing in non-overlapping frequency bands, giving every species its own channel; they share by dividing the spectrum instead of competing inside one band.",
+  "bridge_question": "What if ideas could partition conceptual frequency space to avoid interference?",
+  "body": "1. **Acoustic niche hypothesis** — A soundscape ecologist studying frequency partitioning — whose work reveals that animals evolve to vocalize in non-overlapping frequency bands, creating a structured acoustic space where every species has its channel. They share by dividing. What if ideas could partition conceptual frequency space to avoid interference?",
+  "provenance": {
+    "repository": "CL-ML/open-collider-research",
+    "pinned_commit": "6ed948a",
+    "path": "OC_data/creativity_engine/T01_fresh_DS12_b1d535f4/prompt.md",
+    "license": "unverified_research_artifact"
+  },
+  "verification_status": "generated_example",
+  "content_hash": "sha256:eb9fce51ff17314f703c44c7d0733070aa31c62ad0312a2b0b54f5e617c18136"
+}

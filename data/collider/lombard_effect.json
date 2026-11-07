@@ -1,0 +1,17 @@
+{
+  "id": "collider_lombard_effect_dynamics",
+  "kind": "collider_example",
+  "family": "bioacoustics",
+  "title": "Lombard effect dynamics",
+  "mechanism": "Animals involuntarily raise their pitch and volume in noise, but the adaptation also reduces the information content of the signal: shouting distorts the message it is meant to carry.",
+  "bridge_question": "How might creative systems avoid conceptual shouting that reduces idea fidelity?",
+  "body": "2. **Lombard effect dynamics** — A bioacoustics researcher studying noise adaptation — whose work shows that animals involuntarily raise their pitch and volume in noise, but this adaptation reduces information content. Shouting distorts the message. How might creative systems avoid conceptual shouting that reduces idea fidelity?",
+  "provenance": {
+    "repository": "CL-ML/open-collider-research",
+    "pinned_commit": "6ed948a",
+    "path": "OC_data/creativity_engine/T01_fresh_DS12_b1d535f4/prompt.md",
+    "license": "unverified_research_artifact"
+  },
+  "verification_status": "generated_example",
+  "content_hash": "sha256:6e478f148207ce3e6c29c9054de81f569f7a84e87f6660e3e35fb8648046a5f1"
+}

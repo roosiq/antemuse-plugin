@@ -1,0 +1,17 @@
+{
+  "id": "collider_fairy_ring_formation",
+  "kind": "collider_example",
+  "family": "mycology",
+  "title": "Fairy ring formation",
+  "mechanism": "Circular mushroom patterns emerge from nutrient-depletion waves that create self-reinforcing growth boundaries; the ring expands because the center becomes toxic to its own growth, forcing exploration outward.",
+  "bridge_question": "How might creative systems poison their own successful patterns to force expansion?",
+  "body": "4. **Fairy ring formation** — A mathematical mycologist studying fairy rings — whose work demonstrates that circular mushroom patterns emerge from nutrient depletion waves that create self-reinforcing growth boundaries. The ring expands because the center becomes toxic to its own growth, forcing exploration. How might creative systems poison their own successful patterns to force expansion?",
+  "provenance": {
+    "repository": "CL-ML/open-collider-research",
+    "pinned_commit": "6ed948a",
+    "path": "OC_data/creativity_engine/T06_fresh_DS1_40c6b87a/prompt.md",
+    "license": "unverified_research_artifact"
+  },
+  "verification_status": "generated_example",
+  "content_hash": "sha256:ebfa827bd68913306bd078ede34b3aa966d52e6ef65355435c8960aa75031ee7"
+}
