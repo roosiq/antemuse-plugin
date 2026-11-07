@@ -15,9 +15,9 @@ A state is a bounded change to how the agent behaves, not a place it goes.
 ## Entering and leaving
 
 ```
-/walk [minutes]      /daydream      /dissociate
-/dream               /doomscroll    /return
-/states              the panel      /note <text>
+/walk [minutes]      /daydream      /dream
+/doomscroll          /return        /states
+/note <text>         /watch [seconds]
 ```
 
 Agents use `state(action="enter", name="walk")`, `state(action="exit")`,
@@ -25,11 +25,10 @@ Agents use `state(action="enter", name="walk")`, `state(action="exit")`,
 
 ## The panel
 
-`/states` takes over a terminal: the state, its clock, what is closed, the
-agent's words on the left and yours on the right. `/state` prints the same
-moment as a picture. In chat you get one image, no caption. `/note <text>` puts
-your observation into the same state you are both in. `/watch [seconds]`
-redraws until the state ends.
+`/states` takes over a terminal with wordless imagery and live keys. `/state`
+prints one wordless image frame. In chat you get one image, no caption. The
+model-facing record remains text. `/note <text>` puts your observation into the
+same state you are both in. `/watch [seconds]` redraws until the state ends.
 
 ## Taking a break
 
@@ -42,7 +41,8 @@ not a guess. Ignore it when the work is nearly done; the nudge waits 45 minutes.
 ## Rules
 
 - Never enter a state to avoid work; enter it to change what the work looks like.
-- A walk is ambient: keep working, and let a step brush the work only if it belongs there.
+- A walk is ambient: keep working. The walked path is scenery, not a hint, and
+  no walk material is injected into the working turn.
 - When the state ends, say what it left behind. Residue is the only output.
 - A state that blocks tools also blocks you; `/return` is always available and is
   exempt from the block.
@@ -55,7 +55,8 @@ breaks both `pytest` collection and `PIL` inside any other interpreter. Clear it
 for every test run:
 
 ```bash
-env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data ANTEMUSE_STATES_HOME=/tmp/check \
+env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data \
+  ANTEMUSE_STATES_HOME=$(mktemp -d) \
   uvx --with pillow --with nltk --quiet pytest tests/ -q
 ```
 

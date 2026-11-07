@@ -1,7 +1,7 @@
 # Antemuse
 
-The agent can take a walk, daydream, dissociate, dream, or doomscroll — and a
-person can watch it happen in the CLI and take the same state beside it.
+The agent can take a walk, daydream, dream, or doomscroll — and a person can
+watch it happen in the CLI and take the same state beside it.
 
 A state is a bounded change to behaviour, not a place:
 
@@ -13,8 +13,14 @@ A state is a bounded change to behaviour, not a place:
 States expire on minutes *and* turns; the clock decides when it ends, the turn
 count decides how much of it the model gets.
 
-Consolidated specification: `docs/spec.md` (architecture, contracts, evidence,
-drift, and change log in one place).
+Documentation authority:
+
+- `docs/brd.md` — business intent and Ryan's quoted requirements.
+- `docs/requirements.md` — operating detail and BR-to-implementation traceability.
+- `docs/spec.md` — shipped behaviour, architecture, evidence, drift, and change log.
+
+The BRD governs intent; the operating document must agree with it. The spec and
+implementation/tests govern what actually ships.
 
 ## Taking a break
 
@@ -34,8 +40,8 @@ Entering any state restarts the counters.
 
 What you see depends on where you are standing:
 
-- `/states` in a terminal hands the screen to the takeover: clock, draining bar,
-  the agent's column on the left and yours on the right, live keys.
+- `/states` in a terminal hands the screen to the takeover: wordless full-screen
+  imagery and live keys.
 - `/state` prints one frame of the state as a picture — no words, by design.
 - In chat, `/states` prints a postcard: one image, no caption.
 
@@ -64,11 +70,11 @@ hermes plugins enable antemuse
 ## Layout
 
 ```
-plugin.yaml            manifest: 1 tool, 3 hooks
-__init__.py            hooks (pre_llm_call, pre_tool_call, transform_llm_output),
-                       /walk /daydream /dissociate /dream /doomscroll /return
-                       /states /note /watch, and the state tool
-core/states.py         the five states: tools, directive, contract, residue
+plugin.yaml            manifest: 1 tool, 4 hooks
+__init__.py            hooks (pre_llm_call, pre_tool_call, post_tool_call,
+                       transform_llm_output), /walk /daydream /dream /doomscroll
+                       /return /states /note /watch, and the state tool
+core/states.py         the four states: tools, directive, contract, residue
 core/engine.py         enter/stop/tick, tool policy, journal, residue
 core/storage.py        the one active record, and the data dir it lives in
 core/walks.py          walks as data: graphs and the rules for moving on them
@@ -82,7 +88,7 @@ core/backdrop.py       pre-rendered three.js frames, replayed as blocks
 core/surfaces.py       one frame, encoded per client
 core/tui.py            the full-screen takeover (alt screen, truecolor, keys)
 bin/antemuse           launcher on PATH
-tests/                 74 tests (6 need `npm ci` for the renderer)
+tests/                 107 tests (renderer tests need `npm ci`)
 ```
 
 ## Verify
@@ -90,12 +96,13 @@ tests/                 74 tests (6 need `npm ci` for the renderer)
 ```bash
 antemuse                     # full-screen view
 hermes plugins doctor ~/antemuse/plugin
-PYTHONPATH= ANTEMUSE_STATES_HOME=$(mktemp -d) uvx pytest tests/ -q
+env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data   ANTEMUSE_STATES_HOME=$(mktemp -d)   uvx --with pillow --with nltk --quiet pytest tests/ -q
 hermes chat -q '/walk' && hermes chat -q '/states'
 ```
 
-A fresh clone runs 68 of the 74 tests; the six renderer tests skip until
-`npm ci` has fetched three and the software renderer.
+The current suite collects 107 tests. Renderer tests skip when the npm
+dependencies are unavailable; run `npm ci` to fetch three and the software
+renderer.
 
 ## Notes
 
@@ -126,6 +133,15 @@ Live WebGL at 60 fps inside a terminal is not a thing: one headless render costs
 ~0.65 s. For real images rather than blocks, the same PNGs can go through the
 kitty graphics protocol or sixel where the terminal supports it.
 
+## Generated photographs
+
+`tools/gen_frames.py` renders real images through the configured `SD_SERVER`.
+The default is `http://100.82.186.41:8089`, an operator-controlled tailnet GPU
+host, **not localhost**. Set `SD_SERVER` explicitly to use a different endpoint.
+Generated photographs take priority over the three.js and parsed-walk fallbacks.
+Whether the tailnet default satisfies BR-7's same-machine requirement is OPEN in
+`docs/brd.md` and `docs/requirements.md`.
+
 ## Channel awareness
 
 The card is sized to the client, not to the terminal:
@@ -139,6 +155,9 @@ The card is sized to the client, not to the terminal:
 | Slack | 46 | yes | 3800 |
 | plain text / LM | 72 | no | — |
 
+Matrix and Telegram profiles are configured but have not been verified against
+real clients.
+
 The channel is learned from the turn's `platform` (recorded in `pre_llm_call`)
 and `state(card)` picks the plan automatically; `state(card, name="discord_desktop")`
 forces one. Cards are fenced in a code block because a proportional font destroys
@@ -147,13 +166,15 @@ exceed the channel budget.
 
 ## Scenes
 
-One scene per state, rendered from `tools/scene.html`:
+Four live scenes, rendered from `tools/scene.html`:
 
 - **walk** — a figure walking away from camera toward a low sun on a perspective grid
 - **daydream** — slow, translucent low-poly blobs drifting past each other
-- **dissociate** — the same knot twice: one solid and near, one wireframe and far, the gap breathing
 - **dream** — two coloured spheres merging and separating inside a slow dust field
 - **doomscroll** — feed cards with text bars streaming toward the camera, tilted and accelerating
+
+The generator also retains the retired `dissociate` knot; it is not a fifth live
+state.
 
 ```bash
 python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse/plugin &
@@ -169,7 +190,7 @@ the journal as an event (`who="state"`), so the panel fills while you watch.
 |---|---|---|---|---|
 | **walk** | 3 min | 9 s | **WordNet** — 117,659 synsets | a path for the person to watch and for the agent to come back from; **no material is injected** while walking, because the evidence says the gain is in leaving the frame, not in new input |
 | **daydream** | 3 min | 10 s | `MEMORY.md` + `USER.md` | two memories surface; they are joined only when they share enough terms, otherwise reported adjacent |
-| **doomscroll** | 8 min | 6 s | live RSS (Ars Technica, The Verge, HN), cached 30 min | random items, no synthesis — the feed talks, you consume |
+| **doomscroll** | 8 min | 6 s | Bluesky, fosstodon, HN, Ars Technica, and The Verge, cached 10 min | random items, no synthesis — the feed talks, you consume |
 | **dream** | 30 min | 40 s | **FrameNet** — 1,221 frames | a frame's roles and lexical units recombined into a thing that does not exist: "a {frame} missing its {agent}, so every {patient} has to stand in for it" |
 
 Sources are honest about failure: missing WordNet says `wordnet unavailable`,
@@ -200,35 +221,21 @@ anything else]`. Expiry and `/return` produce it identically; a state that
 received nothing says `nothing arrived`. What the material meant is still the
 agent's to say. Spec: `specs/changes/state-return-report/spec.md`.
 
-## The walk, as a place
+## The walk map
 
-`/walk` takes over the screen with a side-scrolling map instead of a looping
-backdrop. The map is not decorative: it is parsed straight from the journal, so
-every node on screen is a WordNet step that actually happened.
+`core/walk_map.py` parses the journal into a side-scrolling map: every node is a
+WordNet step that happened, relation colours distinguish climbs, descents, and
+lateral moves, fog marks the unwalked graph, and a person's own word can join the
+path. Its default rendering is wordless.
 
-```
-├ +4
-├ +3                                    │SENSE
-├ +2    ──○─ entity    ──●─ entity·2    │  a separate and self-contained
-├ +1 ───     ───    ───└───┘            │  entity
-├  0                       ──▮  thing   │PATH
-▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁ │  ↓ abstraction ↑ entity
-```
+The map is **not always the takeover image**. Generated photographs have priority
+and return before the map overlay is applied; without photographs, the live
+three.js renderer can own the screen instead. The map remains available through
+the fallback rendering path and through `panel.render()` for a walk or idle state
+without a tty. See `docs/spec.md` §§10.2 and 14 for the current contract and the
+owner decision about this precedence.
 
-- **Camera follows x and depth.** The newest node sits right of centre; a climb
-  scrolls the older nodes down instead of off the top.
-- **The depth ladder** on the left is the hypernym altitude, so `+3` means three
-  levels above where the walk started.
-- **Fog ahead** of the walker is the part of the graph not walked yet — the map
-  only ever shows what has been traversed.
-- **The right panel** carries the current sense and the last four steps, so the
-  definition stays on screen for the whole turn instead of scrolling past.
-- **Edges are the relation**: teal climbs (hypernym/holonym), amber descends
-  (hyponym/meronym), grey crosses (antonym/sibling).
-
-Keys: `h`/`l` pan the camera, `0` resets, `j` adds your own word — it lands on
-the map as a `◆` at the current depth and is scored against WordNet like any
-other step, so the person walks the same path rather than watching one.
+When the map is visible, `h`/`l` pan, `0` resets, and `j` adds your own word.
 
 ## Walks are data
 
@@ -280,15 +287,16 @@ refuse unauthenticated JSON reads (403 / 422), so they are not used.
 
 ## On screen: pictures only
 
-Nothing the person sees is written. No titles, counters, labels, captions or
-explanations — the walk is a place, the dream is weather, the scroll is a feed
-passing by. Keys still work (`j` join, `h`/`l` pan, `space` return, `q` quit),
-they just do not advertise themselves.
+The visual contract is no titles, counters, labels, captions, or explanations —
+the walk is imagery, the dream is weather, the scroll is a feed passing by. Keys
+still work (`j` join, `h`/`l` pan, `space` return, `q` quit); they do not
+advertise themselves. The current note/join typing prompts are an unresolved
+exception recorded in `docs/spec.md` §14.
 
-The words go where they belong: the state's material is injected into the
-agent's context on every turn, so the agent reads the concepts, the memories,
-the posts — and reacts to them. The person gets the experience; the model gets
-the content.
+For states that feed material, words go to the agent's context, so the agent
+reads the concepts, memories, or posts and reacts to them. A walk deliberately
+injects no material while work continues. The person gets the experience; the
+model gets the content.
 
 ```
 [WHAT ARRIVED WHILE YOU WERE THERE — react to this, the person only sees pictures]

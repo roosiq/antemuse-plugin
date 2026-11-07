@@ -14,6 +14,8 @@ Sources collated:
 |---|---|
 | `plugin.yaml` | manifest: identity, version, dependencies, tool, hooks |
 | `README.md` | operator documentation and measured behaviour |
+| `docs/brd.md` | business-intent authority and Ryan's quoted requirements |
+| `docs/requirements.md` | operating detail and BR-to-implementation traceability |
 | `SKILL.md` | agent-facing procedure |
 | `docs/brand.md` | naming, voice, palette, surface composition |
 | `docs/creativity-exercises.md` | research basis and its limits |
@@ -24,8 +26,10 @@ Sources collated:
 
 Authority order when artifacts disagree, per the workspace `AGENTS.md`: approved
 intent and acceptance criteria → project constitution → technical plan and
-contracts → tasks → existing code. Section 14 records the disagreements found
-during this collation.
+contracts → tasks → existing code. Within the business document set, `docs/brd.md`
+owns quoted intent, `docs/requirements.md` owns operating detail and traceability,
+and this spec owns shipped behaviour. Section 14 records the disagreements found
+during this collation and the current documentation pass.
 
 ---
 
@@ -462,9 +466,11 @@ The text frame (`panel.debug()`) is the deliberate exception, for reading state
 where a picture cannot be drawn: state, clock, contract, closed tools, turns,
 residue, and both columns as plain lines.
 
-Words go where they belong: the state's material is injected into the agent's
-context, so the model reads concepts, memories, posts, and reacts. The person
-gets the experience; the model gets the content.
+Words go where they belong: for states that feed material, the state's material
+is injected into the agent's context, so the model reads concepts, memories,
+posts, and reacts. A walk feeds nothing into the working turn. The person gets
+the experience; the model gets the content. Note/join entry currently introduces
+a temporary typing prompt in the takeover; that deviation is recorded in §14.
 
 ### 10.2 Terminal takeover
 
@@ -485,10 +491,14 @@ Rendering priority:
 3. live three.js through `tools/term_scene.cjs` when no photographs exist;
 4. a flat ground colour if nothing is available.
 
-The walk additionally gets a side-scrolling map parsed from the journal, so every
-node on screen is a real WordNet step: depth ladder for hypernym altitude, fog
-ahead for untraversed graph, current sense and last four steps in the right
-panel, edges coloured by relation (teal climbs, amber descends, grey crosses).
+`core/walk_map.py` parses a side-scrolling, wordless map from the journal, so
+every node is a real WordNet step and edges retain their relation colours. It is
+a fallback, not a guaranteed takeover layer. When photographs exist,
+`imagery_frame()` returns them before applying the map overlay; when no
+photographs exist, the live three.js renderer can own the screen instead. The
+map renders through the remaining `imagery_frame()` fallback and through
+`panel.render()` for a walk or idle state without a tty. Whether photograph
+priority should suppress the parsed walk is an owner decision in §14.
 
 ### 10.3 Terminal images
 
@@ -514,7 +524,8 @@ Implementation: `core/surfaces.py`. The same frame dict, encoded per destination
 Cards are fenced because proportional fonts destroy spaced art. `_shrink` drops
 art rows from the middle when a message would exceed the budget. The channel is
 learned from the turn's `platform` in `pre_llm_call`; `state(card, name=…)`
-forces one.
+forces one. Matrix and Telegram profiles are configured but have not been
+verified against real clients.
 
 `state(action="image")` renders a PNG card via Pillow and returns
 `MEDIA:<path>` plus the text record — useful where a proportional font would
@@ -525,8 +536,8 @@ tools, then every journal and residue line. This is the model-facing ledger.
 
 ### 10.5 Scenes
 
-Five scene sources in `tools/scene.html`, one per state (plus the retired
-dissociate knot still present in the generator):
+Five scene sources in `tools/scene.html`: four live states plus the retired
+dissociate knot still present in the generator:
 
 | state | scene |
 |---|---|
@@ -678,23 +689,23 @@ agent's own tools until it exits.
 
 ## 14. Documentation drift and known defects found while collating
 
-These are recorded, not fixed, because fixing them changes shipped code or copy
-outside the scope of a documentation pass.
+Documentation corrections made in this pass are marked resolved. Runtime files
+were not changed; behavioural defects and owner decisions remain open.
 
-1. **Test counts are stale in README.** README says "74 tests (6 need `npm ci`)"
-   and "a fresh clone runs 68 of 74". Actual: 107 collected and passing in this
-   environment.
-2. **Hook count is stale.** README's layout says "manifest: 1 tool, 3 hooks" and
-   `__init__.py`'s docstring lists three. The manifest and registration both
-   carry four (`post_tool_call`).
-3. **`/dissociate` is documented but not registered.** `SKILL.md` lists it in the
-   command block; `__init__.py`'s docstring and skill description mention it;
-   `panel.debug()` lists it in the idle line. Only aliases resolve it, via the
-   `state` tool, to `doomscroll`.
+1. **Resolved — test counts were stale in README.** README now says 107 tests and
+   no longer claims a fresh clone runs 68 of 74.
+2. **Partially resolved — hook count was stale.** README now says four hooks and
+   includes `post_tool_call`. `__init__.py`'s runtime docstring still lists three;
+   changing it is outside this documentation-only task.
+3. **Partially resolved — `/dissociate` was documented but not registered.**
+   `SKILL.md` no longer lists it. `__init__.py`'s docstring and skill-registration
+   description still mention it, and `panel.debug()` lists it in the idle line.
+   Only aliases resolve it, via the `state` tool, to `doomscroll`.
 4. **`/distance` is a dead alias chain.** `states.ALIASES` maps
    `"distance" → "dissociate"`, and `resolve()` then checks membership in
    `STATES`, where `dissociate` no longer exists. Verified: `resolve("distance")`
-   returns `None`. It should map directly to `doomscroll`.
+   returns `None`. Proposed code fix, requiring a separate approved change: map
+   directly to `doomscroll`.
 5. **Duplicate alias key.** `"dscroll"` appears twice in `ALIASES`; harmless, but
    dead.
 6. **Scene generator and renderer still carry `dissociate`.** `tools/scene.html`
@@ -708,12 +719,31 @@ outside the scope of a documentation pass.
    `{walk_name: {node, prev, at}}`. Both can coexist in the same JSON object, but
    the legacy provider would not see the per-walk cursors. `PROVIDERS["walk"]`
    points at `walks`, so this is latent, not active.
-9. **README's first line and scene list still say "dissociate".** The body later
-   says "`dissociate` is gone — replaced by doomscroll." Internal contradiction.
+9. **Resolved — README's first line and live scene list still said `dissociate`.**
+   They now list the four live states. The retired generator scene and historical
+   replacement note remain explicitly labelled.
 10. **Scenes-per-surface acceptance does not match current code.** That spec's
     references to `core/realimagery.py`, `HOLD_S`/`FADE_S` replacement, and
     `panel.debug` removal describe the pre-consolidation layout; the module is
     now `core/photographs.py` and global hold/fade constants still exist.
+11. **Photograph priority suppresses the parsed walk map.** Earlier README and
+    §10.2 wording promised a side-scrolling takeover map. In the current code,
+    `imagery_frame()` returns photographs before applying the map overlay, and a
+    live renderer can own the screen when photographs are absent. **Docs resolved:**
+    README and §10.2 now describe the map as a fallback. **Owner: Ryan** — accept
+    that precedence or approve a separate code change to restore the map.
+12. **BR-7 says “on this machine”; the generator defaults to a tailnet host.**
+    `tools/gen_frames.py` uses `SD_SERVER=http://100.82.186.41:8089`, not
+    localhost. **Owner: Ryan** — keep the same-machine requirement, or approve:
+    “Real imagery, generated on operator-controlled infrastructure, with no
+    per-image vendor service.”
+13. **Matrix and Telegram are unverified against real clients.** Their surface
+    profiles exist and are unit-tested as encoders, but no real-client acceptance
+    evidence exists. Documentation must not claim validated support.
+14. **Note/join typing conflicts with BR-5's absolute no-words wording.**
+    `tui.run()` temporarily displays `note ›` or `your word ›` and the typed
+    buffer. **Owner: Ryan** — allow text while explicitly entering text, or
+    approve a separate code change to make the interaction wordless.
 
 ---
 
@@ -798,10 +828,10 @@ bank, two residue channels, threshold drift as an exit rule, ConceptVis design
 verbs as walk moves, an arrow/twig journal shape, a read-only dashboard tab, and
 an offline A/B/C/D evaluation harness. None is implemented.
 
-Brand decision still open upstream: the marketplace has no `cognition` category.
-Recommendation in `docs/brand.md` is to file under `productivity` with tags
-`cognitive`, `creativity`, `states`, `imagery`, and raise the category gap
-separately.
+Brand decision still open upstream: the marketplace has no `cognition` category,
+and `productivity` is not a valid category. Ryan must decide whether to accept
+`general`, the only honest existing fallback, or propose `cognition` upstream.
+The tags remain `cognitive`, `creativity`, `states`, `imagery`.
 
 ---
 
@@ -962,3 +992,8 @@ before any code moves — per the workspace spec-driven policy. Its evidence doe
 not transfer to Antemuse: it evaluates *other* systems, so it cannot support a
 claim that any Antemuse state improves output. Use it to choose structure, not
 to borrow numbers.
+
+A separate proposal for a generative "creative cognition engine" is recorded at
+`../docs/research/creative-cognition-proposal.md`. It is **not adopted** and
+conflicts with this spec's no-model-call and no-scoring contract; it is kept for
+the record, not as a plan.

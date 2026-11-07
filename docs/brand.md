@@ -100,15 +100,18 @@ width, and 2:1 becomes a strip).
 ## Catalog
 
 Category is unresolved by construction: the marketplace has nine hard-coded
-categories and none of them is cognition. File under `productivity` with tags
-`cognitive`, `creativity`, `states`, `imagery`, and keep the gap on record — a
-plugin cannot invent a category, but the submission can say plainly that it does
-not fit.
+categories and none of them is cognition. The earlier recommendation to file
+under `productivity` is invalid: that category does not exist.
+
+**OPEN — Ryan decides:** accept `general`, the only honest existing fallback, or
+propose a `cognition` category upstream before listing. The tags remain
+`cognitive`, `creativity`, `states`, `imagery`. A plugin cannot invent a category,
+but the submission can say plainly that Antemuse does not fit.
 
 ## Open
 
 1. `/return` — settled; `/snap` was unavailable (built-in alias collision).
-2. Propose a `cognition` category upstream, or file under `productivity` and say
-   so. Recommendation: file, and raise the category gap separately.
+2. Propose a `cognition` category upstream, or file under `general` and say so.
+   **OPEN — Ryan decides.** `productivity` is not a valid catalog category.
 3. Version: 0.9.0 shipped with the internal consolidation (package `core/`,
    dead board removed). `scenes-per-surface` therefore lands as 1.0.0.

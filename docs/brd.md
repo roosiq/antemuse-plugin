@@ -7,9 +7,17 @@ Source: every message Ryan sent in the chain that produced this plugin
 the appendix. Nothing here is inferred from market data, the code, or another
 agent's summary. Where a line says what Ryan wants, it quotes him.
 
-`docs/requirements.md` is the companion artifact derived from the code and the
-brand work. This document is the authority where the two disagree, because it
-records what was actually asked for.
+## Document authority
+
+- `docs/brd.md` (this file) owns business intent and Ryan's quoted requirements.
+- `docs/requirements.md` is the operating companion: users, distribution,
+  constraints, risks, release criteria, open decisions, and BR-to-implementation
+  traceability.
+- `docs/spec.md` is the behavioural and implementation contract.
+
+For business intent, this file wins where the two business documents disagree.
+For shipped behaviour, `docs/spec.md` and the implementation and tests govern;
+a requirement here is never evidence that the corresponding behaviour ships.
 
 ---
 
@@ -33,7 +41,7 @@ elaborates it.
 
 **Then it stopped being a place.** "No. This should be the equivalent of an agent
 taking a walk, daydreaming, dissociating, etc. not rooms." The vocabulary of
-containers — kitchen, station, room — was retired with it.
+containers — cooking space, station, room — was retired with it.
 
 **Then the screen was emptied.** "The user should not see text, jargon,
 explainers or anything. This should be more about ingecting content into the
@@ -66,7 +74,7 @@ shows the person an explanation of the mechanism violates the requirement.
 **BR-3 — A state is a temporary change of behaviour, not a container.**
 *"This should be the equivalent of an agent taking a walk, daydreaming,
 dissociating, etc. not rooms."* The four states are walk, daydream, doomscroll,
-and dream. Vocabulary that reintroduces a place — room, kitchen, station, level —
+and dream. Vocabulary that reintroduces a place — room, cooking space, station, level —
 is out of scope by instruction.
 
 **BR-4 — Each state draws on a real corpus, not generated filler.**
@@ -92,6 +100,13 @@ a transition between states — not a status panel, not a wall of ASCII characte
 *"Let's use real images. Can you stand up a small local image generating model for
 this."* Local generation is a requirement, not an implementation detail: no
 per-image vendor cost, no external dependency in the core experience.
+
+Implementation status: **partial; owner decision required**. `tools/gen_frames.py`
+defaults to `SD_SERVER=http://100.82.186.41:8089`, an operator-controlled tailnet
+GPU host rather than the machine displaying the state. Proposed wording for Ryan's
+approval: **“Real imagery, generated on operator-controlled infrastructure, with
+no per-image vendor service.”** Until Ryan approves that broadening, same-machine
+generation remains the requirement and the current default does not meet it.
 
 **BR-8 — The human can watch, and can act.**
 *"The visuals should allow the person to watch and do the same."* The display is
@@ -132,11 +147,11 @@ Built, then removed by instruction. These are requirements in the negative — d
 not reintroduce them.
 
 - A minigame with scores or play. *"Nah. Let's make this less of a game..."*
-- A cooking station, a kitchen, a room, a level. *"Back off the original cooking
+- A cooking station, a cooking space, a room, a level. *"Back off the original cooking
   station idea"*, *"not rooms."*
 - Text, labels, explainers, or any prose shown to the person.
 - The "dissociate" state — folded into doomscroll.
-- The name `antemuse-states`, or any sub-brand of Antemuse.
+- Any suffixed project name or sub-brand of Antemuse.
 - Explaining *why* two concepts connect.
 
 ## 4. Constraints the business has to respect
@@ -147,8 +162,12 @@ not reintroduce them.
 - **No invented material.** A missing corpus, a dead feed, or an empty memory is
   named, never filled in.
 - **No deployment, publication, or purchase without explicit approval.**
-- **Local-first.** Imagery is generated on the operator's machine; social content
-  is the only network dependency, and its absence degrades to a named failure.
+- **Local-first, with an open locality decision.** The quoted requirement is
+  imagery generated on the operator's machine. The current generator defaults to
+  an operator-controlled tailnet GPU host; see BR-7. Social content and the
+  configured image-generation endpoint can require networking, and a dead social
+  feed degrades to a named failure. Do not describe the current default as
+  same-machine generation.
 - **One operator, one machine.** There is no multi-tenant story and none is
   claimed.
 
@@ -159,9 +178,13 @@ not reintroduce them.
    marketplace conversation, not a code change. Undecided.
 2. **Demand.** No usage data exists. Any public claim about adoption would be
    invented, so none is made until the plugin is listed.
-3. **Pricing.** Assumed free. Not stated by Ryan, and not contradicted either.
+3. **Pricing.** **OPEN.** Ryan has not stated a price; the current build has no
+   gating or account.
 4. **Which surfaces ship in v1.** Terminal and chat are specified; Matrix and
    Telegram are configured in code but unverified against real clients.
+5. **Imagery locality.** Does BR-7 require the same machine, or is an
+   operator-controlled tailnet GPU host sufficient? The proposed broader wording
+   in BR-7 awaits Ryan's decision.
 
 ## 6. Success, in business terms
 
@@ -180,6 +203,9 @@ Extracted verbatim from the session database, deduplicated, compaction artifacts
 removed.
 
 39 messages.
+
+Attribution note: #5, #15, #20, and #28 are Ryan's messages; the source extract
+omitted the `[shake]` tag. The message text is unchanged.
 
 1. [shake] Go on the Hermes plugin marketplace and find gaps with cognitive plugins. Creativity, chaos, randomness, semantics, etc
 2. [shake] Let’s look at concept.cooking and see what we can build a plugin as
