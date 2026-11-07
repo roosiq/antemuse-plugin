@@ -13,6 +13,9 @@ A state is a bounded change to behaviour, not a place:
 States expire on minutes *and* turns; the clock decides when it ends, the turn
 count decides how much of it the model gets.
 
+Consolidated specification: `docs/spec.md` (architecture, contracts, evidence,
+drift, and change log in one place).
+
 ## Taking a break
 
 ```

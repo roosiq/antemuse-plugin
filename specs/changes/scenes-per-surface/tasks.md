@@ -3,13 +3,23 @@
 Dependency ordered. Each task is independently verifiable and names its check.
 `T7` is the carried-over item from `state-return-report`.
 
-## T0 — origin binding
+## T0 — origin binding  **done (2026-11-06)**
 `core/engine.py::enter` records `{session_id, platform, project}`; artifacts
 resolve to `<project>/.antemuse/` when `ANTEMUSE_STATES_HOME` is unset; no module
 under `core/` may reference a channel or a send call.
 **Check:** entry from session A then `stop()` in session B produces nothing in B;
 a grep test asserts `core/` contains no `chat_id`, `thread_id`, or send API;
 artifact path follows the project root.
+
+Implemented: `enter()` records `origin: {session_id, platform, project}`;
+`stop(session_id)` withholds the account from any other session (it stays in the
+residue for the one that started it); `storage.project_root()` finds the nearest
+`.git` ancestor and `project_dir()` gives `<root>/.antemuse`, which now receives
+the walk cursor and the card. Three tests plus the grep test.
+
+Two known gaps, recorded rather than hidden: a state entered by a bare slash
+command *before any turn* has no `session_id` yet (so nothing is withheld), and
+`project` follows the process cwd at entry, not a per-session directory.
 
 ## T1 — motion profiles
 `core/realimagery.py`: replace `HOLD_S`/`FADE_S` with

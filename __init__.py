@@ -113,8 +113,8 @@ def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
 
 # ------------------------------------------------------------------ hooks
 
-def _pre_llm_call(platform: str = "", **kwargs: Any) -> str | None:
-    engine.remember_platform(platform)
+def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> str | None:
+    engine.remember_platform(platform, session_id)
     engine.note_turn()
     engine.tick()
     return engine.inject()
@@ -154,7 +154,7 @@ def _enter(key: str, minutes: int | None = None):
 
 
 def _return(_raw: str) -> str:
-    return engine.stop()
+    return engine.stop(engine.current_session())
 
 
 def _state(_raw: str) -> str:

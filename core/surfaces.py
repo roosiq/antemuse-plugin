@@ -177,6 +177,7 @@ def snapshot_path(state: Dict[str, Any], name: str = "discord") -> Path:
     d = ImageDraw.Draw(im)
     for i, line in enumerate(lines):
         d.text((pad, pad + i * lh), line, font=font, fill=(242, 234, 225))
-    path = storage.data_dir() / "state_card.png"
+    home = storage.project_dir() or storage.data_dir()
+    path = home / "state_card.png"
     im.save(path)
     return path

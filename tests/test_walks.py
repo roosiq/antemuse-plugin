@@ -135,3 +135,17 @@ def test_outer_hops_are_farther_than_wander_hops(cursor):
         return statistics.mean(sims)
 
     assert mean_similarity("outer") + 0.1 < mean_similarity("wander")
+
+
+def test_artifacts_follow_the_project(tmp_path, monkeypatch):
+    """A walk taken in a repository resumes there, not in the plugin's home."""
+    import os
+    from core import storage
+    repo = tmp_path / "some-project"
+    (repo / ".git").mkdir(parents=True)
+    monkeypatch.delenv("ANTEMUSE_STATES_HOME", raising=False)
+    monkeypatch.chdir(repo)
+    assert storage.project_root() == repo.resolve()
+    local = storage.project_dir()
+    assert local == repo.resolve() / ".antemuse" and local.is_dir()
+    assert walks.cursor_path_default().parent == local

@@ -78,3 +78,20 @@ def test_no_retired_name_appears_anywhere():
                 offenders.append(f"{path.relative_to(ROOT)}: {needle}")
                 break
     assert not offenders, offenders
+
+
+def test_nothing_in_core_names_a_channel_or_sends_anything():
+    """Origin binding is free because the plugin only returns strings.
+
+    A single `chat_id`, `thread_id`, or send call in core/ would let a state
+    answer somewhere other than where it was started."""
+    # reading a feed is fine; addressing a channel or posting to one is not
+    bad = ("chat_id", "thread_id", "channel_id", "sendMessage", "send_message",
+           "post_message", "requests.post", ".send(", "gateway.send")
+    offenders = []
+    for path in sorted((pathlib.Path(ROOT) / "core").glob("*.py")):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for needle in bad:
+            if needle in text:
+                offenders.append(f"{path.name}: {needle}")
+    assert not offenders, offenders

@@ -350,6 +350,11 @@ class GraphWalk:
 # ------------------------------------------------------------------- registry
 
 def cursor_path_default() -> Path:
+    """A walk in a repository resumes in that repository."""
+    from . import storage
+    local = storage.project_dir()
+    if local is not None:
+        return local / "walk_cursor.json"
     return cursor_path()
 
 

@@ -187,9 +187,16 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
         data = _load()
         previous = data.get("active") or {}
         now = time.time()
+        root = storage.project_root()
+        origin = {
+            "session_id": data.get("session_id") or "",
+            "platform": data.get("platform") or "",
+            "project": str(root) if root else "",
+        }
         duration = float(minutes if minutes else spec["minutes"])
         data["active"] = {
             "key": spec_key,
+            "origin": origin,
             "walk": walk or (previous.get("walk") if previous and previous["key"] == spec_key else "outer"),
             "entered_at": now,
             "ends_at": now + duration * 60,
@@ -210,13 +217,22 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
     return f"{spec['label']} · {duration:g} min · {spec['turns']} turn(s) · {spec['contract']}{note}"
 
 
-def stop() -> str:
+def current_session() -> str:
+    """The session the last turn came from: what `stop()` holds the account to."""
+    with _LOCK:
+        return str(_load().get("session_id") or "")
+
+
+def stop(session_id: str = "") -> str:
     with _LOCK:
         data = _load()
         active = data.get("active")
         if not active:
             return "not in a state."
         spec = states.STATES[active["key"]]
+        origin = active.get("origin") or {}
+        elsewhere = bool(session_id and origin.get("session_id")
+                         and session_id != origin.get("session_id"))
         report = _account(data, active)
         data["residue"].append({**report, "kind": "report", "turns_left": 2})
         data["journal"].append({
@@ -228,6 +244,9 @@ def stop() -> str:
         _save(data)
     from . import ticker
     ticker.stop()
+    if elsewhere:
+        return (f"{spec['label']} ended in the session that started it; its account stays "
+                f"there. Nothing was rendered here.")
     if spec.get("restart"):
         return (f"{spec['label']} ended · {report['text']}\n"
                 f"The frame you were in is gone. State the goal, name the approach you were stuck "
@@ -436,13 +455,16 @@ def status() -> str:
     return "\n".join(lines)
 
 
-def remember_platform(platform: str) -> None:
-    """The channel a turn arrived on, so renders can size themselves to it."""
-    if not platform:
+def remember_platform(platform: str, session_id: str = "") -> None:
+    """Where a turn arrived: the channel sizes the render, the session binds it."""
+    if not platform and not session_id:
         return
     with _LOCK:
         data = _load()
-        data["platform"] = platform
+        if platform:
+            data["platform"] = platform
+        if session_id:
+            data["session_id"] = session_id
         _save(data)
 
 

@@ -260,3 +260,33 @@ def test_a_dream_ends_by_asking_for_a_summary():
     engine.enter("dream", 3)
     out = engine.stop()
     assert "Summarise it in three lines" in out
+
+
+def test_a_state_records_where_it_was_started():
+    engine.remember_platform("discord", "sess-A")
+    engine.enter("walk", minutes=3)
+    origin = (engine.peek() or {}).get("origin") or {}
+    assert origin.get("session_id") == "sess-A"
+    assert origin.get("platform") == "discord"
+    assert "project" in origin
+
+
+def test_another_session_cannot_collect_the_account():
+    engine.remember_platform("discord", "sess-A")
+    engine.enter("walk", minutes=3)
+    engine.record("state", "hand (n) → palm (n) · took its meronym", event="walk")
+    out = engine.stop("sess-B")
+    assert "Nothing was rendered here" in out
+    assert "ended" in out and "hand" not in out, "the account must not travel to another session"
+    assert engine.peek() is None
+    # the account still exists for the session that started it
+    reports = [r for r in engine.watch_state()["residue"] if r.get("kind") == "report"]
+    assert reports and "hand" in reports[-1]["text"]
+
+
+def test_only_this_session_can_collect_it():
+    engine.remember_platform("discord", "sess-A")
+    engine.enter("walk", minutes=3)
+    engine.record("state", "hand (n) → palm (n) · took its meronym", event="walk")
+    out = engine.stop("sess-A")
+    assert "hand" in out
