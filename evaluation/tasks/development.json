@@ -1,0 +1,35 @@
+{
+  "fixtures_version": "development-1",
+  "tasks": [
+    {
+      "id": "dev-lighthouse-door",
+      "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+      "good_idea_qualities": [
+        "the door implies a consequence the keeper must act on",
+        "the paragraph keeps the sea and the lamp in view",
+        "something is at stake for the keeper personally"
+      ],
+      "forbidden_topics": [
+        "real named people",
+        "graphic violence",
+        "self-harm"
+      ],
+      "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+    },
+    {
+      "id": "dev-late-bus-ticket",
+      "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+      "good_idea_qualities": [
+        "the ticket forces a small concrete decision",
+        "the paragraph makes the elapsed thirty years felt without explaining them",
+        "the ending leaves the reader uneasy rather than resolved"
+      ],
+      "forbidden_topics": [
+        "real named people",
+        "graphic violence",
+        "self-harm"
+      ],
+      "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+    }
+  ]
+}
