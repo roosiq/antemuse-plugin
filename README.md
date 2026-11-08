@@ -5,7 +5,7 @@ watch it happen in the CLI and take the same state beside it.
 
 A state is a bounded change to behaviour, not a place:
 
-- **tools** — what the agent may still touch (a walk takes nothing; a dream takes everything)
+- **tools** — what the agent may still touch (open by default; `block: true` closes them, `allow:` narrows)
 - **directive** — injected into the turn the state governs
 - **contract** — the one line the reply is held to
 - **residue** — what it carries back when the state ends

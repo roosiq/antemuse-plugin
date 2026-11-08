@@ -24,6 +24,7 @@ Deadline 2026-11-11 17:00 EST. Target submit Tue 11-10 18:00.
 | H13 | `.gitignore`: allow `docs/screenshots/*.png`, exclude `data/meshy/` | A | 5 | — | `[x]` proven with `git add -n` |
 | H14 | Capture 4 screenshots: takeover mid-walk, chat postcard, `/break` recommendation, blocked-tool refusal | A | 45 | freeze | PNGs under `docs/screenshots/`, committed at the pin |
 | H15 | First-screen summary + screenshot in README | A | 20 | H14 | README renders the image at the pinned SHA |
+| H16 | Confirm states-open-by-default text in README (`block: true`, `allow:`) matches the pin | A | 10 | — | `[x]` fixed in the freeze commit; `/daydream` no longer implies closed tools |
 
 ## Wave 2 — freeze and validate
 
