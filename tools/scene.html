@@ -97,9 +97,9 @@ async function walk() {
 
   
   // one deliberate motion: the construct steps away, the ring holds still
-  pilgrim.rotation.y = Math.PI + Math.sin(t) * 0.16;
-  pilgrim.position.y = 0.9 + Math.abs(Math.sin(t * 2)) * 0.06;
-  pilgrim.position.z = 2.2 - (Math.sin(t) * 0.5 + 0.5) * 0.9;
+  pilgrim.rotation.y = Math.PI + Math.sin(t) * 0.3;
+  pilgrim.position.y = 0.9 + Math.abs(Math.sin(t * 2)) * 0.12;
+  pilgrim.position.z = 2.2 - (Math.sin(t) * 0.5 + 0.5) * 1.5;
   cam.position.set(Math.sin(t) * 0.18, 2.1, 8.4);
   cam.lookAt(0, 1.2, -3);
 }
