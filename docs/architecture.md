@@ -243,7 +243,7 @@ fixed and recorded.
 | Command surface | **LIVE** — 14 commands → 5: the four states and `/return`; `/note`, `/break`, `/mood`, `/state`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions |
 | Daydream material | **LIVE** — `core/recall.py` keeps a bounded ring (24 × 400 chars) of recent turns captured from `pre_llm_call`/`transform_llm_output`, so a daydream has material under any memory provider; the built-in `MEMORY.md`/`USER.md` are enrichment when present |
 | Hermes integration | **VERIFIED** — every mechanism checked against the host source: `ctx.llm` with no provider override, registered auxiliary task keys, `plugin_data_dir`, `valid hooks`, `plugin_api.py`, memory left to the host. Three defects found and fixed; `docs/hermes-integration.md` |
-| Pattern recommendation | **PROPOSED** — `specs/changes/pattern-recommendation`: name the state that fits the shape of the work (loop, grind, churn, saturation, data wall, rut) from measured counters, one line, never enters |
+| Pattern recommendation | **PARTIAL** — `core/recommend.py` names the state that fits the work from measured counters (loop · data wall · saturation · grind · rut), one line with its evidence, silent by default, never enters. `churn` and `return hangover` are NOT BUILT: no measured signal exists for them |
 | Slash flags such as `/daydream --block` | **NOT BUILT** — no command surface carries them yet |
 | Meshy MCP auth | 401: the CLI OAuth token is not a developer key. CLI path works and is what the pack used |
 
@@ -277,6 +277,4 @@ fixed and recorded.
 1. Finish `doomscroll` (blocked on decision 1).
 2. Colour and HUD work to close `immersive-visuals` (`PARTIAL` → `LIVE`).
 3. `scenes-per-surface`: per-surface grading, clock, dual scoring, 4:5 postcards.
-4. Implement `pattern-recommendation` — seven patterns, each with a deterministic
-   fixture, silence by default.
-5. Path A: judge, blind comparison, protected set — the only route to a claim.
+4. Path A: judge, blind comparison, protected set — the only route to a claim.

@@ -1,6 +1,6 @@
 # Pattern recommendation — name the state that fits the shape of the work
 
-Status: **proposed** 2026-11-08. Owner: Ryan Cook. Scope: the recommendation line that
+Status: **implemented (PARTIAL)** 2026-11-08. Owner: Ryan Cook. Scope: the recommendation line that
 already rides in the injected block. No new command, no new state, no model call.
 
 ## Goal
@@ -77,3 +77,19 @@ this looks like a walk · same tool failed 3× · /walk 5
 State definitions, durations, turn budgets, cadences, tool policy, `OFFER_AFTER_MIN`,
 `CONTROL_TOOLS`, the injection format, or the rule that rendering never needs a model
 call.
+
+## What is built, and what is not
+
+| Pattern | State | Evidence it reads |
+|---|---|---|
+| loop | **built** | `work.streak` — consecutive tool failures, reset by any success |
+| data wall | **built** | `work.source_fail_turns` — the turn number of each provider failure |
+| saturation | **built** | `work.turns ≥ 60`, or ≥ 3 open decisions when a caller supplies them |
+| grind | **built** | `work.turns ≥ 20` plus a failure inside the last 3 turns |
+| rut | **built** | `entries` — which state was entered, and when; fires inside a state too |
+| churn | **NOT BUILT** | needs a topic-shift signal the plugin does not keep. Inventing one from word overlap would be a guess dressed as a measurement, so it does not fire. |
+| return hangover | **NOT BUILT** | needs "the first step repeats the step it ended on", which requires comparing intent across a state boundary — a model judgement, which this design forbids. |
+
+`core/recommend.py`; 13 tests in `tests/test_recommend.py`, including one that drives the
+real engine: three failed tools, no command, and the line appears in the injected block —
+then stays quiet for the cooling window.

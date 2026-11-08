@@ -124,9 +124,25 @@ def note_turn() -> None:
 
 
 def note_tool(ok: bool) -> None:
-    """post_tool_call: the only honest signal about how the work is going."""
+    """post_tool_call: the only honest signal about how the work is going.
+
+    Counts twice on purpose: the mood counters hold the totals used for strain, and
+    `work` holds the *shape* — the run of failures, and which turn each one fell on,
+    because "same tool failed three times" is not the same thing as "three failures".
+    """
     from . import mood
     mood.observe_tool(ok)
+    with _LOCK:
+        data = _load()
+        work = data.setdefault("work", {})
+        if ok:
+            work["streak"] = 0
+        else:
+            work["streak"] = int(work.get("streak") or 0) + 1
+            turns = int(work.get("turns") or 0)
+            recent = [int(x) for x in (work.get("fail_turns") or [])][-7:] + [turns]
+            work["fail_turns"] = recent
+        _save(data)
 
 
 def break_view() -> Dict[str, Any]:
@@ -222,6 +238,9 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
             data["active"]["options"] = dict(options)
         now_break = now
         data.setdefault("breaks", []).append(now_break)
+        entries = [e for e in (data.get("entries") or []) if isinstance(e, dict)][-7:]
+        entries.append({"key": spec_key, "at": now_break})
+        data["entries"] = entries
         data["work"] = {"turns": 0, "tools": 0, "fails": 0, "started_at": now_break}
         data["offered_at"] = 0.0
         _save(data)
@@ -349,6 +368,13 @@ def deliver_if_due() -> int:
         lines = provider(1)
     except Exception as exc:  # a provider failing must not kill the turn
         record("state", f"{key} provider failed · {exc}", event=key)
+        with _LOCK:
+            data = _load()
+            work = data.setdefault("work", {})
+            turns = int(work.get("turns") or 0)
+            work["source_fail_turns"] = ([int(x) for x in (work.get("source_fail_turns") or [])][-7:]
+                                         + [turns])
+            _save(data)
         return 1
     for line in lines:
         record("state", line, event=key)
@@ -373,11 +399,14 @@ def inject() -> str | None:
         ][-6:]
     reports = [r for r in residue if r.get("kind") == "report"]
     residue = [r for r in residue if r.get("kind") != "report"]
-    from . import mood
+    from . import mood, recommend
     with _LOCK:
         data = _load()
         view = mood.view(data["work"], data["mood"], data["breaks"], data.get("offered_at") or 0.0)
-        nudge = (not active) and view["due"] != "carry on" and not view["cooling"]
+        # The specific recommendation outranks the generic nudge: a named state with its
+        # evidence is a judgement, "break due" is a timer. Both respect the same cooling.
+        advice = recommend.suggest(data) if not view["cooling"] else None
+        nudge = bool(advice) or ((not active) and view["due"] != "carry on" and not view["cooling"])
         if nudge:
             data["offered_at"] = time.time()
             _save(data)
@@ -417,7 +446,7 @@ def inject() -> str | None:
         lines.append(f"[RESIDUE: {r.get('text', '')}]")
     if nudge:
         lines.append("")
-        lines.append(mood.offer(view))
+        lines.append(advice["line"] if advice else mood.offer(view))
     return "\n".join(lines)
 
 
