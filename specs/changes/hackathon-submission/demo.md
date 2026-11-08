@@ -25,7 +25,7 @@ forbids the claim.
   dark background, ≤ 100 columns, and captions that state the point so the
   terminal text is evidence rather than the message.
 
-## 3. Story beats and shot list (80 s)
+## 3. Story beats and shot list (84 s)
 
 State used in the video: **daydream**, entered from the `state` tool with
 `block: true`. That detail is load-bearing: since the `non-blocking-states`
@@ -72,33 +72,61 @@ if a cut hides a wait, the caption says so (`40 s later`).
   tree, and show the real numbers. If the count changes before the pin, re-shoot
   this beat rather than editing the number.
 
-## 5. Capture harness (verified working 2026-11-08)
+## 5. Toolchain — what captures, what draws
 
-Installed for this: `xterm`, `xdotool` (dnf). Available already: `tmux`, `Xvfb`,
-`ffmpeg` 8.1.3, `ffprobe`, `Pillow`.
+| job | tool | state | why this one |
+|---|---|---|---|
+| record the screen | `Xvfb` + `xterm` + `ffmpeg -f x11grab` | **verified** 2026-11-08 | no window manager or GPU capture needed; 1280×720/30 fps, H.264 via `libopenh264`, 3 s ≈ 37 KB |
+| drive the session | `tmux send-keys` via `tools/demo/human_type.py` | **built + tested** | deterministic retakes; pacing below |
+| captions and cards | `tools/demo/overlays.py` (Pillow) → PNG per beat | **built + tested** | text lives in `beats.json`, not in an escaped ffmpeg string; brand palette enforced |
+| composite | `ffmpeg overlay` with `enable='between(t,a,b)'` | **tested** | one filter graph, no editor, re-renders in seconds |
+| optional desktop capture | OBS Studio (`dnf`, 5.1 MiB) | not installed | only worth it if the demo moves to the real desktop app; adds a GUI dependency |
+| optional hand edit | Kdenlive / Shotcut | not installed | only if a human editor takes over the cut |
+| generated stills | local SD at `:8089` | **not running** | the takeover already carries Meshy art; do not add a second art pipeline |
 
-There is **no libx264** in `ffmpeg-free`; H.264 comes from `libopenh264` (or
-`h264_vaapi`). VP9 exists but X wants MP4/H.264.
+Not used, deliberately: OBS (headless Xvfb is enough), drawtext (quoting and
+wrapping are the failure mode), screen-studio GUIs, AI avatars.
+
+Palette and type come from `docs/brand.md`: ground `#0e0c0b`, amber `#f2b25a`,
+teal `#4fa89c`, Liberation Mono. Captions are 34 px, one or two lines, on a warm
+near-black band with an amber rule — the same grammar as the takeover, so the
+overlay does not look bolted on.
+
+## 5.1 The human, honestly
+
+There is **no webcam on this machine**, and an AI avatar or synthetic voice would
+read as generated — the opposite of the "real situation" the video needs. So the
+human is conveyed by behaviour, not by a face:
+
+- **Human pace.** `human_type.py` types at 45–145 ms per character, pauses longer
+  at spaces and punctuation, and inserts one typo in the middle of a word that is
+  noticed and backspaced. Seeded, so a retake matches the take.
+- **A real task.** A scratch repository with a test that genuinely fails, and a
+  real `hermes` session working on it. No mock terminal, no pre-baked output.
+- **A real reason.** The session starts from the person's own words ("I've been
+  on this for three hours"), not from a command list.
+- **One visible hesitation.** The pause before `/break` and the typo are the two
+  moments that make it read as a person.
+- **Voice, only if real.** If a voice is wanted, Ryan records 20–30 s on a phone;
+  no TTS. Otherwise the cut is music-free and caption-led, which is normal for
+  muted X playback.
+
+If a face is wanted later, the honest version is a 200 px webcam inset recorded
+separately and composited with `ffmpeg overlay` — but there is no camera here, so
+the plan does not depend on one.
+
+## 5.2 Filter graph, exactly
 
 ```bash
-# one virtual display, one window, one recording
-Xvfb :77 -screen 0 1280x720x24 &
-DISPLAY=:77 xterm -fa 'Liberation Mono' -fs 18 -bw 0 -bg '#0b0b0f' -fg '#e8e8e8' \
-  -geometry 118x32+0+0 -e tmux new -A -s demo &
-sleep 2
-xdotool mousemove 4000 4000            # keep the pointer out of frame
-DISPLAY=:77 ffmpeg -f x11grab -video_size 1280x720 -framerate 30 -i :77 \
-  -c:v libopenh264 -b:v 6M -pix_fmt yuv420p -movflags +faststart take.mp4
-# drive the session from another shell:
-tmux send-keys -t demo '/mood stuck' Enter
+python3 tools/demo/overlays.py render          # writes tools/demo/out/beat_NN.png
+GRAPH=$(python3 tools/demo/overlays.py filter)
+INPUTS=""; for f in tools/demo/out/beat_*.png; do INPUTS="$INPUTS -loop 1 -i $f"; done
+ffmpeg -i take.mp4 $INPUTS -filter_complex "$GRAPH" -map "[v9]" \
+  -c:v libopenh264 -b:v 6M -pix_fmt yuv420p -movflags +faststart demo.mp4
 ```
 
-Verified today: 1280×720, 30 fps, H.264, crisp text, 3 s ≈ 37 KB. Text video is
-cheap; do not downscale to save bytes.
-
-Drive typing with `tmux send-keys` (deterministic) rather than `xdotool type`
-(keycode/font races). `-bw 0` removes the window border; move the pointer off the
-Xvfb screen so the I-beam never appears in frame.
+The chain overlays each card only inside its window, so one render covers all
+nine beats; `beats.json` is the single source of timing and copy.
 
 ## 6. Isolation and stale code — two traps found while planning
 
@@ -120,8 +148,10 @@ block; `/return` from the operator is the other way out.
 
 ## 7. Edit and encode
 
-- Captions: burned in with `drawtext` (Liberation Mono, 34–40 px, white on
-  `#000000@0.55` band), lower third, max 2 lines, ≤ 42 characters per line.
+- Captions: generated as PNGs by `tools/demo/overlays.py` from `beats.json`
+  (Liberation Mono 34 px, paper `#f7f3ee` on ground `#0e0c0b` at 91%, amber rule),
+  composited by the ffmpeg chain in §5.2. Wrapping is measured in pixels, so no
+  caption spills off a phone.
 - Cuts: hard cuts only. No transitions, no zoom moves, no fake terminal glow.
 - Encode: `-c:v libopenh264 -b:v 6M -pix_fmt yuv420p -movflags +faststart`,
   1280×720, 30 fps, no audio stream (or silence).

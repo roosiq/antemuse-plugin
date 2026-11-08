@@ -1,0 +1,12 @@
+[
+  {"start": 0.0, "end": 6.0, "kind": "caption", "text": "3 hours in. Same failing test."},
+  {"start": 6.0, "end": 14.0, "kind": "caption", "text": "The plugin watches the work: minutes, turns, failed calls."},
+  {"start": 14.0, "end": 24.0, "kind": "caption", "text": "A state is a contract, not a mood."},
+  {"start": 24.0, "end": 32.0, "kind": "caption", "text": "Not a prompt. The tool call never runs."},
+  {"start": 32.0, "end": 46.0, "kind": "caption", "text": "What the person sees. No words, by design."},
+  {"start": 46.0, "end": 58.0, "kind": "caption", "text": "It comes back with an account."},
+  {"start": 58.0, "end": 68.0, "kind": "caption", "text": "Then the work continues."},
+  {"start": 68.0, "end": 76.0, "kind": "caption", "text": "16 checks green. 677 tests."},
+  {"start": 76.0, "end": 84.0, "kind": "title", "kicker": "Hermes plugin hackathon",
+   "head": "antemuse", "sub": "github.com/roosiq/antemuse-plugin"}
+]
