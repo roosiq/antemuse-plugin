@@ -87,6 +87,47 @@ dissolve, and a crop drift. Keep all of it. Two rules for anything new:
   state change.
 - The dissolve is the only transition. A cut never slides in.
 
+## The screensaver idiom
+
+Photoreal plates were the wrong ambition. On the surfaces this product actually
+has, the picture is a **glyph grid** — so a material render gets graded,
+quantised, and destroyed on the way out, which is what happened to every plate I
+tried. The idiom that is already terminal-native, and already the right period
+reference, is the **Windows screensaver family**: Mystify, 3D Pipes, Marquee.
+
+That is also the brief. Mystify *is* abstract, geometric, futuristic, and not of
+this world — hard vector strands on a black field, bouncing off walls, mirrored
+into symmetry, no material, no lighting, no depth of field. There is nothing to
+grade because there was never a photograph.
+
+```bash
+python3 tools/screensaver.py walk 1 58x22         # one frame in the ramp
+python3 tools/screensaver.py dream 2 --strip      # two frames side by side
+python3 tools/screensaver.py --save               # write all four strips
+```
+
+Rules, so the family stays one family:
+
+- **The field is black.** No vignette, no gradient, no grain.
+- **A strand is one cell wide.** Two cells turns four mirrored copies into a smear.
+- **Mirror, don't decorate.** Two-fold or four-fold symmetry about the centre.
+- **Reflect off the walls**, linearly. No easing, no bounce physics, no curve.
+- **Same language per state, different parameters** — trail length, speed,
+  symmetry order, how many strands. Never a different visual language.
+- **Amber stays the single hot accent**; everything else is the ramp.
+
+What each state does inside that language:
+
+| state | trail | symmetry | strands | reads as |
+|---|---|---|---|---|
+| walk | 22 | 2 | 2 | a path crossing the frame, once |
+| daydream | 26 | 2 | 2 | long slow strands nearly touching |
+| dream | 30 | 2 | 2 + fill | many crossings, dense, unresolved |
+| doomscroll | 18 | 4 | 2 | fast, repetitive, four-fold chatter |
+
+The icon mark keeps its own weight scale and is unaffected by this; what changes
+is everything the *state* draws.
+
 ## Seen the way the product sees it
 
 A plate is not only an icon. Run it through the plugin's own cell model and it

@@ -212,15 +212,34 @@ def dream_recombine(steps: int = 1) -> List[str]:
         return [f"framenet unavailable · {str(exc).splitlines()[0][:90]}"]
     if not frames:
         return ["framenet unavailable · no frames with roles and lexical units"]
+    seed_line = ""
+    chosen = None
+    try:
+        from . import seeding
+        seed = seeding.entry("dream", when=time.time())
+        if seed["term"]:
+            seed_line = seeding.marker(seed)
+            term = seed["term"].lower()
+            for candidate in frames:
+                words = {w.lower() for w in re.findall(r"[A-Za-z]+", candidate.name)}
+                lus = {str(u).lower() for u in getattr(candidate, "lexical_units", [])[:40]}
+                if term in words or term in lus:
+                    chosen = candidate
+                    break
+    except Exception:
+        seed_line = ""
     out = []
     for _ in range(steps):
-        frame = RNG.choice(frames)
+        frame = chosen or RNG.choice(frames)
+        chosen = None
         roles = _roles(frame, 2) + ["thing", "thing"]
         out.append("invented · " + RNG.choice(DREAM_FORMS).format(
             frame=frame.name.replace("_", " ").lower(),
             a=roles[0].replace("_", " ").lower(),
             b=roles[1].replace("_", " ").lower(),
             lu=_lu(frame)))
+    if out and seed_line:
+        out[0] = f"[{seed_line}] " + out[0]
     return out
 
 

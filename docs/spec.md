@@ -199,6 +199,15 @@ Honest limit: the plugin cannot delete the transcript, so "the frame is gone" is
 an instruction, not a fact. Context compaction would be the real analogue and is
 outside the plugin's control.
 
+### 4.1 Where a state starts
+
+Entry is specified in `specs/changes/state-entry`: `walk` and `dream` draw their seed
+from a **5 : 3 : 2** mix of project terms, conversation terms and deliberate randomness,
+chosen by a deterministic hash of (state, entry time, counter), skipping terms the state
+already used, and recording `seed=<source>:<term>` on the first line. `daydream` starts
+from the conversation (memory files are enrichment), and `doomscroll` stays undirected —
+that is its point.
+
 ### 4.2 Daydream — two memories
 
 Pulls two entries from `MEMORY.md` + `USER.md`, reports them, and joins them only
@@ -452,9 +461,9 @@ Implementation: `core/sources.py`, `core/social.py`.
 
 | state | provider | source | cache |
 |---|---|---|---|
-| walk | `walk_text` | the selected walk's graph | cursor per walk |
+| walk | `walk_text` (seeded) | the selected walk's graph | cursor per walk |
 | daydream | `memory_pairs` | recent turns captured from `pre_llm_call` (any provider) → `MEMORY.md` + `USER.md` when present | the built-in memory provider only; an external bank is out of reach and named |
-| dream | `dream_recombine` | FrameNet v17: 1,221 frames, ≥3 frame elements with lexical units | in-process |
+| dream | `dream_recombine` (seeded) | FrameNet v17: 1,221 frames, ≥3 frame elements with lexical units | in-process |
 | doomscroll | `scroll_text` | Bluesky "what's hot" (40), fosstodon.org public timeline (30), HN front page via Algolia (20), Ars Technica + The Verge RSS | `social.json`, 10 min |
 
 `ready(kind)` probes nltk importability and corpus presence before entry and
@@ -649,7 +658,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 717 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 726 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -938,6 +947,7 @@ All paths relative to `specs/changes/`.
 | `command-surface` | **implemented** | public verbs | 14 commands → 5 (four states + `/return`); `/note`, `/break`, `/mood`, `/state`, `/states`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions. `/break <state>` no longer enters, `/keep` numbering is published, and a test fails when a registered verb has no definition. |
 | `pattern-recommendation` | **implemented (partial)** | recommendation | names the state that fits the shape of the work from measured counters: loop, data wall, saturation, grind, rut. One line, one state, one piece of evidence, cooling, silent by default, never enters. `churn` and `return hangover` are NOT BUILT — the plugin keeps no signal for them and a guess is not a measurement. `core/recommend.py`, 13 tests. |
 | `hermes-integration` | **verified** | host interfaces | audit of every mechanism against the host source: tool/commands/hooks/injection/ctx.llm/aux tasks/storage/dashboard/memory. Three defects fixed — automation read `messages` but the host passes `user_message`; three modules hardcoded `~/.hermes`; daydream read a memory file an external provider never writes. No provider override, no SDK, no key: any provider by its default interface. |
+| `state-entry` | **implemented (partial)** | entry + direction | each state now declares where it starts and which way it moves; walk and dream draw their seed from a 5:3:2 mix of project terms, conversation terms and deliberate randomness, chosen by a deterministic hash and recorded as `seed=<source>:<term>` in the journal. `core/seeding.py`, 9 tests; doomscroll stays undirected by design. |
 
 Supporting evidence files:
 

@@ -269,9 +269,14 @@ class GraphWalk:
         cur = self._cursors().get(self.name)
         return cur if isinstance(cur, dict) else {}
 
-    def _write_cursor(self, node_id: str, prev: str) -> None:
+    def _write_cursor(self, node_id: str, prev: str, used: Optional[List[str]] = None) -> None:
         data = self._cursors()
-        data[self.name] = {"node": node_id, "prev": prev, "at": time.time()}
+        entry = {"node": node_id, "prev": prev, "at": time.time()}
+        if used:
+            # remembering what this walk has already started from is what keeps two
+            # entries in the same repository from opening on the same word
+            entry["used"] = [t for t in dict.fromkeys(used) if t][-12:]
+        data[self.name] = entry
         self.cursor_path.parent.mkdir(parents=True, exist_ok=True)
         self.cursor_path.write_text(json.dumps(data))
 
@@ -296,13 +301,36 @@ class GraphWalk:
                     or self.graph.random_node(self.relations))
         if mode == "random":
             return self.graph.random_node(self.relations)
+        # `continue` with no cursor, and the new `project` mode, draw from the mix:
+        # 50 % the repository, 30 % the conversation, 20 % deliberately unrelated.
+        try:
+            from . import seeding
+            for seed in seeding.candidates("walk", when=time.time(),
+                                           exclude=self._used_terms(),
+                                           goal=str((self.seed_spec or {}).get("goal") or "")):
+                resolved = self.graph.resolve(seed["term"])
+                if resolved is not None:
+                    # the marker is claimed only when the seed was actually used: a
+                    # journal that says "project:antemuse" over a random start is a lie
+                    self._seed_marker = seeding.marker(seed)
+                    return resolved
+        except Exception:
+            pass
         return self.graph.random_node(self.relations)
 
+    def _used_terms(self) -> List[str]:
+        try:
+            return [str(x) for x in (self._read_cursor().get("used") or [])][-12:]
+        except Exception:
+            return []
+
     def step(self, steps: int = 1) -> List[str]:
+        self._seed_marker = ""
         node = self.start_node()
         if node is None:
             return [f"walk unavailable · graph '{self.graph_name}' has no starting node"]
         prev_id = self._read_cursor().get("prev", "")
+        prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
         out: List[str] = []
         for _ in range(steps):
             if self.jump == "far" and hasattr(self.graph, "far_from"):
@@ -337,7 +365,9 @@ class GraphWalk:
             out.append(f"{node['label']} ({node['pos'] or 'thing'}) → {nxt['label']} ({nxt['pos'] or 'thing'})"
                        f" · took its {rel}" + (f" · “{gloss}”" if gloss else ""))
             prev_id, node = node["id"], nxt
-        self._write_cursor(node["id"], prev_id)
+        if out and prefix:
+            out[0] = prefix + out[0]
+        self._write_cursor(node["id"], prev_id, used=self._used_terms() + ([self._seed_marker.split(":", 1)[1]] if getattr(self, "_seed_marker", "") else []))
         return out
 
     def describe(self) -> Dict[str, Any]:

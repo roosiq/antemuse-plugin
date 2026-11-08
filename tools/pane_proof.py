@@ -13,7 +13,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, "/home/ryan/antemuse-plugin")
-from core import surfaces  # noqa: E402
+sys.path.insert(0, "/home/ryan/antemuse-plugin/tools")
+import screensaver  # noqa: E402
 
 from PIL import Image
 
@@ -51,7 +52,8 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     shots = []
     for state in STATES:
-        rows = surfaces.art(116, 74, scene=state, fit="cover", pane=True, dither=True, gamma=1.0)
+        rows = screensaver.scene(state, 1, 116, 74)[0]
+        rows = [r.ljust(116) for r in rows]
         cols = max(len(r) for r in rows)
         html = OUT / f"{state}.html"
         html.write_text(page("\n".join(rows), cols, len(rows)))
