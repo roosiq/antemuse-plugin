@@ -6,8 +6,7 @@ last state) and what the agent says about itself when asked.
 
     state(action="mood", feeling="stuck")   the agent reports
     /mood tired                             the person reports for it
-    /break                                  recommendation
-    /break walk                             take it, whatever was suggested
+    /walk, /daydream, /doomscroll, /dream    the recommendation, taken
 
 Nothing here calls a model. The score is arithmetic on counters, so the same
 work always produces the same advice.
@@ -105,13 +104,13 @@ def line(v: Dict[str, Any]) -> str:
 
 
 def menu() -> str:
-    return "  ".join(f"/break {f}" for f in ("walk", "daydream", "doomscroll", "dream"))
+    return "  ".join(f"/{f}" for f in ("walk", "daydream", "doomscroll", "dream"))
 
 
 def offer(v: Dict[str, Any]) -> str:
     """The nudge injected into a turn, once, when a break is actually due."""
-    return (f"[BREAK {v['due'].upper()} — {v['minutes']}m since the last one, "
+    return (f"[NO STATE {v['due'].upper()} — {v['minutes']}m since the last one, "
             f"{v['turns']} turn(s), {v['fails']} failed tool call(s). "
-            f"A {v['suggest']} fits: {v['why']}. Take it with /break {v['suggest']}, "
-            f"or pick another: /break walk|daydream|doomscroll|dream. "
+            f"A {v['suggest']} fits: {v['why']}. Take it with /{v['suggest']}, "
+            f"or pick another: /walk|daydream|doomscroll|dream|unstuck. "
             f"Ignore this if the work is nearly done.]")

@@ -438,7 +438,7 @@ def _spec_files(root: Path) -> List[str]:
     return found[:8]
 
 
-def greenfield_text(steps: int = 1) -> List[str]:
+def unstuck_text(steps: int = 1) -> List[str]:
     """What a brand-new project actually contains, and what it does not.
 
     Every missing piece is named. The exit criterion for this state is one direction,
@@ -456,7 +456,7 @@ def greenfield_text(steps: int = 1) -> List[str]:
         what = f"{git['commits']} commit(s)"
         if git["first"]:
             what += f" · first: {git['first']}"
-        lines.append(f"greenfield: {root.name} · {what}")
+        lines.append(f"unstuck: {root.name} · {what}")
 
     try:
         entries = [c.name + ("/" if c.is_dir() else "") for c in sorted(root.iterdir())
@@ -477,13 +477,13 @@ def greenfield_text(steps: int = 1) -> List[str]:
 
     specs = _spec_files(root)
     if specs:
-        lines.append("already decided: " + ", ".join(specs) + " — no longer greenfield")
+        lines.append("already decided: " + ", ".join(specs) + " — no longer a greenfield")
     else:
         lines.append("no spec files yet · the direction is still unchosen")
 
     try:
         from . import seeding
-        seed = seeding.entry("greenfield", when=time.time())
+        seed = seeding.entry("unstuck", when=time.time())
         lines.append("starts from " + seeding.marker(seed))
     except Exception:
         pass
@@ -495,5 +495,5 @@ PROVIDERS = {
     "daydream": memory_pairs,
     "dream": dream_recombine,
     "doomscroll": scroll_text,
-    "greenfield": greenfield_text,
+    "unstuck": unstuck_text,
 }

@@ -61,8 +61,8 @@ STATES: Dict[str, Dict] = {
         "contract": "random feed · consume, do not synthesize",
         "residue": "doomscrolled: random feed consumed",
     },
-    "greenfield": {
-        "label": "GREENFIELD",
+    "unstuck": {
+        "label": "UNSTUCK",
         "minutes": 5,
         "turns": 3,
         "cadence": 20,
@@ -81,7 +81,7 @@ STATES: Dict[str, Dict] = {
             "unusable. You do not write the spec from this state."
         ),
         "contract": "one direction · the promise, and where it goes",
-        "residue": "greenfield: a direction named, and where it goes",
+        "residue": "unstuck: a direction named, and where it goes",
     },
     "dream": {
         "label": "DREAMING",
@@ -111,11 +111,12 @@ ALIASES = {
     "scroll": "doomscroll",
     "dscroll": "doomscroll",
     "distance": "dissociate",
-    "start": "greenfield",
-    "new_project": "greenfield",
-    "trailhead": "greenfield",
-    "zero": "greenfield",
-    "day-one": "greenfield",
+    "greenfield": "unstuck",
+    "start": "unstuck",
+    "new_project": "unstuck",
+    "trailhead": "unstuck",
+    "zero": "unstuck",
+    "day-one": "unstuck",
 }
 
 

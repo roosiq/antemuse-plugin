@@ -660,7 +660,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 736 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 737 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -951,7 +951,7 @@ All paths relative to `specs/changes/`.
 | `hermes-integration` | **verified** | host interfaces | audit of every mechanism against the host source: tool/commands/hooks/injection/ctx.llm/aux tasks/storage/dashboard/memory. Three defects fixed — automation read `messages` but the host passes `user_message`; three modules hardcoded `~/.hermes`; daydream read a memory file an external provider never writes. No provider override, no SDK, no key: any provider by its default interface. |
 | `state-entry` | **implemented (partial)** | entry + direction | each state now declares where it starts and which way it moves; walk and dream draw their seed from a 5:3:2 mix of project terms, conversation terms and deliberate randomness, chosen by a deterministic hash and recorded as `seed=<source>:<term>` in the journal. `core/seeding.py`, 9 tests; doomscroll stays undirected by design. |
 | `plugin-updates` | **implemented** | delivery | a recommendation is pushed as its own message through `ctx.post_message`, once per cooling window, instead of waiting for someone to type a slash command. Discord caps app commands at 100 and this machine already syncs 95, so a command-only channel is not a reliable one. |
-| `greenfield-state` | **implemented** | states | a fifth state for a repository that does not exist yet: 5 min, 3 turns, read-only (`read_file`, `search_files`), material is what the project actually contains, and the exit criterion is **one direction** named with the spec file it becomes. Recommended automatically while the project has fewer than 3 commits and no spec, then silent. `core/sources.greenfield_text`, `core/recommend._new_project`; 7 tests. Renamed from `greenfield` (kept as an alias) for a plainer, more current word. |
+| `unstuck-state` | **implemented** | states | a fifth state for a repository that does not exist yet: 5 min, 3 turns, read-only (`read_file`, `search_files`), material is what the project actually contains, and the exit criterion is **one direction** named with the spec file it becomes. Recommended automatically while the project has fewer than 3 commits and no spec, then silent. `core/sources.greenfield_text`, `core/recommend._new_project`; 7 tests. Renamed from `greenfield` (kept as an alias) for a plainer, more current word. |
 
 Supporting evidence files:
 

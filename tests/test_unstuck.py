@@ -1,4 +1,4 @@
-"""A greenfield on a repository with nothing in it — and silence once it has a spec."""
+"""A unstuck on a repository with nothing in it — and silence once it has a spec."""
 from __future__ import annotations
 
 import subprocess
@@ -27,16 +27,16 @@ def _repo(path: Path, commits: int = 0, spec: bool = False) -> Path:
 
 
 def test_the_state_exists_with_a_read_only_budget():
-    spec = states.STATES["greenfield"]
+    spec = states.STATES["unstuck"]
     assert spec["minutes"] == 5 and spec["turns"] == 3 and spec["cadence"] == 20
-    assert spec["tools"] == ["read_file", "search_files"], "a greenfield that can edit is a scaffold"
-    assert states.resolve("start") == "greenfield"
+    assert spec["tools"] == ["read_file", "search_files"], "a unstuck that can edit is a scaffold"
+    assert states.resolve("start") == "unstuck"
 
 
 def test_material_names_what_is_missing_instead_of_inventing_it(monkeypatch, tmp_path):
     repo = _repo(tmp_path / "fresh")
     monkeypatch.chdir(repo)
-    lines = " | ".join(sources.greenfield_text())
+    lines = " | ".join(sources.unstuck_text())
     assert "no commits yet" in lines
     assert "no README" in lines
     assert "no spec files yet" in lines
@@ -46,9 +46,9 @@ def test_material_names_what_is_missing_instead_of_inventing_it(monkeypatch, tmp
 def test_material_reports_a_project_that_already_has_a_spec(monkeypatch, tmp_path):
     repo = _repo(tmp_path / "started", commits=4, spec=True)
     monkeypatch.chdir(repo)
-    lines = " | ".join(sources.greenfield_text())
+    lines = " | ".join(sources.unstuck_text())
     assert "already decided" in lines and "specs/changes/x/spec.md" in lines
-    assert "no longer greenfield" in lines
+    assert "no longer a greenfield" in lines
 
 
 def test_the_recommendation_fires_on_a_repository_with_nothing_in_it(monkeypatch, tmp_path):
@@ -57,7 +57,7 @@ def test_the_recommendation_fires_on_a_repository_with_nothing_in_it(monkeypatch
     setattr(recommend, "_NEW_CACHE", {"at": 0.0, "value": None})
     got = recommend.suggest({"work": {"turns": 2}})
     assert got and got["pattern"] == "new project"
-    assert "/greenfield" in got["line"]
+    assert "/unstuck" in got["line"]
 
 
 def test_it_stops_firing_once_the_project_has_a_spec(monkeypatch, tmp_path):
@@ -68,7 +68,7 @@ def test_it_stops_firing_once_the_project_has_a_spec(monkeypatch, tmp_path):
     assert got is None, got
 
 
-def test_a_loop_on_a_new_project_still_recommends_the_greenfield(monkeypatch, tmp_path):
+def test_a_loop_on_a_new_project_still_recommends_the_unstuck(monkeypatch, tmp_path):
     repo = _repo(tmp_path / "empty2")
     monkeypatch.chdir(repo)
     setattr(recommend, "_NEW_CACHE", {"at": 0.0, "value": None})
@@ -110,10 +110,10 @@ def test_entering_a_state_posts_its_picture_into_the_chat(monkeypatch, tmp_path)
     ctx = Ctx()
     module.register(ctx)
     module._HOST = ctx
-    ctx.commands["greenfield"]["handler"]("5")
+    ctx.commands["unstuck"]["handler"]("5")
 
     assert posted, "no picture was posted"
     picture = posted[-1]
-    assert "GREENFIELD" not in picture, "the card must stay wordless"
+    assert "UNSTUCK" not in picture, "the card must stay wordless"
     assert "direction" not in picture.lower(), "no material may reach the picture"
     assert len(picture.splitlines()) > 3, "the picture is empty"

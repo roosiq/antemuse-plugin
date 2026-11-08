@@ -155,7 +155,7 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     for pattern, state, evidence in (
         # On an empty repository there is no loop worth interrupting: there is nothing
         # to be stuck in yet. This is the one pattern that outranks everything.
-        ("new project", "greenfield", _new_project()),
+        ("new project", "unstuck", _new_project()),
         ("loop", "walk", _loop(work)),
         ("wall", "doomscroll", _wall(work)),
         ("saturation", "dream", _saturation(work, open_decisions)),

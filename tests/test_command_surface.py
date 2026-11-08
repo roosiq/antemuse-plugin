@@ -57,7 +57,7 @@ def test_commands_do_not_differ_only_by_plurality():
 
 
 def test_the_public_surface_is_six():
-    assert registered_commands() == {"walk", "daydream", "doomscroll", "dream", "greenfield",
+    assert registered_commands() == {"walk", "daydream", "doomscroll", "dream", "unstuck",
                                      "return"}
 
 
@@ -113,3 +113,28 @@ def test_a_recommendation_is_posted_once_through_the_host():
     # no host, no crash
     module._HOST = object()
     assert module._post("anything") is False
+
+
+def test_no_suggestion_names_a_command_that_does_not_exist():
+    """The nudge recommended `/break daydream` for a week after `/break` was deleted.
+
+    Text the plugin writes by itself is the easiest place for a dead verb to hide: no
+    person typed it, so nothing failed loudly.
+    """
+    import re
+
+    from core import mood, recommend
+
+    live = registered_commands()
+    texts = [mood.menu(), mood.offer({"due": "break overdue", "minutes": 40, "turns": 40,
+                                      "fails": 2, "suggest": "daydream", "why": "cheapest",
+                                      "feeling": None})]
+    for data in ({"work": {"turns": 8, "streak": 3}},
+                 {"work": {"turns": 12, "source_fail_turns": [10, 11]}},
+                 {"work": {"turns": 60}}):
+        line = recommend.suggest(data)
+        if line:
+            texts.append(line["line"])
+    for text in texts:
+        for verb in re.findall(r"/([a-z_]+)", text):
+            assert verb in live, f"suggestion names a command that does not exist: /{verb} in {text!r}"

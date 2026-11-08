@@ -75,16 +75,16 @@ def test_break_with_a_name_takes_that_state_whatever_was_suggested():
 def test_break_without_a_name_recommends_and_lists_the_menu():
     _age_the_break(200, turns=40)
     out = engine.take_break()
-    assert "break " in out and "/break walk" in out
+    assert "break " in out and "/walk" in out and "/break" not in out
     assert engine.peek() is None, "recommending must not start anything"
 
 
 def test_the_offer_is_injected_once_and_then_cools_down():
     _age_the_break(200, turns=40, fails=8)
     first = engine.inject() or ""
-    assert "[BREAK" in first
+    assert "[NO STATE" in first
     second = engine.inject() or ""
-    assert "[BREAK" not in second, "do not nag on the next turn"
+    assert "[NO STATE" not in second, "do not nag on the next turn"
 
 
 def test_taking_a_state_resets_the_work_counters():
