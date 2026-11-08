@@ -19,11 +19,18 @@ import {
   PALETTE_AREA,
   pluginSettingsHref
 } from '@hermes/plugin-sdk'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 
 const ID = 'antemuse'
 const POLL_MS = 2000
+
+// A monospace glyph cell is about 0.6 advances wide by one line tall. Both the
+// requested grid and the font that fills it come from these two numbers, so the
+// art ends up exactly the size of the box instead of a thumbnail inside it.
+const CELL_W = 0.6
+const CELL_H = 1.0
+const PROBE_FONT = 10
 
 const copy = {
   pane: 'State',
@@ -84,13 +91,16 @@ export function viewModel(payload, error) {
 
 // ---------------------------------------------------------------- the surface
 
-function useStatePayload(ctx) {
+function useStatePayload(ctx, cells) {
   const [payload, setPayload] = useState(null)
   const [error, setError] = useState(null)
+  // The grid is part of the request, so a resize must re-ask rather than stretch
+  // an old frame: the server renders at the size it is told.
+  const query = cells ? `?cols=${cells.cols}&rows=${cells.rows}&fit=cover` : ''
   useEffect(() => {
     let alive = true
     const read = () => {
-      ctx.rest('/state').then(
+      ctx.rest('/state' + query).then(
         (data) => { if (alive) { setPayload(data); setError(null) } },
         (err) => { if (alive) setError(String((err && err.message) || err || 'unreachable')) }
       )
@@ -98,44 +108,95 @@ function useStatePayload(ctx) {
     read()
     ctx.setInterval(read, POLL_MS)
     return () => { alive = false }
-  }, [ctx])
+  }, [ctx, query])
   return { payload, error }
 }
 
-function Frame({ lines }) {
+/** The largest box this pane actually has, measured rather than assumed. */
+function useCells() {
+  const ref = useRef(null)
+  const [cells, setCells] = useState(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const fit = () => {
+      const w = el.clientWidth || 0
+      const h = el.clientHeight || 0
+      if (!w || !h) return
+      const cols = Math.max(1, Math.floor(w / (PROBE_FONT * CELL_W)))
+      const rows = Math.max(1, Math.floor(h / (PROBE_FONT * CELL_H)))
+      setCells((prev) => (prev && prev.cols === cols && prev.rows === rows ? prev : { w, h, cols, rows }))
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return { ref, cells }
+}
+
+function Frame({ lines, cells }) {
   if (!lines.length) return null
+  // Fill the box: the grid was requested from it, so the type is derived from the
+  // grid that came back, not from a font size chosen in advance.
+  // Fill the measured box with the art that actually came back: a frame narrower
+  // than the grid is centred at its own width rather than stretched into it.
+  const cols = Math.max(1, ...lines.map((l) => l.length))
+  const rows = lines.length
+  const fontSize = cells
+    ? Math.max(2, Math.min(cells.w / (cols * CELL_W), cells.h / (rows * CELL_H)))
+    : PROBE_FONT
   return jsx('pre', {
     'aria-hidden': 'true',
+    'data-antemuse-frame': `${cols}x${rows}`,
     style: {
       margin: 0,
       padding: 0,
       lineHeight: 1,
-      fontSize: '10px',
+      fontSize: `${fontSize.toFixed(2)}px`,
       letterSpacing: 0,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
       color: 'var(--ui-text-secondary, #8b8b8b)',
-      opacity: 0.85,
-      overflow: 'hidden'
+      opacity: 0.9,
+      overflow: 'hidden',
+      whiteSpace: 'pre'
     },
     children: lines.join('\n')
   })
 }
 
 function StateView({ ctx }) {
-  const { payload, error } = useStatePayload(ctx)
+  const { ref, cells } = useCells()
+  const { payload, error } = useStatePayload(ctx, cells)
   const vm = viewModel(payload, error)
-  if (vm.situation === 'loading') {
-    return jsx('div', { style: { padding: '10px 12px', opacity: 0.6 }, 'data-antemuse-state': 'loading', children: '…' })
-  }
+  const frame = (payload && payload.frame) || {}
+
+  // The art is the pane; the words are furniture in the corner of it.
   return jsxs('div', {
-    style: { padding: '10px 12px', height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' },
+    ref,
+    style: { position: 'relative', height: '100%', width: '100%', overflow: 'hidden', margin: 0 },
     'data-antemuse-state': vm.situation,
     children: [
-    jsx('div', { style: { fontSize: '11px', letterSpacing: '0.08em', fontWeight: 600 }, children: vm.label }),
-    vm.note ? jsx('div', { style: { fontSize: '11px', opacity: 0.55 }, children: vm.note }) : null,
-    jsx(Frame, { lines: vm.lines }),
-    vm.counts ? jsx('div', { style: { fontSize: '11px', opacity: 0.75 }, children: vm.counts }) : null,
-      vm.contract ? jsx('div', { style: { fontSize: '11px', opacity: 0.55 }, children: vm.contract }) : null
+      jsx('div', {
+        style: { position: 'absolute', inset: 0, overflow: 'hidden', display: 'flex',
+                 alignItems: 'flex-start', justifyContent: 'flex-start' },
+        children: jsx(Frame, { lines: vm.lines, cells })
+      }),
+      vm.situation === 'loading'
+        ? jsx('div', { style: { position: 'absolute', top: 10, left: 12, fontSize: '11px', opacity: 0.6 }, children: '…' })
+        : null,
+      jsxs('div', {
+        style: {
+          position: 'absolute', left: 10, bottom: 8, fontSize: '11px', lineHeight: 1.35,
+          opacity: 0.55, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '1px'
+        },
+        children: [
+          jsx('div', { style: { letterSpacing: '0.08em', fontWeight: 600 }, children: vm.label }),
+          vm.note ? jsx('div', { children: vm.note }) : null,
+          vm.counts ? jsx('div', { children: vm.counts }) : null,
+          vm.contract ? jsx('div', { children: vm.contract }) : null
+        ]
+      })
     ]
   })
 }

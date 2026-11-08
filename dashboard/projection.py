@@ -16,6 +16,29 @@ from typing import Any, Dict, List, Optional
 FRAME_COLS = 44
 FRAME_ROWS = 12
 
+#: The envelope a surface may negotiate inside. The defaults above stay what a
+#: destination that says nothing gets, so chat-facing behaviour cannot drift.
+MIN_COLS, MIN_ROWS = 24, 8
+MAX_COLS, MAX_ROWS = 200, 80
+
+
+def grid(cols: Any = None, rows: Any = None) -> "tuple[int, int]":
+    """Clamp a requested grid. Returns what will actually be drawn.
+
+    A pane knows its own pixel box; the server owns the envelope. Neither guesses
+    the other's business, and an out-of-range request is clamped rather than
+    refused, because a surface that misreports its size should still get a frame.
+    """
+    def one(value: Any, low: int, high: int, fallback: int) -> int:
+        try:
+            n = int(value)
+        except (TypeError, ValueError):
+            return fallback
+        return max(low, min(high, n))
+
+    return (one(cols, MIN_COLS, MAX_COLS, FRAME_COLS),
+            one(rows, MIN_ROWS, MAX_ROWS, FRAME_ROWS))
+
 #: Keys that must never appear in a payload, whatever the state holds.
 FORBIDDEN = ("directive", "goal", "candidates", "candidate", "journal", "prompt", "text")
 
@@ -45,13 +68,15 @@ def project(
     frame: Optional[List[str]] = None,
     *,
     now: Optional[float] = None,
+    cols: Any = None,
+    rows: Any = None,
 ) -> Dict[str, Any]:
     """Turn the engine's own projection into the pane's payload."""
     residue = watch.get("residue") or []
     payload: Dict[str, Any] = {
         "generated_at": float(now if now is not None else time.time()),
         "active": None,
-        "frame": {"cols": FRAME_COLS, "rows": FRAME_ROWS, "lines": list(frame or [])},
+        "frame": dict(zip(("cols", "rows"), grid(cols, rows)), lines=list(frame or [])),
         "residue": {
             "count": len(residue),
             "kinds": sorted({_kind(entry) for entry in residue}),

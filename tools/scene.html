@@ -152,11 +152,12 @@ async function daydream() {
 
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(30, 30),
-    new THREE.MeshStandardMaterial({ color: 0x241d18, roughness: 0.95, metalness: 0 })
+    new THREE.MeshStandardMaterial({ color: 0x554636, roughness: 0.9, metalness: 0 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -1.05;
   scene.add(floor);
+  scene.add(new THREE.AmbientLight(0x4a4038, 1.6));
 }
 
 // ---------------------------------------------------------- dissociate
@@ -283,5 +284,18 @@ async function doomscroll() {
 }
 
 await ({walk, daydream, dissociate, dream, doomscroll}[NAME] || walk)();
+
+// Every scene is composed for a wide letterbox because the chat card is wide. A
+// pane is closer to square, and a square viewport does not merely crop: the camera
+// aspect changes and the composition moves. These are the same scenes re-framed,
+// not crops of the wide bake.
+const AR = innerWidth / innerHeight;
+const SQUARE = {
+  walk:      () => { cam.position.set(0, 1.25, 4.6); cam.lookAt(0, 1.05, 0); },
+  daydream:  () => { cam.position.set(0, 0.1, 5.4);   cam.lookAt(0, -0.55, 0); },
+  doomscroll:() => { cam.position.set(0, 0, 3.7);    cam.lookAt(0, 0, -1.8); },
+  dream:     () => { cam.position.set(0, 0.1, 4.9);  cam.lookAt(0, -0.7, 0); }
+};
+if (AR < 1.3 && SQUARE[NAME]) SQUARE[NAME]();
 renderer.render(scene, cam);
 </script></body></html>

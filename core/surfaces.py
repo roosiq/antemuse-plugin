@@ -56,8 +56,15 @@ def strip(s: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*m", "", s)
 
 
-def _frames_dir() -> Path:
-    return storage.data_dir() / "three_frames"
+#: A monospace glyph cell is about 0.6 advances wide for one line of height. Any
+#: aspect-correct sampling has to divide by this, or the picture arrives stretched
+#: by 1/0.6. The old code resized straight to (cols, rows) and did exactly that.
+CELL_ASPECT = 0.6
+
+
+def _frames_dir(pane: bool = False) -> Path:
+    """Frames baked for a chat card (3.8:1) or for a pane (square)."""
+    return storage.data_dir() / ("three_frames_pane" if pane else "three_frames")
 
 
 def _stretch_bounds(values: List[int]) -> tuple[int, int]:
@@ -73,21 +80,47 @@ def _stretch_bounds(values: List[int]) -> tuple[int, int]:
     return ordered[int(n * 0.02)], ordered[min(n - 1, int(n * 0.995))]
 
 
+def _cover(im: Image.Image, cols: int, rows: int) -> Image.Image:
+    """Crop to the grid's aspect (in cell space) without distorting it, then scale.
+
+    ``cols * CELL_ASPECT / rows`` is what the box looks like on screen; the image is
+    cropped to that ratio first, so one cell of picture is one cell of glyphs.
+    """
+    target = (cols * CELL_ASPECT) / rows
+    w, h = im.size
+    if w / h > target:                      # too wide: trim the sides
+        keep = max(1, int(round(h * target)))
+        left = (w - keep) // 2
+        return im.crop((left, 0, left + keep, h))
+    keep = max(1, int(round(w / target)))   # too tall: trim top and bottom
+    top = (h - keep) // 2
+    return im.crop((0, top, w, top + keep))
+
+
 def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
-        scene: str = "") -> List[str]:
-    """Luminance-ramp ASCII of a rendered three.js frame: no colour, no escapes."""
-    sub = _frames_dir() / scene if scene else None
+        scene: str = "", fit: str = "cover", pane: bool = False) -> List[str]:
+    """Luminance-ramp ASCII of a rendered three.js frame: no colour, no escapes.
+
+    ``fit="cover"`` fills the grid edge to edge (a pane, an immersive surface);
+    ``fit="contain"`` letterboxes instead, which is what a chat card wants when the
+    frame is wider than the message.
+    """
+    base = _frames_dir(pane=pane)
+    sub = base / scene if scene else None
     pngs = sorted(sub.glob("*.png")) if sub is not None and sub.is_dir() else []
-    if not pngs and _frames_dir().is_dir():
-        pngs = sorted(_frames_dir().glob("*.png")) or [
-            p for d in sorted(_frames_dir().iterdir()) if d.is_dir() for p in sorted(d.glob("*.png"))[:1]
+    if not pngs and base.is_dir():
+        pngs = sorted(base.glob("*.png")) or [
+            p for d in sorted(base.iterdir()) if d.is_dir() for p in sorted(d.glob("*.png"))[:1]
         ]
     if not pngs:
         return []
     im = Image.open(pngs[index % len(pngs)]).convert("L")
-    w0, h0 = im.size
-    im = im.crop((int(w0 * 0.20), int(h0 * 0.12), int(w0 * 0.80), int(h0 * 0.88)))
-    im = im.resize((cols, rows), Image.LANCZOS)
+    if fit == "cover":
+        im = _cover(im, cols, rows).resize((cols, rows), Image.LANCZOS)
+    else:
+        w0, h0 = im.size
+        im = im.crop((int(w0 * 0.20), int(h0 * 0.12), int(w0 * 0.80), int(h0 * 0.88)))
+        im = _cover(im, cols, rows).resize((cols, rows), Image.LANCZOS)
     values = list(im.tobytes())
     lo, hi = _stretch_bounds(values)
     out = []
@@ -98,7 +131,8 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
             t = 0.0 if hi <= lo else (v - lo) / (hi - lo)
             t = min(1.0, max(0.0, t))
             line += ramp[min(len(ramp) - 1, int(t * len(ramp)))]
-        out.append(line.rstrip())
+        # A pane needs whole rows: ragged edges would show as a torn right margin.
+        out.append(line if fit == "cover" else line.rstrip())
     return out
 
 

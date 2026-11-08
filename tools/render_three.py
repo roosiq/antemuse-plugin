@@ -15,6 +15,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = Path.home() / ".hermes/plugin-data/antemuse/three_frames"
+#: The pane is not a chat card: it is roughly square, so it gets its own bake at
+#: square dimensions. Cropping a 3.8:1 frame into a portrait box would throw away
+#: three quarters of the composition.
+OUT_PANE = Path.home() / ".hermes/plugin-data/antemuse/three_frames_pane"
 CHROME = "chromium-browser"
 FLAGS = [
     "--headless=new", "--no-sandbox", "--use-gl=angle", "--use-angle=swiftshader",
@@ -25,27 +29,33 @@ STATES = ["walk", "daydream", "dissociate", "dream", "doomscroll"]
 FRAMES = 8
 
 
-def shoot(scene: str, frame: int, dest: Path) -> None:
+def shoot(scene: str, frame: int, dest: Path, size: str = "1600,420") -> None:
     url = f"http://127.0.0.1:40813/tools/scene.html?scene={scene}&f={frame}&n={FRAMES}"
+    flags = [f"--window-size={size}" if f.startswith("--window-size") else f for f in FLAGS]
     subprocess.run(
-        [CHROME, *FLAGS, f"--screenshot={dest}", url],
+        [CHROME, *flags, f"--screenshot={dest}", url],
         check=True, capture_output=True, timeout=120,
     )
 
 
-def main(states=None, frames=FRAMES) -> None:
-    states = states or STATES
+def main(argv=None, frames=FRAMES) -> None:
+    """``--square`` bakes the pane set; bare state names bake the chat-card set."""
+    argv = list(argv or [])
+    square = "--square" in argv
+    states = [a for a in argv if not a.startswith("--")] or STATES
+    out = OUT_PANE if square else OUT
+    size = "1100,1100" if square else "1600,420"
     t0 = time.time()
     total = 0
     for s in states:
-        d = OUT / s
+        d = out / s
         d.mkdir(parents=True, exist_ok=True)
         for f in range(frames):
-            shoot(s, f, d / f"f{f:03d}.png")
+            shoot(s, f, d / f"f{f:03d}.png", size=size)
             total += 1
-        print(f"{s}: {frames} frames")
+        print(f"{s}: {frames} frames at {size}")
     took = time.time() - t0
-    print(f"{total} frames in {took:.1f}s ({took/total:.2f}s each) -> {OUT}")
+    print(f"{total} frames in {took:.1f}s ({took/total:.2f}s each) -> {out}")
 
 
 if __name__ == "__main__":

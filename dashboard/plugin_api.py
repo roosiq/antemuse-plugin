@@ -71,18 +71,26 @@ def plugin():
 
 
 @router.get("/state")
-def state() -> Dict[str, Any]:
-    """The current state, as counts and a served frame."""
+def state(cols: int | None = None, rows: int | None = None, fit: str = "contain") -> Dict[str, Any]:
+    """The current state, as counts and a served frame.
+
+    ``?cols=&rows=`` lets a surface ask for the grid its own pixel box can hold.
+    The numbers are clamped to the projection's envelope and echoed back in the
+    payload, so a caller can tell what it got rather than assume what it asked for.
+    """
     proj = projection()
+    width, height = proj.grid(cols, rows)
     watch = plugin().core.panel.engine_state()
     active = watch.get("active") or {}
     lines: List[str] = []
     if active:
         try:
             lines = plugin().core.surfaces.art(
-                cols=proj.FRAME_COLS, rows=proj.FRAME_ROWS, index=0,
+                cols=width, rows=height, index=0,
                 scene=str(active.get("key") or ""),
+                fit="cover" if fit == "cover" else "contain",
+                pane=fit == "cover",
             )
         except Exception:  # health: BLE001 -- a missing frame is not a broken state
             lines = []
-    return proj.project(watch, lines)
+    return proj.project(watch, lines, cols=width, rows=height)

@@ -1,6 +1,6 @@
 # Full-pane visuals — the pane is the picture
 
-Status: **proposed** 2026-11-08. Intent only; nothing implemented.
+Status: **implemented in part (size, aspect, pane bakes)** 2026-11-08. Intent only; nothing implemented.
 Owner: Ryan Cook. Scope: `dashboard/` + `desktop/plugin.js` rendering path in
 `/home/ryan/antemuse-plugin`. The picture itself is briefed separately in
 [`assets.md`](assets.md): which states need drawing, and what each drawing must show. Does not touch the lifecycle, the card, or the CLI.
@@ -249,3 +249,42 @@ require a model. A missing scene still renders nothing and says so.
    subject (walk, doomscroll); billboards where the subject is seen once.
 
 Approval of this intent is gate 1; the plan and tasks come after, and only then code.
+
+## 9. What was built (2026-11-08)
+
+Measured in a real browser at the pane's own box, not estimated.
+
+| | before | after |
+| --- | --- | --- |
+| grid | 44 × 12 (fixed) | 116 × 74, negotiated per surface |
+| glyph box | 264 × 120 px | 700 × 745 px |
+| share of a 700 × 746 pane | 4.4 % | **99.8 %** |
+| cells | 528 | 8,584 |
+| sampling | stretched to `(cols, rows)`; cells are 0.6 as wide as tall, so the picture was ~1.7× wrong | cropped to the grid's cell-space aspect, then scaled |
+
+Three concrete causes, all fixed:
+
+1. **The grid was a constant.** `FRAME_COLS/ROWS = 44/12` was the chat card's size and
+   every surface got it. `projection.grid()` now clamps a requested grid to 24 × 8 …
+   200 × 80 and echoes back what it drew; `GET /state?cols=&rows=&fit=` carries it.
+   Defaults are untouched, so a chat card that asks for nothing still gets 44 × 12.
+2. **`fontSize: '10px'` was a constant.** The pane never asked how much room it had.
+   It now measures itself with `ResizeObserver`, requests `w/6 × h/10`, and derives the
+   font from the grid that came back (`min(w/(cols·0.6), h/rows)`).
+3. **The sampler distorted.** `im.resize((cols, rows))` treats a cell as square; a
+   monospace cell is 0.6 wide by 1.0 tall. `_cover()` crops in cell space first.
+
+Also added because a wide frame cannot become a portrait pane by cropping:
+
+4. **Pane bakes.** `render_three.py --square` renders each scene at 1100 × 1100 into
+   `three_frames_pane/`, with per-scene square framing — a square viewport changes the
+   camera aspect and re-frames the composition, so the scenes are re-composed, not
+   cropped. The card path still reads the wide bakes unchanged.
+
+**Glyph coverage at 116 × 74** (share of cells that carry any glyph): walk 95 %,
+daydream 59 %, doomscroll 82 %, dream 15 %. Walk and doomscroll now fill the frame
+with the subject; dream is sparse by nature (bare branches on black) and is the one
+that still wants composition work.
+
+**Still open from this spec:** the frame strip (8 frames exist, one is served), dither,
+one hue per state, and the HUD's fade. Those are §3.4–3.5 and remain unimplemented.
