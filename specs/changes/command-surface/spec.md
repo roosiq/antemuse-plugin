@@ -1,6 +1,6 @@
 # Command surface — one verb, one name, one definition
 
-Status: **proposed** 2026-11-08. Owner: Ryan Cook. Scope: the `antemuse` plugin's
+Status: **implemented** 2026-11-08. Owner: Ryan Cook. Scope: the `antemuse` plugin's
 public verbs (slash commands and `state` tool actions). No change to state semantics,
 timers, tool policy, or rendering.
 
@@ -42,14 +42,15 @@ answer all four is not defined and should not ship:
 | `/doomscroll` | enter: a random live feed | both | returns the entered frame | not research — nothing is retained or ranked |
 | `/dream` | enter: recombine stored concepts into new things | both | returns the entered frame | not a plan — no decision is produced |
 | `/return` | leave the state, keep the account | both | returns three lines: where it went, what it touched, what is next | not a cancel — residue survives |
-| `/frame` (today `/states`) | show the picture now — the name is the open question, the behaviour is not | person | tty: takeover until the state ends; otherwise: the chat card | not a catalogue — it does not list states |
+| `/state picture` | show the picture now | person | tty: takeover until the state ends; otherwise: the chat card | not a catalogue — it does not list states |
+| `/states` | **deprecated shim** | person | same as `/state picture`, kept so old fingers work | not a catalogue despite the name |
 | `/state` | one text frame of the current moment (not the catalogue) | person | returns the state strip as text | not the picture — that is `/frame` |
 | `/note <text>` | put the person's observation into the same state | person | appends a `person` journal entry inside the state's window | not a message to the model unless the state feeds |
 | `/break` | recommend a state to step away into | person | returns one recommendation with the reason | **not** a way to enter — entering is the state's own command |
 | `/mood <feeling> [note]` | record how the work feels, reported never inferred | person | appends a mood entry and returns the strain arithmetic | not a state change |
 | `/spark <goal>` | one bounded run for that goal | person | returns counts and statuses; candidates go to the model only | not a chat — the person never sees candidate text |
 | `/keep love\|like\|trash <#n\|id>` | record a verdict on one candidate | person | stores the verdict and returns the updated counts | not an edit of the candidate |
-| `/again [deepen\|refresh]` | re-run the last goal from what survived | person | returns the new run's account | not a re-selection of the same candidates |
+| `/spark again [deepen\|refresh]` | re-run the last goal from what survived | person | returns the new run's account | not a re-selection of the same candidates |
 
 That is **nine state/observation verbs plus four exploration verbs**. Two cuts are
 load-bearing:
@@ -118,3 +119,18 @@ its actions still have to be defined one at a time.
 **`watch`, `card` and `image` are surfaces, not decisions.** They stay handled so an
 older caller does not crash, but they are removed from the description a model reads:
 a model cannot watch a terminal and should not be publishing the human's picture.
+
+## What was consolidated
+
+| Before | After | Why |
+|---|---|---|
+| `/state` (text) + `/states` (picture) + `/watch` (picture, blocking) | `/state` and `/state picture` | Three names, two answers; one of them described as a catalogue. |
+| `/again [deepen\|refresh]` | `/spark again [deepen\|refresh]` | The same run with a different source set is a mode of `/spark`, not a verb. |
+| `state(action='card'|'image'|'watch')` | handled, undescribed | Surfaces, not decisions. A model does not publish the person's card and cannot watch a terminal. |
+
+**14 commands → 11** (10 verbs plus one deprecated shim that answers to `/states`).
+`/watch` and `/again` are gone rather than aliased: both were pure duplicates, and a
+redirect that still exists as a command is not a consolidation.
+
+Implemented 2026-11-08; the five parity tests in `tests/test_command_surface.py` were
+turned to the new names, so a verb without a definition fails the suite.

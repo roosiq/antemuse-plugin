@@ -247,14 +247,21 @@ def _return(_raw: str) -> str:
     return engine.stop(engine.current_session())
 
 
-def _state(_raw: str) -> str:
-    return panel.render(engine.watch_state())
+def _state(raw: str) -> str:
+    """One "show me" verb, two answers.
 
-
-def _states(_raw: str) -> str:
-    if sys.stdout.isatty():
-        return tui.run()
-    return surfaces.card(engine.watch_state(), engine.platform() or "discord")
+    `/state` is the text frame; `/state picture` is the picture — takeover in a
+    terminal, the card in chat. This replaced `/states` and `/watch`, which were the
+    same two answers under two more names, one of them misdescribed as a catalogue.
+    """
+    want = (raw or "").strip().lower()
+    if want in ("picture", "image", "frame", "card"):
+        if sys.stdout.isatty():
+            return tui.run()
+        return surfaces.card(engine.watch_state(), engine.platform() or "discord")
+    if want in ("", "text", "frame-text"):
+        return panel.render(engine.watch_state())
+    return "usage: /state  ·  /state picture"
 
 
 def _break(raw: str) -> str:
@@ -280,6 +287,11 @@ def _mood(raw: str) -> str:
     return engine.record_mood(parts[0], parts[1] if len(parts) > 1 else "")
 
 
+def _states_shim(_raw: str) -> str:
+    """`/states` meant the picture; it keeps meaning the picture while it is deprecated."""
+    return _state("picture")
+
+
 def _note(raw: str) -> str:
     text = (raw or "").strip()
     if not text:
@@ -288,10 +300,6 @@ def _note(raw: str) -> str:
         return "no state running — /walk first, then /note what you notice."
     engine.record("person", text)
     return panel.render(engine.watch_state())
-
-
-def _watch(raw: str) -> str:
-    return tui.run()
 
 
 def _spark_handler(ctx: Any):
@@ -305,7 +313,11 @@ def _spark_handler(ctx: Any):
     def handle(raw: str = "", session_id: str = "", **_kwargs: Any) -> str:
         goal = (raw or "").strip()
         if not goal:
-            return "usage: /spark <what you are working on>"
+            return "usage: /spark <what you are working on>  ·  /spark again [deepen|refresh]"
+        if goal.split()[0].lower() == "again":
+            # `/again` was a second command for the same run with different sources.
+            rest = goal.split(None, 1)[1] if len(goal.split(None, 1)) > 1 else ""
+            return _again_handler(ctx)(rest, session_id=session_id)
         # The host passes session_id to command handlers; the state record is the
         # fallback for surfaces that do not.
         key = (session_id or engine.current_session() or "").strip()
@@ -423,8 +435,7 @@ def register(ctx) -> None:
             args_hint="[minutes]",
             argument_mode="text",
         )
-    ctx.register_command(name="watch", handler=_watch,
-                         description="Watch the state in the CLI, redrawing until it ends", args_hint="[seconds]")
+
     ctx.register_command(name="note", handler=_note,
                          description="Put down what you noticed while in the same state", args_hint="<text>")
     ctx.register_command(name="break", handler=_break,
@@ -441,16 +452,16 @@ def register(ctx) -> None:
     ctx.register_command(name="keep", handler=_keep,
                          description="Record what you thought of a candidate: love, like, or trash",
                          args_hint="love|like|trash <#n|candidate-id>", argument_mode="text")
-    ctx.register_command(name="again", handler=_again_handler(ctx),
-                         description="Re-run the last goal with the sources your verdicts point at",
-                         args_hint="[deepen|refresh]")
-    # The descriptions are the definition a person reads. `/states` was described as a
-    # catalogue and actually renders the picture; `/state` was described as "what state
-    # the agent is in" and returns the text frame.
+
+    # The descriptions are the definition a person reads. One "show me" verb: the text
+    # frame by default, the picture when asked. `/states` and `/watch` were the same
+    # two answers under two more names — `/watch` is gone, `/states` is a shim until
+    # people stop typing it.
     ctx.register_command(name="state", handler=_state,
-                         description="One text frame of the current moment, in the state strip")
-    ctx.register_command(name="states", handler=_states,
-                         description="The picture: full-screen takeover in a terminal, the card in chat")
+                         description="The current moment: text frame, or the picture with 'picture'",
+                         args_hint="[picture]", argument_mode="text")
+    ctx.register_command(name="states", handler=_states_shim,
+                         description="deprecated — /state picture")
 
     try:
         from pathlib import Path

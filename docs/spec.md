@@ -145,10 +145,9 @@ state can always be ended even when every other tool is closed.
 |---|---|
 | `/walk [minutes]`, `/daydream`, `/doomscroll`, `/dream` | enter that state; `/walk <name>` selects a walk instead |
 | `/return` | end the state, keep the account |
-| `/states` | tty: full-screen takeover; otherwise: chat card |
-| `/state` | one text frame of the current moment |
+| `/state picture` | the picture: tty full-screen takeover, otherwise the chat card |
+| `/state` | one text frame of the current moment (`/state picture` for the picture) |
 | `/note <text>` | put a person's observation into the same state |
-| `/watch [seconds]` | redraw the takeover until the state ends |
 | `/break [state]` | recommend a state, or take the one named |
 | `/mood <feeling> [note]` | record `stuck`, `tired`, `sharp`, `flat`, `saturated` |
 | `/spark <goal>` | one bounded pass for that goal; binds candidates to this session and reports counts, never candidates. Deterministic when experimental methods are off; auxiliary branches through `ctx.llm` when on (Wave 3, J2) |
@@ -931,7 +930,7 @@ All paths relative to `specs/changes/`.
 | `creative-state-evidence` | approved | evaluation | approved by Ryan 2026-11-07; Waves 1–2 are library-only; runtime activation and method promotion remain unapproved. No creative-quality claim is made anywhere in this change. |
 | `state-evidence-task-bank` | draft | evaluation data | proposed data layer; not approved. Requires provenance-backed samples; pseudo-label self-training and unlabeled crawls are not improvement evidence. |
 | `hackathon-submission` | planning | external submission | nothing submitted, nothing pushed. `antemuse.catalog.yaml`, demo script and checklist are drafts. |
-| `command-surface` | **proposed** | public verbs | 14 commands + 12 tool actions for ~9 verbs; `/states` was described as a catalogue and renders the picture; `/keep #n` referenced numbering no surface published; `/break <state>` was a second spelling of `/walk`. Definitions and migration written; the three behaviour fixes are implemented, the renames are not. |
+| `command-surface` | **implemented** | public verbs | 14 commands + 12 tool actions for ~9 verbs; `/states` was described as a catalogue and renders the picture; `/keep #n` referenced numbering no surface published; `/break <state>` was a second spelling of `/walk`. Definitions and migration written; the three behaviour fixes are implemented, the renames are not. |
 
 Supporting evidence files:
 

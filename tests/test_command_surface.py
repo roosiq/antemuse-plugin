@@ -56,18 +56,21 @@ def test_commands_do_not_differ_only_by_plurality():
             assert f"`/{name}s`" in SPEC.read_text(), f"/{name} and /{name}s are undocumented neighbours"
 
 
-def test_states_description_matches_what_it_returns():
+def test_the_show_verb_describes_both_answers():
     src = (ROOT / "__init__.py").read_text()
-    row = re.search(r'register_command\(name="states".*?description="([^"]+)"', src, re.S)
-    assert row, "/states is not registered"
+    row = re.search(r'register_command\(name="state".*?description="([^"]+)"', src, re.S)
+    assert row, "/state is not registered"
     description = row.group(1).lower()
-    found = re.search(r'def _states\(_raw: str\) -> str:\n(.*?)\n\n', src, re.S)
-    assert found, "no _states handler"
-    handler = found.group(1)
-    if "tui.run()" in handler or "surfaces.card" in handler:
-        assert "picture" in description or "takeover" in description, (
-            "/states renders the picture but is described as something else"
-        )
+    body = re.search(r'def _state\(raw: str\) -> str:\n(.*?)\n\n\n', src, re.S)
+    assert body, "no _state handler"
+    handler = body.group(1)
+    assert "tui.run()" in handler and "panel.render" in handler, (
+        "/state should answer both ways: the text frame and the picture"
+    )
+    assert "picture" in description, "/state's description must name the picture"
+    # the deprecated shim must say it is deprecated, not pretend to be a catalogue
+    shim = re.search(r'register_command\(name="states".*?description="([^"]+)"', src, re.S)
+    assert shim and "deprecated" in shim.group(1).lower()
 
 
 def test_break_does_not_enter_a_state():

@@ -36,9 +36,12 @@ tool restoration and rendering are all deterministic and clock-driven.
 
 The public surface is small and counted: **one tool** (`state`, 12 actions: `enter`,
 `exit`, `status`, `list`, `watch`, `card`, `image`, `walks`, `walk_new`, `walk_del`,
-`break`, `mood`), **8 hooks**, and the slash commands `/walk`, `/daydream`,
-`/doomscroll`, `/dream`, `/return`, `/state`, `/states`, `/note`, `/watch`, `/break`,
-`/mood`, `/spark`, `/keep`, `/again`.
+`break`, `mood`), **8 hooks**, and **eleven verbs** — `/walk`, `/daydream`,
+`/doomscroll`, `/dream`, `/return`, `/state` (with `/state picture`), `/note`, `/break`,
+`/mood`, `/spark` (with `/spark again`), `/keep` — plus one deprecated shim answering
+to `/states`. `/watch` and `/again` were consolidated away; `specs/changes/command-surface`
+defines each verb by purpose, trigger, contract and "not this", and a test fails when a
+registered verb has no definition.
 
 ---
 
@@ -236,7 +239,7 @@ fixed and recorded.
 | `scene3d-renderer` (Python z-buffer instead of Chromium) | **PROPOSED and conflicting** — the bake pipeline is what ships; one of the two must yield |
 | FLAKE-1 `test_outer_hops_are_farther_than_wander_hops` | narrowed, not eliminated (samples n=64) |
 | `/spark` is not gated by state | accepts, unresolved |
-| Command surface: 14 commands + 12 tool actions for ~9 verbs | **PARTIAL** — definitions written in `specs/changes/command-surface`; `/break <state>` no longer enters, `/keep` numbers published, `/states` description corrected; `/states` → `/frame` rename not taken |
+| Command surface | **LIVE** — consolidated from 14 commands to 11 verbs + 1 shim: `/state` absorbs the picture, `/watch` and `/again` are gone, `/break <state>` no longer enters, `/keep` numbering is published |
 | Slash flags such as `/daydream --block` | **NOT BUILT** — no command surface carries them yet |
 | Meshy MCP auth | 401: the CLI OAuth token is not a developer key. CLI path works and is what the pack used |
 

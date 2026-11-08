@@ -132,7 +132,7 @@ def _plugin():
 def test_the_commands_are_registered():
     ctx = _Ctx()
     _plugin().register(ctx)
-    for name in ("spark", "keep", "again"):
+    for name in ("spark", "keep"):  # `/again` was folded into `/spark again`
         assert name in ctx.commands, name
 
 
@@ -167,7 +167,7 @@ def test_spark_without_a_goal_says_how_to_use_it():
     assert "usage" in ctx.commands["spark"]["handler"]("")
 
 
-def test_keep_and_again_route_the_person_feedback():
+def test_keep_and_spark_again_route_the_person_feedback():
     module = _plugin()
     ctx = _Ctx()
     module.register(ctx)
@@ -177,10 +177,10 @@ def test_keep_and_again_route_the_person_feedback():
     run = runtime.plan("a goal")
     candidate_id = str(run.kept[0].get("candidate_id") or "c1")
 
-    assert "nothing loved" in ctx.commands["again"]["handler"]("")
+    assert "nothing loved" in ctx.commands["spark"]["handler"]("again")
     assert "kept as love" in ctx.commands["keep"]["handler"](f"love {candidate_id}")
-    assert "deepen" in ctx.commands["again"]["handler"]("")
-    assert "routes to deepen" in ctx.commands["again"]["handler"]("refresh")
+    assert "deepen" in ctx.commands["spark"]["handler"]("again")
+    assert "routes to deepen" in ctx.commands["spark"]["handler"]("again refresh")
     assert "usage" in ctx.commands["keep"]["handler"]("love")
 
 
@@ -345,7 +345,7 @@ def test_the_whole_chain_from_a_verdict_to_a_steered_run():
     ids = runtime.feedback_ids("sess-fb")
     assert ids["loved"], "the verdict did not resolve to a source"
 
-    second = ctx.commands["again"]["handler"]("")
+    second = ctx.commands["spark"]["handler"]("again")
     assert second.startswith("deepen"), second
     assert "candidate(s)" in second
 
@@ -353,7 +353,7 @@ def test_the_whole_chain_from_a_verdict_to_a_steered_run():
     assert runtime.injection("sess-fb") is not None
 
 
-def test_again_refuses_when_feedback_points_the_other_way():
+def test_spark_again_refuses_when_feedback_points_the_other_way():
     module = _plugin()
     ctx = _Ctx()
     module.register(ctx)
@@ -361,7 +361,7 @@ def test_again_refuses_when_feedback_points_the_other_way():
     engine.remember_platform("discord", "sess-again")
     ctx.commands["spark"]["handler"]("a goal")
     ctx.commands["keep"]["handler"]("like #1")
-    assert "routes to refresh" in ctx.commands["again"]["handler"]("deepen")
+    assert "routes to refresh" in ctx.commands["spark"]["handler"]("again deepen")
 
 
 def test_a_steered_run_does_not_call_excluded_sources_skipped():
