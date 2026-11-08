@@ -105,33 +105,30 @@ async function walk() {
 }
 
 // ------------------------------------------------------------ daydream
-// Two mathematical solids drift together and apart. A memory is the gap between
-// two exact things, so the picture is the gap, not the objects.
+// A faceted mass and a ribbon that passes behind it. Two exact shapes, one thin,
+// one heavy: the gap between them is the memory, so they never merge.
 async function daydream() {
-  bg(0x0b0918);
-  scene.fog = new THREE.Fog(0x0b0918, 12, 42);
-  light(0xb79dff, 55, -3, 3, 4, 45);
-  light(0x59e0d0, 40, 4, -2, 2, 45);
-  scene.add(new THREE.AmbientLight(0x2a2440, 1.4));
+  bg(0x0a0816);
+  scene.fog = new THREE.Fog(0x0a0816, 14, 44);
+  light(0xa78dff, 40, -4, 4, 6, 50);
+  light(0x53d9c8, 26, 4, -3, 2, 50);
 
-  const aMat = new THREE.MeshStandardMaterial({ color: 0xd9d4ef, roughness: 0.35, metalness: 0.7, emissive: 0x141029, emissiveIntensity: 1 });
-  const bMat = new THREE.MeshStandardMaterial({ color: 0x9fe6dd, roughness: 0.3, metalness: 0.6, emissive: 0x0d2422, emissiveIntensity: 1 });
-
-  const [a, b] = await Promise.all([
-    wire('/data/meshy/pack/daydream/dodecahedron.glb', 3.2, 0xd8d0ee, 0.8),
-    wire('/data/meshy/pack/daydream/icosahedron.glb', 3.1, 0x63e6d4, 0.65)
+  const [mass, ribbon] = await Promise.all([
+    wire('/data/meshy/pack/daydream/dodecahedron.glb', 3.4, 0xcfc4f2, 0.85),
+    wire('/data/meshy/pack/daydream/mobius_ribbon.glb', 5.2, 0x4fd8c8, 0.5)
   ]);
-  a.position.set(-1.75, 0.1, 0);
-  b.position.set(1.75, -0.15, -0.4);
-  scene.add(a, b);
+  mass.position.set(-1.35, 0.1, 0.4);
+  ribbon.position.set(1.5, -0.2, -1.4);
+  ribbon.rotation.set(0.5, 0.3, 0.2);
+  scene.add(mass, ribbon);
 
-  const merge = Math.sin(t) * 0.5 + 0.5;      // frames 0-3 close, 4 touch, 7 apart
-  a.position.x = -1.75 + merge * 0.85;
-  b.position.x = 1.75 - merge * 0.85;
-  a.rotation.y = t * 0.3; a.rotation.x = 0.2 + Math.sin(t) * 0.1;
-  b.rotation.y = -t * 0.24; b.rotation.z = Math.sin(t + 1.2) * 0.18;
-  cam.position.set(0, 0.35, 6.4);
-  cam.lookAt(0, -0.05, 0);
+  const drift = Math.sin(t) * 0.5 + 0.5;
+  mass.rotation.y = t * 0.22; mass.rotation.x = 0.18 + Math.sin(t) * 0.06;
+  mass.position.x = -1.35 - drift * 0.35;
+  ribbon.rotation.z = 0.2 + Math.sin(t * 0.8) * 0.35;
+  ribbon.position.y = -0.2 + drift * 0.5;
+  cam.position.set(0, 0.3, 6.8);
+  cam.lookAt(0, 0.0, -0.3);
 }
 
 // ---------------------------------------------------------- dissociate
@@ -189,16 +186,12 @@ async function dream() {
 }
 
 // ---------------------------------------------------------- doomscroll
-// A feed of abstract plates passing the lens: engraved slabs, no words on them.
+// Plates receding down a corridor, seen from inside it: a feed passing the lens.
+// Front faces, no wheel — the depth is the point, so nothing orbits.
 async function doomscroll() {
-  bg(0x06070b);
-  scene.fog = new THREE.Fog(0x06070b, 6, 34);
-  light(0xffb060, 45, 0, 2, 4, 40);
-  light(0x66d9ff, 35, -3, -1, 1, 40);
-  cam.position.set(0, 0, 4.4); cam.lookAt(0, 0, -2.2);
-
-  const slabMat = new THREE.MeshStandardMaterial({ color: 0x8f9aa8, roughness: 0.45, metalness: 0.5, emissive: 0x120d08, emissiveIntensity: 1 });
-  const plateMat = new THREE.MeshStandardMaterial({ color: 0x2b3947, roughness: 0.25, metalness: 0.7, emissive: 0x0c2a33, emissiveIntensity: 1.3 });
+  bg(0x05070a);
+  scene.fog = new THREE.Fog(0x05070a, 9, 52);
+  light(0xffb060, 30, 0, 2, 5, 40);
 
   const sources = [
     '/data/meshy/pack/doomscroll/engraved_slab.glb',
@@ -207,29 +200,36 @@ async function doomscroll() {
     '/data/meshy/pack/doomscroll/prism_bar.glb',
     '/data/meshy/pack/doomscroll/tessellated_block.glb'
   ];
-  const loaded = await Promise.all(sources.map((src) => wire(src, 4.2, 0x5f6e7d, 0.22)));
-  const cards = [];
-  const COUNT = 6;
-  for (let i = 0; i < COUNT; i++) {
+  const loaded = await Promise.all(sources.map((src) => wire(src, 3.0, 0x76848f, 0.3)));
+
+  // explicit plate placement: one near face carrying the frame, the rest stepping away
+  const PLACES = [
+    { z: -2.2, x: 0.0, y: 0.0, s: 2.6, o: 0.9, c: 0xc6d2dc },
+    { z: -6.4, x: -1.5, y: 0.5, s: 1.2, o: 0.5, c: 0x8a97a4 },
+    { z: -9.8, x: 1.4, y: -0.6, s: 1.1, o: 0.45, c: 0x2f7f96 },
+    { z: -13.6, x: -0.8, y: 0.9, s: 1.0, o: 0.38, c: 0x8a97a4 },
+    { z: -18.0, x: 0.6, y: -0.3, s: 0.95, o: 0.3, c: 0x2f7f96 }
+  ];
+  const plates = [];
+  PLACES.forEach((place, i) => {
     const mesh = loaded[i % loaded.length].clone(true);
     mesh.material = new THREE.MeshBasicMaterial({
-      color: i % 2 ? 0x39b6d6 : 0xb9c6d2,
-      wireframe: true, transparent: true, opacity: 0.16 + (i % 3) * 0.08
+      color: place.c, wireframe: true, transparent: true, opacity: place.o
     });
-    mesh.position.set((rnd() - 0.5) * 2.6, (rnd() - 0.5) * 1.5, -rnd() * 26);
-    mesh.rotation.set((rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.6, (rnd() - 0.5) * 0.35);
-    const scale = 0.7 + rnd() * 0.7;
-    mesh.scale.multiplyScalar(scale);
+    mesh.position.set(place.x, place.y, place.z);
+    mesh.rotation.set((rnd() - 0.5) * 0.1, (rnd() - 0.5) * 0.16, (rnd() - 0.5) * 0.08);
+    mesh.scale.multiplyScalar(place.s);
     scene.add(mesh);
-    cards.push({ mesh, speed: 1.4 + rnd() * 2.6, drift: (rnd() - 0.5) * 0.25 });
-  }
+    plates.push({ mesh, depth: place.z, span: 24 });
+  });
 
-  const travel = 34;
-  for (const card of cards) {
-    card.mesh.position.z += ((t / (Math.PI * 2)) * travel * card.speed) % travel;
-    if (card.mesh.position.z > 4.5) card.mesh.position.z -= travel;
-    card.mesh.position.x += Math.sin(t + card.speed) * 0.01 * card.drift;
+  const SPAN = 24;
+  for (const plate of plates) {
+    plate.mesh.position.z = ((plate.depth + (t / (Math.PI * 2)) * SPAN) % SPAN);
+    if (plate.mesh.position.z > 3.4) plate.mesh.position.z -= SPAN;
   }
+  cam.position.set(0, 0, 4.6);
+  cam.lookAt(0, 0, -3.0);
 }
 
 await ({walk, daydream, dissociate, dream, doomscroll}[NAME] || walk)();
@@ -242,7 +242,7 @@ const AR = innerWidth / innerHeight;
 const SQUARE = {
   walk:      () => { cam.position.set(0, 1.25, 4.6); cam.lookAt(0, 1.05, 0); },
   daydream:  () => { cam.position.set(0, 0.1, 5.4);   cam.lookAt(0, -0.55, 0); },
-  doomscroll:() => { cam.position.set(0, 0, 3.7);    cam.lookAt(0, 0, -1.8); },
+  doomscroll:() => { cam.position.set(0, 0, 5.6);    cam.lookAt(0, 0, -6.0); },
   dream:     () => { cam.position.set(0, 0.1, 4.9);  cam.lookAt(0, -0.7, 0); }
 };
 if (AR < 1.3 && SQUARE[NAME]) SQUARE[NAME]();

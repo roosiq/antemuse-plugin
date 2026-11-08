@@ -317,3 +317,33 @@ stitches `/tmp/panes/sheet.png`, so the pictures can be judged without a live st
 passing the lens, and daydream's two solids are close enough that they read as one
 shape plus noise. Those two want composition work, not more assets. Composition is not
 something the sampler or the asset pack can fix.
+
+## 11. Motion, and a bake that cannot lie
+
+**The strip was baked and never shown.** `plugin_api` passed `index=0`, so eight frames
+per state sat on disk while the pane displayed one still. The server now picks the
+frame from the clock (`frame_index`) at a per-state rate — walk 3 s, daydream 2.4 s,
+doomscroll 1.1 s, dream 4 s — and the pane polls at 0.9 s, under the slowest hold, so
+no frame can be skipped. `frame_index` is deterministic in time; the test asserts the
+same instant answers the same frame and that a doomscroll outruns a walk.
+
+**A bake that wrote nothing reported success.** `chromium --screenshot` exits 0 after
+`Page load failed`, so when the preview server on :40813 died the bake loop printed
+"8 frames" over stale files and two tuning rounds were read from frames that had never
+been re-rendered. `render_three.py` now probes the server before the first shot and
+verifies every screenshot exists and is larger than 2 KB, naming the last stderr lines
+otherwise. **A bake with no picture is a failure, not a fast bake.**
+
+**Composition rewritten, twice, against that stale set.** Real numbers after the fix,
+at 116 × 74 in a 700 × 746 pane: walk 45 % ink, daydream 30 %, doomscroll 24 %,
+dream 43 %.
+
+- `daydream` is now a faceted mass and a **möbius ribbon** — one heavy shape and one
+  thin one, because dodecahedron + icosahedron were close enough to read as a single
+  blob at ramp resolution.
+- `doomscroll` is a **corridor**: five explicitly placed plates stepping away from the
+  lens, the nearest carrying the frame. The previous arrangement orbited, which read as
+  a wheel rather than a feed.
+- The per-scene `SQUARE` framing block silently overrode the new cameras (it ran after
+  the scene set them), which is why the first two rewrites came out off-centre. It is
+  updated in step with the scenes now — the ordering is a landmine worth naming.
