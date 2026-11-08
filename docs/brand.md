@@ -13,7 +13,7 @@ the plugin look like a feature of itself. The name is Antemuse, undecorated.
 
 There is one project and it is called Antemuse. The part that touches the agent
 is not a separate product with its own repo: it lives in the project, at
-`/home/ryan/antemuse/plugin`. The site, the lab, and the states are the same
+`/home/ryan/antemuse-plugin`. The site, the lab, and the states are the same
 thing seen from different sides, and they share one name.
 
 ## The sentence

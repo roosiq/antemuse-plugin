@@ -67,7 +67,7 @@ repo relative to itself rather than a hardcoded path outside it.
 ## Verification
 
 - `env -u PYTHONPATH NLTK_DATA=~/nltk_data ANTEMUSE_STATES_HOME=<tmp> pytest tests/ -q`
-- `hermes plugins doctor ~/antemuse/plugin`
+- `hermes plugins doctor antemuse`
 - one real CLI run of the panel plus one tool call (`state(action="status")`)
 - `grep -rni` for the retired package name, `realimagery`, `three_backdrop`,
   `record_spark`, `leaderboard` over

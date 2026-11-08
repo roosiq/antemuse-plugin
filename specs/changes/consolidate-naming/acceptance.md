@@ -63,7 +63,7 @@ $ env -u PYTHONPATH NLTK_DATA=~/nltk_data ANTEMUSE_STATES_HOME=<tmp> \
     uvx --with pillow --with nltk --quiet pytest tests/ -q
 74 passed in 5.65s
 
-$ hermes plugins doctor ~/antemuse/plugin
+$ hermes plugins doctor antemuse
   manifest: antemuse 0.9.0 (standalone)
   OK: runtime discovery, manifest parsing, import, and registration passed
   registrations: 1 tool(s), 3 hook(s)

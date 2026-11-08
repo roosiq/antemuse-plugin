@@ -4,10 +4,11 @@ from __future__ import annotations
 import json
 import os
 import statistics
+import pathlib
 import sys
 import time
 
-sys.path.insert(0, "/home/ryan/antemuse/plugin")
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 os.environ["ANTEMUSE_STATES_HOME"] = "/home/ryan/.hermes/cache/scratch/bench"
 os.environ.setdefault("NLTK_DATA", "/home/ryan/nltk_data")
 

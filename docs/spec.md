@@ -4,7 +4,7 @@ Status: consolidated reference. It describes what ships at `0.9.0` and indexes
 the change specs that produced it. It is not a new change proposal; where it
 records unimplemented work it says so explicitly.
 
-Scope: the Hermes plugin at `/home/ryan/antemuse/plugin` (installed as
+Scope: the Hermes plugin at `/home/ryan/antemuse-plugin` (installed as
 `~/.hermes/plugins/antemuse`). The public site, lab, and brand live in the
 parent repo and are out of scope here.
 
@@ -72,10 +72,10 @@ them.
 ## 2. Install and runtime
 
 ```bash
-ln -s ~/antemuse/plugin ~/.hermes/plugins/antemuse
+ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
 hermes plugins enable antemuse
 antemuse                      # full-screen takeover
-hermes plugins doctor ~/antemuse/plugin
+hermes plugins doctor antemuse
 ```
 
 Manifest facts:
@@ -563,7 +563,7 @@ animation speed. Live WebGL at 60 fps in a terminal is not possible; for real
 images rather than blocks, the same PNGs can go through kitty graphics or sixel.
 
 ```bash
-python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse/plugin &
+python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-plugin &
 python3 tools/render_three.py          # 5 scenes x 8 frames
 ```
 
@@ -647,7 +647,7 @@ $ env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data \
     uvx --with pillow --with nltk --quiet pytest tests/ -q
 107 passed in 7.28s
 
-$ hermes plugins doctor ~/antemuse/plugin
+$ hermes plugins doctor antemuse
 manifest: antemuse 0.9.0 (standalone)
 OK: runtime discovery, manifest parsing, import, and registration passed
 registrations: 1 tool(s), 4 hook(s)

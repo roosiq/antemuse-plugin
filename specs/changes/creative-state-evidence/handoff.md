@@ -5,7 +5,7 @@ You are the next implementation controller for Antemuse. Continue from the curre
 ## 1. Repository state
 
 - Repo: `/home/ryan/antemuse`
-- Plugin: `/home/ryan/antemuse/plugin`
+- Plugin: `/home/ryan/antemuse-plugin`
 - Branch: `corporateslop-llm-reader-burden-model`
 - HEAD: `0c80c2e` (`feat(scripts): measured harvest feasibility probe for the task bank`)
 - Current Antemuse work is uncommitted. Nothing was pushed.
@@ -52,7 +52,7 @@ The final independent integration review returned:
 
 ## 3. Verification evidence
 
-Run from `/home/ryan/antemuse/plugin`:
+Run from `/home/ryan/antemuse-plugin`:
 
 ```bash
 env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data \
@@ -179,13 +179,13 @@ Verified route:
 Reusable driver:
 
 ```text
-/home/ryan/antemuse/plugin/tools/direct_fleet.py
+/home/ryan/antemuse-plugin/tools/direct_fleet.py
 ```
 
 Invocation:
 
 ```bash
-python3 /home/ryan/antemuse/plugin/tools/direct_fleet.py \
+python3 /home/ryan/antemuse-plugin/tools/direct_fleet.py \
   TASK_FILE OUTPUT_FILE [CONTEXT_FILE ...] [--json] [--max-tokens N]
 ```
 
@@ -204,18 +204,18 @@ For each bounded task:
 Authoritative artifacts:
 
 ```text
-/home/ryan/antemuse/plugin/specs/changes/creative-state-evidence/spec.md
-/home/ryan/antemuse/plugin/specs/changes/creative-state-evidence/plan.md
-/home/ryan/antemuse/plugin/specs/changes/creative-state-evidence/tasks.md
-/home/ryan/antemuse/plugin/docs/brd.md
-/home/ryan/antemuse/plugin/docs/requirements.md
-/home/ryan/antemuse/plugin/docs/spec.md
+/home/ryan/antemuse-plugin/specs/changes/creative-state-evidence/spec.md
+/home/ryan/antemuse-plugin/specs/changes/creative-state-evidence/plan.md
+/home/ryan/antemuse-plugin/specs/changes/creative-state-evidence/tasks.md
+/home/ryan/antemuse-plugin/docs/brd.md
+/home/ryan/antemuse-plugin/docs/requirements.md
+/home/ryan/antemuse-plugin/docs/spec.md
 ```
 
 Direct-call driver:
 
 ```text
-/home/ryan/antemuse/plugin/tools/direct_fleet.py
+/home/ryan/antemuse-plugin/tools/direct_fleet.py
 ```
 
 Scratch worktrees, prompts, review responses, and usage metadata:

@@ -2,7 +2,7 @@
 
     python3 tools/render_three.py            # all five states, 8 frames each
 
-Requires a local static server on 127.0.0.1:40813 rooted at ~/antemuse/plugin:
+Requires a local static server on 127.0.0.1:40813 rooted at ~/antemuse-plugin:
 
     python3 -m http.server 8795 --bind 127.0.0.1
 """

@@ -65,7 +65,7 @@ antemuse
 ## Install
 
 ```bash
-ln -s ~/antemuse/plugin ~/.hermes/plugins/antemuse
+ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
 hermes plugins enable antemuse
 ```
 
@@ -136,7 +136,7 @@ library level: `evaluation/`, `core/collider.py`, `core/collision.py`,
 
 ```bash
 antemuse                     # full-screen view
-hermes plugins doctor ~/antemuse/plugin
+hermes plugins doctor antemuse
 env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data   ANTEMUSE_STATES_HOME=$(mktemp -d)   uvx --with pillow --with nltk --quiet pytest tests/ -q
 hermes chat -q '/walk' && hermes chat -q '/states'
 ```
@@ -167,7 +167,7 @@ PNG is quantised to upper-half blocks (`▀` = two vertical pixels per cell), an
 the takeover replays the cached frames at animation speed.
 
 ```bash
-cd ~/antemuse/plugin && python3 tools/render_three.py    # 12 frames, ~0.65 s each
+cd ~/antemuse-plugin && python3 tools/render_three.py    # 12 frames, ~0.65 s each
 ```
 
 Frames land in `<plugin data>/three_frames/`; `core/backdrop.py` loads
@@ -223,7 +223,7 @@ The generator also retains the retired `dissociate` knot; it is not a fifth live
 state.
 
 ```bash
-python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse/plugin &
+python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-plugin &
 python3 tools/render_three.py          # 5 scenes x 8 frames, ~0.6 s each
 ```
 

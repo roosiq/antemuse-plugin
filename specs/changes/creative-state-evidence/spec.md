@@ -2,7 +2,7 @@
 
 Status: approved by Ryan on 2026-11-07. Waves 1–2 are library-only; runtime activation and method promotion remain separately gated.
 
-Owner: Ryan Cook. Controller: Hermes fleet supervisor. Scope: `/home/ryan/antemuse/plugin` and its local evaluation artifacts.
+Owner: Ryan Cook. Controller: Hermes fleet supervisor. Scope: `/home/ryan/antemuse-plugin` and its local evaluation artifacts.
 
 ## 1. Goal
 

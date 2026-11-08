@@ -1,7 +1,7 @@
 # Surface repair — the person's card shows the state it is in
 
 Status: proposed 2026-11-08 by the controller, from `docs/spec.md` §14 items 15–18.
-Owner: Ryan Cook. Scope: `/home/ryan/antemuse/plugin` surfaces and the spec record.
+Owner: Ryan Cook. Scope: `/home/ryan/antemuse-plugin` surfaces and the spec record.
 
 ## Goal
 
@@ -63,6 +63,6 @@ encoders as encoders and never asserts what a person receives.
 ## Verification
 
 ```bash
-cd /home/ryan/antemuse/plugin && env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data \
+cd /home/ryan/antemuse-plugin && env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data \
   ANTEMUSE_STATES_HOME=$(mktemp -d) uvx --with pillow --with nltk --quiet pytest tests/ -q
 ```

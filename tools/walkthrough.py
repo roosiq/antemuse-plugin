@@ -15,10 +15,11 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import pathlib
 import sys
 
-PLUGIN = "/home/ryan/antemuse/plugin"
-sys.path.insert(0, PLUGIN)
+PLUGIN = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PLUGIN))
 
 
 def say(label, body=""):

@@ -2,7 +2,7 @@
 
 Status: **proposed** 2026-11-08. Not implemented. Written from a working prototype,
 not from a sketch.
-Owner: Ryan Cook. Scope: `/home/ryan/antemuse/plugin` rendering only.
+Owner: Ryan Cook. Scope: `/home/ryan/antemuse-plugin` rendering only.
 
 ## 1. Problem
 
