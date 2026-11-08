@@ -144,7 +144,9 @@ built. This is an owner decision and is not assumed below.
 
 - No new agent tools, hooks or LLM calls. The desktop surface reads state; it never
   changes it.
-- No scenes beyond the four states.
+- ~~No scenes beyond the four states.~~ **Amended 2026-11-08 (§9):** the four
+  states are what the agent *enters*; the pane also paints two ambient scenes so it
+  is never blank. No fifth state is added — nothing enters `idle` or `work`.
 - No desktop-side creativity claims, scoring, or candidate display of any kind.
 - Not a replacement for the chat card until the fixture test exists.
 
@@ -205,3 +207,63 @@ The Hermes desktop app is **not installed on this machine** — there is no
 specification is written from the SDK surface and from a shipped plugin's source; the
 implementation must be verified on a machine that runs the app, and until then this
 change stays `proposed`.
+
+## 9. Ambient scenes: idle and work (owner, 2026-11-08)
+
+### Problem
+
+`plugin_api.state()` built glyph lines only when a state was active, and
+`projection.project()` returns `active: null` between states. So outside a state
+the pane painted nothing and said `no state`. Verified in the app on 2026-11-08:
+the State view opened, the plugin loaded, and the main pane was empty.
+
+An empty pane is not a neutral default. This product is a place you are *in*; a
+surface that goes blank the moment the agent is at rest contradicts that, and it
+also makes the pane useless as a background.
+
+### Decision
+
+The pane is never blank. Between states it paints one of two ambient scenes,
+chosen by whether a turn is in flight:
+
+| scene | when | trail | speed | symmetry | strands |
+|---|---|---|---|---|---|
+| `idle` | no active state, nothing running | 30 | 0.012 | 2-fold | 2 |
+| `work` | no active state, a turn in flight | 17 | 0.046 | 4-fold | 4 |
+
+`idle` is slower and sparser than any of the four states — it is the thing you
+leave on. `work` is denser and four-fold, so a busy agent looks busy without
+being loud enough to read as anxiety.
+
+### Mechanism
+
+- The renderer is `core/screensaver.py` — Mystify strands drawn straight into the
+  ramp (` .:-=+*#`), no image, no grading, no font. `tools/screensaver.py` is a
+  CLI wrapper over the same module, so the CLI, the pane and the brand proofs
+  cannot drift.
+- `frame(state, cols, rows, now)` advances by clock phase only, so any surface
+  asking at any moment gets a consistent picture without holding a loop.
+- `GET /api/plugins/antemuse/state?busy=1` selects `work`; the default is `idle`.
+  `busy` changes **only** the ambient scene — it never fabricates an active state
+  or touches the projection.
+- If a state is active, its own scene renders exactly as before; the ambient
+  scenes are a fallback, not a replacement.
+
+### Acceptance
+
+9. With no active state, `GET /state` returns non-empty `art` for the requested
+   grid, and the payload still contains no goal, candidate, source or journal text.
+10. `busy=1` changes the scene and nothing else: `active` stays `null` and every
+    other field is byte-identical to the non-busy response.
+11. `core/screensaver.frame()` is deterministic for a given `now`, and returns
+    exactly `rows` lines of exactly `cols` cells.
+12. The ambient scenes render at 116×74 (pane geometry) with ink between 2% and
+    8% — visible, not a smear. Measured 2026-11-08: idle 3.7%, work 4.2%.
+13. No new Python dependency; the renderer is stdlib only.
+
+### Open
+
+- Whether `busy` should come from the gateway event stream rather than a query
+  parameter the pane sets. Today the pane decides; that is a stub, not a contract.
+- Whether `idle` deserves its own entry in the state vocabulary the user can
+  choose, or stays purely automatic. Recommendation: automatic only.

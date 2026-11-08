@@ -6,10 +6,24 @@ already rides in the injected block. No new command, no new state, no model call
 ## Goal
 
 When the shape of the work has a name, say its name: *"this looks like a walk — you are
-looping on the same failure"*. The plugin already computes strain from measured signals
-and offers one line, cooling for 45 minutes. This change says **which state to recommend
-for which pattern, on what evidence, and in what words** — so the recommendation is a
-judgement with a stated basis, not a nudge.
+looping on the same failure"*. This change says **which state to recommend for which
+pattern, on what evidence, and in what words** — so the recommendation is a judgement
+with a stated basis, not a nudge.
+
+### Revision 2026-11-08: one owner
+
+There were two recommenders. `core/mood.py` summed minutes / 90 + turns / 30 + fails / 6
+into a "strain" score and named a state from that arithmetic — `break due` below 2.0,
+`break overdue` above it — while `core/recommend.py` named a state from a measured
+pattern. Whichever had something to say spoke, so the arithmetic often did: a healthy
+session of 122 minutes and 27 turns was told *"a daydream fits"* by a timer, with no
+evidence beyond the clock.
+
+**`core/mood.py` now measures and never recommends.** It reports minutes since the last
+state, turns, failures, the run of consecutive failures and any reported feeling. It has
+no `due`, no `strain`, no `suggest`, no `offer`, no `menu`. Naming a state is
+`core/recommend.py` alone, and every line it emits must name the counter that justified
+it. When nothing is measured, nothing is said.
 
 ## The rule that must not bend
 
@@ -34,10 +48,17 @@ invention.
 | **Saturation** | ≥ 60 turns in one thread, or ≥ 3 decisions left open in the journal | `dream` | slow and unstructured; let the open decisions recombine |
 | **Data wall** | ≥ 2 source failures (fetch, 401, timeout) in the last 4 turns | `doomscroll` | a feed is raw noise to break attention off a blocked dependency |
 | **Rut** | two entries of the same state inside 10 minutes, or the same state re-entered twice in a row | a *different* state, chosen by the rules above | repeating the same move on the same pattern is the definition of stuck |
+| **Long stretch** | ≥ 90 minutes since the last state ended, with ≥ 10 turns | `daydream` | the cheapest state, and the clock is a real measurement: an unbroken stretch is the observation, not a score derived from it |
+| **Reported** | a mood report inside 4 hours (`state(action="mood", feeling=…)`) | the state mapped to that feeling | the person or agent *said* it. Reported is data; inferred is not |
 | **Return hangover** | the state ended < 2 turns ago and the first step repeats the step it ended on | `walk` | the account said what is next; if that step is being retried, the frame is still wrong |
 
 Five states are defined, so the recommendation must always name one of them; "take a
 break" without a state is not an output.
+
+**Precedence**, fixed so two patterns cannot argue: `new project` → `reported` → `loop` →
+`data wall` → `saturation` → `long stretch` → `grind`. A report outranks the counters
+because the person knows something they do not; a loop outranks a wall because a blocked
+tool is more actionable than a blocked URL.
 
 ## Where it surfaces
 

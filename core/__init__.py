@@ -12,5 +12,8 @@
   walk_map    the walk drawn as a side-scrolling place
   backdrop    optional pre-rendered three.js frames, replayed as blocks
   surfaces    the same frame encoded per client (terminal, chat, text, image)
+  screensaver the ambient scenes: ribbons on a black field, in the ramp
   tui         the full-screen takeover
 """
+
+from . import screensaver  # noqa: E402,F401  the ambient renderer

@@ -1,4 +1,4 @@
-"""Mood, strain, and when to step away."""
+"""Mood measures; the recommender names. Those are different jobs now."""
 from __future__ import annotations
 
 import os
@@ -30,34 +30,44 @@ def _age_the_break(minutes: float, turns: int = 0, fails: int = 0) -> None:
     path.write_text(json.dumps(data))
 
 
-def test_a_fresh_start_is_not_a_break():
+def test_a_fresh_start_measures_near_zero():
     view = engine.break_view()
-    assert view["due"] == "carry on"
-    assert view["minutes"] <= 1
+    assert view["minutes"] <= 1 and view["turns"] == 0
 
 
-def test_two_hours_thirty_turns_and_failures_is_overdue():
+def test_the_strain_score_is_gone():
+    """A number that named a state was a timer pretending to be a judgement."""
+    assert not hasattr(mood, "offer")
+    assert not hasattr(mood, "menu")
+    assert "strain" not in engine.break_view()
+
+
+def test_a_long_stretch_is_measured_and_named():
     _age_the_break(140, turns=30, fails=6)
     view = engine.break_view()
-    assert view["due"] == "break overdue", view
-    assert view["suggest"] in states.STATES
+    assert view["minutes"] >= 140 and view["turns"] == 30
+    line = (engine.inject() or "")
+    assert "140m since the last state" in line, line
+    assert "this looks like a daydream" in line, line
 
 
-def test_a_report_changes_what_is_suggested():
+def test_a_report_names_a_state_because_the_person_said_it():
     _age_the_break(100, turns=10)
     engine.record_mood("stuck", "three failed patches in a row")
-    assert engine.break_view()["suggest"] == "walk"
+    line = engine.inject() or ""
+    assert "this looks like a walk" in line and "you said you were stuck" in line
     engine.clear()
-    engine.record_mood("tired")
-    assert engine.break_view()["suggest"] == "daydream"
-
-
-def test_sharp_pushes_the_break_away():
     _age_the_break(100, turns=10)
-    before = engine.break_view()["strain"]
+    engine.record_mood("tired")
+    assert "you said you were tired" in (engine.inject() or "")
+
+
+def test_sharp_does_not_silence_the_measurement():
+    """A feeling is reported data, not a credit against the counters."""
+    _age_the_break(100, turns=10)
     engine.record_mood("sharp")
-    after = engine.break_view()["strain"]
-    assert after < before
+    view = engine.break_view()
+    assert view["minutes"] >= 100 and view["feeling"] == "sharp"
 
 
 def test_an_unknown_feeling_is_refused():
@@ -72,19 +82,19 @@ def test_break_with_a_name_takes_that_state_whatever_was_suggested():
     assert live is not None and live["key"] == "doomscroll"
 
 
-def test_break_without_a_name_recommends_and_lists_the_menu():
+def test_break_without_a_name_recommends_and_starts_nothing():
     _age_the_break(200, turns=40)
     out = engine.take_break()
-    assert "break " in out and "/walk" in out and "/break" not in out
+    assert "/" in out and "/break" not in out
     assert engine.peek() is None, "recommending must not start anything"
 
 
 def test_the_offer_is_injected_once_and_then_cools_down():
     _age_the_break(200, turns=40, fails=8)
     first = engine.inject() or ""
-    assert "[NO STATE" in first
+    assert "this looks like" in first
     second = engine.inject() or ""
-    assert "[NO STATE" not in second, "do not nag on the next turn"
+    assert "this looks like" not in second, "do not nag on the next turn"
 
 
 def test_taking_a_state_resets_the_work_counters():
@@ -92,7 +102,7 @@ def test_taking_a_state_resets_the_work_counters():
     engine.enter("daydream", 3)
     view = engine.break_view()
     assert view["turns"] == 0 and view["fails"] == 0
-    assert view["due"] == "carry on"
+    assert view["minutes"] <= 1
 
 
 def test_turns_and_tools_are_counted():
@@ -105,10 +115,11 @@ def test_turns_and_tools_are_counted():
     assert view["fails"] == 1
 
 
-def test_mood_scores_are_bounded():
+def test_absurd_counters_are_reported_as_they_are():
     _age_the_break(10_000, turns=10_000, fails=10_000)
     engine.record_mood("stuck")
-    assert engine.break_view()["strain"] == 3.0
+    view = engine.break_view()
+    assert view["minutes"] == 10_000 and view["turns"] == 10_000
 
 
 def test_a_profile_that_has_never_run_anything_can_still_report():
@@ -118,8 +129,8 @@ def test_a_profile_that_has_never_run_anything_can_still_report():
     path = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
     path.unlink(missing_ok=True)
     assert engine.record_mood("tired").startswith("mood: tired")
-    assert "break:" in engine.take_break()
-    assert engine.break_view()["due"] in ("carry on", "break due", "break overdue")
+    assert engine.take_break()
+    assert engine.break_view()["minutes"] >= 0
 
 
 def test_the_walk_keeps_its_dose_but_runs_fast():

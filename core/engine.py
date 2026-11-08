@@ -166,6 +166,12 @@ def record_mood(feeling: str, note: str = "") -> str:
     return f"mood: {feeling}" + (f" · {note.strip()[:120]}" if note.strip() else "")
 
 
+def data_for_advice() -> dict:
+    """The stored record, for a reader that needs counters and entries together."""
+    with _LOCK:
+        return _load()
+
+
 def take_break(choice: str | None = None) -> str:
     """Enter the state the agent asks for, or recommend one."""
     from . import mood
@@ -175,7 +181,12 @@ def take_break(choice: str | None = None) -> str:
         if wanted not in states.STATES:
             return f"no such state. try: {', '.join(states.STATES)}"
         return enter(wanted)
-    return mood.line(view) + "\n" + mood.menu()
+    advice = recommend_line = None
+    from . import recommend
+    advice = recommend.suggest({**data_for_advice(), "minutes": view["minutes"],
+                                "feeling": view["feeling"]})
+    recommend_line = advice["line"] if advice else "nothing measured yet that names a state"
+    return mood.line(view) + "\n" + recommend_line + "\n" + states.palette()
 
 
 def settle() -> None:
@@ -405,8 +416,11 @@ def inject() -> str | None:
         view = mood.view(data["work"], data["mood"], data["breaks"], data.get("offered_at") or 0.0)
         # The specific recommendation outranks the generic nudge: a named state with its
         # evidence is a judgement, "break due" is a timer. Both respect the same cooling.
-        advice = recommend.suggest(data) if not view["cooling"] else None
-        nudge = bool(advice) or ((not active) and view["due"] != "carry on" and not view["cooling"])
+        # One recommender. The old fallback named a state from a strain sum; that was a
+        # timer with an opinion, and it is gone.
+        advice = recommend.suggest({**data, "minutes": view["minutes"],
+                                    "feeling": view["feeling"]}) if not view["cooling"] else None
+        nudge = bool(advice)
         if nudge:
             data["offered_at"] = time.time()
             _save(data)
@@ -446,7 +460,7 @@ def inject() -> str | None:
         lines.append(f"[RESIDUE: {r.get('text', '')}]")
     if nudge:
         lines.append("")
-        lines.append(advice["line"] if advice else mood.offer(view))
+        lines.append(advice["line"])
     return "\n".join(lines)
 
 

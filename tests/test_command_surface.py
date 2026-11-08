@@ -126,9 +126,10 @@ def test_no_suggestion_names_a_command_that_does_not_exist():
     from core import mood, recommend
 
     live = registered_commands()
-    texts = [mood.menu(), mood.offer({"due": "break overdue", "minutes": 40, "turns": 40,
-                                      "fails": 2, "suggest": "daydream", "why": "cheapest",
-                                      "feeling": None})]
+    from core import states
+
+    texts = [states.palette(), mood.line({"minutes": 40, "turns": 40, "fails": 2,
+                                          "tools": 20, "streak": 0, "feeling": None})]
     for data in ({"work": {"turns": 8, "streak": 3}},
                  {"work": {"turns": 12, "source_fail_turns": [10, 11]}},
                  {"work": {"turns": 60}}):

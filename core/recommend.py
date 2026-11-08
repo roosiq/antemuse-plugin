@@ -33,6 +33,18 @@ WALL_FAILS = 2
 WALL_WINDOW = 4
 #: the same state twice inside this many seconds is a rut.
 RUT_SECONDS = 600
+#: a long healthy stretch with no state at all is itself a measurement.
+LONG_MINUTES = 90
+LONG_TURNS = 10
+
+#: a *reported* feeling, mapped. Reported, not inferred: the person or the agent said it.
+REPORTED = {
+    "stuck": ("walk", "you said you were stuck"),
+    "tired": ("daydream", "you said you were tired"),
+    "saturated": ("dream", "you said you were saturated"),
+    "flat": ("doomscroll", "you said you were flat"),
+    "sharp": ("walk", "you said you were sharp — keep the thread, change the frame"),
+}
 
 #: what each pattern recommends, and why that state and not another.
 WHY = {
@@ -74,6 +86,20 @@ def _new_project() -> Optional[str]:
         value = None
     _NEW_CACHE.update({"root": where, "at": now, "value": value})
     return value
+
+
+def _reported(feeling: Optional[str]) -> Optional[Dict[str, str]]:
+    pair = REPORTED.get(str(feeling or ""))
+    if not pair:
+        return None
+    return {"state": pair[0], "evidence": pair[1]}
+
+
+def _long_stretch(minutes: int, turns: int) -> Optional[str]:
+    """Minutes since the last state is a counter; the old strain sum was arithmetic on top."""
+    if minutes >= LONG_MINUTES and turns >= LONG_TURNS:
+        return f"{minutes}m since the last state, {turns} turns"
+    return None
 
 
 def _loop(work: Dict[str, Any]) -> Optional[str]:
@@ -142,6 +168,7 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     """
     now = now if now is not None else time.time()
     work = data.get("work") or {}
+    minutes = int(data.get("minutes") or 0)
     active = data.get("active") or None
 
     if active:
@@ -152,13 +179,23 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
             return {"pattern": "rut", "line": f"this looks like a rut · {rut['evidence']} · /{rut['state']}"}
         return None
 
+    # A feeling someone actually reported outranks anything the counters imply: they
+    # know something the counters do not, and it is a report rather than an inference.
+    reported = _reported(data.get("feeling"))
+    if reported:
+        return {"pattern": "reported",
+                "line": f"this looks like a {reported['state']} · {reported['evidence']}"
+                        f" · /{reported['state']}"}
+
     for pattern, state, evidence in (
         # On an empty repository there is no loop worth interrupting: there is nothing
         # to be stuck in yet. This is the one pattern that outranks everything.
         ("new project", "unstuck", _new_project()),
+
         ("loop", "walk", _loop(work)),
         ("wall", "doomscroll", _wall(work)),
         ("saturation", "dream", _saturation(work, open_decisions)),
+        ("long stretch", "daydream", _long_stretch(minutes, int(work.get("turns") or 0))),
         ("grind", "daydream", _grind(work)),
     ):
         if evidence:

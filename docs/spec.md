@@ -371,33 +371,29 @@ Implementation: `core/mood.py`, `engine.take_break`, `engine.record_mood`.
 Mood is **reported, never inferred**. No sentiment analysis of prose, no model
 call.
 
-Strain is arithmetic on observable work since the last state:
+**One owner.** `core/mood.py` measures and never recommends: minutes since the last
+state, turns, failures, the run of consecutive failures, and any reported feeling. It has
+no score, no `due`, no suggested state. (The old `strain` sum — minutes/90 + turns/30 +
+fails/6, clamped to 0–3 — is gone: it was a timer that named a state, and it told a
+healthy 122-minute session that "a daydream fits" with no evidence beyond the clock.)
 
-```
-strain = min(1, minutes / 90)
-       + min(1, turns / 30)
-       + min(1, failed_tool_calls / 6)
-       + weight(latest_mood_report)
-```
+Naming a state is `core/recommend.py`'s job alone, one line per cooling window, each
+line carrying the counter that justified it:
 
-Weights: `stuck` +1.0, `tired` +1.0, `saturated` +0.6, `flat` +0.2, `sharp` −0.6.
-Clamped to 0–3. `< 1` carry on; `1–2` break due; `> 2` break overdue.
-
-Recommendation:
-
-| feeling | state | reason |
+| pattern | evidence | state |
 |---|---|---|
-| `stuck` | walk | a different edge is more useful than another attempt |
-| `tired` | daydream | cheapest state: three minutes, memories, no tools taken |
-| `saturated` | dream | slow and unstructured; let the input settle |
-| `flat` | doomscroll | raw feed: noise to restart attention |
-| `sharp` | walk | keep the thread, change the frame |
-| none, strain < 2 | walk | the frame, not the effort |
-| none, strain ≥ 2 | daydream | cheapest way to stop for three minutes |
+| new project | < 3 commits and no spec | unstuck |
+| reported | a mood report inside 4 hours | mapped from the report (`stuck`→walk, `tired`→daydream, `saturated`→dream, `flat`→doomscroll, `sharp`→walk) |
+| loop | same tool failed ≥ 3× in a row | walk |
+| data wall | ≥ 2 source failures in the last 4 turns | doomscroll |
+| saturation | ≥ 60 turns, or ≥ 3 open decisions | dream |
+| long stretch | ≥ 90 min since the last state and ≥ 10 turns | daydream |
+| grind | ≥ 20 turns and a failure in the last 3 | daydream |
+| rut | same state twice inside 10 min | a different state |
 
-Reports older than four hours stop counting. An offer is made once and the next
-waits 45 minutes. The plugin recommends; the agent decides. There is no automatic
-break.
+Reports older than four hours stop counting. One recommendation per 45 minutes.
+Silence when nothing is measured. The plugin recommends; the agent decides. There is no
+automatic break.
 
 ---
 
@@ -660,7 +656,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 737 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 738 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -926,10 +922,11 @@ All paths relative to `specs/changes/`.
 
 | change | status | kind | outcome |
 |---|---|---|---|
+| `desktop-surfaces` §9 | implemented | ambient default | the pane is never blank: `idle` and `work` scenes from `core/screensaver.py`, one renderer for CLI, pane and proofs; `?busy=1` selects work. 737 tests. |
 | `e2e-fixes` | implemented | repair found by real sessions | `/return` exists; state-scoped material; account counts material; clock capped; `settle()` not `clear()`; dependency refused at the door. 80 tests then. |
 | `state-return-report` | implemented | ending behaviour | every ending builds an account from the journal; `[YOU JUST CAME BACK …]`; `nothing arrived` for an empty state. |
 | `consolidate-naming` | implemented | internal restructuring | `core/`; modules named by content; one terminal-imaging module; dead SQLite board removed; no stale identity. 74 tests then. |
-| `break-and-mood` | implemented | new surface + bookkeeping | recommends, never enters; mood is reported, never inferred; strain arithmetic; one offer then 45 minutes. The commands themselves were later consolidated into `state(action='break'|'mood')`. |
+| `break-and-mood` | implemented | new surface + bookkeeping | recommends, never enters; mood is reported, never inferred; one offer then 45 minutes. The strain arithmetic was removed 2026-11-08 — see `pattern-recommendation`, one owner. The commands themselves were later consolidated into `state(action='break'|'mood')`. |
 | `ambient-walk` | implemented | walk semantics | tools stay open; walk supplies no material (`feeds: False`); return forces a different first step (`restart: True`); relation names in the trail. 107 tests now. |
 | `surface-repair` | implemented | repair found by running the plugin | `art()` normalises each frame to its own percentiles (cards were 0.09% bright); journal entries carry `session` and `watch_state()` windows them; `snapshot_path()` writes where frames are read; §13 refreshed. 591 tests now. |
 | `scenes-per-surface` | **partial — pane motion only** | rendering contract | per-state motion, clock grade, dual scoring, 4:5 postcards, origin binding, idle renders nothing. Not implemented; tasks T0–T8 open. |

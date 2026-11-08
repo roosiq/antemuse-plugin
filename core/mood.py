@@ -5,11 +5,13 @@ see: what the work has cost (turns, tool calls, failed calls, minutes since the
 last state) and what the agent says about itself when asked.
 
     state(action="mood", feeling="stuck")   the agent reports
-    /mood tired                             the person reports for it
     /walk, /daydream, /doomscroll, /dream    the recommendation, taken
 
-Nothing here calls a model. The score is arithmetic on counters, so the same
-work always produces the same advice.
+This module **measures; it does not recommend.** It used to sum the counters into a
+"strain" score and name a state from that arithmetic, which was a timer pretending to be
+a judgement: 122 minutes became "break overdue", and overdue picked daydream because the
+number was large. Naming a state is `core/recommend.py`'s job, and it must be able to
+point at the counter that justified it.
 """
 from __future__ import annotations
 
@@ -17,18 +19,6 @@ import time
 from typing import Any, Dict, List, Optional
 
 FEELINGS = ("stuck", "tired", "sharp", "flat", "saturated")
-
-# how much each report moves the strain, in the same units as the counters
-WEIGHT = {"stuck": 1.0, "tired": 1.0, "saturated": 0.6, "flat": 0.2, "sharp": -0.6}
-
-# what each feeling asks for, and why
-SUGGEST = {
-    "stuck": ("walk", "a different edge is more useful than another attempt"),
-    "tired": ("daydream", "cheapest state: three minutes, memories, no tools taken"),
-    "saturated": ("dream", "slow and unstructured; let the input settle"),
-    "flat": ("doomscroll", "raw feed: noise to restart attention on something"),
-    "sharp": ("walk", "keep the thread, change the frame for ten minutes"),
-}
 
 STALE_AFTER_MIN = 240      # a self-report older than four hours stops counting
 OFFER_AFTER_MIN = 45       # do not repeat the same nudge more often than this
@@ -70,47 +60,26 @@ def view(work: Dict[str, Any], mood: List[Dict[str, Any]],
     since = [m for m in mood if now - float(m.get("at") or 0) <= STALE_AFTER_MIN * 60]
     feeling = (since[-1].get("feeling") if since else None)
 
-    strain = min(1.0, minutes / 90.0)
-    strain += min(1.0, float(work.get("turns") or 0) / 30.0)
-    strain += min(1.0, float(work.get("fails") or 0) / 6.0)
-    strain += WEIGHT.get(feeling or "", 0.0)
-    strain = max(0.0, min(3.0, strain))
-
-    due = "carry on" if strain < 1.0 else ("break due" if strain < 2.0 else "break overdue")
-    suggested, why = (SUGGEST.get(feeling or "") if feeling else
-                      (("walk", "the frame, not the effort") if strain < 2.0
-                       else ("daydream", "cheapest way to stop for three minutes")))
     cooling = (now - offered_at) < OFFER_AFTER_MIN * 60
 
     return {
-        "strain": round(strain, 2), "due": due, "minutes": int(minutes),
-        "turns": int(work.get("turns") or 0), "fails": int(work.get("fails") or 0),
-        "tools": int(work.get("tools") or 0), "feeling": feeling,
-        "suggest": suggested, "why": why, "cooling": cooling,
+        "minutes": int(minutes),
+        "turns": int(work.get("turns") or 0),
+        "fails": int(work.get("fails") or 0),
+        "tools": int(work.get("tools") or 0),
+        "streak": int(work.get("streak") or 0),
+        "feeling": feeling,
+        "cooling": cooling,
     }
 
 
 def line(v: Dict[str, Any]) -> str:
-    """One line, for the agent's context or for a person reading the terminal."""
-    bits = [f"{v['minutes']}m", f"{v['turns']} turn(s)"]
+    """The measured facts, and nothing else: no score, no suggested state."""
+    bits = [f"{v['minutes']}m since the last state", f"{v['turns']} turn(s)"]
     if v["fails"]:
         bits.append(f"{v['fails']} failed call(s)")
+    if v["streak"]:
+        bits.append(f"{v['streak']} in a row")
     if v["feeling"]:
-        bits.append(f"feeling {v['feeling']}")
-    report_only = (v["feeling"] and v["minutes"] < 5 and not v["turns"] and not v["fails"])
-    tail = " (on the report alone)" if report_only else ""
-    return (f"break: {v['due']}{tail} · " + " · ".join(bits) +
-            f" — {v['suggest']} ({v['why']})")
-
-
-def menu() -> str:
-    return "  ".join(f"/{f}" for f in ("walk", "daydream", "doomscroll", "dream"))
-
-
-def offer(v: Dict[str, Any]) -> str:
-    """The nudge injected into a turn, once, when a break is actually due."""
-    return (f"[NO STATE {v['due'].upper()} — {v['minutes']}m since the last one, "
-            f"{v['turns']} turn(s), {v['fails']} failed tool call(s). "
-            f"A {v['suggest']} fits: {v['why']}. Take it with /{v['suggest']}, "
-            f"or pick another: /walk|daydream|doomscroll|dream|unstuck. "
-            f"Ignore this if the work is nearly done.]")
+        bits.append(f"reported {v['feeling']}")
+    return " · ".join(bits)

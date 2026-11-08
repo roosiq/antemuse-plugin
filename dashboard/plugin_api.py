@@ -87,8 +87,12 @@ def frame_index(key: str, frames: int = 8, now: float | None = None) -> int:
 
 
 @router.get("/state")
-def state(cols: int | None = None, rows: int | None = None, fit: str = "contain") -> Dict[str, Any]:
+def state(cols: int | None = None, rows: int | None = None, fit: str = "contain",
+          busy: bool = False) -> Dict[str, Any]:
     """The current state, as counts and a served frame.
+
+    ``?busy=1`` says a turn is in flight, which changes only the ambient scene:
+    between states the pane paints ``work`` instead of ``idle``.
 
     ``?cols=&rows=`` lets a surface ask for the grid its own pixel box can hold.
     The numbers are clamped to the projection's envelope and echoed back in the
@@ -112,5 +116,13 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
                 gamma=1.0,
             )
         except Exception:  # health: BLE001 -- a missing frame is not a broken state
+            lines = []
+    if not lines:
+        # Between states the agent still exists, so the pane is never blank:
+        # `work` while a turn is in flight, `idle` when nothing is running.
+        scene_name = "work" if busy else "idle"
+        try:
+            lines = plugin().core.screensaver.frame(scene_name, width, height)
+        except Exception:  # health: BLE001 -- art is never worth a 500
             lines = []
     return proj.project(watch, lines, cols=width, rows=height)
