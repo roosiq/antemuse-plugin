@@ -55,7 +55,7 @@ function light(hex, i, x, y, z, dist = 60) {
 function bg(hex) { scene.background = new THREE.Color(hex); }
 
 // ---------------------------------------------------------------- walk
-function walk() {
+async function walk() {
   bg(0x0a0c10);
   scene.fog = new THREE.Fog(0x0a0c10, 8, 34);
   light(0x6fb3a8, 90, 0, 5, -2, 40);
@@ -104,30 +104,15 @@ function walk() {
                                  blending: THREE.AdditiveBlending, depthWrite: false}));
   glow.position.set(0, 0.55, -19.8); scene.add(glow);
 
-  // a walking figure in silhouette against the light: the subject the scene lacked
-  const figure = new THREE.Group();
-  const dark = new THREE.MeshBasicMaterial({color: 0x05070a});
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.46, 6, 14), dark);
-  torso.position.y = 0.98; figure.add(torso);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.115, 24, 18), dark);
-  head.position.y = 1.36; figure.add(head);
-  const limb = (x, y, len, phase) => {
-    const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, len, 4, 10), dark);
-    m.position.set(x, y, 0);
-    m.userData.phase = phase;
-    figure.add(m); return m;
-  };
-  const legL = limb(-0.07, 0.44, 0.34, 0);
-  const legR = limb(0.07, 0.44, 0.34, Math.PI);
-  const armL = limb(-0.19, 1.02, 0.28, Math.PI);
-  const armR = limb(0.19, 1.02, 0.28, 0);
-  figure.position.set(0, 0, 1.8);
-  figure.rotation.y = Math.PI;                 // walking away, toward the light
+  // The subject: a real figure seen from behind, walking toward the light.
+  const cloth = new THREE.MeshStandardMaterial({ color: 0x0b0f13, roughness: 0.95, metalness: 0 });
+  const figure = await prop('/data/meshy/walk/figure.glb', 1.75, cloth);
+  figure.position.set(0, 0.875, 1.8);          // prop() centres on its box, so lift by half
+  figure.rotation.y = Math.PI;                  // walking away, toward the light
   scene.add(figure);
-  const swing = Math.sin(t * 2) * 0.45;
-  legL.rotation.x = swing; legR.rotation.x = -swing;
-  armL.rotation.x = -swing * 0.7; armR.rotation.x = swing * 0.7;
-  figure.position.y = Math.abs(Math.sin(t * 2)) * 0.03;
+  const swing = Math.sin(t * 2) * 0.16;
+  figure.rotation.z = swing * 0.18;
+  figure.position.y = 0.875 + Math.abs(Math.sin(t * 2)) * 0.03;
 
   cam.position.x = Math.sin(t) * 0.18;          // the body drifts as it walks
   grid.position.z = (t * 0.05) % 1;
