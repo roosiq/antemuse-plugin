@@ -96,11 +96,27 @@ What is missing is the assets and a loader. Three additions:
 Bake keys are therefore `(asset-pack hash, scene id, frame index, cols, rows, ramp,
 dither)`. A size change is a new bake, not a resample of an old one.
 
-**Availability, stated plainly:** the Meshy CLI is **not installed** here
-(`npm exec --yes --package=meshy-cli@0.4.3 -- meshy …`), and every generation is a
-paid operation needing authorization and a credit balance. The 2D route is usable
-today (local SD server, `tools/gen_frames.py`); the 3D route needs an install and a
-spend decision from the owner.
+**Availability — corrected 2026-11-08, after checking rather than assuming.** The
+official Meshy plugin (`meshy` 0.5.0, pinned `@meshy-ai/meshy-mcp-server@0.6.5`) is
+now **installed and enabled** in this profile: `/home/ryan/.hermes/plugins/meshy`.
+Spoken to directly over stdio JSON-RPC it registers **28 tools** — text/image/multi-
+image to 3D, retexture, remesh, rig, animate, text-to-motion, convert, resize,
+UV unwrap, text-to-image, image-to-image, printability and Creative Lab. Costs are
+declared per tool and enforced by the plugin, not by hope: it asks for approval on
+every credit-spending call with an estimate, and caps a chat at 200 credits.
+
+What does *not* work yet is authentication on this path. The CLI's stored OAuth
+session is valid and was refreshed today (balance **1,101 credits** — 901 monthly,
+200 permanent), but the MCP server rejects that token with a 401: it wants a
+developer key from `meshy.ai/developers/keys`, not the CLI's OAuth access token.
+So the key is a human step — best entered in the plugin's own settings page
+(Settings ▸ Plugins ▸ Meshy), where saving restarts the tools and nothing passes
+through chat. Until then, generation runs through the CLI, which already has a
+verified session.
+
+Pack budget, from the declared costs: five states × (preview 5 + refine 10) = 75
+credits for meshes; 2D takes at 3–9 per image. Well inside the balance, and inside
+the 200-credit per-chat cap.
 
 Five changes to the surface itself, in dependency order — on top of the source fix
 in 3.0. Each is small; together they are the difference between a thumbnail and a
@@ -222,9 +238,10 @@ require a model. A missing scene still renders nothing and says so.
    leaves letterbox bands. Proposal: cover above 3:2, contain below.
 3. **Where does the immersive case live?** Pane only, or does `/antemuse` become a
    full-window art page (my reading of "full pane, immersive" is both).
-4. **Meshy spend.** Generating assets is paid and needs authorization per pack —
-   roughly one pack per state, five states. Until then the 2D route (local SD
-   server) is the only source that can be exercised without spending.
+4. **Meshy key.** The plugin is installed and its 28 tools are registered, but the
+   MCP path needs a developer key (`meshy.ai/developers/keys`); the CLI's OAuth
+   session is not accepted as one. Enter it in Settings ▸ Plugins ▸ Meshy. Budget is
+   not the constraint: 1,101 credits on hand, ~75 for a five-state mesh pack.
 5. **Mesh or billboard per state?** 3D meshes cost generation, load time and a
    loader; textured 2D billboards cost almost nothing and look the same once
    luminance-quantised. Proposal: meshes only where the camera moves past the
