@@ -255,6 +255,27 @@ def _person_text(kwargs: Dict[str, Any]) -> str:
     return ""
 
 
+#: The host context, kept only so a state can speak on its own behalf. Slash commands
+#: are not the only channel: Discord caps app commands at 100 and this machine already
+#: syncs 95, so an update that has to be typed is an update that may not be reachable.
+_HOST: Any = None
+_LAST_UPDATE = ""
+
+
+def _post(text: str) -> bool:
+    """Send one line through the host's own message channel, on any platform."""
+    host = _HOST
+    post = getattr(host, "post_message", None)
+    if not callable(post) or not text:
+        return False
+    try:
+        post(text)
+        return True
+    except Exception as exc:  # a platform refusing a message must not cost the turn
+        logger.debug("antemuse: update not posted: %s", exc)
+        return False
+
+
 def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> str | None:
     engine.remember_platform(platform, session_id)
     engine.note_turn()
@@ -272,6 +293,13 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
                           origin=engine.current_origin()) or "",
     ]
     block = "\n\n".join(part for part in parts if part)
+    # A recommendation is the one thing worth pushing as its own message: it arrives
+    # once per 45 minutes, and waiting for someone to type a command would defeat it.
+    global _LAST_UPDATE
+    advice = next((line for line in block.splitlines() if line.startswith("this looks like a ")), "")
+    if advice and advice != _LAST_UPDATE:
+        if _post(advice):
+            _LAST_UPDATE = advice
     return block or None
 
 

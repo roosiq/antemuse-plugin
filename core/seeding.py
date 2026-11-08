@@ -17,8 +17,14 @@ from typing import Dict, Iterable, List, Optional, Sequence
 
 from . import recall, storage
 
-#: project : conversation : random, as buckets out of ten.
+#: project : conversation : random, as buckets out of ten — the default.
 MIX = (5, 3, 2)
+
+#: A state may declare its own mix. `dream` starts from memory: it is the state whose
+#: whole premise is recombining what is already known, so a random frame is the wrong door.
+MIXES = {
+    "dream": (("memory", 6), ("project", 2), ("random", 2)),
+}
 
 STOP = set("""
 a about above after again against all also and any are because been before being below
@@ -95,6 +101,27 @@ def project_terms(goal: str = "", limit: int = 24) -> List[str]:
     return out
 
 
+def memory_terms(limit: int = 16) -> List[str]:
+    """Words from what the person has actually said or stored — memory first.
+
+    Uses the same pool daydream draws from (recent turns, then the built-in memory
+    files), so a dream starts from something that happened rather than a random frame.
+    """
+    try:
+        from . import sources  # lazy: sources imports this module inside its own calls
+        pool = sources.memory_pool()
+    except Exception:
+        pool = list(recall.recent(8))
+    seen: List[str] = []
+    for line in pool:
+        for word in _words(line):
+            if word not in seen:
+                seen.append(word)
+            if len(seen) >= limit:
+                return seen
+    return seen
+
+
 def conversation_terms(limit: int = 16) -> List[str]:
     seen: List[str] = []
     for line in recall.recent(8):
@@ -126,9 +153,35 @@ def _bucket(state: str, when: float, counter: int) -> int:
     return int(digest[:8], 16) % 10
 
 
+def _weights(state: str):
+    return MIXES.get(state) or (("project", MIX[0]), ("conversation", MIX[1]), ("random", MIX[2]))
+
+
 def _tier(state: str, when: float, counter: int) -> str:
     bucket = _bucket(state, when, counter)
-    return "project" if bucket < MIX[0] else ("conversation" if bucket < MIX[0] + MIX[1] else "random")
+    edge = 0
+    for source, weight in _weights(state):
+        edge += weight
+        if bucket < edge:
+            return source
+    return _weights(state)[-1][0]
+
+
+def _order(state: str) -> List[str]:
+    """The declaration order, then everything else, so a fallback is still stated."""
+    declared = [source for source, _ in _weights(state)]
+    rest = [s for s in ("memory", "conversation", "project", "random") if s not in declared]
+    return declared + rest
+
+
+def _pool(source: str, goal: str, limit: int) -> List[str]:
+    if source == "memory":
+        return memory_terms(limit)
+    if source == "project":
+        return project_terms(goal, limit)
+    if source == "conversation":
+        return conversation_terms(limit)
+    return [random_term()]
 
 
 def entry(state: str, *, when: float, counter: int = 0, exclude: Sequence[str] = (),
@@ -139,18 +192,11 @@ def entry(state: str, *, when: float, counter: int = 0, exclude: Sequence[str] =
     or a term already used), the next tier answers — and the source says which one did,
     so the fallback is visible rather than silent.
     """
-    order = {"project": ["project", "conversation", "random"],
-             "conversation": ["conversation", "project", "random"],
-             "random": ["random", "project", "conversation"]}[_tier(state, when, counter)]
+    tier = _tier(state, when, counter)
+    order = [tier] + [s for s in _order(state) if s != tier]
     used = {t.lower() for t in exclude}
     for source in order:
-        pool: Iterable[str]
-        if source == "project":
-            pool = project_terms(goal)
-        elif source == "conversation":
-            pool = conversation_terms()
-        else:
-            pool = [random_term()]
+        pool: Iterable[str] = _pool(source, goal, 48)
         for term in pool:
             if term and term.lower() not in used:
                 return {"source": source, "term": term}
@@ -164,14 +210,12 @@ def candidates(state: str, *, when: float, counter: int = 0, exclude: Sequence[s
     A repository word like "antemuse" is not in WordNet; the honest answer is the next
     candidate from the same tier, not a silent jump to a random synset.
     """
-    order = {"project": ["project", "conversation", "random"],
-             "conversation": ["conversation", "project", "random"],
-             "random": ["random", "project", "conversation"]}[_tier(state, when, counter)]
+    tier = _tier(state, when, counter)
+    order = [tier] + [s for s in _order(state) if s != tier]
     used = {t.lower() for t in exclude}
     out: List[Dict[str, str]] = []
     for source in order:
-        pool: Iterable[str] = (project_terms(goal) if source == "project" else
-                               conversation_terms() if source == "conversation" else [random_term()])
+        pool: Iterable[str] = _pool(source, goal, limit * 4)
         for term in pool:
             if not term or term.lower() in used:
                 continue

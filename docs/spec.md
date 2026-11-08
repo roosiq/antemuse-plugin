@@ -201,8 +201,10 @@ outside the plugin's control.
 
 ### 4.1 Where a state starts
 
-Entry is specified in `specs/changes/state-entry`: `walk` and `dream` draw their seed
-from a **5 : 3 : 2** mix of project terms, conversation terms and deliberate randomness,
+Entry is specified in `specs/changes/state-entry`: `walk` draws its seed from a
+**5 : 3 : 2** mix of project terms, conversation terms and deliberate randomness, and
+`dream` from **6 : 2 : 2 memory : project : random** — a dream opens on something the
+person said or stored, never on a random frame,
 chosen by a deterministic hash of (state, entry time, counter), skipping terms the state
 already used, and recording `seed=<source>:<term>` on the first line. `daydream` starts
 from the conversation (memory files are enrichment), and `doomscroll` stays undirected —
@@ -658,7 +660,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 726 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 729 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -948,6 +950,7 @@ All paths relative to `specs/changes/`.
 | `pattern-recommendation` | **implemented (partial)** | recommendation | names the state that fits the shape of the work from measured counters: loop, data wall, saturation, grind, rut. One line, one state, one piece of evidence, cooling, silent by default, never enters. `churn` and `return hangover` are NOT BUILT — the plugin keeps no signal for them and a guess is not a measurement. `core/recommend.py`, 13 tests. |
 | `hermes-integration` | **verified** | host interfaces | audit of every mechanism against the host source: tool/commands/hooks/injection/ctx.llm/aux tasks/storage/dashboard/memory. Three defects fixed — automation read `messages` but the host passes `user_message`; three modules hardcoded `~/.hermes`; daydream read a memory file an external provider never writes. No provider override, no SDK, no key: any provider by its default interface. |
 | `state-entry` | **implemented (partial)** | entry + direction | each state now declares where it starts and which way it moves; walk and dream draw their seed from a 5:3:2 mix of project terms, conversation terms and deliberate randomness, chosen by a deterministic hash and recorded as `seed=<source>:<term>` in the journal. `core/seeding.py`, 9 tests; doomscroll stays undirected by design. |
+| `plugin-updates` | **implemented** | delivery | a recommendation is pushed as its own message through `ctx.post_message`, once per cooling window, instead of waiting for someone to type a slash command. Discord caps app commands at 100 and this machine already syncs 95, so a command-only channel is not a reliable one. |
 
 Supporting evidence files:
 

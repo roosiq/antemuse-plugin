@@ -80,3 +80,24 @@ def test_doomscroll_is_never_seeded():
     end = body.find("\ndef ", 1)
     body = body[:end] if end > 0 else body
     assert "seeding" not in body
+
+
+def test_dream_starts_from_memory(monkeypatch, tmp_path):
+    from core import recall
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    recall.clear()
+    recall.remember("the parser keeps dropping the trailing brace", "person")
+    recall.remember("so the diff is empty and the test passes anyway", "agent")
+    assert seeding._tier("dream", 1_700_000_000, 0) == "memory"
+    got = seeding.entry("dream", when=1_700_000_000)
+    assert got["source"] == "memory", got
+    assert got["term"] in ("parser", "keeps", "dropping", "trailing", "brace", "diff", "empty")
+
+
+def test_dream_mix_is_memory_first_not_project():
+    counts = {"memory": 0, "project": 0, "random": 0}
+    for i in range(400):
+        counts[seeding._tier("dream", 1_700_000_000 + i, 0)] += 1
+    total = sum(counts.values()) or 1
+    assert 100 * counts["memory"] / total >= 50, counts
+    assert 100 * counts["project"] / total <= 32, counts

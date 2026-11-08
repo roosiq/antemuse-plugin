@@ -216,16 +216,18 @@ def dream_recombine(steps: int = 1) -> List[str]:
     chosen = None
     try:
         from . import seeding
-        seed = seeding.entry("dream", when=time.time())
-        if seed["term"]:
-            seed_line = seeding.marker(seed)
+        # Dream starts from memory: a stored or recently spoken word, not a random frame.
+        for seed in seeding.candidates("dream", when=time.time()):
             term = seed["term"].lower()
             for candidate in frames:
                 words = {w.lower() for w in re.findall(r"[A-Za-z]+", candidate.name)}
                 lus = {str(u).lower() for u in getattr(candidate, "lexical_units", [])[:40]}
                 if term in words or term in lus:
                     chosen = candidate
+                    seed_line = seeding.marker(seed)
                     break
+            if chosen is not None:
+                break
     except Exception:
         seed_line = ""
     out = []

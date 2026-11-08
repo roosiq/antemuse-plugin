@@ -95,3 +95,22 @@ def test_break_does_not_enter_a_state():
     assert 'if action == "break":' in handler, "the recommendation must still be reachable as a tool action"
 
 
+
+
+def test_a_recommendation_is_posted_once_through_the_host():
+    import importlib
+    module = importlib.import_module("__init__")
+
+    posted = []
+
+    class Host:
+        def post_message(self, text):
+            posted.append(text)
+
+    module._HOST = Host()
+    module._LAST_UPDATE = ""
+    assert module._post("this looks like a walk · same tool failed 3× · /walk 5") is True
+    assert len(posted) == 1 and "walk" in posted[0]
+    # no host, no crash
+    module._HOST = object()
+    assert module._post("anything") is False

@@ -24,7 +24,7 @@ Each state declares three things, and the code may not improvise them:
 |---|---|---|---|
 | `walk` | one seed term, then a real WordNet edge per step | **out** from the seed along the relation the edge names (hypernym up, hyponym down, similar/holds lateral); direction is recorded per hop | **mixed — 5 : 3 : 2** (project : conversation : random) |
 | `daydream` | two memories | **across**: moves only when the two share ≥ 2 terms; the shared term is the direction | conversation-first, memory files second (see `hermes-integration`) |
-| `dream` | one frame, or a term looked up inside FrameNet | **recombine**: frame → frame through a shared lexical unit or role | mixed — project/conversation seed when the term exists in FrameNet, else random frame |
+| `dream` | **a memory** — a word the person said or stored, looked up inside FrameNet | **recombine**: frame → frame through a shared lexical unit or role | **memory-first — 6 : 2 : 2** (memory : project : random) |
 | `doomscroll` | a live feed page | **none, by design.** Undirected is the point of this state | random external only; never project material |
 
 ## The mix, and why it is a ratio rather than a switch
@@ -38,6 +38,11 @@ state that only touches the project cannot surprise. Each entry draws its source
   one.
 - **30 % conversation** — terms from the bounded recent-turn ring (`core/recall.py`).
 - **20 % random** — WordNet synsets / FrameNet frames, deliberately unrelated.
+
+**`dream` declares its own mix: 6 memory : 2 project : 2 random.** A dream's premise is
+recombining what is already known, so a random frame is the wrong door; it opens on a
+word the person said or stored, and only falls back to the repository or to chance when
+there is nothing to remember.
 
 Determinism matters: the same entry, replayed, must pick the same source. A live RNG
 would make a walk unreproducible and its diversity unmeasurable.
@@ -64,7 +69,7 @@ would make a walk unreproducible and its diversity unmeasurable.
 ## Acceptance criteria
 
 1. `core/seeding.py` resolves an entry as `{source, term}` for `walk` and `dream`; the
-   journal line names both.
+   journal line names both, and `dream`'s first source is memory.
 2. Over 200 synthetic entries the source mix is within ±8 points of 5 : 3 : 2.
 3. A term is never reused by the same state inside one window; two states in the same
    second differ.
