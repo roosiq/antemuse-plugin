@@ -184,9 +184,11 @@ thinks a good task looks like.
 **D3 — Budget and schedule for the protected run** (§7), including which two
 generator families.
 
-**D4 — Collider licensing** (open as `C3` in the other register). Six artifacts
-are committed with `license: unverified_research_artifact`. Decide before any
-push to a public remote or public report.
+**D4 — Collider licensing** — **RESOLVED** as `C3` in the other register: the six
+artifacts are `OC_data/` material, licensed CC BY 4.0 upstream (MIT covers
+`script/` only). Artifacts now carry `license=CC-BY-4.0`, a licence URL, and the
+credit line, and `core/collider.py` rejects a record that omits or alters any of
+them. Public distribution needs `data/collider/ATTRIBUTION.md` to travel with them.
 
 **D5 — `diagnose` provenance.** Internal supply has a measured ceiling of 62
 fix-subject commits, so this family cannot be filled from Ryan's own repos.

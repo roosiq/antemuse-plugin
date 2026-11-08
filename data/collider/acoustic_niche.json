@@ -10,7 +10,9 @@
     "repository": "CL-ML/open-collider-research",
     "pinned_commit": "6ed948a",
     "path": "OC_data/creativity_engine/T01_fresh_DS12_b1d535f4/prompt.md",
-    "license": "unverified_research_artifact"
+    "license": "CC-BY-4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Cédric Lion (2026), Open Collider: Methodology and Dataset for Bisociation-Based Idea Generation, CL-ML/open-collider-research @ 6ed948a"
   },
   "verification_status": "generated_example",
   "content_hash": "sha256:eb9fce51ff17314f703c44c7d0733070aa31c62ad0312a2b0b54f5e617c18136"

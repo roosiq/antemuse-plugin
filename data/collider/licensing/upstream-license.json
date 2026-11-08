@@ -1,0 +1,38 @@
+{
+  "record_id": "c3-open-collider-license",
+  "decided_at": "2026-11-07",
+  "recorded_by": "controller (Hermes fleet supervisor)",
+  "approval_authority": "Ryan Cook owns the promotion and public-distribution decision; this record supplies the licensing fact it rests on",
+  "upstream": {
+    "repository": "CL-ML/open-collider-research",
+    "commit": "6ed948ac9e5b5dcc39b82959bbfe1a644e0f7d7f",
+    "commit_short": "6ed948a",
+    "files": [
+      {
+        "path": "LICENSE",
+        "blob_sha": "610e38882b5390b63173763cbd65e5390079f076",
+        "size_bytes": 1282,
+        "quoted_clause": "This MIT License applies to the source code in `script/` only.\n\nThe dataset, methodology document, blog post, figures, and other research\nartifacts are released under CC BY 4.0 — see `LICENSE-CONTENT.md`."
+      },
+      {
+        "path": "LICENSE-CONTENT.md",
+        "blob_sha": "fa690faa1dc1d521b09d3c2cb98035887a4288bf",
+        "size_bytes": 2068,
+        "quoted_clause": "The non-code content of this repository, including but not limited to: ... `OC_data/` (LLM-generated ideas, briefs, reference texts) ... is licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0)."
+      }
+    ]
+  },
+  "our_material": {
+    "derived_from": "OC_data/creativity_engine/T*/prompt.md",
+    "artifacts": [
+      "acoustic_daylight.json",
+      "acoustic_niche.json",
+      "fairy_ring.json",
+      "lombard_effect.json",
+      "mycelial_network.json",
+      "selective_autophagy.json"
+    ]
+  },
+  "decision": "Redistribution is permitted under CC BY 4.0. The upstream MIT licence covers script/ only and does not reach the artifacts. Each artifact carries license=CC-BY-4.0, license_url, and the upstream credit line; core/collider.py refuses to load a record that omits or alters any of them. data/collider/ATTRIBUTION.md states credit, licence link, the changes we made, and the non-endorsement notice.",
+  "evidence_note": "What is checkable offline: LICENSE and LICENSE-CONTENT.md are stored verbatim beside this record, tests/test_collider.py recomputes each stored file's git blob sha against the blob_sha fields here, and checks that every quoted_clause appears in the stored text. What is not checkable from the tree: that those bytes were fetched from commit 6ed948a on 2026-11-07 — that retrieval is a recorded act, not a proof, and a reader who doubts it should re-fetch the blobs at that sha and compare. This record is a citation, not legal advice."
+}

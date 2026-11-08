@@ -117,7 +117,12 @@ def test_outer_hops_are_farther_than_wander_hops(cursor):
     from core import walks
     STEP = re.compile(r"^(?P<a>.+?) \([a-z]+\) → (?P<b>.+?) \([a-z]+\)")
 
-    def mean_similarity(name, n=16, seed="hand"):
+    # n=64, not 16: the walk picks neighbours with a SystemRandom, so a short
+    # sample estimates the walk's distance poorly. Measured over 30 runs each:
+    #   n=16  outer 0.044 (sd 0.004)  wander 0.264 (sd 0.076)  -> held 94%
+    #   n=64  outer 0.043 (sd 0.003)  wander 0.253 (sd 0.043)  -> held 100%
+    # The property is real; the estimate needed more steps. No runtime change.
+    def mean_similarity(name, n=64, seed="hand"):
         cursor.write_text(json.dumps({name: {"node": wn.synsets(seed)[0].name(), "prev": "", "at": 0}}))
         walk = walks.GraphWalk({"name": name, **walks.BUILTIN[name]}, cursor)
         sims = []

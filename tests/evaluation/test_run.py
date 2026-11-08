@@ -133,8 +133,11 @@ def key_for(condition, *, model=MODEL, task_id=None):
 # --- the condition matrix ---------------------------------------------------
 
 
-def test_conditions_are_exactly_a_b_c_with_three_branches_for_c():
-    assert CONDITIONS == {"A", "B", "C"}
+def test_conditions_are_a_through_f_with_three_branches_where_branching_applies():
+    # A/B/C are the baselines, D adds deterministic material, E branches with no
+    # material and no selection, F branches with material and selection. G
+    # (feedback and refresh) stays unimplemented and must be refused.
+    assert CONDITIONS == {"A", "B", "C", "D", "E", "F"}
     assert N == 3
 
 
@@ -428,7 +431,10 @@ def test_a_different_seed_never_hits(tmp_path):
 
 def test_malformed_condition_is_a_named_failure_record_with_no_calls(tmp_path):
     path = tmp_path / "shard.jsonl"
-    for bad in ("D", "a", "", None):
+    # G is the one condition the spec names but the code does not implement;
+    # it is the invalid example precisely so adding it later cannot pass silently.
+    assert "G" not in CONDITIONS
+    for bad in ("G", "a", "", None):
         transport = FakeTransport()
         record = run(bad, transport=transport, cache_path=path)
 

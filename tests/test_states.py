@@ -290,3 +290,44 @@ def test_only_this_session_can_collect_it():
     engine.record("state", "hand (n) → palm (n) · took its meronym", event="walk")
     out = engine.stop("sess-A")
     assert "hand" in out
+
+
+def test_the_page_shows_only_this_sessions_state():
+    """The journal is a 60-entry ring shared by every session; the page is not."""
+    engine.remember_platform("discord", "sess-now")
+    engine.enter("walk")
+    engine.record("state", "a step from now")
+    path = os.path.join(os.environ["ANTEMUSE_STATES_HOME"], "state.json")
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    data["journal"].insert(0, {"who": "state", "state": "walk", "event": "walk",
+                               "text": "yesterday's step", "at": time.time() - 7200,
+                               "session": "sess-old"})
+    data["journal"].insert(0, {"who": "state", "state": "walk", "event": "walk",
+                               "text": "another session now", "at": time.time(),
+                               "session": "sess-other"})
+    data["journal"].insert(0, {"who": "state", "state": "walk", "event": "walk",
+                               "text": "an unstamped legacy step", "at": time.time() - 7200})
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(data, fh)
+    texts = [e["text"] for e in engine.watch_state()["journal"]]
+    assert "a step from now" in texts
+    assert "yesterday's step" not in texts
+    assert "another session now" not in texts
+    assert "an unstamped legacy step" not in texts
+
+
+def test_record_stamps_the_session_it_was_written_in():
+    """The window is only possible because every write carries its session."""
+    engine.remember_platform("discord", "sess-stamped")
+    engine.enter("walk")
+    engine.record("state", "a stamped step")
+    engine.stop()
+    path = os.path.join(os.environ["ANTEMUSE_STATES_HOME"], "state.json")
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    entries = data["journal"]
+    assert entries[-2]["text"] == "a stamped step"
+    for entry in entries:
+        assert entry.get("session") == "sess-stamped", entry
+    assert entries[-1]["event"] == "report", "the account is journalled too"

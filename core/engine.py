@@ -97,6 +97,7 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
         data.setdefault("journal", []).append({
             "who": "state", "state": active["key"], "event": "report",
             "text": report["text"], "at": now,
+            "session": data.get("session_id") or "",
         })
         data["journal"] = data["journal"][-60:]
         data["active"] = None
@@ -174,7 +175,8 @@ def settle() -> None:
             _save(data)
 
 
-def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
+def enter(key: str, minutes: int | None = None, walk: str | None = None,
+          options: Dict[str, Any] | None = None) -> str:
     spec_key = states.resolve(key)
     if not spec_key:
         return f"no such state. try: {', '.join(states.STATES)}"
@@ -204,6 +206,11 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None) -> str:
             "minutes": duration,
             "total_seconds": duration * 60,
         }
+        # Recorded, never acted on here: the exploration run that consumes these
+        # is a separate wiring step. An entry without options has no key at all,
+        # so today's record shape is unchanged.
+        if options:
+            data["active"]["options"] = dict(options)
         now_break = now
         data.setdefault("breaks", []).append(now_break)
         data["work"] = {"turns": 0, "tools": 0, "fails": 0, "started_at": now_break}
@@ -223,6 +230,22 @@ def current_session() -> str:
         return str(_load().get("session_id") or "")
 
 
+def current_origin() -> Dict[str, str]:
+    """Where the last turn came from: session, channel, and project.
+
+    Prepared material is bound to this, so a run started in one project cannot
+    arrive in another. Missing pieces stay empty rather than being guessed.
+    """
+    with _LOCK:
+        data = _load()
+    root = storage.project_root()
+    return {
+        "session_id": str(data.get("session_id") or ""),
+        "platform": str(data.get("platform") or ""),
+        "project": str(root) if root else "",
+    }
+
+
 def stop(session_id: str = "") -> str:
     with _LOCK:
         data = _load()
@@ -238,6 +261,7 @@ def stop(session_id: str = "") -> str:
         data["journal"].append({
             "who": "state", "state": active["key"], "event": "report",
             "text": report["text"], "at": time.time(),
+            "session": data.get("session_id") or "",
         })
         data["journal"] = data["journal"][-60:]
         data["active"] = None
@@ -492,9 +516,34 @@ def record(who: str, text: str, event: str = "") -> None:
             "event": event or active["key"],
             "text": (text or "").strip()[:800],
             "at": time.time(),
+            "session": data.get("session_id") or "",
         })
         data["journal"] = data["journal"][-60:]
         _save(data)
+
+
+def _journal_window(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """What this session produced, inside this state's window.
+
+    The journal is one 60-entry ring shared by every session that has ever used
+    this profile. Handing all of it to a renderer made this morning's walk show
+    last night's steps as if they were current, so the window is applied here
+    once rather than trusted to each renderer.
+    """
+    journal = list(data.get("journal", []))
+    active = data.get("active") or {}
+    session = data.get("session_id") or ""
+    if active:
+        started = active.get("entered_at", 0) or 0
+        return [
+            e for e in journal
+            if e.get("at", 0) >= started
+            and not (session and e.get("session") and e.get("session") != session)
+        ]
+    # With no session id there is nothing to scope by; the page then shows the
+    # recent tail rather than nothing at all.
+    mine = [e for e in journal if e.get("session") == session] if session else journal
+    return mine[-12:]
 
 
 def watch_state() -> Dict[str, Any]:
@@ -503,7 +552,7 @@ def watch_state() -> Dict[str, Any]:
         data = _load()
         _expire(data)
         active = data.get("active")
-        journal = list(data.get("journal", []))
+        journal = _journal_window(data)
         residue = [
             r if isinstance(r, dict) else {"kind": "legacy", "text": str(r)}
             for r in data.get("residue", [])
@@ -528,6 +577,8 @@ def watch_state() -> Dict[str, Any]:
             "turns_left": active["turns_left"],
             "tools": spec["tools"],
         }
+        if active.get("options"):
+            out["active"]["options"] = dict(active["options"])
     return out
 
 

@@ -16,13 +16,16 @@ Surfaces:
 """
 from __future__ import annotations
 
+import logging
 import sys
 from typing import Any, Dict
 
+logger = logging.getLogger("antemuse")
+
 try:
-    from .core import engine, panel, states, surfaces, tui, walks
+    from .core import engine, options, panel, runtime, session, states, surfaces, tui, walks
 except ImportError:  # flat-module load
-    from core import engine, panel, states, surfaces, tui, walks  # type: ignore[no-redef]
+    from core import engine, options, panel, runtime, session, states, surfaces, tui, walks  # type: ignore[no-redef]
 
 __version__ = "0.9.0"
 
@@ -54,10 +57,74 @@ STATE_SCHEMA: Dict[str, Any] = {
             "spec": {"type": "object",
                      "description": ("A walk definition: {name, graph: wordnet|manual, relations, seed: "
                                      "{mode: continue|random|word|fixed, word|node}, avoid_backtrack, edges, labels}.")},
+            "method": {"type": "string", "enum": ["collide", "deep", "chaos", "spark"],
+                       "description": ("Experimental exploration method for this entry. Off unless the operator "
+                                       "enables plugins.entries.antemuse.settings.experimental.enabled.")},
+            "seed": {"type": "string",
+                     "description": ("Optional deterministic seed for an experimental method. "
+                                     "Integers are accepted and kept as text.")},
+            "budget": {"type": "object",
+                       "description": ("Optional bounds for an experimental method: "
+                                       "{calls: 0-32, tokens: 0-200000, seconds: 1-900}."),
+                       "properties": {"calls": {"type": "integer"},
+                                      "tokens": {"type": "integer"},
+                                      "seconds": {"type": "integer"}}},
         },
         "required": ["action"],
     },
 }
+
+
+AUXILIARY_TASKS = (
+    ("antemuse_generate", "Antemuse generation",
+     "Structured generation for one Antemuse exploration branch. Experimental: called only when "
+     "plugins.entries.antemuse.settings.experimental.enabled is true."),
+    ("antemuse_select", "Antemuse selection",
+     "Structured scoring of Antemuse candidates. A selection aid, never evidence of improvement. "
+     "Experimental: called only when plugins.entries.antemuse.settings.experimental.enabled is true."),
+    ("antemuse_refresh", "Antemuse refresh",
+     "Structured revision of a kept Antemuse candidate, after the person asked for deeper. "
+     "Experimental: called only when plugins.entries.antemuse.settings.experimental.enabled is true."),
+)
+
+
+def _tool_handler(host: Any):
+    """Bind the tool handler to the context it was registered with.
+
+    The handler is called by the host with arguments only, so the flag it reads
+    has to travel with the function. Closing over the registration context is
+    what makes the gate the invoking host's setting rather than whatever was
+    registered last.
+    """
+    def handle(args: Dict[str, Any] | None = None, **_kwargs: Any) -> str:
+        return _handler(args, host=host)
+
+    return handle
+
+
+def experimental_enabled(host: Any = None) -> bool:
+    """The operator's opt-in for auxiliary exploration.
+
+    Off unless the setting says otherwise, and off when it cannot be read: a
+    failed config read must never switch a model call on. With no host in hand
+    the answer is off, so a caller that cannot name the host cannot enable it.
+    """
+    reader = getattr(host, "get_config", None)
+    if not callable(reader):
+        return False
+    try:
+        return bool(reader("experimental.enabled", False))
+    except Exception:
+        return False
+
+
+def _session_boundary(session_id: str = "", **_kwargs: Any) -> None:
+    """A session is over: the material it prepared dies with it. Never raises."""
+    try:
+        session.release(session_id)
+        runtime.release(session_id)
+    except Exception as exc:
+        logger.warning("antemuse: session %r release failed: %s", session_id, exc)
 
 
 def _walks_report() -> str:
@@ -74,11 +141,18 @@ def _walks_report() -> str:
     return "\n".join(lines)
 
 
-def _handler(args: Dict[str, Any] | None = None, **kwargs: Any) -> str:
+def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: Any) -> str:
     a = args or {}
     action = str(a.get("action") or "status").lower()
     if action == "enter":
-        return engine.enter(str(a.get("name") or ""), a.get("minutes"), a.get("walk"))
+        try:
+            opts = options.parse(a)
+        except ValueError as exc:
+            return f"cannot enter · {exc}"
+        if opts and not experimental_enabled(host):
+            return ("cannot enter with method, seed, or budget · experimental methods are off "
+                    "(plugins.entries.antemuse.settings.experimental.enabled: true)")
+        return engine.enter(str(a.get("name") or ""), a.get("minutes"), a.get("walk"), opts or None)
     if action == "walks":
         return _walks_report()
     if action == "walk_new":
@@ -117,7 +191,13 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
     engine.remember_platform(platform, session_id)
     engine.note_turn()
     engine.tick()
-    return engine.inject()
+    parts = [
+        engine.inject() or "",
+        runtime.injection(session_id or engine.current_session(),
+                          origin=engine.current_origin()) or "",
+    ]
+    block = "\n\n".join(part for part in parts if part)
+    return block or None
 
 
 def _post_tool_call(tool_name: str = "", status: str | None = None,
@@ -130,10 +210,17 @@ def _pre_tool_call(tool_name: str = "", **kwargs: Any) -> Dict[str, Any] | None:
     return engine.policy(tool_name)
 
 
-def _transform(response_text: str = "", **kwargs: Any) -> str | None:
+def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> str | None:
     if engine.peek():
         engine.record("agent", response_text)   # the page shows both sides
     out = engine.annotate(response_text)
+    # The person's account of any run this turn. Counts, never candidates.
+    # The hook's own session id wins: on a host multiplexing chats over one
+    # platform, the remembered session can already belong to the next turn.
+    account = runtime.take_account(session_id or engine.current_session())
+    if account:
+        base = out or response_text
+        out = f"{base}\n\n— {account}"
     return out if out and out != response_text else None
 
 
@@ -195,6 +282,85 @@ def _watch(raw: str) -> str:
     return tui.run()
 
 
+def _spark_handler(ctx: Any):
+    """`/spark <goal>` — one bounded run for one goal.
+
+    Deterministic by default. When the operator has enabled experimental
+    methods and the host exposes a structured auxiliary call, the branch path
+    runs instead; if it fails, the deterministic run still happens and the
+    account says what went wrong.
+    """
+    def handle(raw: str = "", session_id: str = "", **_kwargs: Any) -> str:
+        goal = (raw or "").strip()
+        if not goal:
+            return "usage: /spark <what you are working on>"
+        # The host passes session_id to command handlers; the state record is the
+        # fallback for surfaces that do not.
+        key = (session_id or engine.current_session() or "").strip()
+        host_llm = getattr(ctx, "llm", None)
+        use_branches = (experimental_enabled(ctx)
+                        and callable(getattr(host_llm, "acomplete_structured", None)))
+        if use_branches:
+            try:
+                run = runtime.run_sync(host_llm, goal)
+            except Exception as exc:
+                run = runtime.plan(goal)
+                run.error = f"branches unavailable: {exc}"
+        else:
+            try:
+                run = runtime.plan(goal)
+            except ValueError as exc:
+                return f"no run · {exc}"
+        if not runtime.prepare(key, run, origin=engine.current_origin()):
+            return run.account() + " · not bound (no session)"
+        return run.account()
+
+    return handle
+
+
+def _keep(raw: str = "", **_kwargs: Any) -> str:
+    parts = (raw or "").split()
+    if len(parts) < 2:
+        return "usage: /keep love|like|trash <candidate-id>"
+    return runtime.keep(engine.current_session(), parts[0].lower(), parts[1])
+
+
+def _again_handler(ctx: Any):
+    """`/again [deepen|refresh]` — re-run the last goal with the sources your
+    verdicts point at. Reports the routing when it cannot run it.
+    """
+    def handle(raw: str = "", session_id: str = "", **_kwargs: Any) -> str:
+        key = (session_id or engine.current_session() or "").strip()
+        strategy = runtime.next_strategy(key)
+        if strategy is None:
+            return "nothing loved or liked yet · /keep love|like <#n> first"
+        asked = (raw or "").strip().lower()
+        if asked and asked != strategy:
+            return f"feedback routes to {strategy}, not {asked}"
+        goal = runtime.last_goal(key)
+        if not goal:
+            return f"feedback routes to {strategy} · no goal to run it against yet"
+
+        ids = runtime.feedback_ids(key)
+        host_llm = getattr(ctx, "llm", None)
+        use_branches = (experimental_enabled(ctx)
+                        and callable(getattr(host_llm, "acomplete_structured", None)))
+        try:
+            if use_branches:
+                run = runtime.run_sync(host_llm, goal, method=strategy, strategy=strategy,
+                                       loved=ids["loved"], liked=ids["liked"])
+            else:
+                run = runtime.plan(goal, method=strategy, strategy=strategy,
+                                   loved=ids["loved"], liked=ids["liked"])
+        except ValueError as exc:
+            return f"no run · {exc}"
+        if not runtime.prepare(key, run, origin=engine.current_origin()):
+            return run.account() + " · not bound (no session)"
+        return run.account()
+
+    return handle
+
+
 def register(ctx) -> None:
     engine.settle()
 
@@ -203,11 +369,37 @@ def register(ctx) -> None:
     ctx.register_hook("transform_llm_output", _transform)
     ctx.register_hook("post_tool_call", _post_tool_call)
 
+    # A session boundary is a place where prepared material would otherwise
+    # outlive its turn. All four releases do the same thing: drop what that
+    # session bound. They are registered unconditionally because releasing
+    # nothing is the correct behaviour when nothing was prepared.
+    for hook in ("on_session_end", "on_session_finalize", "on_session_reset", "on_session_delete"):
+        try:
+            ctx.register_hook(hook, _session_boundary)
+        except Exception as exc:
+            # An older host may not know every boundary. Losing one is a real
+            # gap, so it is logged rather than swallowed.
+            logger.warning("antemuse: session hook %s not registered: %s", hook, exc)
+
+    # Declaring the routes is not calling them: this only creates the
+    # auxiliary-task picker entries and config blocks. Actual calls stay behind
+    # experimental_enabled(); a host without the API still loads the plugin.
+    declare = getattr(ctx, "register_auxiliary_task", None)
+    if callable(declare):
+        for key, display, description in AUXILIARY_TASKS:
+            try:
+                declare(key, display_name=display, description=description, defaults={"timeout": 60})
+            except Exception as exc:
+                # A refused or unavailable auxiliary task must not stop the
+                # plugin loading: nothing at runtime depends on the route yet.
+                # It is still logged, because a silent miss hides a real error.
+                logger.warning("antemuse: auxiliary task %s not registered: %s", key, exc)
+
     ctx.register_tool(
         name="state",
         toolset="state",
         description=STATE_SCHEMA["description"],
-        handler=_handler,
+        handler=_tool_handler(ctx),
         schema=STATE_SCHEMA,
     )
 
@@ -231,6 +423,15 @@ def register(ctx) -> None:
                          args_hint="<feeling> [note]", argument_mode="text")
     ctx.register_command(name="return", handler=_return,
                          description="End the current state and keep its residue")
+    ctx.register_command(name="spark", handler=_spark_handler(ctx),
+                         description="One bounded exploration run for a goal; the person sees counts, not candidates",
+                         args_hint="<what you are working on>", argument_mode="text")
+    ctx.register_command(name="keep", handler=_keep,
+                         description="Record what you thought of a candidate: love, like, or trash",
+                         args_hint="love|like|trash <#n|candidate-id>", argument_mode="text")
+    ctx.register_command(name="again", handler=_again_handler(ctx),
+                         description="Re-run the last goal with the sources your verdicts point at",
+                         args_hint="[deepen|refresh]")
     ctx.register_command(name="state", handler=_state, description="What state the agent is in")
     ctx.register_command(name="states", handler=_states, description="List every agent state")
 

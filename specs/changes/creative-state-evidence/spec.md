@@ -1,6 +1,6 @@
 # Creative state evidence — governing specification
 
-Status: Gate 0 draft for Ryan's review. The two DeepSeek canaries validate worker suitability only; they do not authorize runtime activation.
+Status: approved by Ryan on 2026-11-07. Waves 1–2 are library-only; runtime activation and method promotion remain separately gated.
 
 Owner: Ryan Cook. Controller: Hermes fleet supervisor. Scope: `/home/ryan/antemuse/plugin` and its local evaluation artifacts.
 
@@ -41,7 +41,15 @@ Sources: WordNet, FrameNet, operator-approved Hermes memory, named public feeds,
 
 Initial Collider provenance is `CL-ML/open-collider-research`, commit `6ed948a`, under `OC_data/creativity_engine/`. Initial examples cover acoustic niches, Lombard dynamics, acoustic daylight, mycelial networks, fairy-ring expansion, and selective autophagy.
 
-These are generated prompt artifacts, not verified scientific authority. `verification_status=generated_example` is mandatory. Final factual claims need independent verification. Redistribution licensing for research artifacts must be decided before public distribution.
+These are generated prompt artifacts, not verified scientific authority. `verification_status=generated_example` is mandatory. Final factual claims need independent verification. Redistribution licensing is decided (C3, verified against the pinned commit):
+upstream `LICENSE` applies MIT to `script/` only, and `LICENSE-CONTENT.md`
+releases `OC_data/` under CC BY 4.0. We may redistribute these artifacts with
+credit, a licence link, and a statement of changes. Every artifact's provenance
+therefore carries `license=CC-BY-4.0`, `license_url`, and the upstream credit line;
+`core/collider.py` refuses to load a record that omits or alters any of them.
+`data/collider/licensing/upstream-license.json` quotes the upstream clauses with
+their blob shas. `data/collider/ATTRIBUTION.md` records the credit, the changes we
+made, the non-endorsement notice, and the unverified-LLM-output caveat.
 
 No invented fallback content. Missing sources produce named failure events and reduced or aborted runs.
 
@@ -80,10 +88,10 @@ A future dashboard may show sources, branches, candidates, selection, and usage.
 - A: ordinary Hermes baseline.
 - B: length-matched `be creative` instruction.
 - C: baseline best-of-N with the same selector.
-- D: deterministic Antemuse sources without auxiliary inference.
-- E: separated branches without Collider sources.
-- F: separated branches with Collider sources and selection.
-- G: F plus human feedback and refresh, evaluated only after F survives.
+- D: deterministic Antemuse sources without auxiliary inference. **Implemented** — one answer call, A vs D differing only by the material.
+- E: separated branches without Collider sources. **Implemented** — N independent calls at distinct seeds, no material, no selection. Consequence recorded: F vs E bundles material and selection together; the material question rides on D vs A/B.
+- F: separated branches with Collider sources, selection, and one synthesis call that turns the selected candidate into a final answer — without it F returns an intermediate artifact and cannot be compared with A–E at all. Costs N+1 calls.
+- G: F plus human feedback and refresh, evaluated only after F survives. **Not implemented** — `/again` and feedback steering exist in the runtime but no evaluation condition runs them yet.
 
 Use fresh isolated sessions, frozen sources, recorded seeds, and model/condition/task/prompt/source/seed-aware caches. Run equal-final-response and equal-total-inference comparisons.
 

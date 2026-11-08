@@ -1,6 +1,6 @@
 # Antemuse — business requirements, from the operator's own words
 
-Status: draft, consolidated 2026-11-06.
+Status: draft, consolidated 2026-11-06. Amended 2026-11-07.
 Owner: Ryan Cook.
 Source: every message Ryan sent in the chain that produced this plugin
 (`@session:default/20261104_181830_944602c9`), deduplicated, listed in full in
@@ -141,6 +141,58 @@ antemuse."*
 *"Don't show things like why they connect. That's cliche."* The product never
 explains its own connective tissue to the person.
 
+**BR-15 — Improvement must be proven, not assumed.**
+Added 2026-11-07 by contract amendment (see §2a). Ryan's later requirement:
+*"we must prove these methods improve agent responses, diversity, creativity -
+think different states of mind, chaos, deep thought, sparks"*. No method,
+state, or exploration technique may be promoted, defaulted on, or described as
+an improvement until it survives protected comparative evaluation under the
+governed spec. Runtime selection scores are not improvement evidence. The
+current four-state runtime behaviour is unchanged and no creative-quality
+improvement is claimed.
+
+## 2a. Contract amendment — 2026-11-07
+
+On 2026-11-07 Ryan approved
+`plugin/specs/changes/creative-state-evidence/spec.md` and its plan. That
+approval amends the earlier blanket "no model calls" constraint for a bounded
+exploration layer, and adds BR-15. Ryan's words, quoted verbatim:
+
+> "LLM calls CAN happen if they prove to be helpful for our goal."
+
+> "we must prove these methods improve agent responses, diversity, creativity -
+> think different states of mind, chaos, deep thought, sparks"
+
+What the amendment permits and what it does not:
+
+- **Permitted experimentally.** Auxiliary LLM exploration (generation,
+  selection, refresh) may run behind an experimental flag, with measured cost,
+  call, token, and time bounds. It is opt-in and disabled by default. That flag
+  is a Wave 3 deliverable; it does not exist in the current runtime.
+- **Never required for lifecycle.** Entry, exit, expiry, tool restoration, and
+  rendering never require inference. `/return` and the `state` control tool
+  remain available under every state.
+- **Not evidence.** Runtime selection scores are aids, not proof of improvement.
+  Candidate-pool diversity is not final-response quality.
+- **Not default-on.** No method becomes default-on. Each method is promoted
+  independently only after protected comparative evaluation under the governed
+  spec.
+- **Not yet wired.** The exploration library and evaluation controls are
+  implemented at the library level; runtime registration and wiring have not
+  happened. No `/spark` command, feedback command, auxiliary hook, or runtime
+  injection exists in the shipped plugin.
+
+### Real Open Collider artifacts vs verified facts
+
+The exploration layer may draw on real Open Collider generated examples
+(`CL-ML/open-collider-research`, commit `6ed948a`, `OC_data/creativity_engine/`).
+These are **generated prompt artifacts**, not scientific authority. They are
+released under CC BY 4.0 with credit, a licence link, and a statement of changes;
+`data/collider/ATTRIBUTION.md` records the credit and the unverified-LLM-output
+caveat. Every artifact carries `verification_status=generated_example`. Final
+factual claims require independent verification. Do not present these artifacts
+as verified facts, scientific findings, or measured improvements.
+
 ## 3. Explicitly rejected
 
 Built, then removed by instruction. These are requirements in the negative — do
@@ -156,9 +208,10 @@ not reintroduce them.
 
 ## 4. Constraints the business has to respect
 
-- **No model calls on the state path.** Entering, ticking, and ending a state must
-  resolve without inference, so marginal cost is effectively zero and the feature
-  works offline.
+- **Deterministic state lifecycle.** Entering, ticking, and ending a state must
+  resolve without inference, so the base experience works offline and its
+  marginal cost is bounded. Optional exploration may make bounded model calls
+  with measured cost, but never on the lifecycle path.
 - **No invented material.** A missing corpus, a dead feed, or an empty memory is
   named, never filled in.
 - **No deployment, publication, or purchase without explicit approval.**
@@ -170,6 +223,8 @@ not reintroduce them.
   same-machine generation.
 - **One operator, one machine.** There is no multi-tenant story and none is
   claimed.
+- **Evidence-gated promotion.** No method is default-on or described as an
+  improvement before protected comparative evaluation (BR-15).
 
 ## 5. Open business decisions
 
@@ -194,6 +249,9 @@ not reintroduce them.
   That is the entire purpose, and the only measure that matters.
 - Installing takes under a minute, with no key, no account, and no network
   requirement in the core loop.
+- Any claim that a method improves responses, diversity, or creativity is backed
+  by protected comparative evaluation, not by runtime scores or test counts
+  (BR-15).
 
 ---
 

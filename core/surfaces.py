@@ -60,6 +60,19 @@ def _frames_dir() -> Path:
     return storage.data_dir() / "three_frames"
 
 
+def _stretch_bounds(values: List[int]) -> tuple[int, int]:
+    """The ends of this frame's own range: 2nd and 99.5th percentile.
+
+    A scene bank whose mean luminance is 13/255 has to be read against itself,
+    not against 255, or the ramp's first visible character is never reached.
+    """
+    ordered = sorted(values)
+    n = len(ordered)
+    if not n:
+        return 0, 0
+    return ordered[int(n * 0.02)], ordered[min(n - 1, int(n * 0.995))]
+
+
 def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
         scene: str = "") -> List[str]:
     """Luminance-ramp ASCII of a rendered three.js frame: no colour, no escapes."""
@@ -75,10 +88,16 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
     w0, h0 = im.size
     im = im.crop((int(w0 * 0.20), int(h0 * 0.12), int(w0 * 0.80), int(h0 * 0.88)))
     im = im.resize((cols, rows), Image.LANCZOS)
-    px = im.load()
+    values = list(im.tobytes())
+    lo, hi = _stretch_bounds(values)
     out = []
     for r in range(rows):
-        line = "".join(ramp[min(len(ramp) - 1, int(px[c, r] / 255 * len(ramp)))] for c in range(cols))
+        line = ""
+        for c in range(cols):
+            v = values[r * cols + c]
+            t = 0.0 if hi <= lo else (v - lo) / (hi - lo)
+            t = min(1.0, max(0.0, t))
+            line += ramp[min(len(ramp) - 1, int(t * len(ramp)))]
         out.append(line.rstrip())
     return out
 
@@ -177,7 +196,7 @@ def snapshot_path(state: Dict[str, Any], name: str = "discord") -> Path:
     d = ImageDraw.Draw(im)
     for i, line in enumerate(lines):
         d.text((pad, pad + i * lh), line, font=font, fill=(242, 234, 225))
-    home = storage.project_dir() or storage.data_dir()
+    home = storage.data_dir()
     path = home / "state_card.png"
     im.save(path)
     return path

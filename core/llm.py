@@ -428,7 +428,7 @@ async def _call_one(
 async def generate_structured(
     host: Any,
     *,
-    instructions: str,
+    instructions: Union[str, Mapping[str, str]],
     inputs: Union[Mapping[str, Any], Sequence[Any]],
     json_schema: Any,
     branches: Union[int, Sequence[str]],
@@ -451,11 +451,26 @@ async def generate_structured(
         raise TypeError("host must expose an async acomplete_structured method")
     if not isinstance(budget, LlmBudget):
         raise TypeError("budget must be an LlmBudget")
-    if not isinstance(instructions, str) or not instructions.strip():
-        raise ValueError("instructions must be non-empty text")
+    if isinstance(instructions, str):
+        if not instructions.strip():
+            raise ValueError("instructions must be non-empty text")
+    elif isinstance(instructions, Mapping):
+        if not instructions:
+            raise ValueError("instructions must not be empty")
+        for branch_id, instruction in instructions.items():
+            if not isinstance(branch_id, str) or not branch_id.strip():
+                raise ValueError("each instruction branch id must be non-empty text")
+            if not isinstance(instruction, str) or not instruction.strip():
+                raise ValueError(f"instructions for {branch_id!r} must be non-empty text")
+    else:
+        raise TypeError("instructions must be text or a mapping of branch id to text")
 
     ids = _branch_ids(branches)
     paired = _branch_inputs(ids, inputs)
+    if isinstance(instructions, Mapping):
+        missing = [branch_id for branch_id in ids if branch_id not in instructions]
+        if missing:
+            raise ValueError("missing instructions for branch(es): " + ", ".join(missing))
 
     run, skipped = paired[: budget.max_calls], paired[budget.max_calls:]
     semaphore = (
@@ -464,7 +479,7 @@ async def generate_structured(
         else None
     )
 
-    hidden = [instructions]
+    hidden = [instructions] if isinstance(instructions, str) else list(instructions.values())
     for _, blocks in paired:
         hidden.extend(block.get("text", "") for block in blocks if isinstance(block.get("text"), str))
 
@@ -472,7 +487,7 @@ async def generate_structured(
         *(
             _call_one(
                 host, branch_id, blocks,
-                instructions=instructions,
+                instructions=instructions if isinstance(instructions, str) else instructions[branch_id],
                 json_schema=json_schema,
                 budget=budget,
                 purpose=purpose,

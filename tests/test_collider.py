@@ -37,7 +37,12 @@ ARTIFACT = PLUGIN / "data" / "collider" / "acoustic_niche.json"
 REPOSITORY = "CL-ML/open-collider-research"
 PINNED_COMMIT = "6ed948a"
 SOURCE_PATH = "OC_data/creativity_engine/T01_fresh_DS12_b1d535f4/prompt.md"
-LICENSE = "unverified_research_artifact"
+LICENSE = "CC-BY-4.0"
+LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/"
+ATTRIBUTION = (
+    "Cédric Lion (2026), Open Collider: Methodology and Dataset for "
+    "Bisociation-Based Idea Generation, CL-ML/open-collider-research @ 6ed948a"
+)
 
 BRIDGE = "What if ideas could partition conceptual frequency space to avoid interference?"
 
@@ -265,13 +270,103 @@ def test_top_level_json_list_raises(tmp_path):
         collider.load_artifact(_write(tmp_path, [{"id": "not-an-object"}]))
 
 
-def test_provenance_is_exact_and_license_is_unverified():
+def test_provenance_is_exact_and_license_is_cc_by():
     provenance = collider.load_artifact(ARTIFACT)["provenance"]
 
     assert provenance["repository"] == REPOSITORY
     assert provenance["pinned_commit"] == PINNED_COMMIT
     assert provenance["path"] == SOURCE_PATH
     assert provenance["license"] == LICENSE
+    assert provenance["license_url"] == LICENSE_URL
+    assert provenance["attribution"] == ATTRIBUTION
+
+
+def test_license_other_than_cc_by_raises(tmp_path):
+    data = _artifact()
+    data["provenance"]["license"] = "unverified_research_artifact"
+    with pytest.raises(ValueError, match="CC-BY-4.0"):
+        collider.load_artifact(_write(tmp_path, data))
+
+
+def test_missing_license_url_raises(tmp_path):
+    data = _artifact()
+    del data["provenance"]["license_url"]
+    with pytest.raises(ValueError, match="license_url"):
+        collider.load_artifact(_write(tmp_path, data))
+
+
+def test_missing_attribution_raises(tmp_path):
+    """CC BY 4.0 requires credit; a copy without it must not load."""
+    data = _artifact()
+    del data["provenance"]["attribution"]
+    with pytest.raises(ValueError, match="attribution"):
+        collider.load_artifact(_write(tmp_path, data))
+
+
+def test_altered_attribution_raises(tmp_path):
+    data = _artifact()
+    data["provenance"]["attribution"] = "someone else"
+    with pytest.raises(ValueError, match="attribution"):
+        collider.load_artifact(_write(tmp_path, data))
+
+
+def test_module_constants_match_the_bank():
+    """The loader's pinned licence values are the ones the bank actually carries."""
+    assert collider.ARTIFACT_LICENSE == LICENSE
+    assert collider.ARTIFACT_LICENSE_URL == LICENSE_URL
+    assert collider.ARTIFACT_ATTRIBUTION == ATTRIBUTION
+
+
+# ------------------------------------------------------- licensing evidence (C3)
+
+LICENSING = PLUGIN / "data" / "collider" / "licensing"
+LICENSE_RECORD = json.loads((LICENSING / "upstream-license.json").read_text(encoding="utf-8"))
+
+
+def _git_blob_sha(path: Path) -> str:
+    """Git's object id for a file, so a recorded upstream blob can be re-derived."""
+    raw = path.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(raw) + raw).hexdigest()
+
+
+def test_upstream_licence_text_matches_the_recorded_blob_shas():
+    """The stored upstream texts are the blobs we cite, checked offline by digest."""
+    for entry in LICENSE_RECORD["upstream"]["files"]:
+        stored = LICENSING / entry["path"]
+        assert stored.exists(), entry["path"]
+        assert _git_blob_sha(stored) == entry["blob_sha"], entry["path"]
+        assert stored.stat().st_size == entry["size_bytes"], entry["path"]
+
+
+def test_quoted_upstream_clauses_appear_verbatim_in_the_stored_text():
+    """Every quoted clause is a substring of the text whose digest we just checked."""
+    for entry in LICENSE_RECORD["upstream"]["files"]:
+        text = " ".join((LICENSING / entry["path"]).read_text(encoding="utf-8").split())
+        quote = " ".join(entry["quoted_clause"].split())
+        for fragment in quote.split("... "):
+            assert " ".join(fragment.split()) in text, (entry["path"], fragment[:60])
+
+
+def test_record_pins_the_commit_the_artifacts_name():
+    commit = LICENSE_RECORD["upstream"]["commit"]
+    assert commit == "6ed948ac9e5b5dcc39b82959bbfe1a644e0f7d7f"
+    for artifact in _bank():
+        assert commit.startswith(artifact["provenance"]["pinned_commit"])
+
+
+def test_attribution_notice_accompanies_the_bank():
+    """CC BY 4.0 needs credit and a licence link that travel with the copies."""
+    notice = " ".join(
+        (PLUGIN / "data" / "collider" / "ATTRIBUTION.md")
+        .read_text(encoding="utf-8")
+        .split()
+    )
+    assert ATTRIBUTION in notice
+    assert collider.ARTIFACT_LICENSE_URL in notice
+    assert collider.ARTIFACT_LICENSE in notice
+    assert "not affiliated" in notice
+    for path in sorted((PLUGIN / "data" / "collider").glob("*.json")):
+        assert path.name in notice, path.name
 
 
 def test_provenance_missing_field_raises(tmp_path):
@@ -326,6 +421,8 @@ def test_bank_provenance_is_pinned_per_artifact():
         assert provenance["repository"] == REPOSITORY
         assert provenance["pinned_commit"] == PINNED_COMMIT
         assert provenance["license"] == LICENSE
+        assert provenance["license_url"] == LICENSE_URL
+        assert provenance["attribution"] == ATTRIBUTION
         assert provenance["path"] == EXPECTED[artifact["id"]]["path"]
         assert provenance["path"].startswith("OC_data/creativity_engine/T")
         assert provenance["path"].endswith("/prompt.md")

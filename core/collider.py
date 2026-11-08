@@ -4,8 +4,9 @@ A collider example is an imported piece of another discipline's real thinking. T
 source entry is preserved verbatim in ``body`` — that field is the one carried
 over unchanged — while ``mechanism`` is a faithful condensation of the entry and
 ``bridge_question`` restates its question. The provenance record says exactly
-where the entry came from and what its licence status is, so a reader can check
-the import against the source and see which parts were condensed.
+where the entry came from, under which upstream licence, and with which credit
+line, so a reader can check the import against the source and see which parts
+were condensed.
 
 Nothing here resolves the source over the network. Loading is offline and strict:
 missing fields, a wrong kind, a status that implies more verification than the
@@ -50,10 +51,23 @@ PROVENANCE_FIELDS: Tuple[str, ...] = (
     "pinned_commit",
     "path",
     "license",
+    "license_url",
+    "attribution",
 )
 
 KIND = "collider_example"
 VERIFICATION_STATUS = "generated_example"
+
+# Licensing is settled, not open (C3). The upstream MIT licence covers ``script/``
+# only; ``OC_data/`` is released under CC BY 4.0 (LICENSE-CONTENT.md at the pinned
+# commit). A record loads only if it carries that licence id, that licence URL, and
+# the exact credit line, so attribution cannot be dropped from a redistributed copy.
+ARTIFACT_LICENSE = "CC-BY-4.0"
+ARTIFACT_LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/"
+ARTIFACT_ATTRIBUTION = (
+    "Cédric Lion (2026), Open Collider: Methodology and Dataset for "
+    "Bisociation-Based Idea Generation, CL-ML/open-collider-research @ 6ed948a"
+)
 
 _HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}\Z")
 
@@ -85,6 +99,23 @@ def _check_provenance(value: Any) -> Dict[str, Any]:
         if field not in value:
             raise ValueError(f"provenance.{field} is missing")
         _require_text(value, field, "provenance.")
+    # Presence and type are already settled by the loop above; these are the values.
+    licence = value["license"]
+    if licence != ARTIFACT_LICENSE:
+        raise ValueError(
+            f"provenance.license must be {ARTIFACT_LICENSE!r}, got {licence!r}"
+        )
+    url = value["license_url"]
+    if url != ARTIFACT_LICENSE_URL:
+        raise ValueError(
+            f"provenance.license_url must be {ARTIFACT_LICENSE_URL!r}, got {url!r}"
+        )
+    credit = value["attribution"]
+    if credit != ARTIFACT_ATTRIBUTION:
+        raise ValueError(
+            "provenance.attribution must carry the Open Collider credit line "
+            f"verbatim (CC BY 4.0 requires credit and a licence link): {credit!r}"
+        )
     return value
 
 

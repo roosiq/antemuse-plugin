@@ -24,3 +24,7 @@ provides_hooks:
   - pre_tool_call
   - post_tool_call
   - transform_llm_output
+  - on_session_end
+  - on_session_finalize
+  - on_session_reset
+  - on_session_delete

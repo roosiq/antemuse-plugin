@@ -18,6 +18,8 @@ Documentation authority:
 - `docs/brd.md` — business intent and Ryan's quoted requirements.
 - `docs/requirements.md` — operating detail and BR-to-implementation traceability.
 - `docs/spec.md` — shipped behaviour, architecture, evidence, drift, and change log.
+- `specs/changes/creative-state-evidence/spec.md` — governing spec for the
+  approved experimental exploration work (library only; not runtime-active).
 
 The BRD governs intent; the operating document must agree with it. The spec and
 implementation/tests govern what actually ships.
@@ -87,9 +89,48 @@ core/walk_map.py       the walk drawn as a side-scrolling place
 core/backdrop.py       pre-rendered three.js frames, replayed as blocks
 core/surfaces.py       one frame, encoded per client
 core/tui.py            the full-screen takeover (alt screen, truecolor, keys)
+core/collider.py       Collider source strategy (library only; not runtime-wired)
+core/collision.py      collision mechanics (library only; not runtime-wired)
+core/llm.py            bounded auxiliary LLM calls (library only; not runtime-wired)
+core/orchestrator.py   run orchestration (library only; not runtime-wired)
+core/selection.py      selection aids (library only; not runtime-wired)
+core/feedback.py       human feedback plumbing (library only; not runtime-wired)
+core/presenter.py      prepared-artifact presentation (library only; not runtime-wired)
+evaluation/            evaluation controls and harness (library only)
+data/collider/         real Open Collider generated examples, CC BY 4.0,
+                       with attribution (library only)
 bin/antemuse           launcher on PATH
-tests/                 107 tests (renderer tests need `npm ci`)
+tests/                 pytest suite (renderer tests need `npm ci`; count in spec §13)
 ```
+
+## Experimental exploration library
+
+The approved creative-state-evidence work adds an exploration layer at the
+library level: `evaluation/`, `core/collider.py`, `core/collision.py`,
+`core/llm.py`, `core/orchestrator.py`, `core/selection.py`, `core/feedback.py`,
+`core/presenter.py`, and `data/collider/`.
+
+- These modules exist and are controller-verified at the library level. Wave 3
+  has begun: the three auxiliary task routes are declared (a routing entry, not
+  a call), and the four session-boundary hooks are registered. On a session
+  boundary those hooks release any material bound to that session — and `/spark`
+  is the first thing that binds any.
+- `/spark <goal>` runs one bounded pass: deterministic when the experimental flag
+  is off, the branch path (auxiliary calls through `ctx.llm`) when it is on.
+  `/keep` records a verdict by handle and `/again` re-runs the last goal with the
+  sources that verdict points at.
+- The model receives candidates; the person receives a line of counts. Keep
+  those separate; never put candidate text into a human-facing line.
+- `state(action="enter")` accepts optional `method`, `seed`, and `budget`, and
+  refuses them unless
+  `plugins.entries.antemuse.settings.experimental.enabled: true`. With the flag
+  on they are recorded on the active state and consumed by nothing yet.
+- No creative-quality improvement is claimed. Runtime selection scores are not
+  improvement evidence; promotion requires protected comparative evaluation.
+- The approved spec, plan, and tasks under
+  `specs/changes/creative-state-evidence/` are the authority for this work.
+- The base four-state lifecycle remains deterministic: entry, exit, expiry, tool
+  restoration, and rendering never require inference.
 
 ## Verify
 
@@ -100,9 +141,14 @@ env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data   ANTEMUSE_STATES_HOME=$(mktemp
 hermes chat -q '/walk' && hermes chat -q '/states'
 ```
 
-The current suite collects 107 tests. Renderer tests skip when the npm
-dependencies are unavailable; run `npm ci` to fetch three and the software
-renderer.
+A count written here rots the moment the next test is added, and this line had
+drifted twice. The current count, its date, and the exact command live in
+`docs/spec.md` §13 — that is the record, this is the pointer. The suite's one
+stochastic case, FLAKE-1, is documented in
+`specs/changes/creative-state-evidence/tasks.md`; it is narrower than it was but
+not proven gone, so a single green run is not proof of stability. Renderer tests
+skip when the npm dependencies are unavailable; run `npm ci` to fetch three and
+the software renderer.
 
 ## Notes
 

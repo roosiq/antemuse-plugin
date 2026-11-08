@@ -22,7 +22,7 @@ Sources collated:
 | `../docs/research/concept-engines-teardown.md` | reverse-engineering input: Open Collider, ConceptVis, Mindscape (Appendix) |
 | `specs/changes/*/` | change history with acceptance evidence |
 | `core/*.py` | implementation of record |
-| `tests/` | executable contract (107 tests) |
+| `tests/` | executable contract — the current count and date live in §13, never here |
 
 Authority order when artifacts disagree, per the workspace `AGENTS.md`: approved
 intent and acceptance criteria → project constitution → technical plan and
@@ -113,6 +113,7 @@ Corpora live in `~/nltk_data` (`wordnet`, `framenet_v17`) and are found through
 | `pre_tool_call` | return a block directive when the state forbids the tool; `None` otherwise |
 | `post_tool_call` | count the call and whether it failed; the only honest work signal |
 | `transform_llm_output` | journal the agent's reply, then append the state marker |
+| `on_session_end` · `on_session_finalize` · `on_session_reset` · `on_session_delete` | release any prepared material bound to that session; each logs a failed release and never raises (Wave 3, J1) |
 
 Hooks must never raise into the turn. Provider failures are caught and written
 to the journal as events.
@@ -124,7 +125,14 @@ One tool, twelve actions:
 `enter` · `exit` · `status` · `list` · `watch` · `card` · `image` · `walks` ·
 `walk_new` · `walk_del` · `break` · `mood`
 
-Parameters: `action` (required), `name`, `minutes`, `walk`, `feeling`, `spec`.
+Parameters: `action` (required), `name`, `minutes`, `walk`, `feeling`, `spec`,
+and — Wave 3, J1 — optional `method` (`collide` · `deep` · `chaos` · `spark`),
+`seed`, and `budget` (`calls` 0–32, `tokens` 0–200000, `seconds` 1–900). The
+three experimental fields are refused unless
+`plugins.entries.antemuse.settings.experimental.enabled` is true. They are
+recorded on the active state, and since J2 the run that consumes them is
+`/spark` — the fields still do not start a run by themselves, because a run needs
+a goal and entry has none.
 Unknown or unhandled actions fall through to the text frame.
 
 The `state` tool is exempt from every block (`CONTROL_TOOLS = {"state"}`), so a
@@ -142,6 +150,9 @@ state can always be ended even when every other tool is closed.
 | `/watch [seconds]` | redraw the takeover until the state ends |
 | `/break [state]` | recommend a state, or take the one named |
 | `/mood <feeling> [note]` | record `stuck`, `tired`, `sharp`, `flat`, `saturated` |
+| `/spark <goal>` | one bounded pass for that goal; binds candidates to this session and reports counts, never candidates. Deterministic when experimental methods are off; auxiliary branches through `ctx.llm` when on (Wave 3, J2) |
+| `/keep love\|like\|trash <#n\|id>` | record a verdict on one candidate by its account handle (Wave 3, J2) |
+| `/again [deepen\|refresh]` | re-run the last goal with the sources the person's verdicts point at: `deepen` from loved, `refresh` from liked (Wave 3, J2/J2b) |
 
 `/return`, not `/snap`: Hermes ships `/snapshot` with the alias `/snap`, and
 `register_command` silently drops a colliding plugin command. The escape hatch
@@ -685,6 +696,45 @@ collection and PIL in other interpreters — clear it for every run. Always poin
 one state file with the live agent, so a test that enters a state will lock the
 agent's own tools until it exits.
 
+### Verification record, 2026-11-08 (surface repair and Wave 3 J1)
+
+Run in `/home/ryan/antemuse/plugin` with the hygiene above:
+
+```
+$ pytest tests/ -q
+660 passed in 8.30s
+```
+
+Recorded 2026-11-08 after Wave 3 J2/J2b/J3 and its audit: 627 passed twice in a row (660 with Wave 4 K1/K2), and
+`hermes plugins doctor antemuse` still reports `1 tool(s), 8 hook(s)`. The earlier
+591-test record above this one belongs to the surface repair, not to this state.
+
+One earlier run of the same suite failed `tests/test_walks.py::test_outer_hops_are_farther_than_wander_hops` — FLAKE-1, recorded below and predating this
+work. Its sample was widened from 16 to 64 steps on 2026-11-08 after measuring the distribution
+(it now holds 30/30 where it held 94% of the time); it is narrower, not proven gone. Two consecutive runs are not proof of stability.
+
+```
+$ hermes plugins doctor antemuse
+manifest: antemuse 0.9.0 (standalone)
+OK: runtime discovery, manifest parsing, import, and registration passed
+registrations: 1 tool(s), 8 hook(s)
+```
+
+Surface measurements taken from the live scene banks (40×8 cells, the `discord`
+profile):
+
+| scene | non-space cells, before | after |
+|---|---|---|
+| walk | 1% | 18% |
+| daydream | 8% | 23% |
+| doomscroll | 19% | 32% |
+| dream | 11% | 11% |
+
+The card PNG grew from 84 bright pixels of 90,692 (0.09%) to 950 of 111,548
+(0.9%) for the same walk state. Both numbers are well below a photograph; the
+point is that the frame is now legible as a picture rather than a blank
+rectangle.
+
 ---
 
 ## 14. Documentation drift and known defects found while collating
@@ -692,7 +742,14 @@ agent's own tools until it exits.
 Documentation corrections made in this pass are marked resolved. Runtime files
 were not changed; behavioural defects and owner decisions remain open.
 
-1. **Resolved — test counts were stale in README.** README now says 107 tests and
+Items 15–18 were added on 2026-11-08 from a live observation of the running
+plugin (a real walk entered, rendered, and exited), not from reading the code,
+and were repaired the same day under `specs/changes/surface-repair/`. 15–17 were
+one class of defect: the model-facing surfaces were correct and the
+human-facing ones were not, which is why four review passes over the code did
+not find them.
+
+1. **Resolved — test counts were stale in README.** (Recurred and re-resolved 2026-11-08: README had drifted to 564. It no longer carries a count at all; §13 is the only place a number is recorded, so it cannot rot out of step again.) README now says 107 tests and
    no longer claims a fresh clone runs 68 of 74.
 2. **Partially resolved — hook count was stale.** README now says four hooks and
    includes `post_tool_call`. `__init__.py`'s runtime docstring still lists three;
@@ -744,6 +801,57 @@ were not changed; behavioural defects and owner decisions remain open.
     `tui.run()` temporarily displays `note ›` or `your word ›` and the typed
     buffer. **Owner: Ryan** — allow text while explicitly entering text, or
     approve a separate code change to make the interaction wordless.
+15. **Resolved 2026-11-08 — the chat card was an almost-empty frame, not a
+    picture of the walk.** Fixed in `core/surfaces.py`: `art()` now normalises
+    each frame against its own 2nd/99.5th luminance percentile before the ramp,
+    so a scene bank with mean luminance ~13/255 is read against itself. Measured
+    after: walk 1%→18%, daydream 8%→23%, doomscroll 19%→32%, dream 11%→11%
+    non-space cells; card PNG 84/90,692 → 950/111,548 bright pixels. No caption
+    was added: BR-5 forbids words on the human surface, and
+    `test_card_is_only_a_picture` still passes. Evidence of the original defect
+    kept below.
+    Original observation: 2026-11-08 with a live walk: `state(action="image")`
+    card body of 10 rows × 21 columns whose only content was two rows of two
+    dots, and a PNG of 287×316 with **84 non-background pixels out of 90,692
+    (0.09%)**. `card()` is picture-only by design — no status line, no contract,
+    no step trail — and `art()` downsamples a 1600×420 frame to `art_rows`×40
+    (8 rows on the `discord` profile) through `ASCII_RAMP = " .:-=+*#"`. Across
+    40 sampled frames the five scene banks measure mean luminance 11.9–15.2
+    against a `255/8 ≈ 32` first-visible-character threshold, so nearly every
+    cell maps to a space. Frames verified present
+    (`~/.hermes/plugin-data/antemuse/three_frames/<scene>/`, 8 PNGs per scene),
+    so this is not a missing-asset failure. The model-facing `record()` carries
+    full text, so the defect is human-only, and encoder unit tests cannot see it.
+    The caption option was declined: the card stays wordless, and the picture was
+    made visible instead.
+16. **Resolved 2026-11-08 — the human card and the model card served the whole
+    journal, not this state's.** Every journal entry now carries its `session`,
+    and `engine._journal_window()` scopes what `watch_state()` hands to the
+    renderers: inside a state, entries at or after `entered_at` from this
+    session; outside one, this session's recent tail (the recent tail at large
+    when no session id is known). `card()` and `record()` therefore no longer
+    print another session's trail. Original evidence: `engine.inject()` filtered
+    to events with `at >= entered_at` while `engine.watch_state()` returned
+    `data["journal"]` unfiltered, so a walk started 2026-11-08 rendered
+    `mouflon → aniline` steps recorded 2026-11-07 at 20:35 as if they were
+    current.
+17. **Resolved 2026-11-08 — card frames and card writes could resolve to
+    different homes.** `snapshot_path()` now writes under `storage.data_dir()`,
+    the same home `art()` reads frames from, for every environment. The original
+    split: `art()` read `storage.data_dir()/three_frames` while `snapshot_path()`
+    wrote to `storage.project_dir() or storage.data_dir()`, so with a working
+    directory inside a git repository the PNG landed in `<repo>/.antemuse/`
+    while frames were read from the plugin data dir. Observed live: the PNG went
+    to `/home/ryan/.antemuse/state_card.png` (because `/home/ryan` is itself a
+    git repository) while the scene bank lives in
+    `/home/ryan/.hermes/plugin-data/antemuse/three_frames`. A test now pins the
+    invariant with a monkeypatched `project_dir`.
+18. **Resolved 2026-11-08 — the verification record was stale by a factor of
+    five.** §13 now carries a dated 2026-11-08 record: 591 tests, doctor
+    `1 tool(s), 8 hook(s)`, and the surface measurements. The original record
+    said 107 tests and a 12-module table; the intermediate measurement of
+    564 tests and 4 hooks was taken before Wave 3 J1 registered the session
+    hooks.
 
 ---
 
@@ -758,7 +866,13 @@ All paths relative to `specs/changes/`.
 | `consolidate-naming` | implemented | internal restructuring | `core/`; modules named by content; one terminal-imaging module; dead SQLite board removed; no stale identity. 74 tests then. |
 | `break-and-mood` | implemented | new surface + bookkeeping | `/break` recommends or takes; `/mood` reports; strain arithmetic; one offer then 45 minutes. 99 tests then. |
 | `ambient-walk` | implemented | walk semantics | tools stay open; walk supplies no material (`feeds: False`); return forces a different first step (`restart: True`); relation names in the trail. 107 tests now. |
+| `surface-repair` | implemented | repair found by running the plugin | `art()` normalises each frame to its own percentiles (cards were 0.09% bright); journal entries carry `session` and `watch_state()` windows them; `snapshot_path()` writes where frames are read; §13 refreshed. 591 tests now. |
 | `scenes-per-surface` | **proposed** | rendering contract | per-state motion, clock grade, dual scoring, 4:5 postcards, origin binding, idle renders nothing. Not implemented; tasks T0–T8 open. |
+| `scene3d-renderer` | **proposed** | rendering source | render scenes in Python at destination resolution (z-buffer, fog) instead of downsampling Chromium screenshots; braille for chat, half-blocks for terminal. Prototype: 80×24 cells in 24 ms, stdlib only. Not implemented; two owner decisions open. |
+| `runtime-wiring` (J2) | implemented | runtime | `core/runtime.py`, `/spark`, `/keep`, `/again`; model gets candidates, person gets counts and never candidate text; session-bound injection, reply footer, branch path through `ctx.llm` behind the flag. Feedback steers selection through `deepen`/`refresh` (J2b); verdicts resolve candidate ids to source ids; branch provenance is the orchestrator's, not the model's. Reproducible: `python3 tools/walkthrough.py`. 627 tests. |
+| `wave4-shards` (K1/K2) | partial | evaluation | end-to-end verified (freeze → 12-cell run → deterministic aggregate → refusals for a missing cell, drift, and duplicates) and once against a real model into a real shard's results directory; immutable shard manifests (id over task set, model set, conditions, prompt/source versions; write-once; drift caught by re-hashing the fixture), one results directory per shard, and deterministic aggregation that fails closed on any missing cell. All six conditions A-F have runners: D (deterministic material), E (plain branching control, no selection), F (branches + selection + synthesis). G is not implemented. The A-F shards are not frozen because no model set is declared. 660 tests. |
+| `wave3-audit` | implemented | review repairs | two independent reviews (spec compliance APPROVED; code quality REJECTED twice). Repaired: a decorative branch timeout, a shared-slot handoff that could cross chats, own-goal fallbacks, an unlocked book, and an account appended to the wrong session's reply. 627 tests. |
+| `origin-and-cleanup` (J3) | implemented | runtime | `engine.current_origin()`; a run is stamped with the project that asked for it and dropped, not rerouted, when a turn arrives from another project; `runtime.release()` clears run, verdicts, goal, account, and bound material in one call, wired to all four session boundaries; `/return` leaves a waiting run alone. Ignorance is not a mismatch: an empty project on either side still delivers. 627 tests. |
 
 Supporting evidence files:
 
@@ -827,6 +941,54 @@ From the reverse-engineering teardown (Appendix): a `collide` walk over a domain
 bank, two residue channels, threshold drift as an exit rule, ConceptVis design
 verbs as walk moves, an arrow/twig journal shape, a read-only dashboard tab, and
 an offline A/B/C/D evaluation harness. None is implemented.
+
+### 17.1 Scene renderer — 3D straight to terminal pixels
+
+From `scene3d-renderer` (status: proposed, 2026-11-08; full contract in
+`specs/changes/scene3d-renderer/spec.md`). Not implemented.
+
+Today the chat card is one of eight cached Chromium screenshots of a 1600×420
+three.js frame, cropped and resized to 40×8 cells. At that size a scene's
+geometry falls below one cell per feature: the walk's floor, path edges and
+perspective disappear, and what remains is the point trail and the ring. §14.15
+fixed the luminance ramp — the card is legible now — but sampling cannot put
+back what it discarded. Producing those frames also needs a static server,
+headless Chromium with SwiftShader, and ~0.7 s per frame.
+
+Proposal: render the scene in Python at the resolution the destination actually
+has, instead of photographing it and shrinking the photograph.
+
+- `core/scene3d.py` — a deterministic software renderer with no third-party
+  dependency: camera basis, perspective projection, z-buffer, distance fog, and
+  a luminance buffer.
+- Primitives mirror what `tools/scene.html` already draws: ground grid, luminous
+  path, point trail, torus, per-state camera.
+- Packing per surface: truecolor half-blocks for the terminal takeover (which
+  the TUI already speaks), braille (2×4 dots per cell) for the wordless chat
+  card, full-size pixels for the PNG attachment.
+- `art()` gains a renderer choice; the frame bank stays the default until the
+  live renderer is proven on both surfaces.
+
+Prototype evidence (2026-11-08): the walk scene projected in Python and packed
+2×4 into braille — **80×24 cells = 160×96 addressable dots in 24 ms**, stdlib
+only, no browser, no PNG bank, deterministic for a given camera. The corridor,
+the ring, and the trail were all legible. Reproducible with
+`python3 tools/scene3d_probe.py`, which is the measurement and not the
+implementation: it is not wired into runtime.
+
+Two decisions are open and are Ryan's, not the implementation's:
+
+- **source of truth** — port the scenes to Python and retire `scene.html` +
+  `three_frames/`, or keep the JS authoritative and accept a second
+  implementation that can drift (recommendation: port);
+- **chat glyph set** — braille for 8× addressable resolution but monochrome and
+  dependent on U+28xx coverage, versus block ramps (`▁▂▃▄▅▆▇█`) at 1× resolution
+  and universal rendering (recommendation: braille, with a ramp fallback when
+  the surface reports a glyph gap).
+
+This is the same aspect problem `scenes-per-surface` already names: a 40×8 card
+is 5:1 and a 4:5 postcard is not the same place. A live renderer makes the
+two-crop requirement cheap — two cameras instead of two asset sets.
 
 Brand decision still open upstream: the marketplace has no `cognition` category,
 and `productivity` is not a valid category. Ryan must decide whether to accept
@@ -973,8 +1135,8 @@ Every concrete recommendation in the teardown, checked against the code:
 
 | Recommendation | Status | Where it would land |
 |---|---|---|
-| `collide` walk as a `ManualGraph` over a domain bank (persona + mechanism + bridging question) | **not implemented** — no `collide` in `walks.BUILTIN` | `core/walks.py` + a bank spec |
-| Write the bank schema down before implementing | **not done** — no collide spec in `plugin/specs/` | `specs/changes/collide-walk/` |
+| `collide` walk as a `ManualGraph` over a domain bank (persona + mechanism + bridging question) | **partly implemented, not as a walk** — `collide` is still absent from `walks.BUILTIN`, but the bank (`core/collider.py`, six CC BY 4.0 artifacts), the deterministic collision (`core/collision.py`), and the branch runner (`core/orchestrator.py`) exist and run | `core/walks.py` if the walk form is still wanted; otherwise the module path is the implementation |
+| Write the bank schema down before implementing | **done, elsewhere** — the bank schema and its licensing enforcement live in `core/collider.py` with the change record in `specs/changes/creative-state-evidence/`; there is no `collide-walk` spec because no collide walk was built | `specs/changes/creative-state-evidence/` |
 | Two residue channels (`carried`, `arrived`) | **not implemented** — residue has only `report`/legacy kinds | `core/engine.py` |
 | Threshold drift as a state-exit rule | **not implemented** — exit is minutes/turns only | `core/states.py`, `engine` |
 | ConceptVis design verbs (`critique`, `compare`, `scamper`) as walk moves | **not implemented** | `core/walks.py` relations/policy |

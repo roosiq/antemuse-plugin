@@ -97,3 +97,63 @@ def test_snapshot_writes_a_png():
     assert path.exists() and path.stat().st_size > 500
     with open(path, "rb") as fh:
         assert fh.read(8) == b"\x89PNG\r\n\x1a\n"
+
+
+# ---------------------------------------------------------------- visibility
+def _density(rows, cols=40):
+    """Non-space share of the art block. The card is the only thing a person gets."""
+    total = len(rows) * cols
+    non = sum(1 for row in rows for ch in row.ljust(cols) if ch != " ")
+    return non / total
+
+
+def _seed_scene(scene):
+    """One real frame per scene, in this temp profile."""
+    src = Path("/home/ryan/.hermes/plugin-data/antemuse/three_frames") / scene
+    if not src.is_dir():
+        import pytest
+        pytest.skip(f"no frame bank at {src}")
+    dst = Path(os.environ["ANTEMUSE_STATES_HOME"]) / "three_frames" / scene
+    dst.mkdir(parents=True, exist_ok=True)
+    for png in sorted(src.glob("*.png"))[:2]:
+        shutil.copy(png, dst / png.name)
+    assert dst.glob("*.png"), f"no frame bank for {scene}"
+
+
+def test_every_scene_is_actually_visible():
+    """A card a person cannot see is not a card. Measured 84/90692 bright pixels before."""
+    for scene in ("walk", "daydream", "doomscroll", "dream"):
+        _seed_scene(scene)
+        rows = surfaces.art(40, 8, scene=scene)
+        assert rows, scene
+        d = _density(rows)
+        assert d >= 0.08, f"{scene} renders {d:.1%} — effectively blank"
+        assert d < 0.60, f"{scene} renders {d:.1%} — a solid block, no picture"
+
+
+def test_art_is_deterministic_for_a_frame():
+    _seed_scene("walk")
+    assert surfaces.art(40, 8, scene="walk") == surfaces.art(40, 8, scene="walk")
+
+
+def test_the_card_still_carries_no_words():
+    """BR-5: the fix is a visible picture, never a caption."""
+    import re
+    _seed_scene("walk")
+    out = surfaces.card(state(), "discord")
+    assert not re.search(r"[A-Za-z]{2,}", out)
+
+
+def test_the_snapshot_ignores_the_working_directory(monkeypatch):
+    """Card frames are read from data_dir; the PNG must be written there too."""
+    from core import storage
+    elsewhere = Path(tempfile.mkdtemp(prefix="not-the-home-"))
+    monkeypatch.setattr(storage, "project_dir", lambda *a, **k: elsewhere)
+    path = Path(surfaces.snapshot_path(state(), "discord"))
+    assert path.parent == storage.data_dir(), f"card written to {path.parent}"
+    assert path.parent != elsewhere
+
+
+def test_the_card_reads_frames_from_the_directory_it_writes_to():
+    from core import storage
+    assert surfaces._frames_dir().parent == storage.data_dir()

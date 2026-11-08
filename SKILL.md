@@ -47,6 +47,38 @@ not a guess. Ignore it when the work is nearly done; the nudge waits 45 minutes.
 - A state that blocks tools also blocks you; `/return` is always available and is
   exempt from the block.
 
+## Experimental development (not runtime-active)
+
+An approved experimental exploration layer lives under
+`specs/changes/creative-state-evidence/` (spec, plan, tasks). Its library modules
+(`evaluation/`, `core/collider.py`, `core/collision.py`, `core/llm.py`,
+`core/orchestrator.py`, `core/selection.py`, `core/feedback.py`,
+`core/presenter.py`, `data/collider/`) exist. Wave 3 has begun: the three
+auxiliary task routes (`antemuse_generate`, `antemuse_select`,
+`antemuse_refresh`) are declared — a routing entry, not a call — and the four
+session-boundary hooks are registered. On a session boundary they release any
+material bound to that session. `/spark` is the first thing that binds material;
+it is also the only runtime path that can reach a model, and only when the flag
+is on.
+
+- `/spark <goal>` exists and runs one bounded pass. With
+  `plugins.entries.antemuse.settings.experimental.enabled: true` and a host that
+  exposes `ctx.llm`, it takes the branch path (one auxiliary call per budgeted
+  source, then deterministic selection). With the flag off it stays
+  deterministic and calls nothing. `/keep love|like|trash <#n|candidate-id>`
+  records a verdict by its account handle; `/again` re-runs the last goal with
+  the sources that verdict points at (`deepen` from loved, `refresh` from liked).
+- The two audiences are separate by contract: the model receives the candidates,
+  the person receives a line of counts (`spark · 2 candidate(s) · 1 kept · kept #1`).
+  Never read candidate text into a human-facing line.
+- Do not claim the library improves responses, diversity, or creativity. No
+  protected comparative evaluation has been run, and runtime selection scores
+  are not improvement evidence.
+- The base state lifecycle stays deterministic: entry, exit, expiry, tool
+  restoration, and rendering never require inference, and `/return` remains
+  available under every state.
+- Any promotion of a method is gated on protected comparative evaluation under
+  the governing spec.
 
 ## Verifying in this environment
 
