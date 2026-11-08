@@ -145,14 +145,13 @@ state can always be ended even when every other tool is closed.
 |---|---|
 | `/walk [minutes]`, `/daydream`, `/doomscroll`, `/dream` | enter that state; `/walk <name>` selects a walk instead |
 | `/return` | end the state, keep the account |
-| `/state picture` | the picture: tty full-screen takeover, otherwise the chat card |
-| `/state` | one text frame of the current moment (`/state picture` for the picture) |
-| `/note <text>` | put a person's observation into the same state |
-| `/break [state]` | recommend a state, or take the one named |
-| `/mood <feeling> [note]` | record `stuck`, `tired`, `sharp`, `flat`, `saturated` |
-| `/spark <goal>` | one bounded pass for that goal; binds candidates to this session and reports counts, never candidates. Deterministic when experimental methods are off; auxiliary branches through `ctx.llm` when on (Wave 3, J2) |
-| `/keep love\|like\|trash <#n\|id>` | record a verdict on one candidate by its account handle (Wave 3, J2) |
-| `/again [deepen\|refresh]` | re-run the last goal with the sources the person's verdicts point at: `deepen` from loved, `refresh` from liked (Wave 3, J2/J2b) |
+
+**Five commands, and nothing else.** Everything a person previously typed has moved:
+their message is journalled as a `person` entry while a state runs (no `/note`), the
+recommendation line arrives in the turn by itself (no `/break`), mood is reported in
+words and recorded by the agent (no `/mood`), the picture arrives with the state (no
+`/state`, `/states`, `/watch`), and exploration runs through the `state` tool —
+`spark`, `keep` (no `/spark`, `/keep`, `/again`).
 
 `/return`, not `/snap`: Hermes ships `/snapshot` with the alias `/snap`, and
 `register_command` silently drops a colliding plugin command. The escape hatch
@@ -644,7 +643,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 693 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 694 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -931,6 +930,7 @@ All paths relative to `specs/changes/`.
 | `state-evidence-task-bank` | draft | evaluation data | proposed data layer; not approved. Requires provenance-backed samples; pseudo-label self-training and unlabeled crawls are not improvement evidence. |
 | `hackathon-submission` | planning | external submission | nothing submitted, nothing pushed. `antemuse.catalog.yaml`, demo script and checklist are drafts. |
 | `command-surface` | **implemented** | public verbs | 14 commands + 12 tool actions for ~9 verbs; `/states` was described as a catalogue and renders the picture; `/keep #n` referenced numbering no surface published; `/break <state>` was a second spelling of `/walk`. Definitions and migration written; the three behaviour fixes are implemented, the renames are not. |
+| `pattern-recommendation` | **proposed** | recommendation | names the state that fits the shape of the work from measured counters only (loop, grind, churn, saturation, data wall, rut, return hangover); one line, one state, one piece of evidence, 45-minute cooling, silence by default. Never enters a state; no model call; no mood inference. Fixtures open. |
 
 Supporting evidence files:
 

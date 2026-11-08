@@ -56,27 +56,33 @@ def test_commands_do_not_differ_only_by_plurality():
             assert f"`/{name}s`" in SPEC.read_text(), f"/{name} and /{name}s are undocumented neighbours"
 
 
-def test_the_show_verb_describes_both_answers():
-    src = (ROOT / "__init__.py").read_text()
-    row = re.search(r'register_command\(name="state".*?description="([^"]+)"', src, re.S)
-    assert row, "/state is not registered"
-    description = row.group(1).lower()
-    body = re.search(r'def _state\(raw: str\) -> str:\n(.*?)\n\n\n', src, re.S)
-    assert body, "no _state handler"
-    handler = body.group(1)
-    assert "tui.run()" in handler and "panel.render" in handler, (
-        "/state should answer both ways: the text frame and the picture"
+def test_the_public_surface_is_five():
+    assert registered_commands() == {"walk", "daydream", "doomscroll", "dream", "return"}, (
+        "a command that only duplicates a state or a tool action is not a command"
     )
-    assert "picture" in description, "/state's description must name the picture"
-    # the deprecated shim must say it is deprecated, not pretend to be a catalogue
-    shim = re.search(r'register_command\(name="states".*?description="([^"]+)"', src, re.S)
-    assert shim and "deprecated" in shim.group(1).lower()
+
+
+def test_a_person_message_becomes_a_note_without_a_command():
+    import importlib
+    module = importlib.import_module("__init__")
+    src = (ROOT / "__init__.py").read_text()
+    assert "def _person_text" in src, "no automatic capture of the person's side"
+    assert 'engine.record("person", said)' in src
+    # the capture is bounded and only runs inside a state
+    assert "text[:400]" in src
+    body = src[src.index("def _pre_llm_call"):src.index("def _post_tool_call")]
+    assert "if engine.peek():" in body
+    assert module._person_text({"messages": [
+        {"role": "user", "content": "the build keeps failing on the same test"},
+    ]}) == "the build keeps failing on the same test"
+    assert module._person_text({"messages": [{"role": "assistant", "content": "x"}]}) == ""
+    assert module._person_text({}) == ""
 
 
 def test_break_does_not_enter_a_state():
     src = (ROOT / "__init__.py").read_text()
-    found = re.search(r'def _break\(raw: str\) -> str:\n(.*?)\n\n\n', src, re.S)
-    assert found, "no _break handler"
-    body = found.group(1)
-    assert "engine.enter" not in body, "/break enters a state; that is /walk's job"
-    assert "it does not enter" in body, "/break must say what it is not"
+    assert 'register_command(name="break"' not in src, "/break is a command again"
+    handler = src[src.index("def _handler"):src.index("# ------------------------------------------------------------------ hooks")]
+    assert 'if action == "break":' in handler, "the recommendation must still be reachable as a tool action"
+
+

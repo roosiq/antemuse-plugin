@@ -16,6 +16,11 @@ def setup_function(_):
     runtime.clear()
 
 
+
+def via_tool(ctx, **args):
+    """Exploration is a tool action now: `/spark` and `/keep` are gone."""
+    return ctx.tools["state"]["handler"](args)
+
 def test_a_run_produces_candidates_from_the_real_bank():
     run = runtime.plan("make the weekly report less boring")
     assert run.candidates, "no candidates from the collider bank"
@@ -132,8 +137,11 @@ def _plugin():
 def test_the_commands_are_registered():
     ctx = _Ctx()
     _plugin().register(ctx)
-    for name in ("spark", "keep"):  # `/again` was folded into `/spark again`
-        assert name in ctx.commands, name
+    assert set(ctx.commands) == {"walk", "daydream", "doomscroll", "dream", "return"}, (
+        "the public surface is the four states and the way out"
+    )
+    assert {"spark", "keep"} <= set(ctx.tools["state"]["schema"]["parameters"]
+                                     ["properties"]["action"]["enum"])
 
 
 def test_spark_accounts_to_the_person_and_hands_candidates_to_the_model():
@@ -143,7 +151,7 @@ def test_spark_accounts_to_the_person_and_hands_candidates_to_the_model():
     from core import engine
     engine.remember_platform("discord", "sess-x")
 
-    human = ctx.commands["spark"]["handler"]("make the weekly report less boring")
+    human = via_tool(ctx, action="spark", goal="make the weekly report less boring")
     assert "spark" in human and "candidate" in human
 
     block = module._pre_llm_call(platform="discord", session_id="sess-x")
@@ -164,7 +172,7 @@ def test_spark_accounts_to_the_person_and_hands_candidates_to_the_model():
 def test_spark_without_a_goal_says_how_to_use_it():
     ctx = _Ctx()
     _plugin().register(ctx)
-    assert "usage" in ctx.commands["spark"]["handler"]("")
+    assert "usage" in via_tool(ctx, action="spark")
 
 
 def test_keep_and_spark_again_route_the_person_feedback():
@@ -173,15 +181,15 @@ def test_keep_and_spark_again_route_the_person_feedback():
     module.register(ctx)
     from core import engine
     engine.remember_platform("discord", "sess-y")
-    ctx.commands["spark"]["handler"]("a goal")
+    via_tool(ctx, action="spark", goal="a goal")
     run = runtime.plan("a goal")
     candidate_id = str(run.kept[0].get("candidate_id") or "c1")
 
-    assert "nothing loved" in ctx.commands["spark"]["handler"]("again")
-    assert "kept as love" in ctx.commands["keep"]["handler"](f"love {candidate_id}")
-    assert "deepen" in ctx.commands["spark"]["handler"]("again")
-    assert "routes to deepen" in ctx.commands["spark"]["handler"]("again refresh")
-    assert "usage" in ctx.commands["keep"]["handler"]("love")
+    assert "nothing loved" in via_tool(ctx, action="spark", goal="again")
+    assert "kept as love" in via_tool(ctx, action="keep", verdict="love", candidate=candidate_id)
+    assert "deepen" in via_tool(ctx, action="spark", goal="again")
+    assert "routes to deepen" in via_tool(ctx, action="spark", goal="again refresh")
+    assert "usage" in via_tool(ctx, action="keep", verdict="love")
 
 
 # ------------------------------------------------------- the branch path (J2b)
@@ -278,7 +286,7 @@ def test_spark_only_calls_the_host_when_the_flag_is_on():
     off.llm = _FakeLlm()
     module.register(off)
     engine.remember_platform("discord", "sess-off")
-    human = off.commands["spark"]["handler"]("a goal for the off case")
+    human = via_tool(off, action="spark", goal="a goal for the off case")
     assert off.llm.calls == 0, "the deterministic path must not call a model"
     assert "branch(es)" not in human
 
@@ -286,7 +294,7 @@ def test_spark_only_calls_the_host_when_the_flag_is_on():
     on.llm = _FakeLlm(tokens=111)
     module.register(on)
     engine.remember_platform("discord", "sess-on")
-    human = on.commands["spark"]["handler"]("a goal for the on case")
+    human = via_tool(on, action="spark", goal="a goal for the on case")
     assert on.llm.calls == runtime.DEFAULT_BUDGET["calls"], "the branch path must call the host"
     assert "branch(es)" in human and "skipped by budget" in human, human
 
@@ -338,14 +346,14 @@ def test_the_whole_chain_from_a_verdict_to_a_steered_run():
     from core import engine
     engine.remember_platform("discord", "sess-fb")
 
-    first = ctx.commands["spark"]["handler"]("make the weekly report less boring")
+    first = via_tool(ctx, action="spark", goal="make the weekly report less boring")
     assert "candidate" in first
-    assert "kept as love" in ctx.commands["keep"]["handler"]("love #1")
+    assert "kept as love" in via_tool(ctx, action="keep", verdict="love", candidate="#1")
 
     ids = runtime.feedback_ids("sess-fb")
     assert ids["loved"], "the verdict did not resolve to a source"
 
-    second = ctx.commands["spark"]["handler"]("again")
+    second = via_tool(ctx, action="spark", goal="again")
     assert second.startswith("deepen"), second
     assert "candidate(s)" in second
 
@@ -359,9 +367,9 @@ def test_spark_again_refuses_when_feedback_points_the_other_way():
     module.register(ctx)
     from core import engine
     engine.remember_platform("discord", "sess-again")
-    ctx.commands["spark"]["handler"]("a goal")
-    ctx.commands["keep"]["handler"]("like #1")
-    assert "routes to refresh" in ctx.commands["spark"]["handler"]("again deepen")
+    via_tool(ctx, action="spark", goal="a goal")
+    via_tool(ctx, action="keep", verdict="like", candidate="#1")
+    assert "routes to refresh" in via_tool(ctx, action="spark", goal="again deepen")
 
 
 def test_a_steered_run_does_not_call_excluded_sources_skipped():
@@ -422,8 +430,8 @@ def test_the_session_boundary_hook_clears_the_runtime_books():
     module.register(ctx)
     from core import engine
     engine.remember_platform("discord", "sess-hook")
-    ctx.commands["spark"]["handler"]("a goal to forget")
-    ctx.commands["keep"]["handler"]("like #1")
+    via_tool(ctx, action="spark", goal="a goal to forget")
+    via_tool(ctx, action="keep", verdict="like", candidate="#1")
     assert runtime.next_strategy("sess-hook") == "refresh"
 
     ctx.hooks["on_session_end"](session_id="sess-hook")
@@ -440,7 +448,7 @@ def test_returning_from_a_state_keeps_a_run_that_is_still_waiting():
     from core import engine
     engine.remember_platform("discord", "sess-return")
     ctx.commands["walk"]["handler"]("1")
-    ctx.commands["spark"]["handler"]("a goal that survives the return")
+    via_tool(ctx, action="spark", goal="a goal that survives the return")
     ctx.commands["return"]["handler"]("")
     assert runtime.injection("sess-return") is not None
 

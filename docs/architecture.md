@@ -36,12 +36,13 @@ tool restoration and rendering are all deterministic and clock-driven.
 
 The public surface is small and counted: **one tool** (`state`, 12 actions: `enter`,
 `exit`, `status`, `list`, `watch`, `card`, `image`, `walks`, `walk_new`, `walk_del`,
-`break`, `mood`), **8 hooks**, and **eleven verbs** — `/walk`, `/daydream`,
-`/doomscroll`, `/dream`, `/return`, `/state` (with `/state picture`), `/note`, `/break`,
-`/mood`, `/spark` (with `/spark again`), `/keep` — plus one deprecated shim answering
-to `/states`. `/watch` and `/again` were consolidated away; `specs/changes/command-surface`
-defines each verb by purpose, trigger, contract and "not this", and a test fails when a
-registered verb has no definition.
+`break`, `mood`, `spark`, `keep`), **8 hooks**, and **five commands** — `/walk`,
+`/daydream`, `/doomscroll`, `/dream`, `/return`. Everything else is automatic: the
+person's message is journalled as a `person` entry while a state runs, the recommendation
+line arrives in the turn by itself, the picture arrives with the state, and exploration
+runs through `state(action='spark'|'keep')`. `specs/changes/command-surface` defines each
+verb by purpose, contract and "not this"; a test fails when a registered verb has no
+definition or when the surface is larger than five.
 
 ---
 
@@ -239,7 +240,8 @@ fixed and recorded.
 | `scene3d-renderer` (Python z-buffer instead of Chromium) | **PROPOSED and conflicting** — the bake pipeline is what ships; one of the two must yield |
 | FLAKE-1 `test_outer_hops_are_farther_than_wander_hops` | narrowed, not eliminated (samples n=64) |
 | `/spark` is not gated by state | accepts, unresolved |
-| Command surface | **LIVE** — consolidated from 14 commands to 11 verbs + 1 shim: `/state` absorbs the picture, `/watch` and `/again` are gone, `/break <state>` no longer enters, `/keep` numbering is published |
+| Command surface | **LIVE** — 14 commands → 5: the four states and `/return`; `/note`, `/break`, `/mood`, `/state`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions |
+| Pattern recommendation | **PROPOSED** — `specs/changes/pattern-recommendation`: name the state that fits the shape of the work (loop, grind, churn, saturation, data wall, rut) from measured counters, one line, never enters |
 | Slash flags such as `/daydream --block` | **NOT BUILT** — no command surface carries them yet |
 | Meshy MCP auth | 401: the CLI OAuth token is not a developer key. CLI path works and is what the pack used |
 
@@ -273,4 +275,6 @@ fixed and recorded.
 1. Finish `doomscroll` (blocked on decision 1).
 2. Colour and HUD work to close `immersive-visuals` (`PARTIAL` → `LIVE`).
 3. `scenes-per-surface`: per-surface grading, clock, dual scoring, 4:5 postcards.
-4. Path A: judge, blind comparison, protected set — the only route to a claim.
+4. Implement `pattern-recommendation` — seven patterns, each with a deterministic
+   fixture, silence by default.
+5. Path A: judge, blind comparison, protected set — the only route to a claim.

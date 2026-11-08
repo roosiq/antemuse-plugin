@@ -1,136 +1,87 @@
-# Command surface — one verb, one name, one definition
+# Command surface — four states, one way out, everything else automatic
 
-Status: **implemented** 2026-11-08. Owner: Ryan Cook. Scope: the `antemuse` plugin's
-public verbs (slash commands and `state` tool actions). No change to state semantics,
-timers, tool policy, or rendering.
+Status: **implemented** 2026-11-08 (consolidated twice: 14 → 11 → 5). Owner: Ryan Cook.
+Scope: the `antemuse` plugin's public verbs. No change to state semantics, timers, tool
+policy, or rendering.
 
-## Problem
+## The rule
 
-The surface grew by accretion. There are **14 commands** and **12 tool actions** for
-about nine verbs, and several of the duplicates are not synonyms — they disagree about
-what the verb means.
+A command is a thing only a person can decide: **which state to be in**, and **when to
+stop**. Everything else the plugin can observe, compute from measured signals, or do
+through the tool the agent already has — so it should not be a command.
 
-| Command | Current description | The defect |
+That leaves five:
+
+| Verb | Purpose | Contract | Not this |
+|---|---|---|---|
+| `/walk [min\|name]` | enter the walk: concept to concept, work continues | returns the entered frame; the walk supplies no material to the turn | not a lockout — tools stay open unless `block: true` |
+| `/daydream` | enter: two stored memories, join only if it holds | returns the entered frame | not a search — it does not go looking |
+| `/doomscroll` | enter: a random live feed | returns the entered frame | not research — nothing is retained or ranked |
+| `/dream` | enter: recombine stored concepts into new things | returns the entered frame | not a plan — no decision is produced |
+| `/return` | leave the state and keep the account | three lines: where it went, what it touched, what is next | not a cancel — residue survives |
+
+## What was removed, and where it went
+
+| Removed | Replaced by | Why it is not a command |
 |---|---|---|
-| `/state` | "What state the agent is in" | Names the *concept*; a person expects the picture. |
-| `/states` | "List every agent state" | One letter from `/state` and means the opposite: one of them is singular-current, the other is plural-catalogue. |
-| `/watch` | "Watch the state in the CLI, redrawing until it ends" | Exists again as `state(action='watch')`, which an agent cannot meaningfully call — it blocks a terminal. |
-| `/break` | "Recommend a state to step away into, or take the one you name" | Two verbs. "Take the one you name" is exactly `/walk`. |
-| `/keep` | "Record what you thought of a candidate: love, like, or trash" | Takes `#1`/`#2` "from the run's account", but **the account line shows counts, never a numbered list** — so `#1` refers to nothing a person can see. The command is unusable as documented. |
-| `/again` | "Re-run the last goal with the sources your verdicts point at" | Depends on `/keep` verdicts, so it is downstream of a command nobody can successfully call. |
-| `state(action='card' / 'image' / 'list' / 'status')` | — | Four actions that are views, not decisions: the model never needs to render the human's card. |
+| `/note <text>` | **automatic**: while a state runs, the person's own message is journalled as a `person` entry inside the state's window | it asked a person to retype what they had already said |
+| `/break` | **automatic**: the recommendation line is already injected when strain trips, once per 45 minutes | a recommendation that arrives by itself beats one you must ask for |
+| `/mood` | **natural language → tool**: a person says how it feels, the agent records `state(action='mood')` | mood is *reported, never inferred*; the mechanism belongs to the agent |
+| `/state`, `/states`, `/state picture` | **the picture arrives with the state**: the reply carries the frame, the pane shows it, chat gets the still card | nothing to ask for — the state shows itself |
+| `/watch` | the pane and the takeover redraw on their own | it was a blocking duplicate of the picture |
+| `/spark`, `/again` | **tool actions**: `state(action='spark', goal=…)`, `state(action='spark', goal='again …')` | the person never saw candidates, so the run was never theirs to start |
+| `/keep` | **tool action**: `state(action='keep', verdict='love', candidate='#2')` | a verdict on text the person cannot see is not a person's verb |
 
-Also stale: the module docstring still advertises `/dissociate`, a retired name, and
-describes the tool as `state(action=enter|exit|status|list)` when the schema has twelve.
+Earlier in the same session `/watch`, `/again`, `/states` and `/state picture` were
+already collapsed once; that earlier table is in the change log. This is the second and
+final pass: nothing that a state's own command or a tool action can do remains a command.
 
-## What a verb has to answer
+## Tool actions after consolidation
 
-Every public verb must state, in one line each, all four of these. A verb that cannot
-answer all four is not defined and should not ship:
+One tool, because an agent should not have to remember fourteen names. Fourteen actions,
+each defined:
 
-1. **Purpose** — the change in the world it makes.
-2. **Trigger** — who calls it: the person, the agent, or both.
-3. **Contract** — what it returns or changes, in one sentence.
-4. **Not this** — the nearest thing it must not be confused with, named explicitly.
+| Action | Purpose | Not this |
+|---|---|---|
+| `enter` | begin a state (`name`, `minutes`, `walk`, options) | not an override of a running state's clock |
+| `exit` | the same path as `/return` | not a cancel |
+| `status` | what is running now | not the picture |
+| `list` | the states that exist | not the walks |
+| `walks` | the walks that exist, built-in and the person's own | not the state list |
+| `walk_new` | save a walk definition | does not enter it |
+| `walk_del` | remove one of the person's walks | refuses built-ins |
+| `break` | recommend a state | not entering — `enter` does that |
+| `mood` | record how the work feels | not a state change |
+| `spark` | one bounded run for a goal; counts to the person, candidates to the model | not a chat |
+| `keep` | record a verdict on `#n` from the run account | not an edit of the candidate |
+| `watch` | block a terminal redrawing until the state ends | not model-facing |
+| `card` | render the chat card | not model-facing |
+| `image` | render the card as a PNG | not model-facing |
 
-## Proposed surface: nine verbs
+## Automation that replaced commands
 
-| Verb | Purpose | Who | Contract | Not this |
-|---|---|---|---|---|
-| `/walk [min\|name]` | enter the walk: concept to concept, work continues | both | returns the entered frame; a walk supplies no material | not a lockout — tools stay open unless `block: true` |
-| `/daydream` | enter: two stored memories, join only if it holds | both | returns the entered frame | not a search — it does not go looking for new material |
-| `/doomscroll` | enter: a random live feed | both | returns the entered frame | not research — nothing is retained or ranked |
-| `/dream` | enter: recombine stored concepts into new things | both | returns the entered frame | not a plan — no decision is produced |
-| `/return` | leave the state, keep the account | both | returns three lines: where it went, what it touched, what is next | not a cancel — residue survives |
-| `/state picture` | show the picture now | person | tty: takeover until the state ends; otherwise: the chat card | not a catalogue — it does not list states |
-| `/states` | **deprecated shim** | person | same as `/state picture`, kept so old fingers work | not a catalogue despite the name |
-| `/state` | one text frame of the current moment (not the catalogue) | person | returns the state strip as text | not the picture — that is `/frame` |
-| `/note <text>` | put the person's observation into the same state | person | appends a `person` journal entry inside the state's window | not a message to the model unless the state feeds |
-| `/break` | recommend a state to step away into | person | returns one recommendation with the reason | **not** a way to enter — entering is the state's own command |
-| `/mood <feeling> [note]` | record how the work feels, reported never inferred | person | appends a mood entry and returns the strain arithmetic | not a state change |
-| `/spark <goal>` | one bounded run for that goal | person | returns counts and statuses; candidates go to the model only | not a chat — the person never sees candidate text |
-| `/keep love\|like\|trash <#n\|id>` | record a verdict on one candidate | person | stores the verdict and returns the updated counts | not an edit of the candidate |
-| `/spark again [deepen\|refresh]` | re-run the last goal from what survived | person | returns the new run's account | not a re-selection of the same candidates |
+1. **Person journalling.** `pre_llm_call` reads the person's message from the turn and
+   records it as `person` while a state is active, capped at 400 characters. A state's
+   account is a page, not a transcript.
+2. **The recommendation.** The injected block already carries one offer line, computed
+   from measured strain (minutes + turns + failed tool calls), cooling for 45 minutes.
+   It is a recommendation, never an entry: entering stays the person's decision. The
+   patterns that trigger it are specified in `specs/changes/pattern-recommendation`.
+3. **The picture.** The state's own reply carries the frame; the pane shows the moving
+   picture; chat gets the still card.
 
-That is **nine state/observation verbs plus four exploration verbs**. Two cuts are
-load-bearing:
+## Acceptance criteria (all enforced by tests)
 
-- **`/break <name>` is removed.** It duplicated `/walk` while claiming to be a
-  recommendation, which is the only thing that made it a separate verb. `/break` with
-  no argument stays.
-- **`/states` becomes `/frame`.** A one-letter difference between "what I am doing" and
-  "the picture, now" is a naming bug, not a feature.
-
-And two additions that make an existing verb real:
-
-- **`/keep` needs numbering that exists.** The run account must read
-  `3 candidate(s) #1–#3` so that `#2` refers to something the person can see. Counts
-  stay counts; no text crosses over.
-- **`state(action='card'|'image'|'watch')` are removed from the model-facing schema.**
-  A model does not render the person's card and cannot watch a terminal.
-
-## Migration
-
-1. Add `/frame`; keep `/states` as a deprecated alias for one release, returning the
-   picture and a line saying it was renamed.
-2. Make `/break <name>` return "that is `/walk <name>`" instead of entering.
-3. Publish the numbering in `Run.account()`; `/keep #n` becomes usable without any
-   other change.
-4. Drop the three view actions from `STATE_SCHEMA`; keep them handled (so an old caller
-   does not crash) but undescribed.
-5. Update the module docstring: no `dissociate`, twelve actions listed once.
-
-## Acceptance criteria
-
-1. Every registered command and every tool action appears in the table above, with all
-   four answers — enforced by a test that reads the registrations from the plugin.
-2. No two verbs differ only by plurality or by an auxiliary (`state`/`states`).
-3. `/keep #2` succeeds against a real run account line, on a surface that shows `#1–#3`.
-4. `/break walk` does not enter a state; it names the command that does.
-5. The docstring names no retired state and no action count that disagrees with the
-   schema.
+1. Exactly five registered commands: `walk`, `daydream`, `doomscroll`, `dream`, `return`.
+2. Every registered command and every tool action has a row here with its "not this".
+3. A person's message during a state appears in the journal as `person`, once per turn,
+   and not at all when no state is running.
+4. The offer line appears without any command being typed and repeats no more than once
+   per 45 minutes.
+5. No command exists that only duplicates a state's own command or a tool action.
 
 ## Must not change
 
 State definitions, durations, turn budgets, cadences, directives, contracts, residue
-labels, journal cap 60, residue cap 3, two-turn decay, `CONTROL_TOOLS`, `/return`'s
-existence as an escape, or the rule that rendering never needs a model call.
-
-## Tool actions
-
-The `state` tool is one tool because an agent should not have to remember twelve names;
-its actions still have to be defined one at a time.
-
-| Action | Purpose | Contract | Not this |
-|---|---|---|---|
-| `enter` | begin a state | `engine.enter(name, minutes, walk, options)` → the entered frame | not an override of a running state's clock |
-| `exit` | leave the state | same path as `/return` | not a cancel |
-| `status` | what is running now | the state dict for the current moment | not the picture |
-| `list` | the states that exist | names, durations, turn budgets, contracts | not a catalogue of walks — that is `walks` |
-| `walks` | the walks that exist | built-ins plus the person's own | not a state list |
-| `walk_new` | save a walk definition | writes one JSON walk, returns the report | not entering it |
-| `walk_del` | remove one of the person's walks | refuses built-ins | not a reset of every walk |
-| `break` | recommend a state | one recommendation with a reason | not entering — `enter` does that |
-| `mood` | record how the work feels | appends a mood entry and returns strain | not a state change |
-| `watch` | block a terminal redrawing until the state ends | returns when the state ends | not a model action — a person's surface, kept for parity |
-| `card` | render the chat card | text frame, no words | not model-facing: the model does not publish the person's card |
-| `image` | render the card as a PNG | path to the PNG | not model-facing either |
-
-**`watch`, `card` and `image` are surfaces, not decisions.** They stay handled so an
-older caller does not crash, but they are removed from the description a model reads:
-a model cannot watch a terminal and should not be publishing the human's picture.
-
-## What was consolidated
-
-| Before | After | Why |
-|---|---|---|
-| `/state` (text) + `/states` (picture) + `/watch` (picture, blocking) | `/state` and `/state picture` | Three names, two answers; one of them described as a catalogue. |
-| `/again [deepen\|refresh]` | `/spark again [deepen\|refresh]` | The same run with a different source set is a mode of `/spark`, not a verb. |
-| `state(action='card'|'image'|'watch')` | handled, undescribed | Surfaces, not decisions. A model does not publish the person's card and cannot watch a terminal. |
-
-**14 commands → 11** (10 verbs plus one deprecated shim that answers to `/states`).
-`/watch` and `/again` are gone rather than aliased: both were pure duplicates, and a
-redirect that still exists as a command is not a consolidation.
-
-Implemented 2026-11-08; the five parity tests in `tests/test_command_surface.py` were
-turned to the new names, so a verb without a definition fails the suite.
+labels, journal cap 60, residue cap 3, two-turn decay, `CONTROL_TOOLS`, `/return` as an
+escape, and the rule that rendering never needs a model call.

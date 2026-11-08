@@ -47,12 +47,19 @@ STATE_SCHEMA: Dict[str, Any] = {
         "type": "object",
         "properties": {
             "action": {"type": "string",
-                       "enum": ["enter", "exit", "status", "list", "watch", "card", "image",
-                                "walks", "walk_new", "walk_del", "break", "mood"]},
+                       "enum": ["enter", "exit", "status", "list", "walks", "walk_new",
+                                "walk_del", "break", "mood", "spark", "keep",
+                                "watch", "card", "image"]},
             "name": {"type": "string",
                      "description": "State to enter (walk, daydream, dream, doomscroll) or the walk to use."},
             "minutes": {"type": "integer", "description": "Optional override for how long the state lasts."},
             "walk": {"type": "string", "description": "Which walk to traverse: wander, upward, downward, lateral, or one you saved."},
+            "goal": {"type": "string",
+                     "description": "For action='spark': what the run is for. The person sees counts, never candidates."},
+            "verdict": {"type": "string", "enum": ["love", "like", "trash"],
+                        "description": "For action='keep': how the run's candidates landed."},
+            "candidate": {"type": "string",
+                          "description": "For action='keep': '#2' from the run account, or a full id."},
             "feeling": {"type": "string", "enum": ["stuck", "tired", "sharp", "flat", "saturated"],
                         "description": "For action='mood': how the work feels right now."},
             "spec": {"type": "object",
@@ -174,6 +181,16 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         return engine.take_break(a.get("name"))
     if action == "mood":
         return engine.record_mood(str(a.get("feeling") or ""), str(a.get("note") or ""))
+    if action == "spark":
+        # `/spark` was a person's command; the run itself belongs to the agent, which
+        # is the only one who ever saw the candidates. Same handler, no command.
+        return _spark_handler(host)(str(a.get("goal") or ""),
+                                    session_id=str(a.get("session") or ""))
+    if action == "keep":
+        verdict, candidate = str(a.get("verdict") or ""), str(a.get("candidate") or "")
+        if verdict not in ("love", "like", "trash") or not candidate:
+            return "usage: keep love|like|trash <#n|id>  (the run account publishes #1–#n)"
+        return runtime.keep(engine.current_session(), verdict, candidate)
     if action == "exit":
         return engine.stop()
     if action == "list":
@@ -190,10 +207,37 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
 
 # ------------------------------------------------------------------ hooks
 
+def _person_text(kwargs: Dict[str, Any]) -> str:
+    """The person's own words from the turn about to be sent, if the host passes them.
+
+    `/note` asked a person to retype what they had already said. While a state is
+    running their message *is* the note, so it is journalled automatically. Bounded:
+    a state's account is a page, not a transcript.
+    """
+    messages = kwargs.get("messages") or []
+    for message in reversed(messages if isinstance(messages, list) else []):
+        if not isinstance(message, dict):
+            continue
+        role = str(message.get("role") or "").lower()
+        if role not in ("user", "human", "person"):
+            continue
+        content = message.get("content")
+        if isinstance(content, list):
+            content = " ".join(str(part.get("text") or "") for part in content
+                               if isinstance(part, dict))
+        text = str(content or "").strip()
+        return text[:400]
+    return ""
+
+
 def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> str | None:
     engine.remember_platform(platform, session_id)
     engine.note_turn()
     engine.tick()
+    if engine.peek():
+        said = _person_text(kwargs)
+        if said:
+            engine.record("person", said)
     parts = [
         engine.inject() or "",
         runtime.injection(session_id or engine.current_session(),
@@ -436,32 +480,14 @@ def register(ctx) -> None:
             argument_mode="text",
         )
 
-    ctx.register_command(name="note", handler=_note,
-                         description="Put down what you noticed while in the same state", args_hint="<text>")
-    ctx.register_command(name="break", handler=_break,
-                         description="Recommend a state to step away into, or take the one you name",
-                         args_hint="[walk|daydream|doomscroll|dream]", argument_mode="text")
-    ctx.register_command(name="mood", handler=_mood,
-                         description="Say how the work feels: stuck, tired, sharp, flat, saturated",
-                         args_hint="<feeling> [note]", argument_mode="text")
     ctx.register_command(name="return", handler=_return,
                          description="End the current state and keep its residue")
-    ctx.register_command(name="spark", handler=_spark_handler(ctx),
-                         description="One bounded exploration run for a goal; the person sees counts, not candidates",
-                         args_hint="<what you are working on>", argument_mode="text")
-    ctx.register_command(name="keep", handler=_keep,
-                         description="Record what you thought of a candidate: love, like, or trash",
-                         args_hint="love|like|trash <#n|candidate-id>", argument_mode="text")
 
-    # The descriptions are the definition a person reads. One "show me" verb: the text
-    # frame by default, the picture when asked. `/states` and `/watch` were the same
-    # two answers under two more names — `/watch` is gone, `/states` is a shim until
-    # people stop typing it.
-    ctx.register_command(name="state", handler=_state,
-                         description="The current moment: text frame, or the picture with 'picture'",
-                         args_hint="[picture]", argument_mode="text")
-    ctx.register_command(name="states", handler=_states_shim,
-                         description="deprecated — /state picture")
+    # Five commands. Everything else a person might want is automatic: their message
+    # is journalled as a note while a state runs, the recommendation line arrives in
+    # the turn by itself, and exploration runs through the tool the agent already has.
+    # The picture arrives with the state; there is nothing to ask for.
+
 
     try:
         from pathlib import Path
