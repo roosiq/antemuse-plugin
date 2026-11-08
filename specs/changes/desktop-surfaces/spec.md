@@ -1,7 +1,8 @@
 # Desktop surfaces — the state seen, not described
 
-Status: **proposed** 2026-11-08. Not implemented. Written from a source review of a
-shipped plugin, not from a sketch.
+Status: **partial** 2026-11-08. Backend route and desktop half implemented and tested
+without the app; not yet verified inside Hermes Desktop. Written from a source review of a
+shipped plugin, then built.
 Owner: Ryan Cook. Scope: `/home/ryan/antemuse-plugin` desktop surface only.
 
 ## 1. Problem
@@ -85,7 +86,20 @@ must ship a small Python backend:
 - The pane must not become the plugin's only surface: if the pane is the only
   contribution and the user closes it, the plugin disables itself.
 
-## 4. The decision this forces
+## 3a. Decisions taken (owner, 2026-11-08)
+
+1. **Python owns the scenes; the desktop displays served frames.** The backend calls the
+   same `surfaces.art()` the CLI calls and returns the glyph lines as text. The JS half
+   renders text and samples nothing. This resolves §4 by dissolving it: there is still one
+   renderer, so there is no fourth one to drift.
+2. **Glyph set stays the existing luminance ramp** (`" .:-=+*#"`). Braille was considered
+   and dropped: these scenes are luminance fields, and a braille canvas would be a second
+   renderer with a different look — exactly what decision 1 avoids.
+3. **The desktop half lives in this repository** at `desktop/plugin.js`, which the app loads
+   from `$HERMES_HOME/plugins/<name>/desktop/plugin.js` — the symlinked plugin directory, so
+   there is nothing extra to install.
+
+## 4. The decision this forces (resolved by 3a.1)
 
 Antemuse would then have **four renderers of the same scenes**: the Pillow chat card,
 the CLI text renderer, the proposed Python `scene3d`, and now JavaScript glyphs. There
@@ -139,6 +153,26 @@ built. This is an owner decision and is not assumed below.
 2. Is an ambient background acceptable at all, given it sits behind text? If yes, what
    strength ceiling?
 3. Does the desktop pane replace the chat card for desktop users, or coexist?
+
+## 7a. What was built and what was proven
+
+- `dashboard/manifest.json` + `dashboard/plugin_api.py`: `GET /state` mounted at
+  `/api/plugins/antemuse/`, payload from the pure `dashboard/projection.py`. Counts, names
+  and glyph lines only — the state's `directive`, the goal, the journal and any candidate
+  text are absent, and `tests/test_plugin_api.py` asserts that structurally (every key is
+  walked) rather than by review.
+- `desktop/plugin.js`: a pane (`area: 'panes'`, placement right), a status chip
+  (`statusBar.right`) so a closed pane cannot disable the plugin, a palette command, and a
+  settings page when the host offers one. It polls `ctx.rest('/state')` every 2 s through
+  `ctx.setInterval`, and reports `backend unavailable` when the route is missing.
+- Proven without the app: eight pytest tests on the projection, an HTTP end-to-end
+  (`TestClient`) that enters a real state in a temporary home and reads the mounted route —
+  idle → `active: null`; daydream → label, `tools.mode: none`, 179 s, 2 turns; stop → null —
+  and a jsdom mount of the real plugin file asserting DOM text, the `<pre>` glyph lines,
+  `aria-hidden` on the art, the poll tick, unmount, idle, and the unavailable state.
+  `hermes_cli.plugin_validate_desktop` reports no findings.
+- **Still unproven:** how it looks in the app. No Electron here, so CSS, pane placement and
+  the real gateway transport are untested. The change stays `partial` until it is seen.
 
 ## 8. Verification limitation, stated plainly
 

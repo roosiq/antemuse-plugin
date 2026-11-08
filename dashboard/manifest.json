@@ -1,0 +1,7 @@
+{
+  "name": "antemuse",
+  "label": "Antemuse",
+  "description": "The state a turn is governed by, as glyphs and counts.",
+  "icon": "Waves",
+  "api": "plugin_api.py"
+}

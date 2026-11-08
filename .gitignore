@@ -5,3 +5,5 @@ postcards/
 __pycache__/
 *.pyc
 *.png
+tools/desktop_harness/node_modules/
+tools/desktop_harness/.work/

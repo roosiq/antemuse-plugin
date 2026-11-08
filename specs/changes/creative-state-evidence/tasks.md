@@ -144,7 +144,28 @@ one.
   `evaluation/aggregate.py`: reads a shard's records in sorted order, requires every declared cell exactly once via `report.required_cells` (which raises `CoverageError` listing all gaps), refuses a record outside the grid, refuses duplicates by default and reports them when explicitly allowed, and names a malformed result file instead of skipping it. Output is key-sorted JSON, so two runs over the same files are byte-identical. 13 tests in `tests/test_shards.py`.
 - [ ] K3 Runtime/Hermes/surface/evaluation independent QA.
 
-## Wave 5
+## Wave 5 — product first, then evidence (owner decision, 2026-11-08)
+
+Ryan's order: ship a surface a person can watch, then build the judge and the real task set.
+L1–L4 stay open below, deliberately after B1–B3, because a judge scoring outputs nobody can
+see is scoring a hypothetical.
+
+- [x] B1 Desktop backend: `GET /api/plugins/antemuse/state`.
+  `dashboard/manifest.json` + `dashboard/plugin_api.py` + pure `dashboard/projection.py`.
+  Counts, names and served glyph lines; the state's `directive`, the goal, the journal and
+  candidate text are absent by construction, and a test walks every key to prove it. 8 pytest
+  tests plus an HTTP end-to-end over a real state (idle → daydream → stop) through the mounted
+  route.
+- [x] B2 Desktop half: a pane, a chip, a palette command.
+  `desktop/plugin.js` — the app loads it from `$HERMES_HOME/plugins/<name>/desktop/plugin.js`,
+  which is the symlinked plugin directory. The chip exists so a closed pane cannot disable the
+  plugin (the trap the ascii-worlds review found). The harness caught a real defect: `jsx()`'s
+  third argument is the key, not children, so the pane rendered an empty box until children
+  moved into props.
+- [ ] B3 Seen in the app.
+  Blocked on this machine: no Hermes Desktop install. Needs a run where the pane and chip are
+  looked at, the CSS checked, and the real gateway transport exercised.
+
 
 - [ ] L1 Development pilot and variance/cost analysis.
 - [ ] L2 Protected-final frozen evidence bundle.
