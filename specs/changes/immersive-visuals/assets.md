@@ -1,7 +1,7 @@
 # Scene assets — which pictures the visualizer needs
 
-Status: **proposed** 2026-11-08. Companion to `spec.md`; this file decides *what is
-drawn*, the other decides *how big and how served*.
+Status: **implemented for all four states** 2026-11-08 (43 credits). Companion to
+`spec.md`; this file decides *what is drawn*, the other decides *how big and how served*.
 Owner: Ryan Cook. Scope: scenes and assets only. The four-state lifecycle, durations,
 turn budgets and tool policy are out of scope and must not change.
 
@@ -172,3 +172,42 @@ needs the most judgement and the most money.
    at 44 × 12 than a figure on a road.
 3. **Rigged or static figure?** Rigging is free of extra credits (`meshy_rig`, 5) but
    the bake only needs eight poses; a static mesh plus camera motion may be enough.
+
+## 10. What was built (2026-11-08)
+
+43 credits spent, all four states now draw real assets instead of primitives.
+
+| state | assets | triangles | credits |
+| --- | --- | --- | --- |
+| walk | `walk/figure.glb` — hooded figure from behind | 15,810 | 5 |
+| daydream | `daydream/mug.glb`, `daydream/stone.glb` | 3,164 / 3,138 | 10 |
+| doomscroll | `doomscroll/card.png` (1024 × 1024) | — | 18 |
+| dream | `dream/chair_branches.glb` | 8,366 | 5 |
+
+Rejected and kept on disk with the reason: `doomscroll/card_v1_phone.png` — it
+read as a photograph of a phone and carried roughly one luminance band, so the ramp
+had nothing to work with. The second take is a bright card on black.
+
+**What the pipeline needed that the plan did not anticipate:**
+
+1. **A GLB reader, not a loader** (`tools/glb_mesh.js`, ~100 lines). The vendored
+   `three.module.js` declares no revision and the repo's `three` is 0.82, so pairing
+   either with a 0.180 `GLTFLoader` is a guess. The reader takes positions, normals
+   and indices and nothing else — which is all a luminance ramp can use.
+2. **A `prop()` normaliser.** Meshy meshes arrive at their own scale; each is
+   rescaled to a stated longest side and re-centred on its bounding box, so a mug and
+   a chair can share a scene without one being 40 m tall.
+3. **Self-lit props.** Two point lights at four metres leave a small mesh almost
+   black; the materials carry a little emissive so the ramp has something to read.
+   The amber/teal split in the daydream render is the two lights, not a texture.
+4. **A density regression the eye would miss.** Filling the frame with the card
+   pushed the 40 × 8 chat card to **79.4 %** glyph coverage — a solid block. The
+   existing `test_every_scene_is_actually_visible` bound of 60 % caught it; the
+   camera sits back at 4.4 rather than relaxed to fit the test.
+
+**Auth note, still true:** the plugin's 28 MCP tools are installed but reject the
+CLI's OAuth token (401). Every asset above was generated through the CLI path, which
+already holds a verified session. Balance after this pack: see §3.0.
+
+**Not done:** the frames are still served at 44 × 12. The assets are full-size; the
+surface that shows them is not. That is `spec.md`, which remains unimplemented.
