@@ -57,8 +57,54 @@ Capacity at real pane sizes, at a 8 × 14 px cell:
 
 ## 3. Proposal
 
-Five changes, in dependency order. Each is small; together they are the difference
-between a thumbnail and a surface.
+### 3.0 Where the imagery comes from — owner direction, 2026-11-08
+
+The sampler is not the weak part of the current picture. The **source** is. The
+scenes are procedural diagrams assembled from primitives in `tools/scene.html`
+(248 lines, no loader, no assets): a `PlaneGeometry` floor and path, a
+`CapsuleGeometry` torso with a `SphereGeometry` head, a `Points` dust cloud, planes
+standing in for feed posts. Rendered at 44 × 12 that reads as a mood. Rendered at
+4,611 cells it reads as exactly what it is — a diagram of a person, not a person.
+
+Owner direction, therefore: **the pictures are real imagery — 2D or 3D, authored in
+Meshy — rendered through three.js and converted to ASCII.** The conversion path
+already exists in this repository and does not need replacing:
+
+- `tools/render_three.py` bakes 8 frames per state by screenshotting
+  `tools/scene.html?scene=<s>&f=<i>&n=8` in headless Chromium
+  (`--use-angle=swiftshader --window-size=1600,420 --virtual-time-budget=8000`);
+- `tools/term_scene.cjs` renders three.js to half-block truecolour in a terminal
+  through `three-software-renderer`, with an 8 × 8 Bayer dissolve between scenes;
+- the scene clock is already frame-indexed (`t = (F / N) * 2π`, one seamless loop),
+  which is what a loopable bake needs.
+
+What is missing is the assets and a loader. Three additions:
+
+1. **An asset pack with provenance.** Assets land under `data/meshy/` (or
+   `data/real/` for the existing SD route) with a manifest beside them:
+   provider, prompt, date, licence, sha256, and for meshes the triangle count.
+   `data/collider/ATTRIBUTION.md` is the pattern to copy.
+2. **A loader in the scene.** `GLTFLoader` for 3D assets; for 2D, a textured
+   billboard at a declared depth, which is cheaper, deterministic, and — at 4,611
+   cells of luminance ramp — visually indistinguishable from a mesh for anything
+   further away than the camera's near plane. States may mix the two.
+3. **A seeded bake.** `tools/scene.html:186` calls `Math.random()` for dust
+   positions, so a re-bake is not reproducible today. Randomness must come from a
+   seeded PRNG keyed on the bake, or a frame cannot be re-made, compared, or
+   blamed.
+
+Bake keys are therefore `(asset-pack hash, scene id, frame index, cols, rows, ramp,
+dither)`. A size change is a new bake, not a resample of an old one.
+
+**Availability, stated plainly:** the Meshy CLI is **not installed** here
+(`npm exec --yes --package=meshy-cli@0.4.3 -- meshy …`), and every generation is a
+paid operation needing authorization and a credit balance. The 2D route is usable
+today (local SD server, `tools/gen_frames.py`); the 3D route needs an install and a
+spend decision from the owner.
+
+Five changes to the surface itself, in dependency order — on top of the source fix
+in 3.0. Each is small; together they are the difference between a thumbnail and a
+surface.
 
 ### 3.1 Size negotiation instead of a constant
 
@@ -141,12 +187,21 @@ Measured in the app on Xvfb, not asserted from the source:
 9. `card()` and `test_card_is_only_a_picture` unchanged; the full suite stays green;
    doctor still reports `1 tool(s), 8 hook(s)`.
 10. Screenshots at pane size and at page size, both with a live state.
+11. Every served frame traces to a manifest entry — provider, prompt, date, licence,
+    sha256 — and a missing asset fails loudly rather than falling back to a diagram.
+12. Two bakes of the same pack produce byte-identical glyphs (seeded randomness; the
+    current `Math.random()` in `scene.html` fails this today).
+13. The client does no WebGL and no per-frame image work: the pane's payload is text.
+14. A 3D asset survives the pipeline recognisably — a turntable test with a known
+    subject still reads as that subject at 4,611 cells.
 
 ## 5. Non-goals
 
 - No second renderer. Python still owns the glyphs; JavaScript still displays text.
   The surface chooses *size* and *which frame*; it samples nothing.
 - No image, video or canvas fallback. The medium stays ASCII.
+- No WebGL in the client. three.js runs at bake time only; a pane never opens a
+  GL context.
 - No change to `card()`, and none to BR-5: the chat card stays a picture with no
   words in it. The HUD is pane furniture, not a caption on the card.
 - No claim about creative quality. Framing is presentation.
@@ -166,6 +221,13 @@ require a model. A missing scene still renders nothing and says so.
 2. **Crop or fit?** Covering the pane loses scene edges at narrow widths; containing
    leaves letterbox bands. Proposal: cover above 3:2, contain below.
 3. **Where does the immersive case live?** Pane only, or does `/antemuse` become a
-   full-window art page (my reading of "full pane, immersive" is both)?
+   full-window art page (my reading of "full pane, immersive" is both).
+4. **Meshy spend.** Generating assets is paid and needs authorization per pack —
+   roughly one pack per state, five states. Until then the 2D route (local SD
+   server) is the only source that can be exercised without spending.
+5. **Mesh or billboard per state?** 3D meshes cost generation, load time and a
+   loader; textured 2D billboards cost almost nothing and look the same once
+   luminance-quantised. Proposal: meshes only where the camera moves past the
+   subject (walk, doomscroll); billboards where the subject is seen once.
 
 Approval of this intent is gate 1; the plan and tasks come after, and only then code.
