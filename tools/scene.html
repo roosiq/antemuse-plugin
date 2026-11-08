@@ -184,27 +184,34 @@ function dissociate() {
 }
 
 // --------------------------------------------------------------- dream
-function dream() {
+async function dream() {
   bg(0x0b0a12);
   scene.fog = new THREE.Fog(0x0b0a12, 9, 36);
   light(0x8f7bd6, 45, -3, 2, 4, 40);
   light(0xe8a33d, 35, 3, -2, 3, 40);
-  cam.position.set(0, 0.6, 7.4); cam.lookAt(0, 0, 0);
+  cam.position.set(0, 0.55, 4.6); cam.lookAt(0, 0.05, 0);
 
-  const mk = (hex, x) => {
-    const m = new THREE.Mesh(new THREE.SphereGeometry(1.15, 48, 32),
-      new THREE.MeshStandardMaterial({
-        color: hex, roughness: 0.25, metalness: 0.1,
-        transparent: true, opacity: 0.55, emissive: hex, emissiveIntensity: 0.25
-      }));
-    m.position.x = x; scene.add(m); return m;
-  };
-  const a = mk(0x6f5ab0, -0.95), b = mk(0xc08a43, 0.95);
-  const merge = Math.sin(t) * 0.5 + 0.5;          // separate -> overlap -> separate
-  a.position.x = -0.95 + merge * 0.55;
-  b.position.x = 0.95 - merge * 0.55;
-  a.position.y = Math.sin(t * 2) * 0.06;
-  b.position.y = Math.cos(t * 2) * 0.06;
+  // One object that could not exist, and a second copy of it warped out of shape:
+  // the state is recombination, so the picture shows one thing made from another.
+  const wood = new THREE.MeshStandardMaterial({ color: 0xb9a894, roughness: 0.9, metalness: 0.02, emissive: 0x171320, emissiveIntensity: 1 });
+  const ghostMat = new THREE.MeshStandardMaterial({ color: 0x6f5ab0, roughness: 0.6, metalness: 0.1, transparent: true, opacity: 0.55, emissive: 0x2a2350, emissiveIntensity: 1 });
+  const [solid, ghost] = await Promise.all([
+    prop('/data/meshy/dream/chair_branches.glb', 3.6, wood),
+    prop('/data/meshy/dream/chair_branches.glb', 3.6, ghostMat)
+  ]);
+  solid.position.set(-1.05, -0.55, 0);
+  ghost.position.set(1.15, -0.62, -0.4);
+  scene.add(solid, ghost);
+
+  // separate -> overlap -> separate, and the copy keeps turning
+  const merge = Math.sin(t) * 0.5 + 0.5;
+  solid.position.x = -1.05 + merge * 0.62;
+  ghost.position.x = 1.15 - merge * 0.62;
+  solid.rotation.y = -0.5 + t * 0.12;
+  ghost.rotation.y = 0.9 - t * 0.2;
+  ghost.rotation.z = Math.sin(t) * 0.12;
+  solid.position.y = -0.55 + Math.sin(t * 2) * 0.04;
+  ghost.position.y = -0.62 + Math.cos(t * 2) * 0.04;
 
   const N2 = 300, pos = new Float32Array(N2 * 3);
   for (let i = 0; i < N2; i++) {
@@ -219,6 +226,7 @@ function dream() {
     color: 0xcfc4ff, size: 0.035, transparent: true, opacity: 0.75
   }));
   scene.add(dust); dust.rotation.y = t * 0.12;
+
 }
 
 // ---------------------------------------------------------- doomscroll

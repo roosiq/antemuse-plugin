@@ -1,0 +1,21 @@
+{
+  "state": "dream",
+  "provider": "meshy",
+  "licence": "Meshy output, generated on a paid Meshy plan for this project",
+  "generated": "2026-11-08",
+  "assets": [
+    {
+      "file": "chair_branches.glb",
+      "role": "the impossible object \u2014 a chair grown into branches, and its warped copy",
+      "prompt": "a wooden dining chair growing thin bare tree branches from its back and seat, branches twisting upward, one impossible object, no leaves, single object, plain background",
+      "task_id": "01a1bcd5-6086-7695-8fcf-cf79f4c3afa0",
+      "credits": 5,
+      "route": "text-to-3d preview, smart topology, 8000 target triangles",
+      "sha256": "a54ec0e3c18f2cc5ea438e147922d0c1b0daa7fcd1da1eea35bca16c183b7849",
+      "bytes": 151840,
+      "triangles": 8366
+    }
+  ],
+  "rejected": [],
+  "credits_spent": 5
+}
