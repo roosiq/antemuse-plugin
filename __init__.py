@@ -149,7 +149,9 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
             opts = options.parse(a)
         except ValueError as exc:
             return f"cannot enter · {exc}"
-        if opts and not experimental_enabled(host):
+        # Only the exploration options are experimental. `block` and `allow` are
+        # ordinary state arguments, so they must not need that switch.
+        if any(k in opts for k in ("method", "seed", "budget")) and not experimental_enabled(host):
             return ("cannot enter with method, seed, or budget · experimental methods are off "
                     "(plugins.entries.antemuse.settings.experimental.enabled: true)")
         return engine.enter(str(a.get("name") or ""), a.get("minutes"), a.get("walk"), opts or None)

@@ -176,7 +176,8 @@ def settle() -> None:
 
 
 def enter(key: str, minutes: int | None = None, walk: str | None = None,
-          options: Dict[str, Any] | None = None) -> str:
+          options: Dict[str, Any] | None = None, block: bool = False,
+          allow: List[str] | None = None) -> str:
     spec_key = states.resolve(key)
     if not spec_key:
         return f"no such state. try: {', '.join(states.STATES)}"
@@ -185,6 +186,14 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
     if why_not:
         return f"cannot enter {spec_key} · {why_not}"
     spec = states.STATES[spec_key]
+    # Convenience kwargs for the two policy arguments, so an entry can be closed
+    # without building an options dict by hand. They are recorded in the same place
+    # the tool handler records them, and nowhere else.
+    if block or allow:
+        options = dict(options or {})
+        options["block"] = bool(block)
+        if allow:
+            options["allow"] = list(allow)
     with _LOCK:
         data = _load()
         previous = data.get("active") or {}
@@ -378,12 +387,7 @@ def inject() -> str | None:
     if active:
         spec = states.STATES[active["key"]]
         left = max(0, int((active["ends_at"] - time.time()) / 60))
-        allowed = spec["tools"]
-        tool_rule = (
-            "No tools in this state." if allowed == []
-            else ("Only these tools: " + ", ".join(allowed) + ".") if isinstance(allowed, list)
-            else "Tools are allowed."
-        )
+        tool_rule = _tool_rule(_effective_tools(active))
         lines += [
             f"[STATE: {spec['label']} · {left} min left · {active['turns_left']} turn(s)]",
             spec["directive"],
@@ -420,6 +424,28 @@ def inject() -> str | None:
 CONTROL_TOOLS = {"state"}  # the escape hatch must survive every state
 
 
+def _effective_tools(active: Dict[str, Any]) -> Any:
+    """What this state actually allows, as a list, `[]`, or `None` for everything.
+
+    Open unless the entry asked to be closed: a state that silently removes tools
+    ends the chain it is running inside, and that is the wrong default for an aside.
+    """
+    opts = active.get("options") or {}
+    if not opts.get("block"):
+        return None
+    if "allow" in opts:
+        return list(opts["allow"])
+    return states.STATES[active["key"]]["tools"]
+
+
+def _tool_rule(allowed: Any) -> str:
+    if allowed == []:
+        return "No tools in this state."
+    if isinstance(allowed, list):
+        return "Only these tools: " + ", ".join(allowed) + "."
+    return "Tools are open in this state."
+
+
 def policy(tool_name: str) -> Dict[str, Any] | None:
     """pre_tool_call directive: block what the state forbids."""
     if tool_name in CONTROL_TOOLS:
@@ -431,7 +457,7 @@ def policy(tool_name: str) -> Dict[str, Any] | None:
     if not active:
         return None
     spec = states.STATES[active["key"]]
-    allowed = spec["tools"]
+    allowed = _effective_tools(active)
     if allowed == []:
         return {"action": "block",
                 "message": f"the agent is {spec['label'].lower()}; no tools in this state. /return to come back."}

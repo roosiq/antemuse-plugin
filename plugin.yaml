@@ -6,11 +6,11 @@ author: Antemuse
 homepage: https://antemuse.com
 description: >
   Antemuse lets the agent itself take a walk, daydream, dream, or doomscroll. A state is a bounded change to behaviour, not a place:
-  it decides which tools are still allowed, what shape the next replies take,
-  and what residue the agent carries when the state ends. States expire on
-  minutes and turns, are injected into the turn they govern, block forbidden
-  tools before they run, and mark the reply so the human can see which state
-  produced it. Walks step through WordNet (117k synsets, named relations) and
+  it shapes the next replies, decides what residue the agent carries when the
+  state ends, and — only when the entry asks with block: true — restricts which
+  tools may run. By default a state does not interrupt the work it happens
+  inside. States expire on minutes and turns, are injected into the turn they
+  govern, and mark the reply so the human can see which state produced it. Walks step through WordNet (117k synsets, named relations) and
   dreams recombine FrameNet roles (1,221 frames); daydreams draw on stored
   memories, doomscrolls on live feeds. No model calls, no scoring.
 requires_hermes: ">=0.21.6"

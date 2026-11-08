@@ -43,12 +43,18 @@ def grid(cols: Any = None, rows: Any = None) -> "tuple[int, int]":
 FORBIDDEN = ("directive", "goal", "candidates", "candidate", "journal", "prompt", "text")
 
 
-def tools_of(spec_tools: Optional[List[str]]) -> Dict[str, Any]:
-    """A state's tool policy as three facts instead of a nullable list.
+def tools_of(spec_tools: Optional[List[str]], block: bool = False,
+             allow: Optional[List[str]] = None) -> Dict[str, Any]:
+    """A state's tool policy as facts instead of a nullable list.
 
-    ``None`` means every tool is open (walk), ``[]`` means none is (daydream,
-    dream), a list is an allowlist (doomscroll).
+    ``free`` is the default now: the state is an aside, not a lock, so nothing is
+    taken away unless the entry asked for it. Only a blocking entry reports
+    ``all``/``some``/``none``.
     """
+    if not block:
+        return {"mode": "free", "allowed": [], "blocked": []}
+    if allow:
+        return {"mode": "some", "allowed": sorted(str(t) for t in allow), "blocked": []}
     if spec_tools is None:
         return {"mode": "all", "allowed": [], "blocked": []}
     if not spec_tools:
@@ -94,6 +100,10 @@ def project(
         "seconds_left": int(active.get("seconds_left") or 0),
         "total_seconds": int(active.get("total_seconds") or 0),
         "turns_left": int(active.get("turns_left") or 0),
-        "tools": tools_of(active.get("tools")),
+        "tools": tools_of(
+            active.get("tools"),
+            block=bool((active.get("options") or {}).get("block")),
+            allow=(active.get("options") or {}).get("allow"),
+        ),
     }
     return payload

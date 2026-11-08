@@ -94,12 +94,17 @@ def test_no_forbidden_key_appears_anywhere_including_nested():
     assert found == set()
 
 
-def test_tool_modes_are_three_facts():
-    assert tools_of(None) == {"mode": "all", "allowed": [], "blocked": []}
-    assert tools_of([]) == {"mode": "none", "allowed": [], "blocked": []}
-    some = tools_of(["web_search", "read_file"])
-    assert some["mode"] == "some"
-    assert some["allowed"] == ["read_file", "web_search"]
+def test_tools_are_free_by_default_and_policy_only_when_asked():
+    """A state is an aside: the panel says tools are open unless the entry closed them."""
+    assert tools_of(None) == {"mode": "free", "allowed": [], "blocked": []}
+    assert tools_of([]) == {"mode": "free", "allowed": [], "blocked": []}
+    assert tools_of(["web_search"], block=True) == {
+        "mode": "some", "allowed": ["web_search"], "blocked": []
+    }
+    assert tools_of(None, block=True)["mode"] == "all"
+    assert tools_of([], block=True)["mode"] == "none"
+    narrowed = tools_of(["web_search", "read_file"], block=True, allow=["read_file"])
+    assert narrowed == {"mode": "some", "allowed": ["read_file"], "blocked": []}
 
 
 def test_residue_kinds_are_deduplicated_and_legacy_is_named():
@@ -120,3 +125,25 @@ def test_the_route_is_declared_at_state():
     module = load("plugin_api")
     paths = {route.path for route in module.router.routes}
     assert "/state" in paths
+
+
+def test_a_surface_may_ask_for_a_larger_grid():
+    """A 700x746 pane can hold ~87x53 cells; the chat card still asks for 44x12."""
+    payload = project(WALK, ["x"], cols=87, rows=53)
+    assert payload["frame"]["cols"] == 87
+    assert payload["frame"]["rows"] == 53
+
+
+def test_an_out_of_range_grid_is_clamped_not_refused():
+    """A surface that misreports its size should still get a frame."""
+    assert project(WALK, [], cols=5000, rows=5000)["frame"] | {} == {
+        "cols": projection.MAX_COLS, "rows": projection.MAX_ROWS, "lines": []
+    }
+    small = project(WALK, [], cols=1, rows=1)["frame"]
+    assert (small["cols"], small["rows"]) == (projection.MIN_COLS, projection.MIN_ROWS)
+
+
+def test_a_nonsense_grid_falls_back_to_the_card_default():
+    """'abc' is not a size; the chat card default is the safe answer."""
+    frame = project(WALK, [], cols="abc", rows=None)["frame"]
+    assert (frame["cols"], frame["rows"]) == (projection.FRAME_COLS, projection.FRAME_ROWS)

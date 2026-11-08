@@ -61,4 +61,26 @@ def parse(args: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError("budget must name at least one of calls, tokens, seconds")
         out["budget"] = clean
 
+    # A state does not take tools away unless the caller said so. `block` is the
+    # whole switch; `allow` exists so a caller can narrow the set without editing
+    # core/states.py, and is meaningless (and refused) without `block`.
+    block = args.get("block")
+    if block not in (None, ""):
+        if not isinstance(block, bool):
+            raise ValueError("block must be true or false")
+        out["block"] = block
+
+    allow = args.get("allow")
+    if allow not in (None, "", [], ()):
+        if not out.get("block"):
+            raise ValueError("allow needs block: true — without it every tool stays open")
+        if isinstance(allow, str):
+            allow = allow.split(",")
+        if not isinstance(allow, (list, tuple)):
+            raise ValueError("allow must be a list of tool names")
+        names = [str(a).strip() for a in allow if str(a).strip()]
+        if not names:
+            raise ValueError("allow must name at least one tool")
+        out["allow"] = names
+
     return out

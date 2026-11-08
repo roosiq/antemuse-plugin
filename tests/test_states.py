@@ -28,14 +28,22 @@ def test_a_walk_leaves_every_tool_open():
     assert engine.policy("web_search") is None
 
 
-def test_dream_still_takes_every_tool():
-    engine.enter("dream")
+def test_a_state_does_not_take_tools_away_unless_asked():
+    """The default: an aside is an aside. Nothing about a daydream stops a patch."""
+    engine.enter("daydream")
+    assert engine.policy("terminal") is None
+    assert engine.policy("write_file") is None
+    assert "Tools are open in this state." in (engine.inject() or "")
+
+
+def test_dream_still_takes_every_tool_when_the_entry_asks():
+    engine.enter("dream", block=True)
     assert engine.policy("terminal")["action"] == "block"
     assert "No tools in this state" in (engine.inject() or "")
 
 
 def test_doomscroll_allows_reading_but_blocks_writing():
-    engine.enter("doomscroll")
+    engine.enter("doomscroll", block=True)
     assert engine.policy("web_search") is None
     assert engine.policy("read_file") is None
     blocked = engine.policy("write_file")
@@ -44,12 +52,29 @@ def test_doomscroll_allows_reading_but_blocks_writing():
 
 
 def test_doomscroll_is_read_only_and_random():
-    engine.enter("doomscroll")
+    engine.enter("doomscroll", block=True)
     assert engine.policy("web_search") is None
     assert engine.policy("terminal")["action"] == "block"
     directive = engine.inject()
     assert "random" in directive.lower()
     assert "do not produce anything" in directive
+
+
+def test_an_entry_may_narrow_the_set_without_editing_the_state():
+    engine.enter("dream", block=True, allow=["read_file"])
+    assert engine.policy("read_file") is None
+    assert engine.policy("write_file")["action"] == "block"
+    assert "Only these tools: read_file." in (engine.inject() or "")
+
+
+def test_allow_without_block_is_refused_and_enters_nothing():
+    from core import options
+    import pytest
+
+    with pytest.raises(ValueError) as excinfo:
+        options.parse({"allow": ["read_file"]})
+    assert "block: true" in str(excinfo.value)
+    assert engine.peek() is None
 
 
 def test_state_expires_on_turns_and_leaves_residue():
