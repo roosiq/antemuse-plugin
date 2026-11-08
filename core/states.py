@@ -61,8 +61,8 @@ STATES: Dict[str, Dict] = {
         "contract": "random feed · consume, do not synthesize",
         "residue": "doomscrolled: random feed consumed",
     },
-    "trailhead": {
-        "label": "AT THE TRAILHEAD",
+    "greenfield": {
+        "label": "GREENFIELD",
         "minutes": 5,
         "turns": 3,
         "cadence": 20,
@@ -72,15 +72,16 @@ STATES: Dict[str, Dict] = {
         "scene": "walk",
         "feeds": True,
         "directive": (
-            "You are at the trailhead of a project that does not exist yet. Look at what is "
-            "actually there — the files, the first commit, the absence of a spec — then name ONE "
-            "direction: what this project is for, and which spec file that sentence becomes (or "
-            "which file it creates). One direction, stated. No menu, no ranking of options, no "
-            "summary of the repository back to the person. If a direction is wrong they will say "
-            "so; five of them are unusable. You do not write the spec from this state."
+            "You are in a greenfield: an empty repository, no spec, no conventions to inherit. "
+            "Look at what is actually there — the files, the first commit, what nobody has decided "
+            "yet — then name ONE direction: what this product is, and which spec file that sentence "
+            "becomes (or which file it creates). One direction, stated plainly, in the present "
+            "tense: the promise, not the roadmap. No menu, no ranked options, no summary of the "
+            "repo back to the person. If the direction is wrong they will say so; five of them are "
+            "unusable. You do not write the spec from this state."
         ),
-        "contract": "one direction · named with the spec file it becomes",
-        "residue": "trailhead: a direction named, and where it goes",
+        "contract": "one direction · the promise, and where it goes",
+        "residue": "greenfield: a direction named, and where it goes",
     },
     "dream": {
         "label": "DREAMING",
@@ -110,9 +111,11 @@ ALIASES = {
     "scroll": "doomscroll",
     "dscroll": "doomscroll",
     "distance": "dissociate",
-    "start": "trailhead",
-    "new_project": "trailhead",
-    "greenfield": "trailhead",
+    "start": "greenfield",
+    "new_project": "greenfield",
+    "trailhead": "greenfield",
+    "zero": "greenfield",
+    "day-one": "greenfield",
 }
 
 

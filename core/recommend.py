@@ -44,7 +44,7 @@ WHY = {
 }
 
 
-_NEW_CACHE: Dict[str, Any] = {"at": 0.0, "value": None}
+_NEW_CACHE: Dict[str, Any] = {"root": "", "at": 0.0, "value": None}
 
 
 def _new_project() -> Optional[str]:
@@ -54,12 +54,13 @@ def _new_project() -> Optional[str]:
     a turn for a fact that changes once a day is a waste of a subprocess.
     """
     now = time.time()
-    if now - float(_NEW_CACHE["at"] or 0) < 60:
+    from . import sources, storage
+    root = storage.project_root()
+    where = str(root or "")
+    if where == _NEW_CACHE.get("root") and now - float(_NEW_CACHE["at"] or 0) < 60:
         return _NEW_CACHE["value"]
     value = None
     try:
-        from . import sources, storage
-        root = storage.project_root()
         if root is not None:
             specs = sources._spec_files(root)
             git = sources._git(root)
@@ -71,7 +72,7 @@ def _new_project() -> Optional[str]:
                     value = f"{commits} commit(s) and no spec"
     except Exception:
         value = None
-    _NEW_CACHE.update({"at": now, "value": value})
+    _NEW_CACHE.update({"root": where, "at": now, "value": value})
     return value
 
 
@@ -154,7 +155,7 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     for pattern, state, evidence in (
         # On an empty repository there is no loop worth interrupting: there is nothing
         # to be stuck in yet. This is the one pattern that outranks everything.
-        ("new project", "trailhead", _new_project()),
+        ("new project", "greenfield", _new_project()),
         ("loop", "walk", _loop(work)),
         ("wall", "doomscroll", _wall(work)),
         ("saturation", "dream", _saturation(work, open_decisions)),
@@ -162,6 +163,5 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     ):
         if evidence:
             return {"pattern": pattern,
-                    "line": f"this looks like a {'trailhead' if state == 'trailhead' else state}"
-                            f" · {evidence} · /{state}" + ("" if state == "trailhead" else " 5")}
+                    "line": f"this looks like a {state} · {evidence} · /{state}"}
     return None

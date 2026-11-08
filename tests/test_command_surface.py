@@ -57,7 +57,7 @@ def test_commands_do_not_differ_only_by_plurality():
 
 
 def test_the_public_surface_is_six():
-    assert registered_commands() == {"walk", "daydream", "doomscroll", "dream", "trailhead",
+    assert registered_commands() == {"walk", "daydream", "doomscroll", "dream", "greenfield",
                                      "return"}
 
 

@@ -137,7 +137,7 @@ def _plugin():
 def test_the_commands_are_registered():
     ctx = _Ctx()
     _plugin().register(ctx)
-    assert set(ctx.commands) == {"walk", "daydream", "doomscroll", "dream", "trailhead",
+    assert set(ctx.commands) == {"walk", "daydream", "doomscroll", "dream", "greenfield",
                                 "return"}, (
         "the public surface is the five states and the way out"
     )

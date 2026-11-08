@@ -339,10 +339,32 @@ def _enter(key: str, minutes: int | None = None):
             # /walk upward  →  walk that graph; /walk 5  →  five minutes
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
-            return engine.enter(key, minutes, walk=arg) + "\n" + states.palette()
+            line = engine.enter(key, minutes, walk=arg)
+            _picture()
+            return line + "\n" + states.palette()
         override = int(arg) if arg.isdigit() else minutes
-        return engine.enter(key, override) + "\n" + states.palette()
+        line = engine.enter(key, override)
+        _picture()
+        return line + "\n" + states.palette()
     return handler
+
+
+def _picture() -> bool:
+    """Post the state's picture into the chat, as its own message.
+
+    The chat is where a person actually watches a state, so the picture belongs there
+    rather than behind a command they have to remember. It is still only a picture:
+    nothing from the injected material is ever rendered into it.
+    """
+    try:
+        from core import surfaces
+        view = engine.watch_state()
+        if not view.get("active"):
+            return False
+        return _post(surfaces.card(view, engine.platform() or "discord"))
+    except Exception as exc:
+        logger.debug("antemuse: no picture posted: %s", exc)
+        return False
 
 
 def _return(_raw: str) -> str:

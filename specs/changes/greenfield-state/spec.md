@@ -1,4 +1,4 @@
-# Trailhead — the state for a project that does not exist yet
+# Greenfield — the state for a project that does not exist yet
 
 Status: **implemented** 2026-11-08. Owner: Ryan Cook. This adds a fifth state, which
 revises the four-state lifecycle protected in `docs/spec.md` §18. The revision is the
@@ -11,21 +11,21 @@ memories to join, a feed to consume, stored concepts to recombine. At the start 
 project there is nothing to recombine — and the failure mode is not "no ideas", it is
 **a menu**. Five plausible directions, none chosen, no spec written.
 
-A trailhead is the one place where the right output is a single direction and the
+A greenfield is the one place where the right output is a single direction and the
 artifact it belongs in.
 
 ## Definition
 
 | Field | Value |
 |---|---|
-| name | `trailhead` (alias `start`) |
+| name | `greenfield` (aliases `start`, `trailhead`, `new_project`, `zero`, `day-one`) |
 | duration | 5 minutes |
 | turns | 3 |
 | cadence | 20 s |
 | tools | `read_file`, `search_files` — read the project, change nothing |
 | feeds | yes: what the project actually contains |
 | contract | one direction · named with the spec file it becomes |
-| residue | `trailhead: a direction named, and where it goes` |
+| residue | `greenfield: a direction named, and where it goes` |
 
 ## Material
 
@@ -36,11 +36,11 @@ Deterministic, read-only, no model call on the state path:
 - whether a README exists, and its opening line;
 - **what is already decided**: `specs/`, `.specify/specs/*/spec.md`, `docs/spec.md`,
   `AGENTS.md`;
-- the entry seed from `core/seeding.py` (project-first), so two trailheads in the same
+- the entry seed from `core/seeding.py` (project-first), so two greenfields in the same
   repository start from different words.
 
 Missing evidence is named, not guessed: `no project root · no .git ancestor`,
-`git unavailable · <reason>`, `no README`, `no spec files yet`. A trailhead on a project
+`git unavailable · <reason>`, `no README`, `no spec files yet`. A greenfield on a project
 that already has a real spec says so — that is a finding, not a failure.
 
 ## Directive (what the agent is told)
@@ -55,22 +55,22 @@ agent's normal work, done on the person's instruction, outside the state.
 
 ## When it is recommended
 
-`core/recommend.py` fires `trailhead` when the project is **new**: fewer than three
+`core/recommend.py` fires `greenfield` when the project is **new**: fewer than three
 commits *and* no spec artifacts. It is the only recommendation that outranks a loop,
 because on an empty repository there is no loop worth interrupting — there is nothing to
 be stuck in.
 
 Once the project has three commits or a spec file, the pattern stops firing. A
-recommendation that keeps pointing at the trailhead after the trail has started is a
+recommendation that keeps pointing at the greenfield after the trail has started is a
 malfunction, not an encouragement.
 
 ## Acceptance criteria
 
-1. `states.STATES["trailhead"]` exists with the budget above, and `/trailhead` is
+1. `states.STATES["greenfield"]` exists with the budget above, and `/greenfield` is
    registered; `/return` remains the only way out.
-2. `sources.trailhead_text()` returns what the repository contains, and **names** each
+2. `sources.greenfield_text()` returns what the repository contains, and **names** each
    missing piece instead of inventing it.
-3. `recommend.suggest()` returns `trailhead` for a fresh repository and nothing for a
+3. `recommend.suggest()` returns `greenfield` for a fresh repository and nothing for a
    repository with a spec.
 4. Tool policy is the read-only pair; nothing in this state can modify the project.
 5. The picture contract is unchanged: wordless card (BR-5), no candidate text on any
@@ -78,7 +78,7 @@ malfunction, not an encouragement.
 
 ## Not built
 
-- **Its own art.** The state renders with the `walk` scene until a trailhead pack is
+- **Its own art.** The state renders with the `walk` scene until a greenfield pack is
   generated; this is named in `docs/architecture.md` rather than hidden.
 - **Writing the spec.** Deliberately out of scope: the state recommends, the agent acts
   on instruction.
