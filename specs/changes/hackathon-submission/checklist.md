@@ -1,6 +1,6 @@
 # Hackathon submission — readiness checklist
 
-Evidence cut: 2026-11-08 15:27 EST, HEAD `c3f8ce3`, tree at `specs/changes/hackathon-submission/`.
+Evidence cut: 2026-11-08 15:45 EST, HEAD `00438b6` (pin candidate).
 Checked with the source-grounded preflight `hackathon_judge` (v0.2.1, 33 rules)
 plus the official validator. The preflight is not official Nous judging.
 
@@ -8,19 +8,17 @@ plus the official validator. The preflight is not official Nous judging.
 
 | # | rule | evidence | fix |
 |---|---|---|---|
-| 1 | PRE-01 public repo | `git remote -v` is **empty**; `gh auth status` → "The token in default is invalid" for `roosiq` | W0: re-auth, create public repo, push |
-| 2 | CAT-13 disclosures | no Disclosures section in `README.md`; judge: "README lacks an obvious disclosure section" | W2 |
-| 3 | License | no `LICENSE` file in the tree or in the sibling repos | W1 |
-| 4 | HACK-01 catalog PR | no entry, no PR | W3 |
-| 5 | HACK-02/03 demo | no video, no X post | W4/W5 |
-| 6 | HACK-04 form | not submitted | W5 |
+| 1 | PRE-01 public repo | `git remote -v` is empty; `gh auth status` → "The token in default is invalid" for `roosiq`; owner decision: keep private for now | H01–H02, deferred by decision — the catalog PR and form stay blocked until public |
+| 2 | HACK-01 catalog PR | no entry, no PR; draft ready at `antemuse.catalog.yaml` with `sha: PIN_SHA_40` | H30–H32 |
+| 3 | HACK-02/03 demo | no video, no X post; shot list and capture path planned | H40–H44 |
+| 4 | HACK-04 form | not submitted | H50 |
 
 ## Green (verified today)
 
 | rule | evidence |
 |---|---|
 | PRE-02 loadable layout | `plugin.yaml` + `__init__.py` + `desktop/plugin.js` + `dashboard/manifest.json` |
-| PRE-03 local validation | `hermes plugins validate . --install-deps --json` on a clean clone of `c3f8ce3`: manifest, requires_hermes, load, **capabilities match registrations**, config_schema, requires_env, dependency constraints, security scan (`safe`), **no core override**, **desktop surface** — all `ok: true`, `warnings: []` |
+| PRE-03 local validation | `hermes plugins validate . --install-deps --json` on a clean clone of `00438b6`: 16/16 checks `ok: true`, `warnings: []` — manifest, requires_hermes, load, **capabilities match registrations**, config_schema, requires_env, dependency constraints, security scan (`safe`), **no core override**, **desktop surface** |
 | CAT-06 capabilities match | same run: `"matches registrations"` |
 | CAT-07 security scan | same run: `"safe"` |
 | CAT-08 desktop SDK | same run: `"stays inside the plugin SDK surface"`; the judge's `tools/*.js` findings are the bundled three.js and the dev harness, neither loaded by `desktop/plugin.js` |
@@ -28,7 +26,7 @@ plus the official validator. The preflight is not official Nous judging.
 | CAT-14 compatibility | `requires_hermes: ">=0.21.6"`, installed Hermes is `0.22.5`; floor is a SemVer floor, not a date |
 | CAT-17 reviewable payloads | `git ls-files` has zero `.pyc`/`.pyo`/binaries/archives; `__pycache__/` is ignored; the judge's bytecode list is all untracked working-tree output |
 | CAT-10 dependency bounds | `pillow>=10,<14`, `nltk>=3.8,<4` — bounded both ends, no newest-release floor |
-| Reliability | 677 collected at `c3f8ce3`: **670 passed, 7 skipped in 8.5 s** on a clean clone (the 7 are the renderer tests, which skip without `npm ci`); `hermes plugins doctor` → 1 tool, 8 hooks. Run `npm ci` and repeat so no test is skipped at the pin |
+| Reliability | 677 collected at `00438b6`: **670 passed, 7 skipped in 8.5 s** on a clean clone (the 7 are the renderer tests, which skip without `npm ci`); `hermes plugins doctor` → 1 tool, 8 hooks. Run `npm ci` and repeat so no test is skipped at the pin |
 
 ## Amber (fix or accept with a decision)
 

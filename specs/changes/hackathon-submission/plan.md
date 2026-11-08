@@ -5,6 +5,10 @@ Companion to [`spec.md`](spec.md). Times are EST. Deadline 2026-11-11 17:00.
 Working assumption: **submit on Tue 2026-11-10 by 18:00**, one day of buffer.
 The catalog PR may be pending at submission — HACK-01 accepts an opened PR.
 
+Owner decision, 2026-11-08: the repository stays **private** for now. Prep that
+does not need a public remote proceeds (licence, README, screenshots, validation,
+demo, catalog-entry draft); H31 onward and the form wait on Ryan making it public.
+
 ---
 
 ## W0 — Unblock and freeze (Sun 11-08, ~30 min, human-gated)
