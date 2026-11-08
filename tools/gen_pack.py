@@ -74,6 +74,18 @@ MESHES = [
     ("scene", "fractal_spiral_flat", "a flat golden spiral of geometric segments on a dark disc, neon edge", 6000),
 ]
 
+# --- third wave: forms built to read at eight glyphs, for the compositions that do
+# not read yet. A face-on wall beats a corridor when the subject must fill a pane, and
+# a tall waisted solid beats a faceted ball as the opposite of a mass.
+MESHES += [
+    ("doomscroll", "slab_wall", "a wall of stacked rectangular slabs with deep even gaps between them, face on, flat planes, neon lines in the seams", 9000),
+    ("doomscroll", "plate_stack_face", "three large plates layered front to back seen face on, each with a geometric engraved border, deep shadow between them", 8000),
+    ("doomscroll", "engraved_panel_large", "one large rectangular panel with a dense engraved geometric pattern of concentric squares and radial lines, flat and face on", 6000),
+    ("daydream", "hyperboloid_tall", "a tall waisted hyperboloid of one sheet, thin ruled lines, chrome, geometric and empty in the middle", 8000),
+    ("daydream", "banded_sphere", "a sphere banded by concentric horizontal rings with gaps between the bands, chrome, geometric", 7000),
+    ("walk", "square_arch_monolith", "a single square arch cut from one block, sharp inner edges, matte black with neon lining", 5000),
+]
+
 IMAGES = [
     ("walk", "lattice_horizon", "an endless orthogonal neon lattice horizon over black, geometric, cyberpunk, no objects, no sky detail", "16:9"),
     ("daydream", "platonic_field", "a field of faint wireframe platonic solids floating in deep indigo, geometric, no text", "1:1"),
