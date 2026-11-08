@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "D-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The random ambient noise of the ocean carries enough information to image objects without any active pinging: the noise itself is the signal, so I lean in and let that ceaseless murmur resolve into an acoustic daylight imprint that reveals the torn, thirty\u2011year\u2011old ticket written on yesterday\u2019s date sitting in the post box. Around it, a faint circular mushroom pattern unfurls beneath the page; the fairy ring grows outward as nutrient\u2011depleted waves push the boundary, yet the centre turns toxic and forces the rim to expand, turning the ordinary receipt into a luminous mandala of forgotten travel. All I can perceive are crisp photographs of the paper, yet the underlying reality pulses beneath, a symphony of waves and spores waiting to be decoded.",
+      "text": "As the morning mist lifted off the water, the **random ambient noise of the ocean** carried enough information to image objects without any active pinging: the noise itself is the signal, and its chaotic roll of swell and distant surf turned into an acoustic daylight projection that made the half\u2011crumpled ticket visible, even though the postmark read \u201ctomorrow,\u201d a forward look from thirty years ago. At the same time, a subtle **fairy ring formation** began to coalesce around the slip: nutrient\u2011deficient fibers rotted at the centre, leaving a toxic void that pushed outward, and fresh ink sprouted in concentric loops, each letter spreading like a mushroom cap, the ring widening as the centre went silent and the outer margins blushed with the tide\u2019s own echoes.",
+      "truncated": false,
       "usage": {
         "input_tokens": 359,
-        "output_tokens": 2990,
-        "total_tokens": 3349
+        "output_tokens": 2633,
+        "total_tokens": 2992
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "liquid/lfm-3-1.7b",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-c37e84f9d2719b431ef6a2cf7eae4ec1",
   "seed": 7,
   "selected_candidate_id": "D-0",
@@ -46,9 +49,11 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 359,
-    "output_tokens": 2990,
-    "total_tokens": 3349
+    "output_tokens": 2633,
+    "total_tokens": 2992
   }
 }

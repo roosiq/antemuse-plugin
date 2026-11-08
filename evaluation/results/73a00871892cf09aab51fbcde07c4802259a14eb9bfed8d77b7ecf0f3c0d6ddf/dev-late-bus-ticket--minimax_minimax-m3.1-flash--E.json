@@ -5,36 +5,42 @@
       "branch": 0,
       "candidate_id": "E-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "He read the date three times, not because he hadn't understood it the first two, but because he wanted a third opinion and there was nobody in the house to give one. The ticket was a return \u2014 the 47 to Ardmore via the coal wharf \u2014 issued at 6.40 in the morning, and the punch holes in it were the ones he remembered, two neat bites from the little brass clip he'd carried for a year and then lost. He had ridden that bus with his father's suitcase between his knees and the conductor's dog asleep on the platform. The paper had gone the colour of weak tea. The ink on the date had not. It was black, and it was fresh, and it was dated tomorrow. He set it on the table, went and put the kettle on, and stood at the window a while with his coat on. The 47 had been cut back to the estate in 1998; the wharf stop was tarmac over now, and there were houses standing in the gap where the turning circle used to be. He knew that because he'd driven the bypass and seen it. He knew also, without much wanting to, that the timetable was still in the window of the chip shop on the corner \u2014 same route number, same hours, though the 6.40 had gone and the first bus now came at nine. It was half past six. In twenty-three minutes the 47 would leave the terminus, if it still left the terminus, and it would go past a stop that no longer existed, and it would be half empty, and it would be the same bus, or a bus like it, in the same livery, which was the part that had him standing there in his coat at half past six in the morning with an old ticket in his hand and no plan at all.",
+      "text": "She set it on the table where the post had lain all morning and did not open it for a long while. The envelope was soft as cloth, the postmark faded to a rust-coloured ghost of the town she had left at nineteen, the stamp a commemorative issue nobody had wanted. Inside, the ticket had gone the colour of old tea, but the date was still legible: the 7:40 to Ardmore, the fifteenth of September \u2014 thirty years from tomorrow. On the back, in the same hand that had addressed the envelope to a name she had not used in three decades, someone had pencilled a seat number, 31, the window, and beneath it a single word: *wait*.",
+      "truncated": false,
       "usage": {
         "input_tokens": 221,
-        "output_tokens": 1284,
-        "total_tokens": 1505
+        "output_tokens": 665,
+        "total_tokens": 886
       }
     },
     {
       "branch": 1,
       "candidate_id": "E-1",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The envelope was addressed to me in my own handwriting \u2014 the penmanship of a man who still believed in paper, and in the post. The ticket inside was for the 7:40 from the Victoria terminus to Ardmore, a route discontinued the autumn my mother died; I had bought it that June, intending to go and then not going, and had spent the money on wine instead, and the stub had lain in a drawer ever since, waiting for nothing at all. Now it was postmarked Tuesday and dated tomorrow, and there was a seat number printed on it \u2014 31, window \u2014 in the same typewriter serif as the ticket I kept for the journey I did make. I stood in the kitchen a long time holding it by the edges, not rubbing the ink, the way you handle something that might turn out to be a symptom if you press too hard. Then I put on my coat and walked down to the terminus and stood on platform four in the rain, and at 7:38 a bus came round the corner that has not run that road in thirty years, and the driver leaned out, took the ticket from my hand, and said, \"Right. That's the 7:40. Sit anywhere you like.\"",
+      "text": "The envelope was postmarked yesterday, which was the first oddity; the ticket inside was dated tomorrow. A single fare, Route 47, Ardmore Cross to the Central Terminus, valid for one journey only, the price printed in a currency that had not been legal tender for thirty years. The paper had gone the colour of weak tea, but the ink was black and fresh as if it had been struck this morning. I turned it over. On the back, in the same crisp hand, the date again, and beneath it four words in my own handwriting: *Wait at the stop. Don't wave.* I hadn't been to Ardmore Cross since I was nine years old. The stop had been pulled up in 2003 and replaced by a shelter on the far side of the overpass, and Route 47 had been renumbered twice and truncated in 2011; there was no 47 on any timetable now, and no Ardmore Cross at all. I checked the app twice, in case I had misremembered the road. Nothing. But a ticket, in my experience, is not an invitation \u2014 it is an instruction, and it does not care whether you have kept the appointment all this time. So I put it in my coat pocket. At ten to nine the next morning I stood on the far side of the overpass where the old stop had been, with the fog coming down off the river and my hands in my pockets, and I did not wave. At nine exactly a bus came round the corner that I did not recognise: no number on the front, no destination blind, windows opaque with steam, the doors sighing open like something waking up. The driver looked at me, and at the ticket in my hand, and nodded as though he had been expecting me for a very long time.",
+      "truncated": false,
       "usage": {
         "input_tokens": 221,
-        "output_tokens": 1676,
-        "total_tokens": 1897
+        "output_tokens": 1312,
+        "total_tokens": 1533
       }
     },
     {
       "branch": 2,
       "candidate_id": "E-2",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The ticket was a paper strip the width of a thumb, cream-coloured, soft at the creases in the way only three decades of handling can make it soft, and I knew it before I read the date because my mother had kept it in the tin with the buttons and the tram stubs and the ferry ticket from Aberdeen. Thirty years ago I had bought it at the kiosk on Bridge Street for the 6:20 to Craigmore, and I had not gone. That was the whole of it, really \u2014 one missed journey, one evening my mother spent watching the light go out of the window of the room I never left. Now it had come back through the post, and the date printed along the top of it was tomorrow.\n\nI turned it over. On the back, in the same faded blue ink, a seat number: 41. I don't know why that frightened me. The 6:20 to Craigmore had forty-one seats; I had counted them that night from the timetable in the kiosk, with the rain coming down and the bus already pulling away from the stand with its door open and the driver looking up the street as though he had all the time in the world. Forty-one seats, and the last of them was the one by the window on the nearside, and I remember thinking, with the tickets in my hand and the rain going down the collar of my coat: if I ever do go, that's the one.\n\nThe bus stop was still there. The kiosk was not \u2014 that was a car park now, and the cinema opposite had become a supermarket \u2014 but the stop was a stop, the same chipped enamel plate with the same route number, and somebody had kept the timetable in a plastic sleeve against the rain, and tomorrow's date was chalked on the board in a hand that looked very much like my mother's. I got there early. The 6:20 came in on time, which was the first thing that was wrong with it, because no bus in the whole of my life has ever once come in on time. It was an old bus, the kind with the slatted windows and the folding door, and the number on the front was 41, and the driver \u2014 a young man, twenty-five at most \u2014 tipped his head at me as if he had been expecting me all evening, and held out his hand for the ticket.\n\n\"Forty-one,\" he said, when I gave it to him, and punched it. \"That's the window, on the nearside. She'll wait for you.\"",
+      "text": "The envelope was addressed in my own handwriting, which was the first thing that put me wrong about it \u2014 the loop of my capital A leaning hard to the right, the way I signed my name before I was old enough to sign anything properly. The postmark was thirty years old, a faded blue ghost of the sorting office at Mill Lane, but the ticket inside was crisp as a brand-new one, the card still pale, the ink still wet-looking. Route 47. Fare 37p. Date: tomorrow. I turned it over, and on the back, in the printer's small type, the destination read WHITFIELD GATE, a stop that had been demolished before I was born. The timetable in my pocket \u2014 the one I had been meaning to replace since spring \u2014 confirmed what I already knew: no 47 ran to Whitfield Gate, or anywhere now. So I stood in the hall holding this small bright rectangle of paper, feeling its faint dampness, its impossible newness, and I understood that the seat had been booked, that someone in this city was keeping it warm, and that they expected me to be there. Outside, the evening traffic thinned, and somewhere down the road an engine turned over \u2014 a sound like a bus pulling away from a stop it had no intention of leaving.",
+      "truncated": false,
       "usage": {
         "input_tokens": 221,
-        "output_tokens": 1889,
-        "total_tokens": 2110
+        "output_tokens": 875,
+        "total_tokens": 1096
       }
     }
   ],
@@ -44,6 +50,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "minimax/minimax-m3.1-flash",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-8ec34acb763b02a18cc08a74e8bfd0c1",
   "seed": 7,
   "selected_candidate_id": null,
@@ -66,9 +73,11 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 3,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 663,
-    "output_tokens": 4849,
-    "total_tokens": 5512
+    "output_tokens": 2852,
+    "total_tokens": 3515
   }
 }

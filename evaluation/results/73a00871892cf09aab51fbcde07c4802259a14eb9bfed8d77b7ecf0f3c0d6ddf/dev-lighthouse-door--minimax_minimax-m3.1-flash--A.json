@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "A-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "He stood a long while before touching it, because the cliff face had given him no permission to. The door was set flush into the granite at the height of his chest, its frame of blackened oak in a style he had seen only in the old drawings of the North Light itself \u2014 squared timbers, iron nails gone to orange rust, a brass handle worn smooth and shiny as a river stone on one side and untouched on the other, which meant someone had used it, and recently, and had always approached from the same direction. The salt air moved through the passage behind him with the slow, deliberate breath of something waking up, and he thought of the lamp two hundred feet above, its wicks trimmed and lit, its great lens turning out over a black and empty sea, and of the log book waiting for the hour's entry: *Wind, NE. Sea, moderate. Light, burning.* He would have to climb back up to write it. He would have to write it and leave the door alone, and that was the correct thing, and he found he could not make his hands obey the idea. So he reached out and pressed his palm flat against the wood, and it was warm \u2014 not sun-warm, not even the mild warmth of a wall that has held the afternoon \u2014 but the deep, living warmth of a room with a fire in it, and from somewhere beyond the hinges came the sound of water dripping, and then, very faintly, the sound of someone humming.",
+      "text": "The rock was wet everywhere else \u2014 slick with spray, skinned with weed \u2014 but the stone framing the door was dry as a bone, and the brass hinges were polished bright, as though someone had come along with a rag and an oil can and kept them free of rust. He had walked this path every evening for nineteen years and he knew every hollow and loose stone in it; he would have sworn there was nothing here but cliff. Yet the door stood in the rock face like a mouth, six feet high, its panels plain, its threshold worn to a shallow groove in the middle, as if a great many feet had passed over it and gone down. Above him the lamp room stood dark, and the sun was dropping toward the water like a coin slipped into a slot; the wick wanted trimming, the reservoir wanted filling, and the fog would come in on the tide as it always did. But the air breathing out from under the door was warm. It smelled of lamp oil and hot metal, and beneath that, faintly, of the sea \u2014 though the sea lay two hundred feet below the path and no tide was running. He set down his can, and laid his palm flat against the wood, and the wood was warm too.",
+      "truncated": false,
       "usage": {
         "input_tokens": 225,
-        "output_tokens": 438,
-        "total_tokens": 663
+        "output_tokens": 949,
+        "total_tokens": 1174
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "minimax/minimax-m3.1-flash",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-0539cfebc2fe1d5721a297100b8fe85b",
   "seed": 7,
   "selected_candidate_id": "A-0",
@@ -42,9 +45,11 @@
   },
   "task_id": "dev-lighthouse-door",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 225,
-    "output_tokens": 438,
-    "total_tokens": 663
+    "output_tokens": 949,
+    "total_tokens": 1174
   }
 }

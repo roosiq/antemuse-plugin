@@ -5,36 +5,42 @@
       "branch": 0,
       "candidate_id": "C-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The envelope was cream-coloured, gummed shut with the sort of glue that eats its own adhesive within a decade, and the stamp in the corner was a 22p, out of circulation since the year the Aldershot depot closed. The postmark was smudged but the date beneath it was legible: tomorrow \u2014 the fourteenth of next month, in a year that had not yet happened. Inside was a ticket, buff card gone the colour of weak tea, punched once at the top edge: the 47 to Aldershot, a route that had run for seven years and then hadn't, the fare still printed in old pence, the departure at 7:40 in the morning. I knew that journey. I was fourteen, the windows were fogged, a conductor let me keep the stub because I asked him what the hole was for. But this was the ticket for the one I didn't take \u2014 the later bus, the one my mother talked me out of at the counter, the one I have been sorry for since I was old enough to be sorry. It was dated tomorrow. Which meant either I had bought it thirty years early, in a depot that no longer stood, on a route that no longer ran, with a coin that had not yet been minted; or that the bus was coming, thirty years late, and would wait for me at the stop at 7:40 in the morning, engine idling, door open, the conductor holding out his hand for a fare I had already paid.",
+      "text": "I turned it over and there was no envelope, no stamp, no postmark \u2014 only the ticket itself, lying between the gas bill and a leaflet for a window-cleaning service, as though it had always been part of the post. The date across the top was tomorrow's: the same weekday, the same month, thirty-one years and one day ahead of the summer I left. Route 47, out through the marshes where the herons stood in the reeds; the conductor had punched it without looking up, the way he did for everyone, and the paper had gone soft as cloth in my wallet, and I had kept it, God knows why, because by then the line was being cut and there would be no more tickets to keep. I held it up to the window. The ink was fresh \u2014 faintly warm, like something just off a press \u2014 and the fare at the bottom was a sum I had no way of imagining paying. Someone had posted it. That was the part I kept turning over. Not the date, not the route: the posting. Because the 47 no longer runs past the marshes; it stops at the ring road now, and has for years, and the man who could have sent it has been in the ground since the winter my mother died. So either someone had found the ticket and dated it forward out of kindness or malice, or the timetable had never really stopped running \u2014 and tomorrow there would be a bus, and a conductor who did not look up, and a seat by the window with the reeds going by on the left.",
+      "truncated": false,
       "usage": {
         "input_tokens": 221,
-        "output_tokens": 2387,
-        "total_tokens": 2608
+        "output_tokens": 1342,
+        "total_tokens": 1563
       }
     },
     {
       "branch": 1,
       "candidate_id": "C-1",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The envelope was addressed to me in my own handwriting, though I had never written it \u2014 the same cramped, childish capitals I had used at eleven, before my hand learned to slant. Inside was a single ticket, card stock gone the colour of weak tea, its edges worn soft as cloth from being handled. Route 14: the one that used to run out past the reservoir and up to the radio mast, a journey I had made every day that summer. The date on it was tomorrow. I carried it to the window and held it up to the grey light, checking the numerals twice, three times, and at the bottom, faded almost to nothing, was the conductor's punch mark I remembered him making with a small silver tool \u2014 a man named Pike, who had let me pay with a coin I did not have and never mentioned it again. Then I went and stood in the hall with the wall clock ticking and the buses going past down the road, one every ten minutes, exactly on time, as they had when I was eleven and knew the whole timetable by heart. I did not sleep. At half past five I put on my coat and walked down to the stop at the end of the street and stood there in the drizzle with the ticket crushed in my fist, waiting for the 14 to come grinding up the hill with its doors sighing open \u2014 as though it had never once stopped running.",
+      "text": "The ticket was a return, and it was the return half that had arrived: the outbound stub had been torn off along a perforation so fine it looked like a scar. Route 47, the old green-and-cream livery, the fare in pounds and pence, and in the box marked for the date, tomorrow's date, written in the same looping hand that had filled in the destination thirty years ago \u2014 my mother's, I realised, the same hand as the note she had left on the kitchen table the morning she went in to register at the hospital: *back by six, don't wait up.* She had never come back by six. She had, in fact, never come back at all, and I had spent one decade not waiting and one decade not not-waiting, and now here was the return half, postmarked today, dated tomorrow, as though the timetable had simply been holding it all this time, patient as a station clock, waiting for somebody to travel on it. I went down to the corner and looked at the stop. The shelter had been swapped for a glass one and the timetable case was empty, but the pole was still the same pole, and the tarmac still held the pale rectangle where the old shelter's concrete foot had stood, and I stood there a long while in the wind, holding a ticket for a journey that had been paid for before I was born.",
+      "truncated": false,
       "usage": {
         "input_tokens": 221,
-        "output_tokens": 951,
-        "total_tokens": 1172
+        "output_tokens": 1603,
+        "total_tokens": 1824
       }
     },
     {
       "branch": 2,
       "candidate_id": "C-2",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The envelope was the old kind \u2014 pale blue, the sort they stopped printing in the nineties \u2014 and the stamp was a hologram, so it had clearly been through a machine that hadn't existed when I bought the ticket. The card inside was brown, punched once at the top, which meant it had never been used. And the date was tomorrow. Not *tomorrow* written out; tomorrow's actual date, the same one on the calendar hanging by the door, which was also, I realised with a cold sort of certainty, the date it had carried the day I bought it. Thirty years of the calendar running forward and the ticket keeping pace, always one day ahead, like a boat trailing one wake behind the ship. The route was 44. The 44 was renumbered in '94 and abandoned when the depot closed; the whole northern loop was playing fields and a floodlight now. I smoothed the card flat on the kitchen table. It was warm \u2014 not sun-warm, not radiator-warm, but the warmth of a hand that had only just let go of it. Outside, the replacement service was due in four minutes, and I found, to my surprise, that I was in no hurry to go anywhere at all.",
+      "text": "The envelope was addressed to me in my own handwriting, which was the first thing that made me sit down. Inside was a single ticket, buff cardboard gone the colour of weak tea, the sort they stopped printing in 1994, and the date stamped across the top was tomorrow. Route 47, the Kirkstall\u2013Bramley line, a service that had been cut the year before I was born. I turned it over and read the fare \u2014 eleven pounds, paid in coins \u2014 and the little punched hole at the top edge was still ragged, still raw-looking, as though the conductor's punch had only just gone through. Then I understood what the ticket was actually for, and my hands began to shake. It wasn't a ticket to ride the bus. It was a ticket to be on it. Thirty years ago I had bought a seat on a bus that ran tomorrow, and the bus was coming, and it was coming for me, and the only way to find out where it went was to stand at the stop with the ticket in my pocket and my coat buttoned and my name on the envelope in my own handwriting, waiting.",
+      "truncated": false,
       "usage": {
         "input_tokens": 221,
-        "output_tokens": 1633,
-        "total_tokens": 1854
+        "output_tokens": 980,
+        "total_tokens": 1201
       }
     }
   ],
@@ -44,6 +50,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "minimax/minimax-m3.1-flash",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-7e5eb3fb22af19da96c2c68af513e66a",
   "seed": 7,
   "selected_candidate_id": "C-0",
@@ -66,9 +73,11 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 3,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 663,
-    "output_tokens": 4971,
-    "total_tokens": 5634
+    "output_tokens": 3925,
+    "total_tokens": 4588
   }
 }

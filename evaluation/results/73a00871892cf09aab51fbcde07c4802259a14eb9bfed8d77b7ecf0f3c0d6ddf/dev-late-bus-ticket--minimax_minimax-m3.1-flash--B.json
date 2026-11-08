@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "B-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The envelope was addressed to me in my own handwriting \u2014 my thirty-year-old handwriting, with the old loop on the *g* I'd long since abandoned \u2014 and the postmark read HALLOWAY, a village that had been a bus depot for forty years until the road was rerouted and the whole place folded back into a field. Inside was a single ticket, card stock gone the color of weak tea, torn from a spiral pad on a bus that had not run since the eighties. Route 44. Fare 40p. And there, crisp as ink from this morning, the date: tomorrow, the 14th, with the departure time struck in the ticket machine's uneven blocky type \u2014 06:14. I had told no one I was going. I had told no one anything. But the seat number was the same one I took every morning for six years, riding out to the hospital where my mother worked the early shift, and the thought of sitting down there again made the back of my neck cold in a way the weather had nothing to do with. So at 6:13 the next morning I was standing on the corner with my coat buttoned to the throat, holding a ticket I had no intention of using, and when the engine turned over at the end of the street \u2014 a sound like the world remembering how to breathe \u2014 it was a green single-decker with the number 44 in the window, and the driver's face was the face of the man I buried in 1997.",
+      "text": "The ticket came in a pale envelope with a postmark from the town I left at nineteen, and the stub inside was the colour of weak tea \u2014 thirty years of damp in the paper \u2014 except that the date on it was tomorrow's, roller-printed in the same dot-matrix drum the machine had used back then, the 7 with its crossbar sitting slightly off, as though the machine had been dragged out of a cupboard and warmed up for the occasion. It was a return. The outward half had been punched \u2014 a small round hole with a little starburst of ink around it \u2014 and the return half was virgin, still carrying its fare of \u00a32.40 in the old money, and I understood, sitting on the kitchen floor with the kettle going cold beside me, that I had never used it: I had missed the connection, or lost my nerve, or simply been too young to want to go back. So the return had stayed valid in the only way a paper can stay valid \u2014 by never being tested. Then I looked up the route, because the ticket said 47A, and the 47A had been withdrawn the following winter when the bypass opened, and it had not run since. Except it was running tomorrow. One service, one day, the last ever, the company had announced, and every unused return from the old stock was being posted out, automatically, to whoever the envelopes had names on. By Thursday there were forty of us at the stop with our tickets, all different years, all the same yellow, and the conductor was a girl with the ancient machine slung in a canvas bag, and she punched each one without comment, and none of us got on, because the bus was going out to the depot first, and then out again along the coast road, and if we wanted, we could go as far as it went. I have never been so glad to have missed a bus in my life.",
+      "truncated": false,
       "usage": {
         "input_tokens": 231,
-        "output_tokens": 1025,
-        "total_tokens": 1256
+        "output_tokens": 1965,
+        "total_tokens": 2196
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief, but make it creative.",
   "model": "minimax/minimax-m3.1-flash",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-83712b7e1caadf5908db84566ba2a7a2",
   "seed": 7,
   "selected_candidate_id": "B-0",
@@ -42,9 +45,11 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 231,
-    "output_tokens": 1025,
-    "total_tokens": 1256
+    "output_tokens": 1965,
+    "total_tokens": 2196
   }
 }

@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "B-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "When I cracked the waxen seal, a cream\u2011colored slip unfolded like a torn photograph, and at the bottom in gleaming red ink was stamped \u201cTomorrow, September\u202f23.\u201d The ticket bore the same route I\u2019d bought back in \u201992 for Route\u202f7\u2019s midnight express\u2014now a name whispered only in legend books\u2014and beside it, a date that made no sense: the day after the very trip I\u2019d already taken, as if the posthad been rushed by a hurried clerk who thought it could send a message to his future self. Tucked in the corner was a scribble of \u201cBuy milk before you board,\u201d a wry joke from a teenager trying to seem mature for her grandparents, and",
+      "text": "The yellowed slip lands on my doorstep with a soft, almost frantic sigh\u2014the date stamped in red ink reads \u201cJune\u202f3,\u202f1992\u00a0\u2013 Tomorrow,\u201d and the top corner bears a faint imprint of a waving sun. I peel back the brittle paper, and there it is: Bus\u202f#7, departing 08:15\u202fa.m. from the town square to the Valley of Echoes. In the middle, a hurriedly written note promises \u201cYou\u2019ll board when the bell rings; remember, the road to tomorrow starts at dawn.\u201d My thumb traces the faded route, half\u2011expectant, half\u2011terrified\u2014it\u2019s the exact ticket I bought thirty years ago, yet it slips across the postal tower like a time\u2011travel confession, delivering the promise of a ride back to the days I thought I\u2019d forgotten how to hope.",
+      "truncated": false,
       "usage": {
         "input_tokens": 41,
-        "output_tokens": 2500,
-        "total_tokens": 2541
+        "output_tokens": 1422,
+        "total_tokens": 1463
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief, but make it creative.",
   "model": "liquid/lfm-3-1.7b",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-c4a85a8f15543da82b75f49a1197a613",
   "seed": 7,
   "selected_candidate_id": "B-0",
@@ -42,9 +45,11 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 41,
-    "output_tokens": 2500,
-    "total_tokens": 2541
+    "output_tokens": 1422,
+    "total_tokens": 1463
   }
 }

@@ -5,8 +5,10 @@
       "branch": 0,
       "candidate_id": "A-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The envelope was addressed in my own handwriting \u2014 thirty years of my handwriting, faded to the colour of weak tea \u2014 and inside was the ticket, soft as cloth from being folded and refolded in a pocket. I knew the route number before I read the date: the 47, the one that used to labour up the hill past the reservoir, and I knew the stop because I had once stood at it in the rain holding a bag of oranges. But the date on the ticket was tomorrow. Not tomorrow as in the day after I opened it, but tomorrow, tomorrow, the way a calendar in a dentist's waiting room means it \u2014 a date that hadn't happened yet, sitting there with its ink already dry. I turned it over. On the back, in dot-matrix print, a departure time: 6:40. The first bus. The one that only came when the road was clear and the driver felt like it. I did not know then what I know now, that the route was cut in 1994, that the depot was sold and the timetable in the library is a photocopy of a photocopy. I looked at the clock. I looked at the ticket again. And then, because there was nothing else in the envelope and nothing else to do, I put on my coat and walked down to the stop, which is still there, and stood in the drizzle with a bus ticket in my hand, waiting for the 6:40 that had not run for thirty years.",
+      "text": "The envelope was addressed to me in my own handwriting, which I recognised before I recognised anything else about it \u2014 the loop of the R, the way the p's fell backwards \u2014 and inside was a single ticket, buff card stock the colour of weak tea, punched once in the corner and stamped with a fare in a currency that had stopped existing before I was born. The date on it was tomorrow. Not tomorrow as in the day after yesterday's tomorrow, the way the word usually behaves, but tomorrow as it behaves in a dream: exact, unavoidable, already behind you. Route 41, since renumbered twice and discontinued in the spring of 1996; the same date, the same day and month, thirty years on. I bought that ticket in a queue that smelled of rain and diesel, on the morning I did not leave. I have thought about that morning every year since, and I have never once been able to remember where I was going \u2014 only what I was leaving, which was a small room with a window facing the yard, and my mother at the bus stop with her coat folded over her arm, not waving. I turned the ticket over. On the back, in the ballpoint of somebody who had never been in my hand, three words: *the bus still runs.*",
+      "truncated": false,
       "usage": {
         "input_tokens": 221,
         "output_tokens": 1006,
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "minimax/minimax-m3.1-flash",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-7a2349650b5d53a3055ca5b32a0c35ba",
   "seed": 7,
   "selected_candidate_id": "A-0",
@@ -42,6 +45,8 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 221,
     "output_tokens": 1006,

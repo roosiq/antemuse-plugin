@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "B-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The keeper shuffled down the narrow spiral stairs until the world dissolved beyond the frosted glass and iron railings, and below the lamp room he caught a sudden, sharp scent of brine and decay. Half buried by sea\u2011spray, a slab of ancient stone slid aside, unveiling a wide doorway whose arch was etched in spiraling shells and a solitary, unblinking eye\u2014shapes none of him recalled carving. Yesterday\u2019s dawn tide had only left dusty footprints where the door once stood, a hollow echo of a loss that now pressed close. With a trembling hand he lifted the heavy panel, feeling the lingering chill that promised secrets older than the lighthouse itself, and stepped onto the threshold of something forgotten. Beyond, a narrow tunnel yawned into darkness, its walls lined with tattered charts and brass compasses all pointing toward a map that seemed deliberately concealed, urging him forward to uncover what history had tried to keep out of sight.",
+      "text": "He steps onto the slick basalt path, the wind snarling around his shoulders as he peers into the narrow gap between the cliff\u2019s faces; a rust\u2011stained wooden panel slides back from the wall, unveiling a massive, weather\u2011worn doorway that seems to have been carved by hands long gone, its hinges long forgotten and its plastered frame etched with spiraling symbols that shimmer faintly in the waning light, and from the cool draft pouring out beyond it a soft, amber hum rises like a distant bell, promising secrets older than the lighthouse\u2019s own flame, urging him forward despite the uneasy silence that now rings louder than any lantern beam.",
+      "truncated": false,
       "usage": {
         "input_tokens": 46,
-        "output_tokens": 1614,
-        "total_tokens": 1660
+        "output_tokens": 730,
+        "total_tokens": 776
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief, but make it creative.",
   "model": "liquid/lfm-3-1.7b",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-19edac47815fc9f72bd348db392d42ae",
   "seed": 7,
   "selected_candidate_id": "B-0",
@@ -42,9 +45,11 @@
   },
   "task_id": "dev-lighthouse-door",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 46,
-    "output_tokens": 1614,
-    "total_tokens": 1660
+    "output_tokens": 730,
+    "total_tokens": 776
   }
 }

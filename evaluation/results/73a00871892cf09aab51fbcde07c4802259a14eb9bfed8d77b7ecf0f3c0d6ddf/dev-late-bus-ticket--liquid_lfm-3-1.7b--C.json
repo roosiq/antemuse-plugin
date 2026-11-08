@@ -5,36 +5,42 @@
       "branch": 0,
       "candidate_id": "C-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The envelope, heavy and slightly creased, carried my name scribbled at the bottom alongside a bright yellow header that read \u201cBus Ticket \u2013 Route\u202f7, 10\u202fp.m., 24\u202fNovember\u202f1999 \u2013 **DUE: TOMORROW**.\u201d I glanced at the date stamped on the front of the ticket, seeing today\u2019s calendar\u2014a quiet, ordinary November\u202f2, 2026\u2014but the interior listed the departure for the very next morning, \u201cTomorrow,\u201d as if the paper were nudging me toward a future ride I never intended to take. Inside, a faded photograph of the old town square peeked through the lines of the original printout, and in the corner a handwritten note fluttered out: \u201cReturn this by midnight to claim your seat.\u201d Every detail felt out of sync with the thirty\u2011year span between buying the ticket and watching it arrive, and I laughed nervously while slipping the brittle slip beneath the mattress, half convinced it was some quirky postage trick and half amused by a time\u2011worn relic finally getting its way.",
+      "text": "The postman slides the paper across the counter, his breath a little shaky, when he notices the tiny wax seal that bears nothing more than a faded 1970s bus emblem and a single line of text that reads \u201cDelivered \u2013\u202fTomorrow.\u201d Inside, tucked beneath crumpled stamps, is a ticket listing a route that didn\u2019t exist in the city thirty years ago\u2014a suburban express that ran only between two villages three miles apart\u2014and my own seat number is struck through in crimson. As I unfold the brittle page, I see the date stamped in the upper right corner, October\u202f14,\u202f2035, which is exactly tomorrow\u2019s date according to the clock glowing on my kitchen wall. A wave of unease washes over me; it seems the bureaucracy of the era had slipped a future\u2011dated notice onto a legacy document, turning yesterday\u2019s fare into a promise for a day I have yet to live.",
+      "truncated": false,
       "usage": {
         "input_tokens": 40,
-        "output_tokens": 1700,
-        "total_tokens": 1740
+        "output_tokens": 945,
+        "total_tokens": 985
       }
     },
     {
       "branch": 1,
       "candidate_id": "C-1",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "When I finally cracked open the cream\u2011colored envelope, the familiar red border of the old tram line was already marred by glossy stamps bearing \u201cDelivered\u201d and today\u2019s date\u2014March\u202f14,\u202f2026\u2014instead of the handwritten note I\u2019d scribbled back then in \u201993. A rush of bewilderment mixed with mischievous delight washed over me; I\u2019d bought that ticket three decades ago for a few cents, riding a squeaking metal bus that once rattled past the market square, and now here it sat in my kitchen like a time\u2011traveler\u2019s postcard, announcing arrival before its origin ever left.",
+      "text": "Opening the brown envelope, I gasped at the sight of the ticket dated exactly thirty years earlier\u2014a relic from the bus routes I once rode as a child\u2014yet stamped with the word *Tomorrow* as its travel date. The fine print listed a departure from the city centre tomorrow, even though the fare had already been paid and the schedule had shifted long ago, leaving only a faint smudge where the actual date should have been. It seemed the postal clerk simply left the field unchecked when I mailed it out, so the system defaulted to the day after filing, a quirk that survived another four decades without anyone catching it. I tucked the paper into my coat, half amused and half terrified, aware that soon I\u2019ll either step onto that very vehicle or spend another three decades waiting for the next postmark to surprise me.",
+      "truncated": false,
       "usage": {
         "input_tokens": 40,
-        "output_tokens": 829,
-        "total_tokens": 869
+        "output_tokens": 1741,
+        "total_tokens": 1781
       }
     },
     {
       "branch": 2,
       "candidate_id": "C-2",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "You pulled the heavy cream\u2011colored envelope off the coffee table and felt the familiar weight of a paper that seemed to have traveled through time itself. Inside, the glossy front page bore the usual \u201cTicket for City Bus \u2013 Route\u202f12\u201d header, but beneath the plain address, a single line of ink spelled *\u201cDate: Tomorrow.\u201d* The words were in bold, the handwriting neat, the ink fresh enough that even twenty\u2011three years since I first snapped a ticket at the platform looked entirely innocent. I scratched my head, wondering how anyone could date a purchase from thirty years ago with a date that hadn\u2019t happened yet\u2014until I remembered the peculiar quirk of the national post: stamps are issued for the day a parcel is physically delivered, not for the day it was originally printed. So the agency apparently wrote down the postmark\u2019s expected handover window rather than honoring the actual issue date, leaving a tiny loop of paradoxes hanging over my cup of tea. Either I\u2019ll have to sign a request for \u201cfuture use\u201d or, at the very least, become an unwilling early adopter of history\u2019s weirdest correspondence.",
+      "text": "The parcel slid across my doorstep under a veil of morning mist and, after a momentary gasp, revealed itself to be the faded yellow slip from last month\u2019s bus timetable. Inside, besides the familiar line drawing of the 1972 silver bus, sat a single line item that caught my eye: \u201cTicket\u202f#B22 \u2013 Valid for ride on 27\u202fApril\u202f2009 until 23:59.\u201d Beneath it, a tiny brass stamp bore the date \u201c26\u202fSeptember\u202f2025,\u201d and right below that, handwritten in looping cursive wrote, \u201cDue by tomorrow.\u201d My mind spun\u2014the purchase certainly was twenty\u2011three years ago, not thirty\u2014and I realized the postal service had printed a retroactive issue date and shifted the due\u2011day forward by three months, turning a relic into a scheduled ride waiting for a future passenger. I tore open the ticket, feeling both revulsion and a strange thrill at watching history be quietly re\u2011programmed.",
+      "truncated": false,
       "usage": {
         "input_tokens": 40,
-        "output_tokens": 1469,
-        "total_tokens": 1509
+        "output_tokens": 1697,
+        "total_tokens": 1737
       }
     }
   ],
@@ -44,6 +50,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "liquid/lfm-3-1.7b",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-146c0764c9fc2ee5528530c85068b309",
   "seed": 7,
   "selected_candidate_id": "C-0",
@@ -66,9 +73,11 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 3,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 120,
-    "output_tokens": 3998,
-    "total_tokens": 4118
+    "output_tokens": 4383,
+    "total_tokens": 4503
   }
 }

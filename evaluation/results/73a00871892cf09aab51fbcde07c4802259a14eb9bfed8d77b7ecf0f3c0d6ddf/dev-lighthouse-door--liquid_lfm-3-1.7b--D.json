@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "D-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "He steps onto the narrow trail and lets the sudden rush of surf become his night\u2011vision instrument; the chaotic tap of waves, the sigh of wind, and the occasional deep rumble form an acoustic daylight image that sketches the silhouette of a wooden door half\u2011buried in the sand, its frame barely visible beneath layers of sand and salt\u2011crusted rock. Nearby, a pale, concentric curve of green moss spreads outward from a stone slab, its edges sharpening into a bright ring while the centre darkens as a toxin builds\u2014an emergent fairy\u2011ring formation that tells him the earth is actively reshaping itself, inviting caution as he peers into the hollow that now opens to the churning sea below.",
+      "text": "The random ambient noise of the ocean carries enough information to image objects without any active pinging: the noise itself is the signal. With his ears tuned to the constant chorus of crashing surf, the keeper felt the low\u2011frequency hum of distant ships merge into a faint topography, and a sudden sharp intake of wind revealed a narrow gap concealed between two boulders\u2014a door that had been missing from his charts. Beyond it, a circular trail of disturbed sand and shells radiated outward in perfectly concentric arcs, the spreading growth of a fairy ring whose center had become too saline to sustain new moss, forcing the surrounding flora to retreat and expand the boundary outward into the cliffs.",
+      "truncated": false,
       "usage": {
         "input_tokens": 374,
-        "output_tokens": 1733,
-        "total_tokens": 2107
+        "output_tokens": 1997,
+        "total_tokens": 2371
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "liquid/lfm-3-1.7b",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-8601de6a53c3673251b217b149999217",
   "seed": 7,
   "selected_candidate_id": "D-0",
@@ -46,9 +49,11 @@
   },
   "task_id": "dev-lighthouse-door",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 374,
-    "output_tokens": 1733,
-    "total_tokens": 2107
+    "output_tokens": 1997,
+    "total_tokens": 2371
   }
 }

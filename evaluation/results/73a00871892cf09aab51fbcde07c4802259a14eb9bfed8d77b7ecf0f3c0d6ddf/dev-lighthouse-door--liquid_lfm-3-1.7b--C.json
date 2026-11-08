@@ -5,36 +5,42 @@
       "branch": 0,
       "candidate_id": "C-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "He steadies himself on the slick stone and pushes off toward the cliff\u2019s edge, the salty wind whipping around him like restless ghosts; at the exact spot where the old lighthouse tower\u2019s shadow fell yesterday, a dark, rectangular slab rises against the rugged wall\u2014a door that seemed out of place among the jagged rocks and weather\u2011worn boulders. The iron handle, tarnished silver and etched with faded symbols, gives only a faint, metallic click when he twists it, and after a tentative push the structure groans open, spilling a narrow staircase into a dimly lit shaft where a lone lantern flickers, casting trembling shadows across a space that belongs nowhere on any map he has ever seen.",
+      "text": "He steps out onto the craggy path beneath the lamp room, the wind whipping the sea\u2011spray into brittle crystals around him, and kneels at the mouth of the cliff where the stone wall meets the jagged edge. A narrow slab of timber frames a doorway that hadn\u2019t been there in daylight\u2014or even the last night\u2019s lantern light\u2014so he brushes away a patch of moss\u2011clinging lichen, feeling the cold iron knob embedded in the rough mortar; when he turns it, the door sighs open with a low creak, revealing a dimly lit chamber lined with crumbling stone shelves, a single candle guttering, and a map pinned to the far wall marked with an X that seemed to point toward the very heart of the cliffs.",
+      "truncated": false,
       "usage": {
         "input_tokens": 45,
-        "output_tokens": 515,
-        "total_tokens": 560
+        "output_tokens": 482,
+        "total_tokens": 527
       }
     },
     {
       "branch": 1,
       "candidate_id": "C-1",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "As he knelt to probe the slickness of the shale, his fingers brushed a swollen seam in the cliff face where a rust\u2011stained beam jutted out from the stone\u2014an improbable doorway that had been absent for days. With a hesitant push, the door swung inward on silent hinges, unveiling a dimly lit passage that spiraled downward into the sea\u2011shrouded abyss, its walls lined with faded murals of ships long since gone; a sudden gust rattled the shutters above the lamp room, carrying the salty tang of coming waves, and for a heartbeat the keeper thought the storm itself might have caused the structure to shift overnight. Yet the door bore no obvious lock\u2014only a faint incense scent curled up from within, and an echo lingered as if waiting for his footsteps. Something ancient and patient was waiting just beyond the threshold, ready to reveal what lay beneath the cliffs and explain why he had seen none yesterday.",
+      "text": "The keeper descended the winding stone path, the wind whipping his coat against his face as he reached the shadowed alcove beneath the lamp room. With a slow, careful tug on the rusted iron handle\u2014its hinges groaning despite its age\u2014the solid wood panel swung inward, revealing a narrow passage lit by a faint, amber glow that did not match any lantern or beacon above. A chill brushed his spine when he stepped inside, and the scent of salt\u2011worn timber mingled with something older, almost metallic, suggesting that beyond this hidden doorway lay more than just another corridor of fog and gulls\u2019 cries.",
+      "truncated": false,
       "usage": {
         "input_tokens": 45,
-        "output_tokens": 847,
-        "total_tokens": 892
+        "output_tokens": 411,
+        "total_tokens": 456
       }
     },
     {
       "branch": 2,
       "candidate_id": "C-2",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "The wind rattled the lantern\u2019s glass as I descended the spiral stairs, my boots sinking into the damp stone; on the steep ledge below the lamp room I saw a heavy, moss\u2011clad oak slab set half\u2011buried among basalt blocks, its hinges rusted yet still turning with a reluctant sigh\u2014then a narrow, stone\u2011lined corridor yawned inside, a thin crack of moon\u2011lit light seeping through the ceiling and filling the space with the sharp scent of brine and forgotten timber, as though some long\u2011lost hand had left it deliberately concealed waiting for me to discover its true purpose.",
+      "text": "He eased himself down the winding stone stair, the wind howling through the cracks like a restless beast, until he reached the edge of the cliff\u2019s lip and stared into the dark mouth of the fissure where the door lay concealed among the rotting lichen. With trembling fingers he pushed aside a veil of sea\u2011sprayed moss, and there, half swallowed by jagged rock, stood a narrow wooden doorway whose frame was etched with a faded symbol\u2014a stylized compass rose flanked by two spiraling shells\u2014that he had never once seen on any chart. When he turned the stubborn brass lock, the hinges sang and the door swung inward, releasing a wave of cool, damp air that carried the scent of salt and age; inside, the chamber was illuminated only by flickering candles and the ghostly glow of a broken lantern, and beside them lay rows of weather\u2011worn maps, a cracked mirror reflecting a distant beam fading out the window, and a single, dust\u2011caked journal whose pages whispered promises of a forgotten treasure hidden below the sea\u2019s own ribs.",
+      "truncated": false,
       "usage": {
         "input_tokens": 45,
-        "output_tokens": 744,
-        "total_tokens": 789
+        "output_tokens": 919,
+        "total_tokens": 964
       }
     }
   ],
@@ -44,6 +50,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "liquid/lfm-3-1.7b",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-771197c6753c019e03094b46f5f049d4",
   "seed": 7,
   "selected_candidate_id": "C-0",
@@ -66,9 +73,11 @@
   },
   "task_id": "dev-lighthouse-door",
   "transport_calls": 3,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 135,
-    "output_tokens": 2106,
-    "total_tokens": 2241
+    "output_tokens": 1812,
+    "total_tokens": 1947
   }
 }

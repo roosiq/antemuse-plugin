@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "A-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "He follows the narrow stone path down to the base of the cliff, his lantern casting trembling circles on the slick rocks, and when he reaches the low archway beneath the lamp room\u2014half concealed by sea\u2011spray and twisted ivy\u2014he notices a heavy, iron\u2011bound door that no longer fits the ordinary ledge or service hatch he uses each night. Its surface is rough, pitted with centuries of salt spray, yet etched upon the inner threshold are strange runes that seem to pulse faintly in the waning light, as though they have been waiting for someone brave enough to uncover them. With a hesitant hand, he pushes the wood aside; a cold draft rises, carrying the scent of brine and old timber, and beyond the thin panel a narrow stairwell descends deeper into darkness, inviting him to explore whatever secrets this forgotten passage might hold.",
+      "text": "He stepped down the crumbling stairway, the wind whipping sea\u2011foam over his hat, until a sudden gust tore at the stone and revealed a dark, weathered doorway set deep beneath the lamp room\u2014its iron hinges rusted and bound together by vines, the space between the two panels swallowed by shadow. As his fingers brushed the cold wood, a low, resonant groan echoed from below the cliffs, and the great lantern\u2019s beam above sputtered, throwing trembling lines across the damp floor; then, without warning, the door swung inward, revealing a narrow corridor bathed in amber glow, dust motes dancing in the air like ghostly fireflies and the scent of cedar, ancient incense, and forgotten secrets.",
+      "truncated": false,
       "usage": {
         "input_tokens": 45,
-        "output_tokens": 453,
-        "total_tokens": 498
+        "output_tokens": 573,
+        "total_tokens": 618
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "liquid/lfm-3-1.7b",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-b2c629790864fac579c1e06c8ebe79d3",
   "seed": 7,
   "selected_candidate_id": "A-0",
@@ -42,9 +45,11 @@
   },
   "task_id": "dev-lighthouse-door",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
     "input_tokens": 45,
-    "output_tokens": 453,
-    "total_tokens": 498
+    "output_tokens": 573,
+    "total_tokens": 618
   }
 }

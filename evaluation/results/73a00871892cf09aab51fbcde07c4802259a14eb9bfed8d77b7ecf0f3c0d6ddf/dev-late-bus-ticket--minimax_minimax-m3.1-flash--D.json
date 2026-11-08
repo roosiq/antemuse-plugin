@@ -5,12 +5,14 @@
       "branch": 0,
       "candidate_id": "D-0",
       "error": null,
+      "finish_reason": "stop",
       "status": "ok",
-      "text": "**The next paragraph:**\n\nIt arrived in the recycling, with no envelope of its own \u2014 a ticket the size of a thumbnail, and the date printed on it was tomorrow. I held it up to the window and the afternoon read it for me: the hiss off the radiator across the courtyard, a bus changing gears two streets over, the dust turning in the light. Nothing had been summoned. The message had been lying in the ordinary noise for thirty years, and I had only ever been listening for the wrong answer.\n\nThen the smudge on the back of the ticket resolved into a circle. The depot I rode from as a boy sat at the dead centre of it, its routes withdrawn, its timetable folded shut \u2014 made unliveable by its own success, the way a fungus makes its own patch of ground barren and must therefore travel outward to feed. So the buses went around instead, and going around widened year on year until the whole city wore the shape of something growing away from what it could no longer digest. Tomorrow's date was not a promise. It was the next circle, opening.\n\n---\n\n*How the two mechanisms were used:* **Acoustic daylight imaging** supplies the first turn \u2014 the ticket's information is recovered passively, out of the city's ambient noise, with no active query (no asking, no pinging, no search for the sender); the noise itself is the signal. **Fairy ring formation** supplies the second \u2014 the ticket's smudge resolves into a self-reinforcing ring whose centre (the old depot) has been made toxic to itself by its own depletion, so the pattern must expand outward, and the date \"tomorrow\" is the next increment of that expansion rather than a mystery to be solved. The factual grounding is limited to what the fairy-ring mechanism itself asserts (rings of mycelium expanding outward from a nutrient-exhausted centre), which is consistent with the biology; nothing else in the paragraph is offered as fact about the world.",
+      "text": "The envelope contained no letter, only a bus ticket bought thirty years ago, its edges soft, every mark upon it a picture to her: a coach, a timetable, and a calendar leaf with tomorrow ringed in red. Held up to the morning, the destination remained a grey blur until she stopped trying to sharpen it and simply listened. The city\u2019s restless daytime noise\u2014the hiss of rain, cries of gulls, pulse of engines\u2014carried the outline of a night bus waiting at the end of a pier, so that the ticket\u2019s blankness slowly became its picture. Beneath the card, tiny mushrooms had opened in a perfect ring, the center blackening as though poisoned by its own spread while the living rim pushed farther into the envelope. She turned the ticket over. On the back, the bus was leaving.",
+      "truncated": false,
       "usage": {
-        "input_tokens": 534,
-        "output_tokens": 1604,
-        "total_tokens": 2138
+        "input_tokens": 545,
+        "output_tokens": 4353,
+        "total_tokens": 4898
       }
     }
   ],
@@ -20,6 +22,7 @@
   "instruction": "Answer the brief as you normally would.",
   "model": "minimax/minimax-m3.1-flash",
   "prompt_version": "prompt-1",
+  "record_schema": "record-2",
   "run_id": "run-227e4fcefcb841f65cb17ff901f5e61d",
   "seed": 7,
   "selected_candidate_id": "D-0",
@@ -46,9 +49,11 @@
   },
   "task_id": "dev-late-bus-ticket",
   "transport_calls": 1,
+  "truncated": false,
+  "truncated_candidates": [],
   "usage": {
-    "input_tokens": 534,
-    "output_tokens": 1604,
-    "total_tokens": 2138
+    "input_tokens": 545,
+    "output_tokens": 4353,
+    "total_tokens": 4898
   }
 }
