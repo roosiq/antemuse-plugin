@@ -147,3 +147,17 @@ def test_a_nonsense_grid_falls_back_to_the_card_default():
     """'abc' is not a size; the chat card default is the safe answer."""
     frame = project(WALK, [], cols="abc", rows=None)["frame"]
     assert (frame["cols"], frame["rows"]) == (projection.FRAME_COLS, projection.FRAME_ROWS)
+
+
+def test_frames_advance_on_a_clock_per_state():
+    """The strip is baked; the pane animates by asking which frame is now."""
+    api = load("plugin_api")
+    walk = [api.frame_index("walk", now=100 + i) for i in range(13)]
+    doom = [api.frame_index("doomscroll", now=100 + i) for i in range(13)]
+    assert len(set(walk)) > 1 and len(set(doom)) > 1
+    assert all(0 <= i < 8 for i in walk + doom)
+    # a doomscroll moves faster than a walk: more distinct frames in the same second
+    assert len(set(doom)) > len(set(walk))
+    assert api.frame_index("walk", frames=0) == 0
+    # deterministic: the same clock answers the same frame twice
+    assert api.frame_index("dream", now=1234.5) == api.frame_index("dream", now=1234.5)

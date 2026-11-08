@@ -23,6 +23,7 @@ import importlib.util
 import sys
 import threading
 from pathlib import Path
+import time
 from typing import Any, Dict, List
 
 from fastapi import APIRouter
@@ -70,6 +71,21 @@ def plugin():
     return _by_path(_MODULE, ROOT / "__init__.py", package=True)
 
 
+#: Seconds per baked frame, per state. A walk steps slowly (a frame every three
+#: seconds), a doomscroll moves fast, a dream barely moves at all. The bake sampled
+#: t at f/n of a 2*pi loop, so a wall-clock index is enough to animate it.
+FRAME_SECONDS = {"walk": 3.0, "daydream": 2.4, "doomscroll": 1.1, "dream": 4.0}
+FRAME_DEFAULT = 2.5
+
+
+def frame_index(key: str, frames: int = 8, now: float | None = None) -> int:
+    """Which baked frame is on screen right now. Deterministic in time, not random."""
+    if frames <= 0:
+        return 0
+    step = FRAME_SECONDS.get(key, FRAME_DEFAULT)
+    return int((time.time() if now is None else now) // step) % frames
+
+
 @router.get("/state")
 def state(cols: int | None = None, rows: int | None = None, fit: str = "contain") -> Dict[str, Any]:
     """The current state, as counts and a served frame.
@@ -86,7 +102,8 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
     if active:
         try:
             lines = plugin().core.surfaces.art(
-                cols=width, rows=height, index=0,
+                cols=width, rows=height,
+                index=frame_index(str(active.get("key") or ""), frames=8),
                 scene=str(active.get("key") or ""),
                 fit="cover" if fit == "cover" else "contain",
                 pane=fit == "cover",

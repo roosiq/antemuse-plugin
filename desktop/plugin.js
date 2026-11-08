@@ -23,7 +23,9 @@ import { useEffect, useRef, useState } from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 
 const ID = 'antemuse'
-const POLL_MS = 2000
+// Fast enough that a baked frame is not stale when it lands: the slowest state,
+// dream, holds a frame four seconds, so polling under a second never skips one.
+const POLL_MS = 900
 
 // A monospace glyph cell is about 0.6 advances wide by one line tall. Both the
 // requested grid and the font that fills it come from these two numbers, so the
