@@ -54,16 +54,6 @@ Statuses: `[ ]` pending, `[~]` active, `[x]` verified complete, `[!]` blocked.
   Reconciled 2026-11-08 against the code, not against memory. Fixed as false: the `/again` row still said deepen/refresh generation was unwired (it runs since J2b); §3.2 said "no run consumes them yet" for `method`/`seed`/`budget` (the consumer is `/spark`); §17 A.4 called `collide` "not implemented" (the walk form is absent, the bank, collision and branch runner exist); §17 A.4 said "no collide spec in `plugin/specs/`" (the schema and licensing record live in `core/collider.py` and `specs/changes/creative-state-evidence/`); §13's verification record was 591 (now 621, dated, with doctor output). Fixed as a class, not an instance: README's test count had drifted twice (107 → 564), so README no longer carries a number at all — §13 is the only place a count is recorded — and §14 item 1 records that recurrence. Checked mechanically: 14 commands registered, every one documented, none documented that does not register; 4 states; 8 hooks; 3 auxiliary routes; 12 tool actions.
   Verification: `pytest tests/ -q` → 621 passed after the documentation pass; no runtime file changed in J4.
 
-- [x] K1f Truncation visible in every record.
-  A real cell exposed the hole: `liquid/lfm-3-1.7b` on `dev-late-bus-ticket/B` spent its
-  ceiling reasoning and returned text ending "...trying to seem mature for her grandparents, and",
-  which the runner recorded as `status: ok` with nothing indicating it was cut off. Candidates now
-  carry `finish_reason` (verbatim or null) and `truncated`; records carry `record_schema`
-  (`record-2`) and `truncated_candidates`; the default selector passes over a truncated candidate
-  when a complete one exists; a cached record from an older schema is a miss, not a replay; and
-  `tools/run_shard.py` treats such a file as `stale` and re-runs it instead of counting coverage.
-  9 tests (`tests/evaluation/test_truncation.py`), full suite 669.
-
 ## Wave 3 review trail (2026-11-08)
 
 Two independent reviews ran on the J2/J2b/J3 diff. The first attempt used the
@@ -133,16 +123,25 @@ one.
   `orchestrator.branch_plan()` is now public and pure — it returns the exact branch requests `orchestrate` would send — and `orchestrate` builds its own branches through the same `_branch_entries` helper, so the offline runner cannot drift from production. Condition F selects N sources with `collider.select_sources`, sends one call per source with that source's own instruction and inputs, then runs the injected selector. Verified on the real fixture: `status: ok | calls: 3 | selected: F-0 | sources: collider_acoustic_daylight_imaging, collider_fairy_ring_formation, collider_lombard_effect_dynamics`, and every branch saw exactly one source. A test caught a real bug during the build: selection was gated on `condition == C`, so F was silently taking the first successful branch instead of running its selector. 7 tests in `tests/evaluation/test_condition_f.py`; suite 653 passed twice.
 - [x] K1c Condition E: separated branches **without** Collider sources.
   Built as the plain branching control: N independent calls at N distinct seeds, A's instruction, no source of any kind, and **no promoted candidate** (`selected_candidate_id: None`) — a selector here would make E what F already is. Chosen over inventing an angle list, because nothing in the code separates branches except a source and an authored list would become part of the intervention. **The consequence is recorded, not hidden:** F vs E therefore bundles material *and* selection; the material question is carried by D (and A/B), not by F vs E. If that trade is wrong, E is one line to change. 5 tests in `tests/evaluation/test_condition_e.py`.
-- [~] K1d A–F pilot against a real endpoint.
+- [x] K1d A–F pilot against a real endpoint.
   `tools/pilot.py` runs all six conditions once, through the offline runner, against `127.0.0.1:8645` and writes records to a temp directory — deliberately never to a frozen shard, so a pilot cannot be mistaken for evidence. It also caught its own bug: the first version coerced a `null` answer into the string `"None"`, which the runner would have recorded as a successful cell. The transport now raises on empty content and the runner records a named `transport_error` instead.
   **This is not a result.** One task, one seed, one small model, no judge, no protected set, no quality claim.
+  Closed 2026-11-08: the pilot has since run many times against the real endpoint, and the same six conditions ran as a frozen shard (`73a00871…`, 24/24 cells) through `tools/run_shard.py`, which is the pilot's path plus coverage. What remains unproven is not the wiring but the question — no judge exists.
+- [x] K1f Truncation visible in every record.
+  A real cell exposed the hole: `liquid/lfm-3-1.7b` on `dev-late-bus-ticket/B` spent its
+  ceiling reasoning and returned text ending "...trying to seem mature for her grandparents, and",
+  which the runner recorded as `status: ok` with nothing indicating it was cut off. Candidates now
+  carry `finish_reason` (verbatim or null) and `truncated`; records carry `record_schema`
+  (`record-2`) and `truncated_candidates`; the default selector passes over a truncated candidate
+  when a complete one exists; a cached record from an older schema is a miss, not a replay; and
+  `tools/run_shard.py` treats such a file as `stale` and re-runs it instead of counting coverage.
+  9 tests (`tests/evaluation/test_truncation.py`), full suite 669.
 - [x] K1e End-to-end test of the whole evidence path.
   `tools/e2e.py` — no network, no model, deterministic transport, seconds to run. It freezes a shard, runs every cell of 2 tasks × A–F through the real runner (12 cells, 26 calls, 26 requests), aggregates twice and requires byte-identical output, then requires the pipeline to *refuse*: a deleted cell is refused by name, a drifted fixture raises `ShardDrift`, a duplicated record is refused, and the repaired grid aggregates again. All 8 properties pass.
   Then the same path with a real model: a shard was frozen over one task and `liquid/lfm-3-1.7b`, all six conditions ran into that shard's own results directory, and `tools/shards.py aggregate` returned `complete: true` with 6/6 cells and no duplicates — `A ok 1 call, B ok 1, C ok 3, D ok 1, E ok 3, F ok 4 + synthesis ok`. That is a pipeline test, not a result: one task, one seed, one small model, no judge.
   The plugin runtime was tested end to end separately (`tools/walkthrough.py`): state → `/spark` → model injection → human footer → `/keep` → `/again` → `/return` → residue → `on_session_end`, with 0 candidate-text occurrences in human surfaces.
 - [x] K2 Deterministic aggregation and complete coverage.
   `evaluation/aggregate.py`: reads a shard's records in sorted order, requires every declared cell exactly once via `report.required_cells` (which raises `CoverageError` listing all gaps), refuses a record outside the grid, refuses duplicates by default and reports them when explicitly allowed, and names a malformed result file instead of skipping it. Output is key-sorted JSON, so two runs over the same files are byte-identical. 13 tests in `tests/test_shards.py`.
-- [ ] K2 Deterministic aggregation and complete coverage.
 - [ ] K3 Runtime/Hermes/surface/evaluation independent QA.
 
 ## Wave 5
