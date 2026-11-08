@@ -1,0 +1,50 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "B-0",
+      "error": null,
+      "status": "ok",
+      "text": "When I cracked the waxen seal, a cream\u2011colored slip unfolded like a torn photograph, and at the bottom in gleaming red ink was stamped \u201cTomorrow, September\u202f23.\u201d The ticket bore the same route I\u2019d bought back in \u201992 for Route\u202f7\u2019s midnight express\u2014now a name whispered only in legend books\u2014and beside it, a date that made no sense: the day after the very trip I\u2019d already taken, as if the posthad been rushed by a hurried clerk who thought it could send a message to his future self. Tucked in the corner was a scribble of \u201cBuy milk before you board,\u201d a wry joke from a teenager trying to seem mature for her grandparents, and",
+      "usage": {
+        "input_tokens": 41,
+        "output_tokens": 2500,
+        "total_tokens": 2541
+      }
+    }
+  ],
+  "condition": "B",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief, but make it creative.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-c4a85a8f15543da82b75f49a1197a613",
+  "seed": 7,
+  "selected_candidate_id": "B-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 41,
+    "output_tokens": 2500,
+    "total_tokens": 2541
+  }
+}

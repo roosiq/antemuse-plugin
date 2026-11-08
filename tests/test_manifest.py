@@ -63,9 +63,16 @@ def test_no_retired_name_appears_anywhere():
     # never written whole, so this check passes itself
     needles = ("kit" + "chen", "antemuse-" + "room", "antemuse-" + "states")
     skip = {"node_modules", ".git", "__pycache__", ".pytest_cache", "test-results"}
+    # Recorded model output is not our prose: a scene set in a domestic room
+    # mentions the retired word, and a retired name inside an answer is evidence,
+    # not branding. Only the evidence directory is exempt — not every directory
+    # that happens to be called "results".
+    evidence = pathlib.Path(ROOT) / "evaluation" / "results"
     offenders = []
     for path in pathlib.Path(ROOT).rglob("*"):
         if not path.is_file() or skip & set(path.parts):
+            continue
+        if evidence in path.parents:
             continue
         if path.suffix in {".png", ".jpg", ".jpeg", ".zip", ".pyc", ".ico"}:
             continue

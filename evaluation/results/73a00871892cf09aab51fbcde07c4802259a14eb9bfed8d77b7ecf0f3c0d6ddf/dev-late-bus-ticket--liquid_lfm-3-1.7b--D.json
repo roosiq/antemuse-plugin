@@ -1,0 +1,54 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "D-0",
+      "error": null,
+      "status": "ok",
+      "text": "The random ambient noise of the ocean carries enough information to image objects without any active pinging: the noise itself is the signal, so I lean in and let that ceaseless murmur resolve into an acoustic daylight imprint that reveals the torn, thirty\u2011year\u2011old ticket written on yesterday\u2019s date sitting in the post box. Around it, a faint circular mushroom pattern unfurls beneath the page; the fairy ring grows outward as nutrient\u2011depleted waves push the boundary, yet the centre turns toxic and forces the rim to expand, turning the ordinary receipt into a luminous mandala of forgotten travel. All I can perceive are crisp photographs of the paper, yet the underlying reality pulses beneath, a symphony of waves and spores waiting to be decoded.",
+      "usage": {
+        "input_tokens": 359,
+        "output_tokens": 2990,
+        "total_tokens": 3349
+      }
+    }
+  ],
+  "condition": "D",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-c37e84f9d2719b431ef6a2cf7eae4ec1",
+  "seed": 7,
+  "selected_candidate_id": "D-0",
+  "source_version": "collider-6ed948a",
+  "sources": [
+    "collider_acoustic_daylight_imaging",
+    "collider_fairy_ring_formation"
+  ],
+  "status": "ok",
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 359,
+    "output_tokens": 2990,
+    "total_tokens": 3349
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "D-0",
+      "error": null,
+      "status": "ok",
+      "text": "The random slap and hiss of the sea carried enough information for him to read the cliff without pinging it; the noise itself traced a hollow rectangle where no stone should have been. Pale mushrooms had appeared overnight around its threshold, their circular ring expanding as the barren, poisoned center prevented anything from growing within it. He understood, with a cold certainty, that the boundary was still moving\u2014and that the door was not merely hidden, but making its way into the cliff.",
+      "usage": {
+        "input_tokens": 558,
+        "output_tokens": 373,
+        "total_tokens": 931
+      }
+    }
+  ],
+  "condition": "D",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-ecff6ce1b6cbc50ded03c96ffb22970c",
+  "seed": 7,
+  "selected_candidate_id": "D-0",
+  "source_version": "collider-6ed948a",
+  "sources": [
+    "collider_acoustic_daylight_imaging",
+    "collider_fairy_ring_formation"
+  ],
+  "status": "ok",
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 558,
+    "output_tokens": 373,
+    "total_tokens": 931
+  }
+}

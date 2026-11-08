@@ -1,0 +1,50 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "A-0",
+      "error": null,
+      "status": "ok",
+      "text": "He follows the narrow stone path down to the base of the cliff, his lantern casting trembling circles on the slick rocks, and when he reaches the low archway beneath the lamp room\u2014half concealed by sea\u2011spray and twisted ivy\u2014he notices a heavy, iron\u2011bound door that no longer fits the ordinary ledge or service hatch he uses each night. Its surface is rough, pitted with centuries of salt spray, yet etched upon the inner threshold are strange runes that seem to pulse faintly in the waning light, as though they have been waiting for someone brave enough to uncover them. With a hesitant hand, he pushes the wood aside; a cold draft rises, carrying the scent of brine and old timber, and beyond the thin panel a narrow stairwell descends deeper into darkness, inviting him to explore whatever secrets this forgotten passage might hold.",
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 453,
+        "total_tokens": 498
+      }
+    }
+  ],
+  "condition": "A",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-b2c629790864fac579c1e06c8ebe79d3",
+  "seed": 7,
+  "selected_candidate_id": "A-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 45,
+    "output_tokens": 453,
+    "total_tokens": 498
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "E-0",
+      "error": null,
+      "status": "ok",
+      "text": "The envelope, slipped quietly into my inbox by the post, held a crinkled sheet of yellowed paper and a tiny brass tag stamped \u201cTomorrow\u201d in bold red at the top\u2014a date that made no sense for a ticket issued thirty years ago and pointed to a departure scheduled for the very day after I was born. As I unfurled the old fare, I noticed the route number listed was extinct, the seat numbers blank, and my own name crossed out beside the year 1982 in favor of a cheerful doodle. With a half\u2011tossed sigh and a sense that history had finally caught up with me, I tucked the ticket back into my wallet and stepped into the waiting bus, already wondering whether tomorrow\u2019s train was really going anywhere or if it was merely a glitch in the universe\u2019s timing.",
+      "usage": {
+        "input_tokens": 40,
+        "output_tokens": 1908,
+        "total_tokens": 1948
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "E-1",
+      "error": null,
+      "status": "ok",
+      "text": "When I finally unrolled the creased tissue and lifted the thick, cream\u2011colored slip, the familiar route number and fare flickered across the page, but the most startling thing was the date stamped in bold black letters at the top right\u2014a single, absurdly precise line reading \u201cDate: Thursday, 12\u202fMay\u202f2026,\u201d a day that didn\u2019t exist until almost four months from now. My hands trembled slightly as I compared it with today\u2019s calendar, and I half\u2011expected the post office to have printed a typo; instead, a faint yellow sticky note attached to the flap advertised \u201cLast scheduled service returns ten years hence\u201d beside a faded photograph of the same bus model I\u2019d seen on a night market fifty years ago. Curiosity outweighed disbelief, so I traced the address on the reverse and realized it matched the one from thirty\u2011two years back, where I would have taken the first bus to the coast, long before my lease was signed\u2014I wonder if this mysterious mail was meant to send that very same journey forward, waiting for someone to catch wind of it.",
+      "usage": {
+        "input_tokens": 40,
+        "output_tokens": 1393,
+        "total_tokens": 1433
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "E-2",
+      "error": null,
+      "status": "ok",
+      "text": "When I finally pulled the heavy cream envelope out of the mailbox, I found a sea of clerical nonsense: \u201cBus Fare #B\u201120193, valid 01\u202fMar\u202f1993\u201301\u202fMar\u202f1994\u201d scrawled on the front, yet in bold red letters beneath it a single word that seemed to scream \u201cTOMORROW\u201d right under the address line, as if the issuer had accidentally written the date of delivery instead of the date of travel. The postmarks showed three stamps from a city that no longer exists, and the tiny barcode on the back pulsed with a light pattern matching the current time, even though the ticket was born nearly thirty years ago. Every detail felt out of sync\u2014an old purchase, a future departure, a mail dated days before any possible bus ever ran\u2014so I laughed nervously, wondering whether the postal service had slipped into a parallel timeline where the 1993 schedule had been moved forward by a bureaucratic misprint. I tucked the parchment away, half convinced it\u2019s a prank, half thrilled that at least now I\u2019m living proof that a piece of paper can carry us two centuries into the same morning.",
+      "usage": {
+        "input_tokens": 40,
+        "output_tokens": 1600,
+        "total_tokens": 1640
+      }
+    }
+  ],
+  "condition": "E",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-1cc61e2757183b310e3934ca95c68060",
+  "seed": 7,
+  "selected_candidate_id": null,
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 3,
+  "usage": {
+    "input_tokens": 120,
+    "output_tokens": 4901,
+    "total_tokens": 5021
+  }
+}

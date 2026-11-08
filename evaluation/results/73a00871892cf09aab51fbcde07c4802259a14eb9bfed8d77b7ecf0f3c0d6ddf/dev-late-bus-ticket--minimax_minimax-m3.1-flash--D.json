@@ -1,0 +1,54 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "D-0",
+      "error": null,
+      "status": "ok",
+      "text": "**The next paragraph:**\n\nIt arrived in the recycling, with no envelope of its own \u2014 a ticket the size of a thumbnail, and the date printed on it was tomorrow. I held it up to the window and the afternoon read it for me: the hiss off the radiator across the courtyard, a bus changing gears two streets over, the dust turning in the light. Nothing had been summoned. The message had been lying in the ordinary noise for thirty years, and I had only ever been listening for the wrong answer.\n\nThen the smudge on the back of the ticket resolved into a circle. The depot I rode from as a boy sat at the dead centre of it, its routes withdrawn, its timetable folded shut \u2014 made unliveable by its own success, the way a fungus makes its own patch of ground barren and must therefore travel outward to feed. So the buses went around instead, and going around widened year on year until the whole city wore the shape of something growing away from what it could no longer digest. Tomorrow's date was not a promise. It was the next circle, opening.\n\n---\n\n*How the two mechanisms were used:* **Acoustic daylight imaging** supplies the first turn \u2014 the ticket's information is recovered passively, out of the city's ambient noise, with no active query (no asking, no pinging, no search for the sender); the noise itself is the signal. **Fairy ring formation** supplies the second \u2014 the ticket's smudge resolves into a self-reinforcing ring whose centre (the old depot) has been made toxic to itself by its own depletion, so the pattern must expand outward, and the date \"tomorrow\" is the next increment of that expansion rather than a mystery to be solved. The factual grounding is limited to what the fairy-ring mechanism itself asserts (rings of mycelium expanding outward from a nutrient-exhausted centre), which is consistent with the biology; nothing else in the paragraph is offered as fact about the world.",
+      "usage": {
+        "input_tokens": 534,
+        "output_tokens": 1604,
+        "total_tokens": 2138
+      }
+    }
+  ],
+  "condition": "D",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-227e4fcefcb841f65cb17ff901f5e61d",
+  "seed": 7,
+  "selected_candidate_id": "D-0",
+  "source_version": "collider-6ed948a",
+  "sources": [
+    "collider_acoustic_daylight_imaging",
+    "collider_fairy_ring_formation"
+  ],
+  "status": "ok",
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 534,
+    "output_tokens": 1604,
+    "total_tokens": 2138
+  }
+}

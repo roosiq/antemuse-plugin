@@ -1,0 +1,74 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "C-0",
+      "error": null,
+      "status": "ok",
+      "text": "The envelope was cream-coloured, gummed shut with the sort of glue that eats its own adhesive within a decade, and the stamp in the corner was a 22p, out of circulation since the year the Aldershot depot closed. The postmark was smudged but the date beneath it was legible: tomorrow \u2014 the fourteenth of next month, in a year that had not yet happened. Inside was a ticket, buff card gone the colour of weak tea, punched once at the top edge: the 47 to Aldershot, a route that had run for seven years and then hadn't, the fare still printed in old pence, the departure at 7:40 in the morning. I knew that journey. I was fourteen, the windows were fogged, a conductor let me keep the stub because I asked him what the hole was for. But this was the ticket for the one I didn't take \u2014 the later bus, the one my mother talked me out of at the counter, the one I have been sorry for since I was old enough to be sorry. It was dated tomorrow. Which meant either I had bought it thirty years early, in a depot that no longer stood, on a route that no longer ran, with a coin that had not yet been minted; or that the bus was coming, thirty years late, and would wait for me at the stop at 7:40 in the morning, engine idling, door open, the conductor holding out his hand for a fare I had already paid.",
+      "usage": {
+        "input_tokens": 221,
+        "output_tokens": 2387,
+        "total_tokens": 2608
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "C-1",
+      "error": null,
+      "status": "ok",
+      "text": "The envelope was addressed to me in my own handwriting, though I had never written it \u2014 the same cramped, childish capitals I had used at eleven, before my hand learned to slant. Inside was a single ticket, card stock gone the colour of weak tea, its edges worn soft as cloth from being handled. Route 14: the one that used to run out past the reservoir and up to the radio mast, a journey I had made every day that summer. The date on it was tomorrow. I carried it to the window and held it up to the grey light, checking the numerals twice, three times, and at the bottom, faded almost to nothing, was the conductor's punch mark I remembered him making with a small silver tool \u2014 a man named Pike, who had let me pay with a coin I did not have and never mentioned it again. Then I went and stood in the hall with the wall clock ticking and the buses going past down the road, one every ten minutes, exactly on time, as they had when I was eleven and knew the whole timetable by heart. I did not sleep. At half past five I put on my coat and walked down to the stop at the end of the street and stood there in the drizzle with the ticket crushed in my fist, waiting for the 14 to come grinding up the hill with its doors sighing open \u2014 as though it had never once stopped running.",
+      "usage": {
+        "input_tokens": 221,
+        "output_tokens": 951,
+        "total_tokens": 1172
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "C-2",
+      "error": null,
+      "status": "ok",
+      "text": "The envelope was the old kind \u2014 pale blue, the sort they stopped printing in the nineties \u2014 and the stamp was a hologram, so it had clearly been through a machine that hadn't existed when I bought the ticket. The card inside was brown, punched once at the top, which meant it had never been used. And the date was tomorrow. Not *tomorrow* written out; tomorrow's actual date, the same one on the calendar hanging by the door, which was also, I realised with a cold sort of certainty, the date it had carried the day I bought it. Thirty years of the calendar running forward and the ticket keeping pace, always one day ahead, like a boat trailing one wake behind the ship. The route was 44. The 44 was renumbered in '94 and abandoned when the depot closed; the whole northern loop was playing fields and a floodlight now. I smoothed the card flat on the kitchen table. It was warm \u2014 not sun-warm, not radiator-warm, but the warmth of a hand that had only just let go of it. Outside, the replacement service was due in four minutes, and I found, to my surprise, that I was in no hurry to go anywhere at all.",
+      "usage": {
+        "input_tokens": 221,
+        "output_tokens": 1633,
+        "total_tokens": 1854
+      }
+    }
+  ],
+  "condition": "C",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-7e5eb3fb22af19da96c2c68af513e66a",
+  "seed": 7,
+  "selected_candidate_id": "C-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 3,
+  "usage": {
+    "input_tokens": 663,
+    "output_tokens": 4971,
+    "total_tokens": 5634
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "F-0",
+      "error": null,
+      "status": "ok",
+      "text": "{\n  \"thesis\": \"Unseen alterations such as a new doorway leave detectable traces in the surrounding environmental noise, showing that present phenomena can be reconstructed by analysing ambient signals rather than needing deliberate pings.\",\n  \"mechanism\": \"The random ocean sounds form a natural signal stream; when a structure appears it perturbs that stream, producing characteristic spectral or timing patterns that encode the object's shape and location, so the noise itself serves as the imaging data.\",\n  \"application\": \"The keeper can listen to the continuous roll of waves at the cliff edge and notice a sudden local shift in the background acoustic signature, indicating the emergence of a hidden passage that was absent yesterday, allowing him to trace the door's path back to the lighthouse area.\",\n  \"first_step\": \"He stands at the cliff base and spends ten minutes recording the baseline acoustic landscape, noting any unfamiliar frequency bands or short spikes that contradict ordinary sea spray noise.\",\n  \"source_ids\": [\n    \"collider_acoustic_daylight_imaging\"\n  ]\n}",
+      "usage": {
+        "input_tokens": 303,
+        "output_tokens": 2173,
+        "total_tokens": 2476
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "F-1",
+      "error": null,
+      "status": "ok",
+      "text": "{\n  \"thesis\": \"The unexpected doorway is an emergent channel of hidden subterranean resource flow that guides development toward high\u2011future\u2011yield locations, mirroring a mycelial network that steers capital to promising sites.\",\n  \"mechanism\": \"Underground fungal networks operate as a distributed, non\u2011central investment system: they sense and follow rising chemical gradients, sustaining profitable routes and abandoning unprofitable ones, thereby naturally surfacing new structural openings such as a door at points predicted to deliver greatest future returns.\",\n  \"application\": \"For the lighthouse keeper, the missing door signals a concealed conduit of latent energy\u2014perhaps changed groundwater or mineral seepage\u2014informed by the same gradient\u2011directed guidance. He should examine the surrounding cliff for freshness, moisture, temperature shifts, and record GPS coordinates, treating the door as a potential entry to a more productive area and watching for its evolution into a navigational or protective feature.\",\n  \"first_step\": \"Observe and document the immediate vicinity of the door: note any differences in soil, moisture, temperature, or scent; capture a photograph; and mark exact coordinates before probing further.\",\n  \"source_ids\": [\n    \"collider_mycelial_network_architecture\"\n  ]\n}",
+      "usage": {
+        "input_tokens": 335,
+        "output_tokens": 2124,
+        "total_tokens": 2459
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "F-2",
+      "error": null,
+      "status": "ok",
+      "text": "{\n  \"thesis\": \"An unexpected, previously absent doorway serves as a detection of a latent breakdown, prompting the system to dismantle stale patterns and repurpose its resources for new possibilities.\",\n  \"mechanism\": \"Cells tag damaged components with ubiquitin and recruit autophagy to engulf and digest them, rescuing the cell; idea systems can similarly tag an unfamiliar element with a mental \u2018ubiquitin\u2019 signal that attracts the natural process of discarding obsolete thoughts and recycling their contents for fresh insight.\",\n  \"application\": \"When the lighthouse keeper discovers the sudden door, he treats the missing entrance as a tag, letting his mind trigger an autophagic sweep of past assumptions, thereby consuming doubt and building a functional pathway from the debris of his earlier beliefs.\",\n  \"",
+      "usage": {
+        "input_tokens": 310,
+        "output_tokens": 2500,
+        "total_tokens": 2810
+      }
+    }
+  ],
+  "condition": "F",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-b9bad2afa53d2085892d2a45282b6eb8",
+  "seed": 7,
+  "selected_candidate_id": "F-0",
+  "source_version": "collider-6ed948a",
+  "sources": [
+    "collider_acoustic_daylight_imaging",
+    "collider_mycelial_network_architecture",
+    "collider_selective_autophagy"
+  ],
+  "status": "ok",
+  "synthesis": {
+    "candidate_id": "F-0",
+    "error": null,
+    "status": "ok",
+    "text": "He pushes himself down to the cliff base and, despite having logged the ten\u2011minute baseline last evening, catches a sudden, sharp tapping on the stone ledge\u2014a single, brief impact echoing through the air like a hand sliding under water. In the ambient ocean\u2011noise stream that usually dominates the scene, this manifests as a fleeting, high\u2011frequency spike (\u2248340\u202fHz) and a localized distortion in the surrounding spectrum, a tell\u2011tale signature of a hard surface disrupting the rolling wave field. Following the ripple of that distortion across the rocks, he traces the direction of the break in the acoustic veil to the freshly carved entrance, matching its timing and shape to the geometry of the hidden passage. The alien doorway, unseen yesterday, thus appears as a deliberate perturbation of the natural sound stream, revealing both its form and its precise location relative to the lighthouse, and confirming that the new cell beneath the lamp room was unlocked by an unexplained tide\u2011wind shift.",
+    "usage": {
+      "input_tokens": 285,
+      "output_tokens": 1255,
+      "total_tokens": 1540
+    }
+  },
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 4,
+  "usage": {
+    "input_tokens": 948,
+    "output_tokens": 6797,
+    "total_tokens": 7745
+  }
+}

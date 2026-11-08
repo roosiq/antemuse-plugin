@@ -1,0 +1,74 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "C-0",
+      "error": null,
+      "status": "ok",
+      "text": "He steadies himself on the slick stone and pushes off toward the cliff\u2019s edge, the salty wind whipping around him like restless ghosts; at the exact spot where the old lighthouse tower\u2019s shadow fell yesterday, a dark, rectangular slab rises against the rugged wall\u2014a door that seemed out of place among the jagged rocks and weather\u2011worn boulders. The iron handle, tarnished silver and etched with faded symbols, gives only a faint, metallic click when he twists it, and after a tentative push the structure groans open, spilling a narrow staircase into a dimly lit shaft where a lone lantern flickers, casting trembling shadows across a space that belongs nowhere on any map he has ever seen.",
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 515,
+        "total_tokens": 560
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "C-1",
+      "error": null,
+      "status": "ok",
+      "text": "As he knelt to probe the slickness of the shale, his fingers brushed a swollen seam in the cliff face where a rust\u2011stained beam jutted out from the stone\u2014an improbable doorway that had been absent for days. With a hesitant push, the door swung inward on silent hinges, unveiling a dimly lit passage that spiraled downward into the sea\u2011shrouded abyss, its walls lined with faded murals of ships long since gone; a sudden gust rattled the shutters above the lamp room, carrying the salty tang of coming waves, and for a heartbeat the keeper thought the storm itself might have caused the structure to shift overnight. Yet the door bore no obvious lock\u2014only a faint incense scent curled up from within, and an echo lingered as if waiting for his footsteps. Something ancient and patient was waiting just beyond the threshold, ready to reveal what lay beneath the cliffs and explain why he had seen none yesterday.",
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 847,
+        "total_tokens": 892
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "C-2",
+      "error": null,
+      "status": "ok",
+      "text": "The wind rattled the lantern\u2019s glass as I descended the spiral stairs, my boots sinking into the damp stone; on the steep ledge below the lamp room I saw a heavy, moss\u2011clad oak slab set half\u2011buried among basalt blocks, its hinges rusted yet still turning with a reluctant sigh\u2014then a narrow, stone\u2011lined corridor yawned inside, a thin crack of moon\u2011lit light seeping through the ceiling and filling the space with the sharp scent of brine and forgotten timber, as though some long\u2011lost hand had left it deliberately concealed waiting for me to discover its true purpose.",
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 744,
+        "total_tokens": 789
+      }
+    }
+  ],
+  "condition": "C",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-771197c6753c019e03094b46f5f049d4",
+  "seed": 7,
+  "selected_candidate_id": "C-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 3,
+  "usage": {
+    "input_tokens": 135,
+    "output_tokens": 2106,
+    "total_tokens": 2241
+  }
+}

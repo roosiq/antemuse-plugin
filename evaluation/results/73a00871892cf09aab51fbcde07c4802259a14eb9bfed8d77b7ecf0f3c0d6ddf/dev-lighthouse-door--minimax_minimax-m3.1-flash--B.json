@@ -1,0 +1,50 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "B-0",
+      "error": null,
+      "status": "ok",
+      "text": "He had walked that stretch of cliff a thousand times in twenty-two years of keeping the light, and he knew every fissure, every ledge where the gulls nested, every place the rock sweated salt in August. So he was not mistaken when he came down the switchback path at dusk with the day's wick trimmed and the brass polished, and found a door standing in the cliff face where yesterday there had been only stone: a narrow, iron-strapped door, sea-green with rust, set flush into the granite as if the rock had grown around it like a knuckle around a finger. He stopped. Above him the lens began its slow turn, dragging a blade of light across the water, and in the sweep the door's small window flashed \u2014 not with reflection, but with a warm yellow glow from somewhere deeper in the hill, steady as a held candle. His key ring hung cold and silent in his pocket; every key on it was black with use. Yet when he lifted his hand to the latch, the iron was warm. Not sun-warm. The warm of a thing recently touched on the other side. And from beyond the wood came a sound he knew intimately, muffled but unmistakable: the soft, patient clicking of a clockwork mechanism, the same mechanism that lived in the lamp room above, winding itself in the dark. He did not open it. He stood on the cliff with the sea throwing itself at the rocks below and the light sweeping over his shoulder, and he listened, and he understood with a certainty that settled in his stomach like a stone, that whatever had been keeping the light for the last hundred years had been waiting for him to come down and knock.",
+      "usage": {
+        "input_tokens": 226,
+        "output_tokens": 475,
+        "total_tokens": 701
+      }
+    }
+  ],
+  "condition": "B",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief, but make it creative.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-d5fea9736c695e25ca12ad50cd46139b",
+  "seed": 7,
+  "selected_candidate_id": "B-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 226,
+    "output_tokens": 475,
+    "total_tokens": 701
+  }
+}

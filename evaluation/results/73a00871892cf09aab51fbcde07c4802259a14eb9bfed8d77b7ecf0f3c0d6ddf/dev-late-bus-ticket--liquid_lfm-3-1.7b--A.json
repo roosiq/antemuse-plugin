@@ -1,0 +1,50 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "A-0",
+      "error": null,
+      "status": "ok",
+      "text": "When I finally lifted the thick, cream\u2011coloured envelope from the back of the mailbox, a jolt of recognition shot through me\u2014my handwriting, my address, even the tiny embossed \u201cTicket #B17\u201d all match the paper I\u2019d bought thirty years ago. Yet the date at the top reads not \u201cJanuary\u202f1995, March\u202f12\u201d but simply \u201cTomorrow, March\u202f15\u201d. I blinked, realizing that the stamp had been pre\u2011printed before the ink ever dried, as if some mysterious hand had slipped a blank page into the form before it could be filled in. Now, standing on the porch of my grandmother\u2019s house, the train schedule still shows no service for tomorrow, and the bus depot across town is closed for renovation\u2014every detail points toward a tiny paradox that only the mail itself knows how to solve. I pocketed the ticket, half\u2011amazed and half\u2011terrified, determined to figure out whether I\u2019ve finally received my long\u2011lost fare to the city where I once lived before I left it centuries behind.",
+      "usage": {
+        "input_tokens": 40,
+        "output_tokens": 704,
+        "total_tokens": 744
+      }
+    }
+  ],
+  "condition": "A",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-6b66fb4da882676ab05bce62293c63a1",
+  "seed": 7,
+  "selected_candidate_id": "A-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 40,
+    "output_tokens": 704,
+    "total_tokens": 744
+  }
+}

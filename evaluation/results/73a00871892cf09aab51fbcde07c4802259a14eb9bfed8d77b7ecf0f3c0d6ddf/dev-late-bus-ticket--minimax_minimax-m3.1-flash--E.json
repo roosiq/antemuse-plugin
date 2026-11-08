@@ -1,0 +1,74 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "E-0",
+      "error": null,
+      "status": "ok",
+      "text": "He read the date three times, not because he hadn't understood it the first two, but because he wanted a third opinion and there was nobody in the house to give one. The ticket was a return \u2014 the 47 to Ardmore via the coal wharf \u2014 issued at 6.40 in the morning, and the punch holes in it were the ones he remembered, two neat bites from the little brass clip he'd carried for a year and then lost. He had ridden that bus with his father's suitcase between his knees and the conductor's dog asleep on the platform. The paper had gone the colour of weak tea. The ink on the date had not. It was black, and it was fresh, and it was dated tomorrow. He set it on the table, went and put the kettle on, and stood at the window a while with his coat on. The 47 had been cut back to the estate in 1998; the wharf stop was tarmac over now, and there were houses standing in the gap where the turning circle used to be. He knew that because he'd driven the bypass and seen it. He knew also, without much wanting to, that the timetable was still in the window of the chip shop on the corner \u2014 same route number, same hours, though the 6.40 had gone and the first bus now came at nine. It was half past six. In twenty-three minutes the 47 would leave the terminus, if it still left the terminus, and it would go past a stop that no longer existed, and it would be half empty, and it would be the same bus, or a bus like it, in the same livery, which was the part that had him standing there in his coat at half past six in the morning with an old ticket in his hand and no plan at all.",
+      "usage": {
+        "input_tokens": 221,
+        "output_tokens": 1284,
+        "total_tokens": 1505
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "E-1",
+      "error": null,
+      "status": "ok",
+      "text": "The envelope was addressed to me in my own handwriting \u2014 the penmanship of a man who still believed in paper, and in the post. The ticket inside was for the 7:40 from the Victoria terminus to Ardmore, a route discontinued the autumn my mother died; I had bought it that June, intending to go and then not going, and had spent the money on wine instead, and the stub had lain in a drawer ever since, waiting for nothing at all. Now it was postmarked Tuesday and dated tomorrow, and there was a seat number printed on it \u2014 31, window \u2014 in the same typewriter serif as the ticket I kept for the journey I did make. I stood in the kitchen a long time holding it by the edges, not rubbing the ink, the way you handle something that might turn out to be a symptom if you press too hard. Then I put on my coat and walked down to the terminus and stood on platform four in the rain, and at 7:38 a bus came round the corner that has not run that road in thirty years, and the driver leaned out, took the ticket from my hand, and said, \"Right. That's the 7:40. Sit anywhere you like.\"",
+      "usage": {
+        "input_tokens": 221,
+        "output_tokens": 1676,
+        "total_tokens": 1897
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "E-2",
+      "error": null,
+      "status": "ok",
+      "text": "The ticket was a paper strip the width of a thumb, cream-coloured, soft at the creases in the way only three decades of handling can make it soft, and I knew it before I read the date because my mother had kept it in the tin with the buttons and the tram stubs and the ferry ticket from Aberdeen. Thirty years ago I had bought it at the kiosk on Bridge Street for the 6:20 to Craigmore, and I had not gone. That was the whole of it, really \u2014 one missed journey, one evening my mother spent watching the light go out of the window of the room I never left. Now it had come back through the post, and the date printed along the top of it was tomorrow.\n\nI turned it over. On the back, in the same faded blue ink, a seat number: 41. I don't know why that frightened me. The 6:20 to Craigmore had forty-one seats; I had counted them that night from the timetable in the kiosk, with the rain coming down and the bus already pulling away from the stand with its door open and the driver looking up the street as though he had all the time in the world. Forty-one seats, and the last of them was the one by the window on the nearside, and I remember thinking, with the tickets in my hand and the rain going down the collar of my coat: if I ever do go, that's the one.\n\nThe bus stop was still there. The kiosk was not \u2014 that was a car park now, and the cinema opposite had become a supermarket \u2014 but the stop was a stop, the same chipped enamel plate with the same route number, and somebody had kept the timetable in a plastic sleeve against the rain, and tomorrow's date was chalked on the board in a hand that looked very much like my mother's. I got there early. The 6:20 came in on time, which was the first thing that was wrong with it, because no bus in the whole of my life has ever once come in on time. It was an old bus, the kind with the slatted windows and the folding door, and the number on the front was 41, and the driver \u2014 a young man, twenty-five at most \u2014 tipped his head at me as if he had been expecting me all evening, and held out his hand for the ticket.\n\n\"Forty-one,\" he said, when I gave it to him, and punched it. \"That's the window, on the nearside. She'll wait for you.\"",
+      "usage": {
+        "input_tokens": 221,
+        "output_tokens": 1889,
+        "total_tokens": 2110
+      }
+    }
+  ],
+  "condition": "E",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-8ec34acb763b02a18cc08a74e8bfd0c1",
+  "seed": 7,
+  "selected_candidate_id": null,
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 3,
+  "usage": {
+    "input_tokens": 663,
+    "output_tokens": 4849,
+    "total_tokens": 5512
+  }
+}

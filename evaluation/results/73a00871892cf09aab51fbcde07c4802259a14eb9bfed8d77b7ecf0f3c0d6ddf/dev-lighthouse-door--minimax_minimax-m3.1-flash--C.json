@@ -1,0 +1,74 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "C-0",
+      "error": null,
+      "status": "ok",
+      "text": "He had walked that stretch of cliff twice a day for eleven years and knew every seam of the granite, every loose stone in the path, every place the wind got under his collar. So he was not mistaken when he stopped halfway down, one hand out to steady himself, and found a door. It was oak, black with age, banded with iron that had not rusted, set into rock that showed no joint, no mortar, no tool-mark \u2014 as though the cliff had simply decided to keep something inside itself. There was no handle and no lock, only a small square hole at eye height, its edges worn round and glossy, the way a lantern handle would polish wood if a person stood there often and often and often. The draft that leaked through smelled of kelp and lamp oil and something colder beneath both. Above him the beam swung out across the water, touched the door, slid past, and left it in shadow. When he laid his palm flat against the wood, it was warm \u2014 blood-warm \u2014 and from somewhere on the other side, very faintly, he heard the sound of a foghorn blowing.",
+      "usage": {
+        "input_tokens": 225,
+        "output_tokens": 564,
+        "total_tokens": 789
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "C-1",
+      "error": null,
+      "status": "ok",
+      "text": "He went down with the hand lantern, though the sweep of his own lamp above would have done better, for the beam came round every forty seconds and left the cliff face in a moving darkness like water. The door was set flush into the rock at the height of a man's shoulders, and it was a door in every particular \u2014 six panels, painted green once, a brass latch, a keyhole with a key still in it. He had walked this path a thousand times to check the sea wall and the winch, and he would have sworn to the Board of Trade that yesterday the cliff had been only cliff: gorse and granite and the long grey coil of the foghorn cable. Yet the hinges were clean. That was the thing that stopped him. Everything else on that headland wore a crust of salt and bird-lime and forty winters of weather, but the brass shone, and the paint, though faded, showed no blistering, as though the door had been sheltered from the wind for years \u2014 or as though it had only just been put there. He put his palm flat against the wood. It was warm. Not sun-warm; the sun had not touched that side of the cliff since noon. Warm as a cheek, warm as a throat. And from somewhere beyond it came a sound he knew well and did not want to name: the slow, patient breathing of the sea, but deeper, as though the tide had room to move in a much larger chamber than any cave the island possessed. His lantern guttered. The wind came round the headland and set up a long low note in the doorframe, and he heard himself say, absurdly, \"Is someone there?\" \u2014 and then, because the sea answered him with that slow exhalation and nothing else, he took his hand off the wood and stepped back, and the shadows of the gorse moved over him like something looking for a place to hide.",
+      "usage": {
+        "input_tokens": 225,
+        "output_tokens": 618,
+        "total_tokens": 843
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "C-2",
+      "error": null,
+      "status": "ok",
+      "text": "The door was old, and that was the first thing that made Aldous uneasy in a way he could not name, because old things in his charge were usually only rusted. This was oak, banded with iron gone black and green with weed, and it sat in the cliff as though the cliff had grown around it \u2014 fitted, not broken into. No mortar showed at its edges. He swung his lantern across the stone and the light caught a handle of dull brass, polished bright at the grip, as if a hand had held it lately and often. Far overhead the great lens began its turn, and a bar of white light swept the sea, crossed the door, went on, and in that instant of illumination the grain of the wood stood out sharp as planed boards. He had walked this path at dusk and at dawn and at noon through twenty-three years of keeping the light, and he would have staked his pension on the blankness of that stretch of cliff. Yet there was a threshold, worn concave, and a sill of pale stone polished by feet. Aldous stood very still, with the cold coming up through his boots, and understood with the calm certainty of a man who has spent his life reading weather that something on the other side of that door had been waiting for him to arrive.",
+      "usage": {
+        "input_tokens": 225,
+        "output_tokens": 713,
+        "total_tokens": 938
+      }
+    }
+  ],
+  "condition": "C",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-12d95cea3e334ac4a4cbdec4184b4655",
+  "seed": 7,
+  "selected_candidate_id": "C-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 3,
+  "usage": {
+    "input_tokens": 675,
+    "output_tokens": 1895,
+    "total_tokens": 2570
+  }
+}

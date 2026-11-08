@@ -1,0 +1,74 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "E-0",
+      "error": null,
+      "status": "ok",
+      "text": "He eases himself down the steep, slick steps that lead from the rain\u2011slick roof of the lamp room toward the jagged crags below, the sound of distant waves muffling his footsteps as if urging him onward.  Half\u2011swallowed by a veil of mist, a weathered doorway peeks out from the cliff\u2019s face\u2014a solid slab of gray stone framed by vines and the faintest glint of iron hinges that catch the pale light filtering through the clouds.  Curiosity tightens its grip around his throat, so he pulls the latch with a hesitant turn of the lock and feels a cool draft brush his cheek, as though the door has been waiting for someone to notice its presence.  Beyond it lies a narrow, spiraling shaft descending into shadow, and when he steps inside, the air grows thick with the scent of salt and old timber, inviting him to uncover whatever lay buried beneath the cliffs for all to see.",
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 628,
+        "total_tokens": 673
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "E-1",
+      "error": null,
+      "status": "ok",
+      "text": "He stepped over the jagged edge, his boots sinking into moss\u2011clad stone as the wind howled through the yawning chasm below. The darkness felt thick and alive, pressing against his legs until he brushed aside a curtain of sea\u2011worn sand and revealed a solitary wooden panel half\u2011buried under the rock\u2019s ancient crust. Its grain was worn smooth by centuries of salt spray, and etched along its sides were delicate motifs of a trident and interlocking gears\u2014symbols he hadn\u2019t seen at all in recent years. Curiosity tugging at his skin, he heaved the panel free and discovered a narrow doorway set within the shadows, its frame carved deep with the same maritime inscriptions that marked the lighthouse itself. A sudden chill seeped out from behind the opening, carrying the faint, mournful toll of distant ships, and perched on the threshold hung a rusted lever, motionless yet unmistakably awaiting his touch.",
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 688,
+        "total_tokens": 733
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "E-2",
+      "error": null,
+      "status": "ok",
+      "text": "He pushes aside a veil of misted sea spray and peers into a narrow alcove where the cliff meets the abyss; there, concealed beneath a layer of weather\u2011worn slate, lies a heavy oak door\u2014a massive slab of dark wood with iron hinges rusted shut for decades. The lock is tarnished, yet it yields when his thumb brushes the cold metal knob, and a faint, mournful whistle drifts upward from within, as if the structure itself were awakening. Curiosity pulls him forward, and the staircase descending splits the rock face into three precarious flights before it opens onto a dimly lit chamber filled with old lanterns and maps long forgotten. For a heartbeat he wonders whether this hidden doorway was left by some vanished crew\u2014or whether it belongs now to the keeper himself, waiting for a purpose only he can see.",
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 465,
+        "total_tokens": 510
+      }
+    }
+  ],
+  "condition": "E",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "liquid/lfm-3-1.7b",
+  "prompt_version": "prompt-1",
+  "run_id": "run-9a2ab3a78937e13a7d6dffa989420c66",
+  "seed": 7,
+  "selected_candidate_id": null,
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 3,
+  "usage": {
+    "input_tokens": 135,
+    "output_tokens": 1781,
+    "total_tokens": 1916
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "F-0",
+      "error": null,
+      "status": "ok",
+      "text": "{\"thesis\":\"Apparently meaningless residue can encode a coherent hidden pattern, allowing the old bus ticket to function as a map of tomorrow rather than merely a nostalgic object.\",\"mechanism\":\"As ambient ocean noise contains enough correlated variation to reconstruct an image without an added signal, incidental details surrounding the ticket\u2014perforations, faded printing, wear, and ordinary city sounds\u2014can combine into an interpretable structure.\",\"application\":\"Under the hall\u2019s fluorescent light, the ticket showed the brown fibers of thirty-year-old paper, a route number no timetable used anymore, and, in the corner, tomorrow\u2019s date. Its perforations along one edge looked like random damage until the bus outside released its brakes with a long metallic exhalation; as the sound faded, the holes and faded ink settled into alignment, revealing the first six stops of a route that did not yet exist. The final mark was not a stop but a time, ten minutes before dawn. Somewhere beneath the terminal\u2019s ordinary clatter\u2014a cough, a dropped coin, a lift bell\u2014the same interval repeated, waiting to be recognized.\",\"first_step\":\"Inspect the ticket\u2019s date, route number, perforations, and incidental marks for a recoverable pattern.\",\"source_ids\":[\"collider_acoustic_daylight_imaging\"]}",
+      "usage": {
+        "input_tokens": 481,
+        "output_tokens": 2293,
+        "total_tokens": 2774
+      }
+    },
+    {
+      "branch": 1,
+      "candidate_id": "F-1",
+      "error": null,
+      "status": "ok",
+      "text": "{\n  \"thesis\": \"Memory of fertile collision zones does not require an archive, a ledger, or any central tracker: it can exist as a persistent chemical gradient \u2014 a distributed signal that keeps one route alive by feeding it, so that when the zone actually arrives (here, the past and the future touching in a single envelope), the resources of attention are already flowing toward it. For the task, the ticket is not a keepsake but a route with a thickened filament: the paragraph should treat the artifact as a signal that concentrates meaning at the point where two times collide, and should let the unprofitable lines (the nostalgia that leads nowhere, the filed-away drawer) be abandoned rather than explored.\",\n  \"mechanism\": \"Underground fungal networks invest without planning: local chemical gradients carry resources toward whatever will return most in the future; persistently profitable routes thicken and persist, unprofitable ones are starved and abandoned, and no map or overseer is required. The same logic makes an idea-generation system develop memory of fertile zones: repeated, mutually reinforcing associations behave like the network's chemistry, keeping a path chemically 'warm' so it stays available, while dead ends lose their reinforcement and fade. Memory here is an active routing of resources, not a stored record \u2014 which is why a forgotten thirty-year-old journey can still be the richest thing in the narrator's pocket.\",\n  \"application\": \"The next paragraph therefore (a) refuses the obvious nostalgia reading and makes the ticket a live route rather than a memento; (b) lets the body remember the purchase as an investment ('I remember the coin, the woman behind the grille\u2026 and not one thing about where the bus went') so the past is stored as gradient, not as filed detail; (c) shows thirty years of small, unplanned attention as continuous feeding of a filament that has not yet fruited; (d) makes the collision zone explicit \u2014 the envelope dated tomorrow, the machine's ink 'for anything it thought the future would want' \u2014 so the highest-return intersection is the moment of choice; (e) abandons the unprofitable branch (throwing it away, filing it) and ends with the narrator moving toward the productive one (standing at the window, buying, discovering what the thirty years were invested in). Draft paragraph: 'The postman left it on the mat with a bundle of leaflets about a heating offer, and the date in the corner of the ticket was tomorrow's, printed in that pale ink the machine used for anything it thought the future would want. Thirty years ago I bought it at the window on Platform 4, a Saturday, deciding on the spur of the moment because the rain had stopped and the queue had thinned; I remember the coin, the woman behind the grille, the smell of wet coats, and not one thing about where the bus went. I have carried that journey the whole way without knowing its destination \u2014 it has sat in drawers, in wallets, in the inside pocket of a coat I no longer own, and it has never once been a keepsake. It has been a route. Something in me has been quietly feeding it, day after day, small sums of attention, the way a network feeds a filament that has not yet fruited: nothing is decided, nothing is filed, no one is keeping score, and yet the whole of my attention has been drifting downhill toward this one point on the map where the past and the future overlap. Now the ticket is here, dated for a day that has not happened, and the gradient has steepened. I could throw it away \u2014 that is the unprofitable line, the one where I file it under the flat drawer of things that meant nothing and feel lighter. Or I could take it to the station and stand at the window and see whether the machine will print me a ticket for tomorrow, for the bus I nearly didn't take, and find out what thirty years of my own resources were actually invested in. The envelope is not a memory. It is a dividend.'\",\n  \"first_step\": \"Write a single ~180-word paragraph in which the ticket functions as a persistent chemical signal rather than a memento: open on the date discrepancy ('dated tomorrow'), give one sensory cluster of the thirty-year-old purchase with no destination attached, name the thirty years of quiet feeding as the accumulated gradient, and close at the moment of choice where the narrator spends the ticket at a station window \u2014 the profitable route thickened, the discarded route named and left.\",\n  \"source_ids\": [\"collider_mycelial_network_architecture\"]\n}",
+      "usage": {
+        "input_tokens": 501,
+        "output_tokens": 1914,
+        "total_tokens": 2415
+      }
+    },
+    {
+      "branch": 2,
+      "candidate_id": "F-2",
+      "error": null,
+      "status": "ok",
+      "text": "{\n  \"thesis\": \"A stale bus ticket can be treated not as a dead artifact but as recyclable material: its failed plan can be selectively broken down so that its surviving details generate a new possibility.\",\n  \"mechanism\": \"Like ubiquitin-marked cellular debris, the ticket's obsolete itinerary is tagged for dismantling; irrelevant parts are discarded while usable fragments\u2014date, route, fare\u2014are returned to the imagination as fuel for a new journey.\",\n  \"application\": \"Use tomorrow's date to make the ticket a live prompt, digest the abandoned journey, and build the next scene from what survives. \\\"The ticket was yellowed at the edges, but the ink was sharp: Route 17, departing at 6:40, tomorrow. It had been bought thirty years ago for a journey someone else had abandoned, and the envelope carried no return address. I looked up the route and found it had been dismantled years ago, most of its stops folded into other lines. So I did what the dead timetable no longer could: I marked what still worked. The fare. The first terminus. A seat on the first bus out. At dawn I would go there, carrying the old ticket as the only surviving part of the plan, and let tomorrow decide whether it could become the beginning of another.\\\"\",\n  \"first_step\": \"Write one line listing the ticket's obsolete details and circle the single usable fragment that can seed the next scene.\",\n  \"source_ids\": [\n    \"collider_selective_autophagy\"\n  ]\n}",
+      "usage": {
+        "input_tokens": 461,
+        "output_tokens": 2411,
+        "total_tokens": 2872
+      }
+    }
+  ],
+  "condition": "F",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-3b0ffb9f9896f1c2b0e182a3895e6cd6",
+  "seed": 7,
+  "selected_candidate_id": "F-0",
+  "source_version": "collider-6ed948a",
+  "sources": [
+    "collider_acoustic_daylight_imaging",
+    "collider_mycelial_network_architecture",
+    "collider_selective_autophagy"
+  ],
+  "status": "ok",
+  "synthesis": {
+    "candidate_id": "F-0",
+    "error": null,
+    "status": "ok",
+    "text": "She went to the first stop at ten minutes before dawn, because that was the time the ticket gave, and the sky in late October keeps its promises badly \u2014 a grey thinning, birds, milk bottles on a step, shutters dragged up \u2014 but the noise of the waking street was enough. Held against the light, the ticket's wear made a landscape: the scuffed corner became a car park, the old crease a river, the coffee ring the ring road round the hospital, and the city assembled itself out of incidental things the way a face assembles itself out of a crowd, one detail at a time, until the whole route stood there in the paper's grain. The 418 came at 4:52, a bus she had never seen, clean, its destination board lit with a number that had been dead for thirty years. The driver was young. He looked at her ticket for a long moment, then at her. \"You're early,\" he said. \"We start tomorrow.\" But the date printed on the ticket in his hand was today, and the sixth mark on her paper was not a place at all but a time, and the doors folded open with a long pneumatic sigh. Inside, the seats were new and the window was clean, and in the far corner, folded on the seat, lay a second ticket, and the date on it was the day after tomorrow.",
+    "usage": {
+      "input_tokens": 500,
+      "output_tokens": 2098,
+      "total_tokens": 2598
+    }
+  },
+  "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the ticket forces a small concrete decision",
+      "the paragraph makes the elapsed thirty years felt without explaining them",
+      "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+  },
+  "task_id": "dev-late-bus-ticket",
+  "transport_calls": 4,
+  "usage": {
+    "input_tokens": 1443,
+    "output_tokens": 6618,
+    "total_tokens": 8061
+  }
+}

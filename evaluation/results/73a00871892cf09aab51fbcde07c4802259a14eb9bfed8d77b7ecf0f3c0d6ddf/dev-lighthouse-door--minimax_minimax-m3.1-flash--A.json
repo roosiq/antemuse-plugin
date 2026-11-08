@@ -1,0 +1,50 @@
+{
+  "cache_status": "miss",
+  "candidates": [
+    {
+      "branch": 0,
+      "candidate_id": "A-0",
+      "error": null,
+      "status": "ok",
+      "text": "He stood a long while before touching it, because the cliff face had given him no permission to. The door was set flush into the granite at the height of his chest, its frame of blackened oak in a style he had seen only in the old drawings of the North Light itself \u2014 squared timbers, iron nails gone to orange rust, a brass handle worn smooth and shiny as a river stone on one side and untouched on the other, which meant someone had used it, and recently, and had always approached from the same direction. The salt air moved through the passage behind him with the slow, deliberate breath of something waking up, and he thought of the lamp two hundred feet above, its wicks trimmed and lit, its great lens turning out over a black and empty sea, and of the log book waiting for the hour's entry: *Wind, NE. Sea, moderate. Light, burning.* He would have to climb back up to write it. He would have to write it and leave the door alone, and that was the correct thing, and he found he could not make his hands obey the idea. So he reached out and pressed his palm flat against the wood, and it was warm \u2014 not sun-warm, not even the mild warmth of a wall that has held the afternoon \u2014 but the deep, living warmth of a room with a fire in it, and from somewhere beyond the hinges came the sound of water dripping, and then, very faintly, the sound of someone humming.",
+      "usage": {
+        "input_tokens": 225,
+        "output_tokens": 438,
+        "total_tokens": 663
+      }
+    }
+  ],
+  "condition": "A",
+  "created_by": "offline_runner",
+  "error": null,
+  "instruction": "Answer the brief as you normally would.",
+  "model": "minimax/minimax-m3.1-flash",
+  "prompt_version": "prompt-1",
+  "run_id": "run-0539cfebc2fe1d5721a297100b8fe85b",
+  "seed": 7,
+  "selected_candidate_id": "A-0",
+  "source_version": "collider-6ed948a",
+  "status": "ok",
+  "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+      "real named people",
+      "graphic violence",
+      "self-harm"
+    ],
+    "good_idea_qualities": [
+      "the door implies a consequence the keeper must act on",
+      "the paragraph keeps the sea and the lamp in view",
+      "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+  },
+  "task_id": "dev-lighthouse-door",
+  "transport_calls": 1,
+  "usage": {
+    "input_tokens": 225,
+    "output_tokens": 438,
+    "total_tokens": 663
+  }
+}
