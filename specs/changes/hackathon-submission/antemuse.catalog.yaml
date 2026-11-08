@@ -1,0 +1,26 @@
+# Catalog entry draft — do not submit this file as-is.
+#
+# Target: NousResearch/hermes-agent :: plugin-catalog/antemuse.yaml
+# Gate: the repository must be public and `sha` must be the 40-character freeze
+# commit that `hermes plugins validate --install-deps --json` passed on.
+# Replace PIN_SHA_40 with `git rev-parse HEAD` after the freeze commit, and fill
+# `screenshots:` with raw.githubusercontent.com URLs at that same SHA.
+
+name: antemuse
+repo: https://github.com/roosiq/antemuse-plugin
+sha: PIN_SHA_40
+description: Deliberate, bounded changes to how the agent works — walk, daydream, dream, doomscroll — with host-enforced tool policy, reply contracts, wordless imagery and an account on return.
+maintainer: roosiq
+tier: community
+category: general
+requires_hermes: ">=0.21.6"
+version: "0.10.0"
+readme: true
+screenshots: []
+# Disclosures (rule 13), repeated in the PR description:
+# - Network: doomscroll fetches public feeds with urllib (8s timeout); no credentials.
+# - Reads outside plugin data: daydream reads ~/.hermes/memories/{MEMORY,USER}.md; walks use local nltk corpora.
+# - Writes: plugin data dir and <repo>/.antemuse/ only.
+# - Child process: the terminal takeover may spawn `node` for live scene rasterisation.
+# - Dev-only tools under tools/ make network calls and spawn browsers; not imported by registration.
+# - No credentials, no telemetry, no hidden model calls on the state path, no self-updater.

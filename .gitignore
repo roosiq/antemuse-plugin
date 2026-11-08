@@ -5,5 +5,7 @@ postcards/
 __pycache__/
 *.pyc
 *.png
+!docs/screenshots/*.png
 tools/desktop_harness/node_modules/
 tools/desktop_harness/.work/
+data/meshy/

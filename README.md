@@ -64,15 +64,22 @@ antemuse
 
 ## Install
 
+From a clone, for development:
+
 ```bash
+git clone https://github.com/roosiq/antemuse-plugin ~/antemuse-plugin
 ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
 hermes plugins enable antemuse
 ```
 
+Once the plugin is listed in the catalog, `hermes plugins install antemuse`
+installs the reviewed pin instead. Python dependencies (`pillow`, `nltk`) are
+declared in `plugin.yaml`; Hermes prepares them at install time.
+
 ## Layout
 
 ```
-plugin.yaml            manifest: 1 tool, 4 hooks
+plugin.yaml            manifest: 1 tool, 8 hooks
 __init__.py            hooks (pre_llm_call, pre_tool_call, post_tool_call,
                        transform_llm_output), /walk /daydream /dream /doomscroll
                        /return /states /note /watch, and the state tool
@@ -158,6 +165,41 @@ the software renderer.
 - State is profile-wide, not per-session: the metaphor is about the agent.
 - Data lives in the profile plugin data dir, overridable with
   `ANTEMUSE_STATES_HOME`.
+
+## Disclosures
+
+What a person should know before installing. Each line names where it happens.
+
+- **Network reads.** `doomscroll` fetches public RSS/JSON feeds through
+  `core/sources.py` and `core/social.py` (8 s timeout, `urllib`, no credentials).
+  Results are cached in the plugin data dir. No other runtime path makes a
+  network call.
+- **Reads outside the plugin data dir.** `daydream` reads the operator's Hermes
+  memory files (`~/.hermes/memories/MEMORY.md` and `USER.md`) as its material,
+  and walks use the local WordNet/FrameNet corpora via `nltk`. Nothing else
+  outside the plugin data dir is read at runtime.
+- **Writes.** The active state record, journal, residue, cursor and render caches
+  go under the plugin data dir (`data_dir()`, honouring `ANTEMUSE_STATES_HOME`);
+  per-project artifacts go under `<repo>/.antemuse/`. No writes to Hermes config,
+  auth, memory or another plugin's files.
+- **Child process.** The full-screen takeover may spawn `node` to rasterise the
+  live scene (`core/tui.py`). It inherits no shell, is not started under approval
+  bypass, and the takeover falls back to cached frames when `node` is absent.
+- **Dev-only tools.** Scripts under `tools/` (frame rendering, pilots, benchmark
+  harnesses) make network calls and spawn browsers; they are never imported by
+  plugin registration. `tools/gen_frames.py` defaults to an operator-controlled
+  `SD_SERVER` on a tailnet host, not localhost.
+- **Credentials.** None requested, read, stored or refreshed. No `.env`, no
+  `auth.json`, no keychain, no OAuth token. Environment reads are limited to
+  `ANTEMUSE_STATES_HOME`, `NLTK_DATA`, `NO_COLOR` and `TERM`.
+- **Telemetry and model usage.** None. No analytics, no usage reporting, no
+  hidden LLM calls on the state path. The experimental exploration library uses
+  `ctx.llm` only when explicitly invoked by code that is not runtime-wired.
+- **Updates.** The plugin does not update itself and never fetches its own code.
+  Updates arrive through the catalog's pinned SHA and `hermes plugins update`.
+- **Unattended runs.** States work under cron and the messaging gateway; a state
+  that cannot draw degrades to a picture or a text record rather than waiting on
+  a person.
 
 ## three.js backdrop
 
