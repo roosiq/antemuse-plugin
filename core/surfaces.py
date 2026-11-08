@@ -80,6 +80,17 @@ def _stretch_bounds(values: List[int]) -> tuple[int, int]:
     return ordered[int(n * 0.02)], ordered[min(n - 1, int(n * 0.995))]
 
 
+#: 4x4 ordered dither. Eight ramp levels cannot show a gradient on their own, so a
+#: cell is pushed up or down by a fixed threshold instead of being rounded to the
+#: nearest glyph — that is the difference between a wash and a picture.
+_BAYER4 = (
+    (0, 8, 2, 10),
+    (12, 4, 14, 6),
+    (3, 11, 1, 9),
+    (15, 7, 13, 5),
+)
+
+
 def _cover(im: Image.Image, cols: int, rows: int) -> Image.Image:
     """Crop to the grid's aspect (in cell space) without distorting it, then scale.
 
@@ -98,7 +109,8 @@ def _cover(im: Image.Image, cols: int, rows: int) -> Image.Image:
 
 
 def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
-        scene: str = "", fit: str = "cover", pane: bool = False) -> List[str]:
+        scene: str = "", fit: str = "cover", pane: bool = False,
+        dither: bool = False, gamma: float = 1.0) -> List[str]:
     """Luminance-ramp ASCII of a rendered three.js frame: no colour, no escapes.
 
     ``fit="cover"`` fills the grid edge to edge (a pane, an immersive surface);
@@ -123,6 +135,7 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
         im = _cover(im, cols, rows).resize((cols, rows), Image.LANCZOS)
     values = list(im.tobytes())
     lo, hi = _stretch_bounds(values)
+    levels = max(1, len(ramp) - 1)
     out = []
     for r in range(rows):
         line = ""
@@ -130,7 +143,13 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
             v = values[r * cols + c]
             t = 0.0 if hi <= lo else (v - lo) / (hi - lo)
             t = min(1.0, max(0.0, t))
-            line += ramp[min(len(ramp) - 1, int(t * len(ramp)))]
+            # lift the mids: a scene lit at 13/255 lives entirely in the bottom fifth
+            if gamma != 1.0:
+                t = t ** gamma
+            if dither:
+                t = t + ((_BAYER4[r % 4][c % 4] + 0.5) / 16.0 - 0.5) / levels
+                t = min(1.0, max(0.0, t))
+            line += ramp[min(len(ramp) - 1, int(round(t * levels)))]
         # A pane needs whole rows: ragged edges would show as a torn right margin.
         out.append(line if fit == "cover" else line.rstrip())
     return out

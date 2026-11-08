@@ -156,8 +156,9 @@ function Frame({ lines, cells }) {
       fontSize: `${fontSize.toFixed(2)}px`,
       letterSpacing: 0,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-      color: 'var(--ui-text-secondary, #8b8b8b)',
-      opacity: 0.9,
+      color: '#cfd6dd',
+      opacity: 0.96,
+      textShadow: '0 0 6px rgba(120,200,255,0.18)',
       overflow: 'hidden',
       whiteSpace: 'pre'
     },
@@ -174,7 +175,10 @@ function StateView({ ctx }) {
   // The art is the pane; the words are furniture in the corner of it.
   return jsxs('div', {
     ref,
-    style: { position: 'relative', height: '100%', width: '100%', overflow: 'hidden', margin: 0 },
+    style: {
+      position: 'relative', height: '100%', width: '100%', overflow: 'hidden', margin: 0,
+      background: 'radial-gradient(ellipse at 50% 38%, #0d1219 0%, #05070a 62%, #000 100%)'
+    },
     'data-antemuse-state': vm.situation,
     children: [
       jsx('div', {
@@ -187,8 +191,9 @@ function StateView({ ctx }) {
         : null,
       jsxs('div', {
         style: {
-          position: 'absolute', left: 10, bottom: 8, fontSize: '11px', lineHeight: 1.35,
-          opacity: 0.55, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '1px'
+          position: 'absolute', left: 12, bottom: 10, fontSize: '11px', lineHeight: 1.35,
+          opacity: 0.5, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '1px',
+          color: '#9aa6b2', letterSpacing: '0.02em'
         },
         children: [
           jsx('div', { style: { letterSpacing: '0.08em', fontWeight: 600 }, children: vm.label }),

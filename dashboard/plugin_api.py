@@ -90,6 +90,9 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
                 scene=str(active.get("key") or ""),
                 fit="cover" if fit == "cover" else "contain",
                 pane=fit == "cover",
+                # dither buys the pane its gradients; on a card it buys a block
+                dither=fit == "cover",
+                gamma=1.0,
             )
         except Exception:  # health: BLE001 -- a missing frame is not a broken state
             lines = []

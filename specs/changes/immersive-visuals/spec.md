@@ -288,3 +288,32 @@ that still wants composition work.
 
 **Still open from this spec:** the frame strip (8 frames exist, one is served), dither,
 one hue per state, and the HUD's fade. Those are §3.4–3.5 and remain unimplemented.
+
+## 10. The pane as an art surface (2026-11-08, after review)
+
+The first pane render was rejected on sight — light glyphs on the app's white page,
+eight flat ramp levels, no dither. Three fixes, in order of effect:
+
+1. **The pane has its own ground.** It is not a text surface: the plugin paints a
+   near-black radial field behind the frame and draws ink at `#cfd6dd`. A ramp against
+   white is a wash; against black it is light.
+2. **Dither and a mid-tone lift, scoped to the pane.** `surfaces.art()` takes
+   `dither`/`gamma`; a 4×4 ordered matrix pushes each cell up or down instead of
+   rounding it to the nearest glyph. Both default **off**, because on the 44 × 12 chat
+   card dithering a dim scene produced 71 % coverage — a solid block. The pane path
+   (`fit=cover`) turns them on; the card path does not.
+3. **Wireframe, not shaded blobs.** A shaded low-poly solid collapses to one value
+   band once quantised. `wire()` renders the same Meshy meshes as transparent line
+   structures, with hierarchy: one bright subject (0.8-0.85), everything else 0.18-0.42.
+   Structure survives eight glyphs; shading does not.
+
+**Measured at 116 × 74 in a 700 × 746 pane** (glyph box 700 × 746, font 10.06 px):
+walk 41 % ink, daydream 28 %, doomscroll 38 %, dream 35 %.
+
+`tools/pane_proof.py` renders the four states exactly as the pane draws them and
+stitches `/tmp/panes/sheet.png`, so the pictures can be judged without a live state.
+
+**Still weak, honestly:** doomscroll reads as a busy circular mass rather than a feed
+passing the lens, and daydream's two solids are close enough that they read as one
+shape plus noise. Those two want composition work, not more assets. Composition is not
+something the sampler or the asset pack can fix.
