@@ -90,9 +90,12 @@ plugin.register(registered.ctx)
 assert.equal(plugin.id, 'antemuse')
 assert.deepEqual(
   registered.contributions.map((c) => c.area),
-  ['panes', 'statusBar.right', 'palette'],
-  'a pane, a chip and a palette command'
+  ['panes', 'statusBar.right', 'routes', 'sidebar.nav', 'palette'],
+  'a pane, a chip, a page, a nav entry and a palette command'
 )
+const byId = Object.fromEntries(registered.contributions.map((c) => [c.id, c]))
+assert.equal(byId.page.data.path, '/antemuse', 'the page route must match what the palette opens')
+assert.equal(byId.nav.data.path, '/antemuse')
 assert.equal(registered.contributions[0].data.placement, 'right')
 assert.equal(registered.contributions[0].data.collapsible, true)
 assert.equal(registered.pages.length, 1, 'a settings page is offered when the host supports one')

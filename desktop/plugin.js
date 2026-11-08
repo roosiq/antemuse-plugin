@@ -11,7 +11,14 @@
 // surface is a pane disables itself when that pane is closed, so the chip keeps
 // the plugin meaningful on its own.
 
-import { PANES_AREA, STATUSBAR_AREAS, PALETTE_AREA, pluginSettingsHref } from '@hermes/plugin-sdk'
+import {
+  PANES_AREA,
+  ROUTES_AREA,
+  SIDEBAR_NAV_AREA,
+  STATUSBAR_AREAS,
+  PALETTE_AREA,
+  pluginSettingsHref
+} from '@hermes/plugin-sdk'
 import { useEffect, useState } from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 
@@ -178,6 +185,21 @@ export default {
       area: STATUSBAR_AREAS.right,
       order: 20,
       render: () => jsx(StateChip, { ctx })
+    })
+    // A dock pane can sit in an inactive tab or a collapsed rail, so the same
+    // view also gets its own route: a page is reachable even when the layout
+    // has no room for the pane.
+    ctx.register({
+      id: 'page',
+      area: ROUTES_AREA,
+      data: { path: `/${ID}` },
+      render: () => jsx(StateView, { ctx })
+    })
+    ctx.register({
+      id: 'nav',
+      area: SIDEBAR_NAV_AREA,
+      order: 60,
+      data: { codicon: 'pulse', label: copy.pane, path: `/${ID}` }
     })
     ctx.register({
       id: 'watch',

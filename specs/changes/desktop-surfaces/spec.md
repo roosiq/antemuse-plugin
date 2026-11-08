@@ -1,8 +1,9 @@
 # Desktop surfaces — the state seen, not described
 
-Status: **partial** 2026-11-08. Backend route and desktop half implemented and tested
-without the app; not yet verified inside Hermes Desktop. Written from a source review of a
-shipped plugin, then built.
+Status: **verified in the app** 2026-11-08. Backend route and desktop half built, then
+booted inside Hermes Desktop on a virtual display: chip renders live, page renders live.
+The dock pane alone did not render (see §7b). Written from a source review of a shipped
+plugin, then built.
 Owner: Ryan Cook. Scope: `/home/ryan/antemuse-plugin` desktop surface only.
 
 ## 1. Problem
@@ -173,6 +174,29 @@ built. This is an owner decision and is not assumed below.
   `hermes_cli.plugin_validate_desktop` reports no findings.
 - **Still unproven:** how it looks in the app. No Electron here, so CSS, pane placement and
   the real gateway transport are untested. The change stays `partial` until it is seen.
+
+## 7b. Verified inside the app (2026-11-08)
+
+The packaged app was already up to date, so `hermes desktop` installed the launcher
+entry without a build. No compositor was live on this box (only gdm's greeter), so the
+app was booted on `Xvfb :99` with `--remote-debugging-port=9222` and driven over CDP.
+
+- The app discovered the plugin itself: `~/.hermes/desktop-plugins/antemuse/` with
+  `.hermes-package.json` `{"linked": true, "source": "~/.hermes/plugins/antemuse/desktop"}`,
+  and the copied `plugin.js` is byte-identical to `desktop/plugin.js`.
+- Enabled through the app's own decision store (`hermes.desktop.pluginDecisions.v2`).
+- **Chip: renders.** `WALKING · 2:25` in the status bar; `[data-antemuse-state]`
+  reflects the live payload.
+- **Pane: adopted, but not visible.** The layout tree held `antemuse:state` as an
+  inactive tab beside `review` in the right rail; making it active (via the stored
+  tree, and by giving it its own group) left `getBoundingClientRect()` at 0 × 0.
+  A dock pane is not a dependable first surface.
+- **So a route and a nav entry were added** — which is what the palette command had
+  been pointing at all along (`/antemuse` did not exist). Clicking **State** in the
+  sidebar renders the same view at 700 × 746 with a live `DOOMSCROLLING` state.
+
+That measurement is also the reason for `specs/changes/immersive-visuals/spec.md`:
+in a 700 × 746 pane the frame drew at ≈ 264 × 120 px, 4.4 % of the surface.
 
 ## 8. Verification limitation, stated plainly
 
