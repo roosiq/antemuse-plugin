@@ -2,7 +2,8 @@
 
 Status: **proposed** 2026-11-08. Intent only; nothing implemented.
 Owner: Ryan Cook. Scope: `dashboard/` + `desktop/plugin.js` rendering path in
-`/home/ryan/antemuse-plugin`. Does not touch the lifecycle, the card, or the CLI.
+`/home/ryan/antemuse-plugin`. The picture itself is briefed separately in
+[`assets.md`](assets.md): which states need drawing, and what each drawing must show. Does not touch the lifecycle, the card, or the CLI.
 
 ## 1. Problem, measured
 
