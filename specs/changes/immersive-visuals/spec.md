@@ -347,3 +347,18 @@ dream 43 %.
 - The per-scene `SQUARE` framing block silently overrode the new cameras (it ran after
   the scene set them), which is why the first two rewrites came out off-centre. It is
   updated in step with the scenes now — the ordering is a landmine worth naming.
+
+## 12. A dither of black is a dot lattice
+
+Judging the panes as ASCII rather than from a JPEG showed the defect the screenshot
+kept hiding: the empty half of every pane was a regular field of `.` — the ordered
+dither was pushing pure-black cells up one level, so the dark part of the picture read
+as graph paper and the subject floated in the top of it.
+
+`art()` now takes a **floor** (0.06): below it a cell is empty and the dither never
+runs. Only then does the dither describe texture instead of describing itself.
+
+After the floor, at 116 × 74: walk 41 % ink, daydream 28 %, doomscroll 18 %,
+dream 35 %. `doomscroll` is now the sparse one — a five-plate corridor that reads as
+a small bright cluster high in the frame. That is a composition decision I have run
+out of ways to guess at; it needs an eye, not another parameter.

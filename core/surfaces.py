@@ -110,7 +110,8 @@ def _cover(im: Image.Image, cols: int, rows: int) -> Image.Image:
 
 def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
         scene: str = "", fit: str = "cover", pane: bool = False,
-        dither: bool = False, gamma: float = 1.0) -> List[str]:
+        dither: bool = False, gamma: float = 1.0,
+        floor: float = 0.06) -> List[str]:
     """Luminance-ramp ASCII of a rendered three.js frame: no colour, no escapes.
 
     ``fit="cover"`` fills the grid edge to edge (a pane, an immersive surface);
@@ -146,6 +147,11 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
             # lift the mids: a scene lit at 13/255 lives entirely in the bottom fifth
             if gamma != 1.0:
                 t = t ** gamma
+            # A dither of a flat black field is a dot lattice, not texture: below the
+            # floor the cell is empty, so the dark parts of a scene stay dark.
+            if t <= floor:
+                line += ramp[0]
+                continue
             if dither:
                 t = t + ((_BAYER4[r % 4][c % 4] + 0.5) / 16.0 - 0.5) / levels
                 t = min(1.0, max(0.0, t))
