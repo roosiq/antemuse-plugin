@@ -41,6 +41,20 @@ def project_dir(start: Path | None = None) -> Path | None:
     return path
 
 
+def hermes_home() -> Path:
+    """The active Hermes home: the host's own resolver first, then env, then default.
+
+    Plugins must not assume ``~/.hermes``: profiles and ``HERMES_HOME`` move it, and a
+    plugin that hardcodes the path writes one profile's data into another's.
+    """
+    try:
+        from hermes_constants import get_hermes_home  # type: ignore
+        return Path(get_hermes_home())
+    except Exception:
+        override = os.environ.get("HERMES_HOME")
+        return Path(override) if override else Path.home() / ".hermes"
+
+
 def data_dir() -> Path:
     """The plugin data dir, or an explicit override for tests and tinkering."""
     override = os.environ.get(ENV_HOME)
@@ -51,7 +65,7 @@ def data_dir() -> Path:
     try:
         from plugins.plugin_storage import plugin_data_dir  # type: ignore
         return plugin_data_dir(PLUGIN_NAME)
-    except Exception:  # standalone/test use
-        path = Path.home() / ".antemuse"
+    except Exception:  # standalone/test use: the same tree the host would use
+        path = hermes_home() / "plugin-data" / PLUGIN_NAME
         path.mkdir(parents=True, exist_ok=True)
         return path

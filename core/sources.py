@@ -20,11 +20,15 @@ from typing import Any, Dict, List
 
 HOME = Path.home()
 NLTK_HOME = HOME / "nltk_data"
-DATA = HOME / ".hermes/plugin-data/antemuse"
+from . import storage
+
+#: Resolved through the host's own plugin-storage convention, not a guessed path:
+#: `~/.hermes` is only the default home, and profiles move it.
+DATA = storage.data_dir()
 WALK_CURSOR = DATA / "walk_cursor.json"
 FEED_CACHE = DATA / "feed.json"
-MEMORY = HOME / ".hermes/memories/MEMORY.md"
-USER = HOME / ".hermes/memories/USER.md"
+MEMORY = storage.hermes_home() / "memories/MEMORY.md"
+USER = storage.hermes_home() / "memories/USER.md"
 
 if NLTK_HOME.is_dir():
     os.environ.setdefault("NLTK_DATA", str(NLTK_HOME))
@@ -238,11 +242,32 @@ def _words(s: str) -> set:
     return {w for w in re.findall(r"[a-z]{4,}", s.lower()) if w not in STOP}
 
 
+def memory_provider() -> str:
+    """Which memory backend the host is configured with, if it can be read.
+
+    Hermes memory is provider-pluggable. This module can only read the *built-in*
+    provider's files, so with an external provider (hindsight, honcho, mem0) the
+    files may be empty or stale — which is a limitation to name, not to hide.
+    """
+    try:
+        from hermes_cli.config import load_config_readonly  # type: ignore
+        config = load_config_readonly() or {}
+        return str((config.get("memory") or {}).get("provider") or "builtin")
+    except Exception:
+        return "unknown"
+
+
 def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
     """Bring two memories back; say whether the connection is worth joining."""
     pool = memories()
     if len(pool) < 2:
-        return ["no memories on disk · looked in MEMORY.md and USER.md"]
+        provider = memory_provider()
+        if provider in ("unknown", "builtin"):
+            return ["no memories on disk · looked in MEMORY.md and USER.md"]
+        # Named, with the reason: an external bank is not on disk, so an empty read
+        # is not "this person has no memories" — it is "this plugin cannot see them".
+        return [f"no memories on disk · memory provider is '{provider}', "
+                "which this state cannot read (built-in MEMORY.md only)"]
     out = []
     for _ in range(steps):
         a, b = RNG.sample(pool, 2)

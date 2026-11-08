@@ -19,7 +19,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 RNG = random.SystemRandom()
-CACHE = Path.home() / ".hermes/plugin-data/antemuse/social.json"
+from . import storage
+
+CACHE = storage.data_dir() / "social.json"
 TTL = 600
 UA = "antemuse/0.9 (+https://antemuse.com)"
 TIMEOUT = 8

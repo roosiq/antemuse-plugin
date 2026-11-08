@@ -643,7 +643,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 694 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 699 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -931,6 +931,7 @@ All paths relative to `specs/changes/`.
 | `hackathon-submission` | planning | external submission | nothing submitted, nothing pushed. `antemuse.catalog.yaml`, demo script and checklist are drafts. |
 | `command-surface` | **implemented** | public verbs | 14 commands + 12 tool actions for ~9 verbs; `/states` was described as a catalogue and renders the picture; `/keep #n` referenced numbering no surface published; `/break <state>` was a second spelling of `/walk`. Definitions and migration written; the three behaviour fixes are implemented, the renames are not. |
 | `pattern-recommendation` | **proposed** | recommendation | names the state that fits the shape of the work from measured counters only (loop, grind, churn, saturation, data wall, rut, return hangover); one line, one state, one piece of evidence, 45-minute cooling, silence by default. Never enters a state; no model call; no mood inference. Fixtures open. |
+| `hermes-integration` | **verified** | host interfaces | audit of every mechanism against the host source: tool/commands/hooks/injection/ctx.llm/aux tasks/storage/dashboard/memory. Three defects fixed — automation read `messages` but the host passes `user_message`; three modules hardcoded `~/.hermes`; daydream read a memory file an external provider never writes. No provider override, no SDK, no key: any provider by its default interface. |
 
 Supporting evidence files:
 

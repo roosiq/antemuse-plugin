@@ -207,26 +207,51 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
 
 # ------------------------------------------------------------------ hooks
 
-def _person_text(kwargs: Dict[str, Any]) -> str:
-    """The person's own words from the turn about to be sent, if the host passes them.
+def _text_of(content: Any) -> str:
+    """Provider-neutral flattening: a string stays a string, block lists become text.
 
-    `/note` asked a person to retype what they had already said. While a state is
-    running their message *is* the note, so it is journalled automatically. Bounded:
-    a state's account is a page, not a transcript.
+    Anthropic-style content blocks, OpenAI-style strings and whatever a new provider
+    invents should all land here as the person's words, not as a repr of a dict.
     """
-    messages = kwargs.get("messages") or []
-    for message in reversed(messages if isinstance(messages, list) else []):
-        if not isinstance(message, dict):
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts = []
+        for part in content:
+            if isinstance(part, dict):
+                parts.append(str(part.get("text") or part.get("content") or ""))
+            elif isinstance(part, str):
+                parts.append(part)
+        return " ".join(p for p in parts if p).strip()
+    return str(content or "").strip()
+
+
+def _person_text(kwargs: Dict[str, Any]) -> str:
+    """The person's own words from the turn about to be sent.
+
+    `/note` asked a person to retype what they had already said; while a state runs
+    their message *is* the note. The host passes it as ``user_message`` (confirmed in
+    ``agent/turn_context.py::_collect_pre_llm_call_context``); `messages` and
+    `conversation_history` are accepted as older-host fallbacks. Bounded: a state's
+    account is a page, not a transcript.
+    """
+    direct = kwargs.get("user_message")
+    if direct is not None:
+        text = _text_of(direct)
+        if text:
+            return text[:400]
+    for key in ("messages", "conversation_history"):
+        history = kwargs.get(key) or []
+        if not isinstance(history, list):
             continue
-        role = str(message.get("role") or "").lower()
-        if role not in ("user", "human", "person"):
-            continue
-        content = message.get("content")
-        if isinstance(content, list):
-            content = " ".join(str(part.get("text") or "") for part in content
-                               if isinstance(part, dict))
-        text = str(content or "").strip()
-        return text[:400]
+        for message in reversed(history):
+            if not isinstance(message, dict):
+                continue
+            if str(message.get("role") or "").lower() not in ("user", "human", "person"):
+                continue
+            text = _text_of(message.get("content"))
+            if text:
+                return text[:400]
     return ""
 
 

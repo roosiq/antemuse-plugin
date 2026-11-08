@@ -72,9 +72,18 @@ def test_a_person_message_becomes_a_note_without_a_command():
     assert "text[:400]" in src
     body = src[src.index("def _pre_llm_call"):src.index("def _post_tool_call")]
     assert "if engine.peek():" in body
+    # the host's real kwarg is `user_message` (agent/turn_context.py); messages and
+    # conversation_history are fallbacks for older hosts
+    assert module._person_text(
+        {"user_message": "the build keeps failing on the same test"}
+    ) == "the build keeps failing on the same test"
     assert module._person_text({"messages": [
-        {"role": "user", "content": "the build keeps failing on the same test"},
-    ]}) == "the build keeps failing on the same test"
+        {"role": "user", "content": "fallback path"},
+    ]}) == "fallback path"
+    assert module._person_text({"conversation_history": [
+        {"role": "assistant", "content": "x"},
+        {"role": "user", "content": [{"type": "text", "text": "block content"}]},
+    ]}) == "block content"
     assert module._person_text({"messages": [{"role": "assistant", "content": "x"}]}) == ""
     assert module._person_text({}) == ""
 
