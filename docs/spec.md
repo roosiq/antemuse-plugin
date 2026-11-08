@@ -15,6 +15,7 @@ Sources collated:
 | `plugin.yaml` | manifest: identity, version, dependencies, tool, hooks |
 | `README.md` | operator documentation and measured behaviour |
 | `docs/brd.md` | business-intent authority and Ryan's quoted requirements |
+| `docs/architecture.md` | the functional plan with per-component status — the map, not the record |
 | `docs/requirements.md` | operating detail and BR-to-implementation traceability |
 | `SKILL.md` | agent-facing procedure |
 | `docs/brand.md` | naming, voice, palette, surface composition |
