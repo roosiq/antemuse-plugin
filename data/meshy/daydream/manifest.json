@@ -1,0 +1,32 @@
+{
+  "state": "daydream",
+  "provider": "meshy",
+  "licence": "Meshy output, generated on a paid Meshy plan for this project",
+  "generated": "2026-11-08",
+  "assets": [
+    {
+      "file": "mug.glb",
+      "role": "object A \u2014 a mug remembered",
+      "prompt": "a small chipped enamel mug, pale blue enamel worn to dark steel at the rim, simple handle, standing upright, single object, no liquid, studio product photo",
+      "task_id": "01a1bccc-9771-77a9-a437-a7dc28b58a2c",
+      "credits": 5,
+      "route": "text-to-3d preview, smart topology, 3000 target triangles",
+      "sha256": "2d1cc7c8acdaea31ade81cd929197db4ccdb74d6e29255f113cdee8fb5ebb56d",
+      "bytes": 57672,
+      "triangles": 3164
+    },
+    {
+      "file": "stone.glb",
+      "role": "object B \u2014 a stone in the pocket",
+      "prompt": "a single smooth river stone, rounded flat pebble, dark grey with pale speckles, worn by water, single object, no stand, studio product photo",
+      "task_id": "01a1bcd1-8623-71b1-bfc1-b5e4930eb68d",
+      "credits": 5,
+      "route": "text-to-3d preview, smart topology, 3000 target triangles",
+      "sha256": "c865a77c550d84571fa68fdfd36c094fd0495070d505d9d4c213727fb847e84f",
+      "bytes": 57264,
+      "triangles": 3138
+    }
+  ],
+  "rejected": [],
+  "credits_spent": 10
+}
