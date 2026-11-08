@@ -40,14 +40,31 @@ def test_hermes_home_is_resolved_not_assumed(monkeypatch, tmp_path):
 
 
 def test_memory_limitation_is_named_not_hidden(monkeypatch):
-    from core import sources
+    from core import recall, sources
+    monkeypatch.setattr(recall, "recent", lambda *a, **k: [])
     monkeypatch.setattr(sources, "memories", lambda: [])
     monkeypatch.setattr(sources, "memory_provider", lambda: "hindsight")
     line = sources.memory_pairs()[0]
     assert "hindsight" in line and "cannot read" in line, line
 
     monkeypatch.setattr(sources, "memory_provider", lambda: "builtin")
-    assert sources.memory_pairs()[0] == "no memories on disk · looked in MEMORY.md and USER.md"
+    assert "nothing said in this conversation" in sources.memory_pairs()[0]
+
+
+def test_daydream_material_survives_an_external_memory_provider(monkeypatch, tmp_path):
+    """The point of the fix: with hindsight configured, a daydream still has material."""
+    from core import recall, sources
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    monkeypatch.setattr(sources, "memories", lambda: [])          # no built-in files
+    monkeypatch.setattr(sources, "memory_provider", lambda: "hindsight")
+
+    recall.remember("the parser keeps dropping the trailing brace", "person")
+    recall.remember("so the diff is empty every time and the test passes anyway", "agent")
+    lines = sources.memory_pairs()
+    joined = " ".join(lines)
+    assert lines, "no material"
+    assert not any("cannot read" in line for line in lines), lines
+    assert "trailing brace" in joined and "diff is empty" in joined, joined
 
 
 def test_all_model_calls_go_through_the_host_facade():

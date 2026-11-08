@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 
 HOME = Path.home()
 NLTK_HOME = HOME / "nltk_data"
-from . import storage
+from . import recall, storage
 
 #: Resolved through the host's own plugin-storage convention, not a guessed path:
 #: `~/.hermes` is only the default home, and profiles move it.
@@ -257,17 +257,39 @@ def memory_provider() -> str:
         return "unknown"
 
 
+def memory_pool() -> List[str]:
+    """Everything this state can honestly call a memory, best source first.
+
+    Recent turns come from the live conversation and are therefore the same under any
+    memory provider; the built-in files are enrichment that only exists when the host
+    is running the built-in provider.
+    """
+    said = recall.recent(6)
+    seen = set()
+    pool: List[str] = []
+    for text in said + memories():
+        key = text[:64]
+        if key in seen:
+            continue
+        seen.add(key)
+        if len(text) > 24:
+            pool.append(text)
+    return pool
+
+
 def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
     """Bring two memories back; say whether the connection is worth joining."""
-    pool = memories()
+    pool = memory_pool()
     if len(pool) < 2:
         provider = memory_provider()
+        if recall.recent(1):
+            return ["only one thing to remember so far · a join needs two"]
         if provider in ("unknown", "builtin"):
-            return ["no memories on disk · looked in MEMORY.md and USER.md"]
+            return ["no memories yet · nothing said in this conversation, and no built-in MEMORY.md"]
         # Named, with the reason: an external bank is not on disk, so an empty read
         # is not "this person has no memories" — it is "this plugin cannot see them".
-        return [f"no memories on disk · memory provider is '{provider}', "
-                "which this state cannot read (built-in MEMORY.md only)"]
+        return [f"no memories yet · nothing said in this conversation · memory provider is "
+                f"'{provider}', which this state cannot read (built-in MEMORY.md only)"]
     out = []
     for _ in range(steps):
         a, b = RNG.sample(pool, 2)

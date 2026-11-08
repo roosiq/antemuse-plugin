@@ -241,6 +241,7 @@ fixed and recorded.
 | FLAKE-1 `test_outer_hops_are_farther_than_wander_hops` | narrowed, not eliminated (samples n=64) |
 | `/spark` is not gated by state | accepts, unresolved |
 | Command surface | **LIVE** — 14 commands → 5: the four states and `/return`; `/note`, `/break`, `/mood`, `/state`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions |
+| Daydream material | **LIVE** — `core/recall.py` keeps a bounded ring (24 × 400 chars) of recent turns captured from `pre_llm_call`/`transform_llm_output`, so a daydream has material under any memory provider; the built-in `MEMORY.md`/`USER.md` are enrichment when present |
 | Hermes integration | **VERIFIED** — every mechanism checked against the host source: `ctx.llm` with no provider override, registered auxiliary task keys, `plugin_data_dir`, `valid hooks`, `plugin_api.py`, memory left to the host. Three defects found and fixed; `docs/hermes-integration.md` |
 | Pattern recommendation | **PROPOSED** — `specs/changes/pattern-recommendation`: name the state that fits the shape of the work (loop, grind, churn, saturation, data wall, rut) from measured counters, one line, never enters |
 | Slash flags such as `/daydream --block` | **NOT BUILT** — no command surface carries them yet |

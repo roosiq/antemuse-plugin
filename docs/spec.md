@@ -448,7 +448,7 @@ Implementation: `core/sources.py`, `core/social.py`.
 | state | provider | source | cache |
 |---|---|---|---|
 | walk | `walk_text` | the selected walk's graph | cursor per walk |
-| daydream | `memory_pairs` | `MEMORY.md` + `USER.md`, split on `§` | — |
+| daydream | `memory_pairs` | recent turns captured from `pre_llm_call` (any provider) → `MEMORY.md` + `USER.md` when present | the built-in memory provider only; an external bank is out of reach and named |
 | dream | `dream_recombine` | FrameNet v17: 1,221 frames, ≥3 frame elements with lexical units | in-process |
 | doomscroll | `scroll_text` | Bluesky "what's hot" (40), fosstodon.org public timeline (30), HN front page via Algolia (20), Ars Technica + The Verge RSS | `social.json`, 10 min |
 
@@ -461,7 +461,8 @@ Runtime failures are named, never filled:
 - `wordnet unavailable · …`
 - `framenet unavailable · …`
 - `feed unavailable · <source names>`
-- `no memories on disk · looked in MEMORY.md and USER.md`
+- `no memories yet · nothing said in this conversation, and no built-in MEMORY.md`
+- `no memories on disk · memory provider is 'hindsight', which this state cannot read (built-in MEMORY.md only)`
 - `walk '<name>' failed · …`
 
 Reddit and mastodon.social refuse unauthenticated JSON reads (403/422) and are
@@ -643,7 +644,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 699 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 704 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.

@@ -21,6 +21,10 @@ backend. A provider swap must be a config change, never a plugin change.
    `pre_llm_call` (appended to the user message, never the system prompt).
 6. Memory stays host-owned: the plugin neither writes memory nor registers a memory
    provider, and any source it cannot reach is named as a limitation.
+7. Because Hermes exposes no plugin-facing memory read, daydream's material comes from
+   a **provider-neutral** source first: the last turns of the live conversation, captured
+   from the host's `pre_llm_call` payload and kept in a bounded ring. The built-in
+   `MEMORY.md`/`USER.md` files are enrichment when they exist, never the only source.
 
 ## Acceptance criteria
 
@@ -30,6 +34,8 @@ backend. A provider swap must be a config change, never a plugin change.
 3. `docs/hermes-integration.md` records one verdict per mechanism with the host source
    line it was checked against.
 4. Daydream's memory failure names the active provider when it is external.
+5. With `memory.provider: hindsight` and an empty data dir, a daydream still produces two
+   memories from the conversation that just happened — and says so if it cannot.
 
 ## Non-goals
 

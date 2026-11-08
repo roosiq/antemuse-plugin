@@ -26,7 +26,7 @@ logger = logging.getLogger("antemuse")
 try:
     from .core import engine, options, panel, runtime, session, states, surfaces, tui, walks
 except ImportError:  # flat-module load
-    from core import engine, options, panel, runtime, session, states, surfaces, tui, walks  # type: ignore[no-redef]
+    from core import engine, options, panel, recall, runtime, session, states, surfaces, tui, walks  # type: ignore[no-redef]
 
 __version__ = "0.9.0"
 
@@ -259,9 +259,12 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
     engine.remember_platform(platform, session_id)
     engine.note_turn()
     engine.tick()
-    if engine.peek():
-        said = _person_text(kwargs)
-        if said:
+    said = _person_text(kwargs)
+    if said:
+        # Every provider hands a plugin the turn it is governing, so this is the one
+        # memory-ish source that is the same under hindsight, honcho, mem0 or builtin.
+        recall.remember(said, "person")
+        if engine.peek():
             engine.record("person", said)
     parts = [
         engine.inject() or "",
@@ -283,6 +286,8 @@ def _pre_tool_call(tool_name: str = "", **kwargs: Any) -> Dict[str, Any] | None:
 
 
 def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> str | None:
+    if response_text:
+        recall.remember(response_text, "agent")
     if engine.peek():
         engine.record("agent", response_text)   # the page shows both sides
     out = engine.annotate(response_text)
