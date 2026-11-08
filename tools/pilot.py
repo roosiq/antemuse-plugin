@@ -63,6 +63,9 @@ def transport_for(model: str, endpoint: str, *, timeout: float = 120.0,
             raise RuntimeError(f"empty content (finish_reason={choice.get('finish_reason')!r})")
         usage = payload.get("usage") or {}
         return {"text": content,
+                # Why it stopped, verbatim. A cell cut off at the ceiling is
+                # still recorded — but as truncated, not as a finished answer.
+                "finish_reason": choice.get("finish_reason"),
                 "usage": {"input_tokens": usage.get("prompt_tokens"),
                           "output_tokens": usage.get("completion_tokens")}}
 

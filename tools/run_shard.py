@@ -46,9 +46,14 @@ def existing_status(path: Path) -> str:
     if not path.is_file():
         return "missing"
     try:
-        return str(json.loads(path.read_text(encoding="utf-8")).get("status") or "unknown")
+        record = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return "unreadable"
+    if record.get("record_schema") != runner.RECORD_SCHEMA:
+        # Written by a runner that could not tell a cut-off answer from a
+        # finished one. Re-run rather than count it as coverage.
+        return "stale"
+    return str(record.get("status") or "unknown")
 
 
 def main(argv=None) -> int:
@@ -82,7 +87,11 @@ def main(argv=None) -> int:
             for tid in manifest["tasks"]
             for model in manifest["models"]
             for condition in sorted(wanted)]
-    todo = [cell for cell in plan if existing_status(cell_path(results, *cell)) != "ok"]
+    statuses = {cell: existing_status(cell_path(results, *cell)) for cell in plan}
+    stale = [cell for cell, status in statuses.items() if status == "stale"]
+    if stale:
+        print(f"{len(stale)} record(s) written by an older runner will be re-run")
+    todo = [cell for cell in plan if statuses[cell] != "ok"]
 
     print(f"shard {args.shard} · {len(plan)} cell(s) · {len(todo)} to run")
     if args.dry_run:
@@ -108,9 +117,12 @@ def main(argv=None) -> int:
                 path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n",
                                 encoding="utf-8")
                 usage = record.get("usage") or {}
+                cut = ""
+                if record.get("truncated"):
+                    cut = f"  TRUNCATED at the {args.max_tokens}-token ceiling"
                 print(f"  ok   {task_id}/{model}/{condition} "
                       f"{record['transport_calls']} call(s) {elapsed:.0f}s "
-                      f"{usage.get('output_tokens')} out-tokens")
+                      f"{usage.get('output_tokens')} out-tokens{cut}")
                 ok = True
                 break
             print(f"  fail {task_id}/{model}/{condition} attempt {attempt}: "

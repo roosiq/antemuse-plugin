@@ -54,6 +54,16 @@ Statuses: `[ ]` pending, `[~]` active, `[x]` verified complete, `[!]` blocked.
   Reconciled 2026-11-08 against the code, not against memory. Fixed as false: the `/again` row still said deepen/refresh generation was unwired (it runs since J2b); §3.2 said "no run consumes them yet" for `method`/`seed`/`budget` (the consumer is `/spark`); §17 A.4 called `collide` "not implemented" (the walk form is absent, the bank, collision and branch runner exist); §17 A.4 said "no collide spec in `plugin/specs/`" (the schema and licensing record live in `core/collider.py` and `specs/changes/creative-state-evidence/`); §13's verification record was 591 (now 621, dated, with doctor output). Fixed as a class, not an instance: README's test count had drifted twice (107 → 564), so README no longer carries a number at all — §13 is the only place a count is recorded — and §14 item 1 records that recurrence. Checked mechanically: 14 commands registered, every one documented, none documented that does not register; 4 states; 8 hooks; 3 auxiliary routes; 12 tool actions.
   Verification: `pytest tests/ -q` → 621 passed after the documentation pass; no runtime file changed in J4.
 
+- [x] K1f Truncation visible in every record.
+  A real cell exposed the hole: `liquid/lfm-3-1.7b` on `dev-late-bus-ticket/B` spent its
+  ceiling reasoning and returned text ending "...trying to seem mature for her grandparents, and",
+  which the runner recorded as `status: ok` with nothing indicating it was cut off. Candidates now
+  carry `finish_reason` (verbatim or null) and `truncated`; records carry `record_schema`
+  (`record-2`) and `truncated_candidates`; the default selector passes over a truncated candidate
+  when a complete one exists; a cached record from an older schema is a miss, not a replay; and
+  `tools/run_shard.py` treats such a file as `stale` and re-runs it instead of counting coverage.
+  9 tests (`tests/evaluation/test_truncation.py`), full suite 669.
+
 ## Wave 3 review trail (2026-11-08)
 
 Two independent reviews ran on the J2/J2b/J3 diff. The first attempt used the

@@ -114,6 +114,11 @@ TASK_FIELDS = (
 
 RUN_ID_NAMESPACE = "antemuse-eval-run-v1"
 
+# Bumped whenever the record shape changes in a way a reader must know about.
+# A cached record from an older schema is not replayed: it would otherwise be
+# indistinguishable from a fresh one while missing whatever the new field says.
+RECORD_SCHEMA = "record-2"
+
 
 class _MalformedResponse(Exception):
     """A transport response that cannot be recorded as a real candidate."""
@@ -164,7 +169,18 @@ def select_first(candidates: Sequence[Mapping[str, Any]]) -> Optional[str]:
     This is the default selector and deliberately not a quality judgment: it
     reads no text, compares nothing, and cannot rank. It only refuses to select
     a candidate that failed, so a caller cannot mistake "first" for "best".
+
+    A candidate that stopped at the token ceiling is still an answer, so it is
+    eligible — but only after every complete one has been passed over. Cutting a
+    sentence off is not a matter of taste, and a truncated answer is not a
+    finished one.
     """
+    complete = [
+        c for c in candidates
+        if c.get("status") == "ok" and not c.get("truncated")
+    ]
+    for candidate in complete:
+        return candidate["candidate_id"]
     for candidate in candidates:
         if candidate.get("status") == "ok":
             return candidate["candidate_id"]
@@ -229,6 +245,12 @@ def _candidate_from_response(
             f"response text must be a non-empty string, got {text!r}"
         )
     usage = _normalize_usage(response.get("usage"))
+    finish_reason = response.get("finish_reason")
+    if finish_reason is not None and not isinstance(finish_reason, str):
+        raise _MalformedResponse(
+            f"response finish_reason must be a string or None, "
+            f"got {type(finish_reason).__name__}"
+        )
     return {
         "candidate_id": f"{condition}-{branch}",
         "branch": branch,
@@ -236,6 +258,12 @@ def _candidate_from_response(
         "usage": usage,
         "status": "ok",
         "error": None,
+        # Why the generation stopped, verbatim from the transport, or None when
+        # it does not report one. A cell cut off at the token ceiling is still an
+        # answer, so it counts as ok — but it must be *visible*, because
+        # comparing a truncated answer against a complete one is unfair.
+        "finish_reason": finish_reason,
+        "truncated": finish_reason == "length",
     }
 
 
@@ -271,14 +299,17 @@ def _synthesize(
         response = transport(request)
     except Exception as exc:  # noqa: BLE001 - recorded, never swallowed
         return {"status": "transport_error", "text": None, "usage": _failed_usage(),
-                "error": f"{type(exc).__name__}: {exc}", "candidate_id": candidate["candidate_id"]}
+                "error": f"{type(exc).__name__}: {exc}", "candidate_id": candidate["candidate_id"],
+                "finish_reason": None, "truncated": False}
     try:
         built = _candidate_from_response("F", 0, response)
     except _MalformedResponse as exc:
         return {"status": "transport_error", "text": None, "usage": _failed_usage(),
-                "error": f"MalformedResponse: {exc}", "candidate_id": candidate["candidate_id"]}
+                "error": f"MalformedResponse: {exc}", "candidate_id": candidate["candidate_id"],
+                "finish_reason": None, "truncated": False}
     return {"status": "ok", "text": built["text"], "usage": built["usage"],
-            "error": None, "candidate_id": candidate["candidate_id"]}
+            "error": None, "candidate_id": candidate["candidate_id"],
+            "finish_reason": built["finish_reason"], "truncated": built["truncated"]}
 
 
 def _failed_candidate(condition: str, branch: int, error: str) -> Dict[str, Any]:
@@ -289,6 +320,8 @@ def _failed_candidate(condition: str, branch: int, error: str) -> Dict[str, Any]
         "usage": _failed_usage(),
         "status": "transport_error",
         "error": error,
+        "finish_reason": None,
+        "truncated": False,
     }
 
 
@@ -495,6 +528,12 @@ def _record(
         "transport_calls": transport_calls,
         "usage": _aggregate_usage(candidates),
         "status": status,
+        "record_schema": RECORD_SCHEMA,
+        "truncated_candidates": [
+            c["candidate_id"] for c in candidates if c.get("truncated")
+        ],
+        "truncated": any(bool(c.get("truncated")) for c in candidates)
+        or bool(synthesis and synthesis.get("truncated")),
         "cache_status": "miss",
         "created_by": "offline_runner",
         "error": error,
@@ -586,6 +625,11 @@ def run_condition(
     cache = JsonlCache(cache_path)
 
     stored = cache.get(cache_key)
+    if stored is not None and stored.get("record_schema") != RECORD_SCHEMA:
+        # A record written by an older runner does not carry the fields this
+        # version reports, so replaying it would present a half-read cell as a
+        # finished one. Treat it as absent and run the cell again.
+        stored = None
     if stored is not None:
         # Replay returns the stored record unchanged except for the cache
         # verdict, and reaches for neither the transport nor the selector.

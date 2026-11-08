@@ -696,6 +696,24 @@ collection and PIL in other interpreters — clear it for every run. Always poin
 one state file with the live agent, so a test that enters a state will lock the
 agent's own tools until it exits.
 
+### Verification record, 2026-11-08 (truncation made visible)
+
+Run in `/home/ryan/antemuse-plugin` with the same hygiene:
+
+```
+$ pytest tests/ -q
+669 passed in 8.53s
+```
+
+Records written by `evaluation/run.py` now carry `record_schema` (`record-2`),
+each candidate's `finish_reason`, a per-candidate `truncated` flag, and a
+record-level `truncated_candidates` list. The default selector passes over a
+candidate that stopped at the token ceiling when a complete one exists. A cached
+record from an older schema is treated as a miss and re-run, and
+`tools/run_shard.py` refuses to count one as coverage — an old record cannot tell
+a cut-off answer from a finished one, so replaying it would present half a cell as
+whole. Nine tests bind this; the full run above is the single dated record.
+
 ### Verification record, 2026-11-08 (surface repair and Wave 3 J1)
 
 Run in `/home/ryan/antemuse/plugin` with the hygiene above:
@@ -871,7 +889,8 @@ All paths relative to `specs/changes/`.
 | `desktop-surfaces` | **proposed** | desktop | state pane, ambient background and per-state settings page for Hermes Desktop, fed by a `dashboard/plugin_api.py` route that returns counts and identifiers only; rendering stays inference-free and wordless. Forces the scene-source-of-truth decision (§17.1): four renderers would otherwise drift. Not implemented — the desktop app is not installed on this machine, so it cannot be tested here. |
 | `scene3d-renderer` | **proposed** | rendering source | render scenes in Python at destination resolution (z-buffer, fog) instead of downsampling Chromium screenshots; braille for chat, half-blocks for terminal. Prototype: 80×24 cells in 24 ms, stdlib only. Not implemented; two owner decisions open. |
 | `runtime-wiring` (J2) | implemented | runtime | `core/runtime.py`, `/spark`, `/keep`, `/again`; model gets candidates, person gets counts and never candidate text; session-bound injection, reply footer, branch path through `ctx.llm` behind the flag. Feedback steers selection through `deepen`/`refresh` (J2b); verdicts resolve candidate ids to source ids; branch provenance is the orchestrator's, not the model's. Reproducible: `python3 tools/walkthrough.py`. 627 tests. |
-| `wave4-shards` (K1/K2) | implemented | evaluation | development shard `73a00871…` frozen over 2 tasks × 2 models × conditions A–F (write-once manifest, drift caught by re-hashing the fixture) and run through `tools/run_shard.py` to `complete: true, 24/24 cells, 0 duplicates`; each shard owns a results directory and aggregation fails closed on any missing cell. Conditions: A baseline, B creative, C best-of-N + selector, D deterministic material, E plain branches, F branches + selection + synthesis. G not implemented. No judge yet, so these are records, not a quality result. 660 tests. |
+| `truncation-visibility` | implemented | evaluation | candidates record `finish_reason` and a `truncated` flag; records declare `record_schema`; old-schema records are re-run rather than replayed; the default selector prefers a complete candidate. Motivated by a real `liquid/lfm-3-1.7b` cell whose 2500-token B answer ended mid-sentence and was counted as `ok` with nothing saying so. |
+| `wave4-shards` (K1/K2) | implemented | evaluation | development shard `73a00871…` frozen over 2 tasks × 2 models × conditions A–F (write-once manifest, drift caught by re-hashing the fixture) and run through `tools/run_shard.py` to `complete: true, 24/24 cells, 0 duplicates`; each shard owns a results directory and aggregation fails closed on any missing cell. Conditions: A baseline, B creative, C best-of-N + selector, D deterministic material, E plain branches, F branches + selection + synthesis. G not implemented. No judge yet, so these are records, not a quality result. 669 tests. |
 | `wave3-audit` | implemented | review repairs | two independent reviews (spec compliance APPROVED; code quality REJECTED twice). Repaired: a decorative branch timeout, a shared-slot handoff that could cross chats, own-goal fallbacks, an unlocked book, and an account appended to the wrong session's reply. 627 tests. |
 | `origin-and-cleanup` (J3) | implemented | runtime | `engine.current_origin()`; a run is stamped with the project that asked for it and dropped, not rerouted, when a turn arrives from another project; `runtime.release()` clears run, verdicts, goal, account, and bound material in one call, wired to all four session boundaries; `/return` leaves a waiting run alone. Ignorance is not a mismatch: an empty project on either side still delivers. 627 tests. |
 
