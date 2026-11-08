@@ -1,6 +1,16 @@
 # Surface repair — the person's card shows the state it is in
 
-Status: proposed 2026-11-08 by the controller, from `docs/spec.md` §14 items 15–18.
+Status: **implemented 2026-11-08** (was proposed; the four defects are closed and
+each has a line of code behind it). Written by the controller from `docs/spec.md`
+§14 items 15–18.
+
+- §14.15 card nearly empty → `art()` stretches each frame to its own 2nd/99.5th
+  percentile; a walk card now carries 10–19 % ink instead of two rows of dots.
+- §14.16 whole journal served → `_journal_window()` windows the ring to this session
+  and this state's start; renderers receive the window, not the ring.
+- §14.17 frames and writes in different homes → `_frames_dir()` and
+  `snapshot_path()` both resolve under `storage.data_dir()`.
+- §14.18 stale record → `docs/spec.md` §13 now records the count the suite prints.
 Owner: Ryan Cook. Scope: `/home/ryan/antemuse-plugin` surfaces and the spec record.
 
 ## Goal

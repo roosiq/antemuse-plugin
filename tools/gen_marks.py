@@ -1,286 +1,315 @@
 """Draw the Antemuse state marks from their construction geometry.
 
-One silhouette, four interiors. The outline is a chamfered square — the turn.
-Its interior is ordered differently per state, because a state is a bounded
-change to how the agent behaves, not a place it goes.
+One silhouette, four interiors. The outline never changes; only its interior
+ordering does, because a state is a bounded change to how the agent behaves, not
+a place it goes.
 
-Everything is derived from constants here, so the plates can be re-cut rather
-than re-drawn:
+The plates are modelled as a *part*, not as a drawing:
 
-    S       plate size
-    B       mark box (silhouette)
-    C1, C2  the two chamfers: B/2.8 on opposite corners, B/9 on the others
-    BODY    the machined body weight — a bezel, never a frame
-    PHI     golden section
-    R2      1/sqrt(2) — the diagonal the chamfer runs along
+    plate ground  ->  a body with eight chamfer facets, each lit by one light
+                  ->  a recessed panel, darker than the body
+                  ->  grooves cut into the panel, each with a lit lip
+                  ->  one amber aperture, the only lit thing in the frame
 
-Run:  python3 tools/gen_marks.py
-Out:  docs/brand/marks/*.svg
+Numbers, so the plates are re-cut rather than traced:
+
+    S    plate size            B    silhouette box
+    C1   long chamfer, two opposite corners (B/2.8)
+    C2   short chamfer, the other two (B/9)
+    K    bezel inset           PHI  golden section
+
+Run:  python3 tools/gen_marks.py            (writes the SVGs)
+      python3 tools/gen_marks.py --png      (also rasterises via chromium)
 """
 from __future__ import annotations
 
 import math
 import pathlib
+import subprocess
+import sys
 
 S = 512
-B = 384                      # silhouette box
-C1 = B / 2.8                 # the long cut, two opposite corners
-C2 = B / 9                   # the short cut, the other two
-BODY = 22.0                  # the machined body: a bezel, not a frame
+B = 384
+X0 = Y0 = (S - B) / 2
+C1 = B / 2.8
+C2 = B / 9
+K = 15.0                      # bezel width
 PHI = (1 + 5 ** 0.5) / 2
-R2 = 2 ** 0.5
-X0 = (S - B) / 2             # mark origin
-Y0 = (S - B) / 2
 
-VOID = "#0e0c0b"             # the shipped ground: warm near-black
-STRUCT = "#9aa6ab"           # titanium: structure, never fills
-EDGE = "#2a3236"             # panel edge
-AMBER = "#f2b25a"            # the emitter: the state itself
-ARC = "#6fe0c8"              # arc: the path, and the interior light
+# One light, high and to the left. Every facet value comes from this vector.
+LX, LY = -0.50, -0.866
 
-HAIR = 1.5                   # hairline weight
-RULE = 3.0                   # rule weight
-MARK = 6.0                   # the one heavy stroke per plate
-
-
-def chamfer(x: float, y: float, side: float, c1: float | None = None,
-            c2: float | None = None) -> str:
-    """A square cut at 45 degrees, two corners long and two short.
-
-    Unequal on purpose: equal corners read as a stop sign, and a stop sign is a
-    UI container. Long cuts on opposite corners read as a machined blade.
-    """
-    c1 = C1 if c1 is None else c1
-    c2 = C2 if c2 is None else c2
-    r = x + side
-    b = y + side
-    return (f"M{x + c1},{y} L{r - c2},{y} L{r},{y + c2} "
-            f"L{r},{b - c1} L{r - c1},{b} L{x + c2},{b} "
-            f"L{x},{b - c2} L{x},{y + c1} Z")
+VOID = "#0e0c0b"              # the shipped ground: warm near-black
+BEZEL = (38, 45, 49)          # base body value before lighting
+BEZEL_LIT = (104, 118, 125)
+BEZEL_DARK = (13, 16, 17)
+PANEL_TOP = "#181410"
+PANEL_BOT = "#050404"
+ARC = "#6fe0c8"
+AMBER = "#f2b25a"
+STRUCT = "#9aa6ab"
 
 
-def inset(k: float) -> str:
-    """The same silhouette pulled in by k, for the edge-light hairline."""
-    return chamfer(X0 + k, Y0 + k, B - 2 * k)
+# ------------------------------------------------------------------ geometry
+
+def pts(x: float, y: float, s: float, c1: float, c2: float) -> list[tuple[float, float]]:
+    """Eight points, clockwise: two opposite corners cut long, two cut short."""
+    r, b = x + s, y + s
+    return [(x + c1, y), (r - c2, y), (r, y + c2), (r, b - c1),
+            (r - c1, b), (x + c2, b), (x, b - c2), (x, y + c1)]
 
 
-def head(extra: str = "") -> str:
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{S}" height="{S}" '
-            f'viewBox="0 0 {S} {S}">{extra}')
+def poly(points: list[tuple[float, float]], close: bool = True) -> str:
+    d = " ".join(f"{'M' if i == 0 else 'L'}{x:.2f},{y:.2f}"
+                 for i, (x, y) in enumerate(points))
+    return d + (" Z" if close else "")
 
 
-def plate(inner: str, cid: str = "box", ground: bool = True) -> str:
-    bg = (f'<rect width="{S}" height="{S}" fill="{VOID}"/>' if ground else "")
-    return head(f"<defs><clipPath id=\"{cid}\">"
-                f"<path d=\"{inset(BODY / 2)}\"/></clipPath></defs>"
-                ) + bg + inner + "</svg>"
+OUT = pts(X0, Y0, B, C1, C2)
+# An inset of a polygon with 45 degree cuts pulls its chamfers in by k*(sqrt2-1).
+INSET = pts(X0 + K, Y0 + K, B - 2 * K, C1 - K * 0.4142, C2 - K * 0.4142)
 
 
-def construction(ops: str, cid: str = "box") -> str:
-    """The proof lines: they are drawn, not hidden. Faint, never decorative."""
-    return (f'<g clip-path="url(#{cid})" opacity="0.13" stroke="{ARC}" '
-            f'stroke-width="{HAIR * 0.7}" fill="none">{ops}</g>')
+def _lerp(a, b, t: float) -> str:
+    t = max(0.0, min(1.0, t))
+    r, g, bl = (round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+    return f"#{r:02x}{g:02x}{bl:02x}"
+
+
+def facets() -> str:
+    """The eight chamfer facets, each shaded by its own normal. This is the metal."""
+    out = []
+    n = len(OUT)
+    for i in range(n):
+        a, b = OUT[i], OUT[(i + 1) % n]
+        a2, b2 = INSET[i], INSET[(i + 1) % n]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        ln = math.hypot(dx, dy) or 1.0
+        nx, ny = dy / ln, -dx / ln          # outward normal, clockwise winding
+        d = nx * LX + ny * LY
+        if d >= 0:
+            fill = _lerp(BEZEL, BEZEL_LIT, d ** 1.4)
+        else:
+            fill = _lerp(BEZEL, BEZEL_DARK, (-d) ** 1.2)
+        out.append(f'<path d="{poly([a, b, b2, a2])}" fill="{fill}"/>')
+    return "".join(out)
 
 
 def body() -> str:
-    """A dark body with one lit edge: the panel the mark is stamped into."""
-    return (f'<path d="{chamfer(X0, Y0, B)}" fill="none" stroke="{EDGE}" '
-            f'stroke-width="{BODY}" stroke-linejoin="miter"/>'
-            f'<path d="{inset(BODY / 2)}" fill="none" stroke="{STRUCT}" '
-            f'stroke-width="{HAIR}" opacity="0.45"/>')
+    """Body, facets, outer specular hairline, and a soft contact shadow."""
+    return (
+        f'<defs><linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0" stop-color="{PANEL_TOP}"/>'
+        f'<stop offset="1" stop-color="{PANEL_BOT}"/></linearGradient>'
+        f'<filter id="soft" x="-50%" y="-50%" width="200%" height="200%">'
+        f'<feGaussianBlur stdDeviation="4"/></filter>'
+        f'<linearGradient id="sheen" x1="0" y1="0" x2="0.55" y2="1">'
+        f'<stop offset="0" stop-color="#ffffff" stop-opacity="0.20"/>'
+        f'<stop offset="0.42" stop-color="#ffffff" stop-opacity="0"/>'
+        f'<stop offset="0.72" stop-color="#ffffff" stop-opacity="0.05"/>'
+        f'<stop offset="1" stop-color="#ffffff" stop-opacity="0.13"/>'
+        f'</linearGradient>'
+        f'<filter id="grain" x="0" y="0" width="100%" height="100%">'
+        f'<feTurbulence type="fractalNoise" baseFrequency="0.006 0.9" numOctaves="3" '
+        f'result="n"/><feColorMatrix in="n" type="saturate" values="0"/>'
+        f'</filter></defs>'
+        f'<path d="{poly(OUT)}" fill="{_lerp(BEZEL, BEZEL_DARK, 0.3)}"/>'
+        + facets() +
+        f'<path d="{poly(INSET)}" fill="url(#panel)"/>'
+        f'<path d="{poly(INSET)}" fill="none" stroke="#000" stroke-width="10" '
+        f'opacity="0.75" filter="url(#soft)"/>'
+        f'<path d="{poly(OUT)} {poly(INSET)}" fill="url(#sheen)" '
+        f'fill-rule="evenodd"/>'
+        f'<path d="{poly(OUT)}" fill="none" stroke="{STRUCT}" stroke-width="1.1" '
+        f'opacity="0.55"/>'
+        f'<path d="{poly(OUT)}" fill="none" stroke="#ffffff" stroke-width="0.6" '
+        f'opacity="0.12"/>'
+        f'<g clip-path="url(#frame)">'
+        f'<path d="{poly(INSET)}" fill="none" stroke="#000" stroke-width="7" '
+        f'opacity="0.55"/>'
+        f'<rect width="{S}" height="{S}" filter="url(#grain)" opacity="0.07"/>'
+        f'<path d="{poly(OUT)}" fill="none" stroke="#000" stroke-width="1" '
+        f'opacity="0.35"/></g>')
 
 
+def clip(cid: str) -> str:
+    return (f'<clipPath id="{cid}"><path d="{poly(INSET)}"/></clipPath>'
+            f'<clipPath id="frame"><path d="{poly(OUT)}"/></clipPath>')
 
-def vernier(cid: str) -> str:
-    """A measuring scale along the inner floor: an instrument, not an axis.
 
-    Long ticks sit at the golden section of the width; the rest are even. It is
-    the one classical-maths cue that reads as machined rather than as a chart.
+# ------------------------------------------------------------------ gestures
+
+def cut(x1: float, y1: float, x2: float, y2: float, width: float,
+        lit: float = 1.0) -> str:
+    """A cut between two points: shadowed near wall, lit far wall, dark floor.
+
+    A filled band reads as UI. A cut reads as metal, because the light catches
+    the far wall of it and the floor of it stays black. The lip always falls on
+    the side facing away from the light, whichever way the cut runs.
     """
-    y = Y0 + B - BODY / 2 - 14
-    x0, w = X0 + BODY / 2 + 10, B - BODY - 20
-    ticks = []
-    for k in range(21):
-        f = k / 20
-        h = 12 if any(abs(f - g) < 1e-9 for g in (0.0, 1 / PHI ** 2, 1 / PHI, 1.0)) else 6
-        ticks.append(f'<path d="M{x0 + w * f:.2f},{y:.2f} v{-h}"/>')
-    return (f'<g clip-path="url(#{cid})" stroke="{ARC}" stroke-width="{HAIR * 0.8}" '
-            f'opacity="0.30" fill="none">' + "".join(ticks) + "</g>")
+    ln = math.hypot(x2 - x1, y2 - y1) or 1.0
+    nx, ny = (y2 - y1) / ln, -(x2 - x1) / ln      # normal to the cut
+    if nx * LX + ny * LY > 0:                     # keep it pointing away from the light
+        nx, ny = -nx, -ny
+    half = width / 2
+    ox, oy = nx * half, ny * half
+    return (
+        f'<path d="M{x1:.2f},{y1 + oy * 1.6:.2f} L{x2:.2f},{y2 + oy * 1.6:.2f}" '
+        f'stroke="#000" stroke-width="{width + 7:.2f}" opacity="0.45" '
+        f'filter="url(#soft)"/>'
+        f'<path d="M{x1:.2f},{y1:.2f} L{x2:.2f},{y2:.2f}" stroke="#000" '
+        f'stroke-width="{width:.2f}" opacity="0.96"/>'
+        f'<path d="M{x1:.2f},{y1:.2f} L{x2:.2f},{y2:.2f}" stroke="{ARC}" '
+        f'stroke-width="1.0" opacity="{0.10 * lit:.2f}" filter="url(#soft)"/>'
+        f'<path d="M{x1 + ox:.2f},{y1 + oy:.2f} L{x2 + ox:.2f},{y2 + oy:.2f}" '
+        f'stroke="{ARC}" stroke-width="2.2" opacity="{0.85 * lit:.2f}"/>'
+        f'<path d="M{x1 + ox * 0.6:.2f},{y1 + oy * 0.6:.2f} '
+        f'L{x2 + ox * 0.6:.2f},{y2 + oy * 0.6:.2f}" stroke="{ARC}" '
+        f'stroke-width="0.9" opacity="{0.30 * lit:.2f}"/>')
 
 
-# ------------------------------------------------------------------ interiors
+def _arc(x: float, y: float, r: float, a0: float, a1: float) -> str:
+    """A rim arc, in degrees, for the specular and shadow sides of a hole."""
+    t0, t1 = math.radians(a0), math.radians(a1)
+    p0 = (x + r * math.cos(t0), y + r * math.sin(t0))
+    p1 = (x + r * math.cos(t1), y + r * math.sin(t1))
+    return (f"M{p0[0]:.2f},{p0[1]:.2f} A{r:.2f},{r:.2f} 0 0 1 "
+            f"{p1[0]:.2f},{p1[1]:.2f}")
+
+
+def aperture(x: float, y: float, r: float, colour: str = AMBER) -> str:
+    """A machined hole that is lit from inside: seat, dark mouth, emissive rim."""
+    return (
+        # the light the hole throws onto the panel around it
+        f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r + 7:.2f}" fill="{colour}" '
+        f'opacity="0.14" filter="url(#soft)"/>'
+        # the seat it is drilled through
+        f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r + 4.5:.2f}" fill="#0a0908"/>'
+        f'<path d="{_arc(x, y, r + 4.5, 188, 268)}" fill="none" stroke="#fff" '
+        f'stroke-width="1.1" opacity="0.35" stroke-linecap="round"/>'
+        f'<path d="{_arc(x, y, r + 4.5, 8, 88)}" fill="none" stroke="#000" '
+        f'stroke-width="2.4" opacity="0.6" stroke-linecap="round"/>'
+        # the mouth
+        f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r:.2f}" fill="#030202"/>'
+        # the lit rim, brighter where the light is
+        f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r:.2f}" fill="none" '
+        f'stroke="{colour}" stroke-width="2.0"/>'
+        f'<path d="{_arc(x, y, r, 188, 268)}" fill="none" stroke="#fff" '
+        f'stroke-width="1.2" opacity="0.6" stroke-linecap="round"/>'
+        f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r - 3.0:.2f}" fill="none" '
+        f'stroke="{colour}" stroke-width="0.8" opacity="0.28"/>')
+
+
+# ------------------------------------------------------------------ the plates
 
 def walk(cid: str = "box") -> str:
-    """One monotone path, climbing the phi grid. A walk takes the shortest way."""
-    lvl = [0.62, 0.44, 0.44, 0.26, 0.26, 0.10]
-    xs = [X0 + B * f for f in (0.19, 0.32, 0.45, 0.58, 0.71, 0.84)]
-    pts = [(x, Y0 + B * y) for x, y in zip(xs, lvl)]
-    d = " ".join(f"{'M' if i == 0 else 'L'}{x:.2f},{y:.2f}"
-                 for i, (x, y) in enumerate(pts))
-    nodes = "".join(
-        f'<circle cx="{x:.2f}" cy="{y:.2f}" r="4" fill="{ARC}" opacity="0.55"/>'
-        for x, y in pts[1:-1])
-    end = f'<circle cx="{pts[-1][0]:.2f}" cy="{pts[-1][1]:.2f}" r="9" fill="none" ' \
-          f'stroke="{AMBER}" stroke-width="{RULE}"/>'
-    con = vernier(cid)
-    return plate(con + body() +
-                 f'<path d="{d}" fill="none" stroke="{ARC}" stroke-width="{MARK}" '
-                 f'stroke-linejoin="miter"/>' + nodes + end)
+    """One level cut, one riser, one more cut. A step is the whole gesture."""
+    y0, y1 = Y0 + B * 0.62, Y0 + B * 0.26
+    x0, x1 = X0 + B * 0.13, X0 + B * 0.63
+    return (
+        f'<g clip-path="url(#{cid})">'
+        + cut(x0, y0, x1, y0, 15)
+        + cut(x1, y0, x1, y1, 15)
+        + cut(x1, y1, X0 + B * 0.86, y1, 15)
+        + "</g>"
+        + aperture(X0 + B * 0.86, y1, 10))
 
 
 def daydream(cid: str = "box") -> str:
-    """Two lattices out of register. Drift without a destination."""
-    step = B / 9
-    shift = step / PHI
-    dots, ghost = [], []
-    for i in range(1, 9):
-        for j in range(1, 9):
-            x, y = X0 + step * i, Y0 + step * j
-            if 0.30 < (i / 10) + 0.11 * math.sin(j * 1.7) < 0.86:
-                dots.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="3.4" '
-                            f'fill="{STRUCT}" opacity="0.55"/>')
-    for i in range(1, 8):
-        for j in range(1, 8):
-            x, y = X0 + step * i + shift, Y0 + step * j + shift
-            ghost.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="2.6" '
-                         f'fill="{ARC}" opacity="0.8"/>')
-    con = vernier(cid)
-    return plate(con + body() +
-                 f'<g clip-path="url(#{cid})">' + "".join(dots) + "".join(ghost) + "</g>"
-                 f'<circle cx="{X0 + B / 2 + shift:.2f}" cy="{Y0 + B / 2 + shift:.2f}" '
-                 f'r="12" fill="none" stroke="{AMBER}" stroke-width="{RULE * 1.4}"/>', cid)
+    """Two cuts crossing at a shallow angle. Drift, and where it happens to meet."""
+    cx, cy = X0 + B / PHI ** 2, Y0 + B * 0.60
+    far = B * 0.9
+    a, b = math.radians(8), math.radians(-7)
+    return (
+        f'<g clip-path="url(#{cid})">'
+        + cut(cx - math.cos(a) * far, cy - math.sin(a) * far,
+              cx + math.cos(a) * far, cy + math.sin(a) * far, 10, 0.85)
+        + cut(cx - math.cos(b) * far, cy - math.sin(b) * far,
+              cx + math.cos(b) * far, cy + math.sin(b) * far, 7, 0.40)
+        + "</g>"
+        + aperture(cx, cy, 9))
 
 
 def dream(cid: str = "box") -> str:
-    """Three revolutions of the same grid at 0/30/60: six-fold, recombined."""
+    """Three cuts through one point. Recombination."""
     cx, cy = X0 + B / 2, Y0 + B / 2
-    lines = []
-    for k in range(3):
-        a = 30 * k
-        lines.append(f'<g transform="rotate({a} {cx} {cy})" opacity="'
-                     f'{0.95 - 0.3 * k}">')
-        for i in range(-3, 4):
-            o = B / 7 * i
-            lines.append(f'<path d="M{cx + o},{cy - B} V{cy + B}" '
-                         f'stroke-width="{HAIR if i % 3 else HAIR * 1.4}"/>')
-        lines.append("</g>")
-    con = vernier(cid) + construction(
-        f'<circle cx="{cx}" cy="{cy}" r="{B / PHI:.2f}"/>')
-    return plate(con + body() +
-                 f'<g clip-path="url(#{cid})" stroke="{ARC}" fill="none">'
-                 + "".join(lines) + "</g>" +
-                 f'<circle cx="{cx}" cy="{cy}" r="{B / 14:.2f}" fill="{VOID}" '
-                 f'stroke="{AMBER}" stroke-width="{RULE}"/>')
+    far = B * 1.1
+    out = [f'<g clip-path="url(#{cid})">']
+    for deg in (0, 60, 120):
+        t = math.radians(deg)
+        dx, dy = math.cos(t) * far, math.sin(t) * far
+        out.append(cut(cx - dx, cy - dy, cx + dx, cy + dy, 10, 0.9))
+    out.append("</g>")
+    out.append(aperture(cx, cy, 10))
+    return "".join(out)
 
 
 def doomscroll(cid: str = "box") -> str:
-    """The same tile, forever, compressed toward the floor. A feed."""
-    rows, out = 7, []
-    for i in range(rows):
-        t = i / (rows - 1)
-        h = 30 * (1 - t) ** 1.4 + 6
-        y = Y0 + B * 0.18 + t * B * 0.70
-        w = B * (0.30 + 0.44 * (1 - t))
-        x = X0 + B * 0.5 - w / 2
-        col = AMBER if i == 0 else ARC
-        op = 0.9 - 0.1 * i
-        out.append(f'<rect x="{x:.2f}" y="{y:.2f}" width="{w:.2f}" '
-                   f'height="{h:.2f}" fill="{col}" opacity="{max(op, 0.18):.2f}"/>')
-        if i == 0:
-            out.append(f'<rect x="{x - 6:.2f}" y="{y - 6:.2f}" width="{w + 12:.2f}" '
-                       f'height="{h + 12:.2f}" fill="none" stroke="{STRUCT}" '
-                       f'stroke-width="{HAIR}" opacity="0.4"/>')
-    con = vernier(cid)
-    return plate(con + body() + "".join(out))
+    """One cut, then the same cut again, lower and shorter. A feed."""
+    out = [f'<g clip-path="url(#{cid})">']
+    rows = [(0.26, 0.84, 14, 1.00),
+            (0.42, 0.74, 11, 0.62),
+            (0.55, 0.62, 9, 0.42),
+            (0.66, 0.50, 7, 0.28),
+            (0.75, 0.38, 5, 0.18)]
+    for y, reach, w, lit in rows:
+        out.append(cut(X0 + B * 0.18, Y0 + B * y, X0 + B * (0.18 + reach),
+                       Y0 + B * y, w, lit))
+    out.append("</g>")
+    out.append(aperture(X0 + B * 0.18, Y0 + B * 0.26, 9))
+    return "".join(out)
 
 
-
-# ------------------------------------------------------- variant B: one cut
-# The chart read is a property of diagrams, not of the brand. In variant B the
-# interior is a single cut across the body — the same turn, cut differently.
-
-def blade(angle: float, offset: float, thick: float, opacity: float,
-          colour: str, cid: str, edge: bool = True) -> str:
-    cx, cy = X0 + B / 2, Y0 + B / 2
-    w = B * 2.2
-    body = (f'<g transform="rotate({angle} {cx} {cy})">'
-            f'<rect x="{cx - w / 2:.2f}" y="{cy + offset - thick / 2:.2f}" '
-            f'width="{w:.2f}" height="{thick:.2f}" fill="{colour}" '
-            f'opacity="{opacity}"/>')
-    if edge:
-        body += (f'<path d="M{cx - w / 2:.2f},{cy + offset - thick / 2:.2f} '
-                 f'h{w:.2f}" stroke="{ARC}" stroke-width="{HAIR * 1.2}" '
-                 f'opacity="0.9"/>')
-    return body + "</g>"
+PLATES = {"walk": walk, "daydream": daydream, "dream": dream, "doomscroll": doomscroll}
 
 
-def cut_walk(cid: str = "box") -> str:
-    """One blade, level, with the leading edge lifted. Forward."""
-    i = (f'<g clip-path="url(#{cid})">'
-         + blade(0, B * 0.10, B * 0.30, 0.42, ARC, cid)
-         + blade(-14, -B * 0.12, B * 0.10, 0.18, ARC, cid, edge=False)
-         + "</g>"
-         + f'<circle cx="{X0 + B * 0.80:.2f}" cy="{Y0 + B * 0.34:.2f}" r="11" '
-           f'fill="none" stroke="{AMBER}" stroke-width="{RULE * 1.3}"/>')
-    return plate(body() + i, cid)
+def svg(name: str, body_inner: str, cid: str) -> str:
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{S}" height="{S}" '
+            f'viewBox="0 0 {S} {S}"><defs>{clip(cid)}</defs>'
+            f'<rect width="{S}" height="{S}" fill="{VOID}"/>'
+            f'{body()}{body_inner}</svg>')
 
 
-def cut_daydream(cid: str = "box") -> str:
-    """Two blades almost parallel: interference, not direction."""
-    i = (f'<g clip-path="url(#{cid})">'
-         + blade(9, -B * 0.06, B * 0.12, 0.30, ARC, cid, edge=False)
-         + blade(19, B * 0.14, B * 0.12, 0.30, ARC, cid, edge=False)
-         + "</g>")
-    return plate(body() + vernier(cid) + i, cid)
-
-
-def cut_dream(cid: str = "box") -> str:
-    """Three blades through one point. Recombination."""
-    i = (f'<g clip-path="url(#{cid})">'
-         + "".join(blade(a, 0, B * 0.07, 0.40, ARC, cid) for a in (0, 60, 120))
-         + "</g>")
-    return plate(body() + i, cid)
-
-
-def cut_doomscroll(cid: str = "box") -> str:
-    """One blade, repeated, each lower than the last. A feed."""
-    parts = [f'<g clip-path="url(#{cid})">']
-    for i in range(6):
-        t = i / 5
-        parts.append(blade(0, B * (-0.30 + 0.16 * i), B * (0.13 - 0.015 * i),
-                           0.46 - 0.055 * i, AMBER if i == 0 else ARC, cid))
-    parts.append("</g>")
-    return plate(body() + "".join(parts), cid)
-
-
-CUTS = {"walk": cut_walk, "daydream": cut_daydream, "dream": cut_dream,
-        "doomscroll": cut_doomscroll}
-
-def sheet(family: dict, name: str) -> str:
-    """The four plates side by side, as one file a browser can open."""
+def sheet() -> str:
     cells = []
-    for i, key in enumerate(family):
+    for i, (name, fn) in enumerate(PLATES.items()):
+        cid = f"c{i}"
         cells.append(f'<g transform="translate({S * i},0)">'
-                     f'{family[key](cid=f"{name}{i}")}</g>')
+                     f'{svg(name, fn(cid), cid)[5:-6]}</g>')
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{S * 4}" height="{S}" '
             f'viewBox="0 0 {S * 4} {S}">' + "".join(cells) + "</svg>")
 
 
-MARKS = {"walk": walk, "daydream": daydream, "dream": dream, "doomscroll": doomscroll}
+def rasterise(svg_path: pathlib.Path, png_path: pathlib.Path,
+              w: int = S, h: int = S) -> None:
+    """Chromium at 2x, because ImageMagick's SVG rasteriser flattens this."""
+    subprocess.run([
+        "chromium-browser", "--headless=new", "--no-sandbox", "--hide-scrollbars",
+        "--force-device-scale-factor=2", f"--window-size={w},{h}",
+        "--default-background-color=00000000", "--virtual-time-budget=2500",
+        f"--screenshot={png_path}", svg_path.as_uri(),
+    ], check=True, capture_output=True)
 
 
 def main() -> None:
-    """Write the four plates. The family row is composed from the PNGs, not here."""
     out = pathlib.Path(__file__).resolve().parent.parent / "docs" / "brand" / "marks"
     out.mkdir(parents=True, exist_ok=True)
-    for name, fn in MARKS.items():
-        (out / f"{name}.svg").write_text(fn(), encoding="utf-8")
-    cut = out / "cut"
-    cut.mkdir(exist_ok=True)
-    for name, fn in CUTS.items():
-        (cut / f"{name}.svg").write_text(fn(), encoding="utf-8")
-    (out / "sheet.svg").write_text(sheet(MARKS, "a"), encoding="utf-8")
-    (cut / "sheet.svg").write_text(sheet(CUTS, "b"), encoding="utf-8")
+    for name, fn in PLATES.items():
+        (out / f"{name}.svg").write_text(svg(name, fn(), "box"), encoding="utf-8")
+    (out / "sheet.svg").write_text(sheet(), encoding="utf-8")
+    # The chart-language variant is retired; the flat drafts are cleared out.
+    for stale in ("cut", "sheet.png"):
+        p = out / stale
+        if p.is_dir():
+            for f in p.iterdir():
+                f.unlink()
+            p.rmdir()
+        elif p.exists():
+            p.unlink()
+    if "--png" in sys.argv:
+        for name in PLATES:
+            rasterise(out / f"{name}.svg", out / f"{name}.png")
+        rasterise(out / "sheet.svg", out / "sheet.png", S * 4, S)
     print(out)
 
 

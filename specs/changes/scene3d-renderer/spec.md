@@ -1,6 +1,6 @@
 # Scene renderer — 3D straight to terminal pixels
 
-Status: **proposed** 2026-11-08. Not implemented. Written from a working prototype,
+Status: **proposed — conflicts with the shipped path** 2026-11-08. Not implemented. Written from a working prototype,
 not from a sketch.
 Owner: Ryan Cook. Scope: `/home/ryan/antemuse-plugin` rendering only.
 

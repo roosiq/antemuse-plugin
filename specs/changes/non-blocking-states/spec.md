@@ -1,6 +1,6 @@
 # Spec: a state should not cut the chain it runs inside
 
-Status: **implemented** 2026-11-08 (683 tests pass). Owner direction: *"Do these states need to be
+Status: **implemented** 2026-11-08 (686 tests pass). Owner direction: *"Do these states need to be
 blocking? Update the spec so they don't block message chains by default unless the
 user wants that. Configurable via args."*
 

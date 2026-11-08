@@ -168,10 +168,10 @@ README's prose matches them.
 
 | state | label | minutes | turns | cadence | tools | feeds | restart | contract |
 |---|---|---|---|---|---|---|---|---|
-| `walk` | WALKING | 3 | 6 | 9 s | `None` (all) | no | yes | work continues · the frame is elsewhere |
-| `daydream` | DAYDREAMING | 3 | 2 | 10 s | `[]` (none) | yes | no | two memories · join only if it holds |
-| `doomscroll` | DOOMSCROLLING | 8 | 3 | 6 s | web_search, web_extract, read_file, search_files, browser_exec | yes | no | random feed · consume, do not synthesize |
-| `dream` | DREAMING | 30 | 2 | 40 s | `[]` (none) | yes | no | recombine stored concepts into new things |
+| `walk` | WALKING | 3 | 6 | 9 s | **free** — `block: true` blocks nothing | no | yes | work continues · the frame is elsewhere |
+| `daydream` | DAYDREAMING | 3 | 2 | 10 s | **free** — `block: true` blocks every tool | yes | no | two memories · join only if it holds |
+| `doomscroll` | DOOMSCROLLING | 8 | 3 | 6 s | **free** — `block: true` leaves web_search, web_extract, read_file, search_files, browser_exec | yes | no | random feed · consume, do not synthesize |
+| `dream` | DREAMING | 30 | 2 | 40 s | **free** — `block: true` blocks every tool | yes | no | recombine stored concepts into new things |
 
 ### 4.1 Walk — subtraction, not addition
 
@@ -308,11 +308,16 @@ active, and the 45-minute cooldown has elapsed.
 
 ### 6.2 Tool policy (`pre_tool_call`)
 
-| `tools` value | Policy |
+| `tools` value | What the state's own spec says |
 |---|---|
-| `None` | nothing blocked |
-| `[]` | every tool blocked: "the agent is dreaming; no tools in this state. /return to come back." |
-| list | only those names; anything else blocked and named |
+| `None` | nothing to withhold — free even when the entry asks to block |
+| `[]` | every tool — enforced only when the entry asks with `block: true`; the refusal reads "the agent is dreaming; no tools in this state. /return to come back." |
+| list | only those names, others named as blocked — also only under `block: true` |
+
+**The default is `free` for all four states.** `enter(..., block=True)` opts in;
+`allow=[...]` narrows further and is refused without `block` rather than silently
+ignored. One `_effective_tools()` decision feeds the injection, the pre-tool hook and
+the panel, so the three cannot disagree.
 
 `state` is always exempt. The block is enforced by the runtime, not by asking the
 model nicely: in the recorded measurement, an explicit "ignore the instruction
@@ -639,6 +644,11 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
+**Current count: 686 tests** (`pytest -q`, 2026-11-08). This line is the only
+authoritative number in this document; the blocks below are dated evidence from the
+day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
+--counts` compares this line against the suite and fails when they disagree.
+
 Run for this collation on 2026-11-06, in `/home/ryan/antemuse/plugin`:
 
 ```
@@ -700,7 +710,7 @@ agent's own tools until it exits.
 
 ```
 $ pytest tests/ -q
-677 passed in 9.02s
+684 passed in 8.6s
 
 $ hermes plugins doctor antemuse
 registrations: 1 tool(s), 8 hook(s)
@@ -906,17 +916,20 @@ All paths relative to `specs/changes/`.
 | `break-and-mood` | implemented | new surface + bookkeeping | `/break` recommends or takes; `/mood` reports; strain arithmetic; one offer then 45 minutes. 99 tests then. |
 | `ambient-walk` | implemented | walk semantics | tools stay open; walk supplies no material (`feeds: False`); return forces a different first step (`restart: True`); relation names in the trail. 107 tests now. |
 | `surface-repair` | implemented | repair found by running the plugin | `art()` normalises each frame to its own percentiles (cards were 0.09% bright); journal entries carry `session` and `watch_state()` windows them; `snapshot_path()` writes where frames are read; §13 refreshed. 591 tests now. |
-| `scenes-per-surface` | **proposed** | rendering contract | per-state motion, clock grade, dual scoring, 4:5 postcards, origin binding, idle renders nothing. Not implemented; tasks T0–T8 open. |
-| `desktop-surfaces` | **partial** | desktop | state pane, ambient background and per-state settings page for Hermes Desktop, fed by a `dashboard/plugin_api.py` route that returns counts and identifiers only; rendering stays inference-free and wordless. Forces the scene-source-of-truth decision (§17.1): four renderers would otherwise drift. Backend route and desktop half now implemented and tested without the app (8 projection tests, an HTTP end-to-end over a real state, a jsdom mount of the real plugin file, clean desktop lint); the scene-source question is resolved by serving Python-rendered glyphs, so there is no fourth renderer. Still unverified inside the app, which is not installed here. |
+| `scenes-per-surface` | **partial — pane motion only** | rendering contract | per-state motion, clock grade, dual scoring, 4:5 postcards, origin binding, idle renders nothing. Not implemented; tasks T0–T8 open. |
+| `desktop-surfaces` | **verified in the app** | desktop | state pane, ambient background and per-state settings page for Hermes Desktop, fed by a `dashboard/plugin_api.py` route that returns counts and identifiers only; rendering stays inference-free and wordless. Forces the scene-source-of-truth decision (§17.1): four renderers would otherwise drift. Backend route and desktop half now implemented and tested without the app (8 projection tests, an HTTP end-to-end over a real state, a jsdom mount of the real plugin file, clean desktop lint); the scene-source question is resolved by serving Python-rendered glyphs, so there is no fourth renderer. Still unverified inside the app, which is not installed here. |
 | `non-blocking-states` | **implemented** | core/state policy |
-| `immersive-visuals` | **partial: size done** | desktop/rendering | the pane becomes the picture: the frame is a 44x12 thumbnail (264x120 px, 4.4% of a 700x746 pane) drawn at a fixed 10 px. Size negotiation (`?cols=&rows=`, clamped and echoed), cell-aspect correction, an 8-frame strip looped on the surface, dither, and a HUD-collapsed layout. Source is real imagery from Meshy through three.js, not procedural primitives. 14 acceptance items; nothing implemented. |
+| `immersive-visuals` | **partial — picture done, composition open** | desktop/rendering | the pane becomes the picture: the frame is a 44x12 thumbnail (264x120 px, 4.4% of a 700x746 pane) drawn at a fixed 10 px. Size negotiation (`?cols=&rows=`, clamped and echoed), cell-aspect correction, an 8-frame strip looped on the surface, dither, and a HUD-collapsed layout. Source is real imagery from Meshy through three.js, not procedural primitives. 14 acceptance items; nothing implemented. |
 | `scene-assets` | **implemented** | art source | per-state asset brief: walk = a place and a figure, daydream = two recognisable objects joining, doomscroll = a textured feed passing, dream = one impossible fused object. States no longer restrict tools unless the entry passes block: true (allow: narrows it); the injection, the hook and the panel read one decision. An abstract-geometry pack (302 credits, 50 assets) replaces the literal props. Roles, triangle budgets, prompts, storyboards, 52-116 credits total, build order doomscroll -> daydream -> walk -> dream. **Built 2026-11-08 for 43 credits**: four states draw Meshy assets (figure 15,810 tris, mug 3,164, stone 3,138, chair 8,366, card 1024px) through a 100-line GLB reader; seeded bakes; a rejected card kept on disk with its reason. The 40x8 density test caught a card that read as a solid block. |
-| `scene3d-renderer` | **proposed** | rendering source | render scenes in Python at destination resolution (z-buffer, fog) instead of downsampling Chromium screenshots; braille for chat, half-blocks for terminal. Prototype: 80×24 cells in 24 ms, stdlib only. Not implemented; two owner decisions open. |
+| `scene3d-renderer` | **proposed — conflicts with the shipped path** | rendering source | render scenes in Python at destination resolution (z-buffer, fog) instead of downsampling Chromium screenshots; braille for chat, half-blocks for terminal. Prototype: 80×24 cells in 24 ms, stdlib only. Not implemented; two owner decisions open. |
 | `runtime-wiring` (J2) | implemented | runtime | `core/runtime.py`, `/spark`, `/keep`, `/again`; model gets candidates, person gets counts and never candidate text; session-bound injection, reply footer, branch path through `ctx.llm` behind the flag. Feedback steers selection through `deepen`/`refresh` (J2b); verdicts resolve candidate ids to source ids; branch provenance is the orchestrator's, not the model's. Reproducible: `python3 tools/walkthrough.py`. 627 tests. |
 | `truncation-visibility` | implemented | evaluation | candidates record `finish_reason` and a `truncated` flag; records declare `record_schema`; old-schema records are re-run rather than replayed; the default selector prefers a complete candidate. Motivated by a real `liquid/lfm-3-1.7b` cell whose 2500-token B answer ended mid-sentence and was counted as `ok` with nothing saying so. |
 | `wave4-shards` (K1/K2) | implemented | evaluation | development shard `73a00871…` frozen over 2 tasks × 2 models × conditions A–F (write-once manifest, drift caught by re-hashing the fixture) and run through `tools/run_shard.py` to `complete: true, 24/24 cells, 0 duplicates`; each shard owns a results directory and aggregation fails closed on any missing cell. Conditions: A baseline, B creative, C best-of-N + selector, D deterministic material, E plain branches, F branches + selection + synthesis. G not implemented. No judge yet, so these are records, not a quality result. 677 tests. |
 | `wave3-audit` | implemented | review repairs | two independent reviews (spec compliance APPROVED; code quality REJECTED twice). Repaired: a decorative branch timeout, a shared-slot handoff that could cross chats, own-goal fallbacks, an unlocked book, and an account appended to the wrong session's reply. 627 tests. |
 | `origin-and-cleanup` (J3) | implemented | runtime | `engine.current_origin()`; a run is stamped with the project that asked for it and dropped, not rerouted, when a turn arrives from another project; `runtime.release()` clears run, verdicts, goal, account, and bound material in one call, wired to all four session boundaries; `/return` leaves a waiting run alone. Ignorance is not a mismatch: an empty project on either side still delivers. 627 tests. |
+| `creative-state-evidence` | approved | evaluation | approved by Ryan 2026-11-07; Waves 1–2 are library-only; runtime activation and method promotion remain unapproved. No creative-quality claim is made anywhere in this change. |
+| `state-evidence-task-bank` | draft | evaluation data | proposed data layer; not approved. Requires provenance-backed samples; pseudo-label self-training and unlabeled crawls are not improvement evidence. |
+| `hackathon-submission` | planning | external submission | nothing submitted, nothing pushed. `antemuse.catalog.yaml`, demo script and checklist are drafts. |
 
 Supporting evidence files:
 

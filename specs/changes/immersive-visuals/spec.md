@@ -1,6 +1,10 @@
 # Full-pane visuals — the pane is the picture
 
-Status: **implemented in part (size, aspect, pane bakes)** 2026-11-08. Intent only; nothing implemented.
+Status: **partial — the picture is real, the composition is not finished**
+2026-11-08. Live in the app: 116 × 74 cells filling a 700 × 746 pane, an eight-frame
+strip moving at a per-state rate, a black ground with light ink, ordered dither with a
+black floor, and wireframe geometry. Open: `doomscroll` composition, one hue per state,
+HUD fade, the colour/crop/scope gate.
 Owner: Ryan Cook. Scope: `dashboard/` + `desktop/plugin.js` rendering path in
 `/home/ryan/antemuse-plugin`. The picture itself is briefed separately in
 [`assets.md`](assets.md): which states need drawing, and what each drawing must show. Does not touch the lifecycle, the card, or the CLI.

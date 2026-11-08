@@ -1,6 +1,7 @@
 # Spec change: scenes-per-surface
 
-Status: proposed
+Status: **partial 2026-11-08** — the pane half exists (per-state motion, still frames
+in chat), the per-surface grading, clock, dual scoring and 4:5 postcards do not.
 Kind: rendering contract. No change to state semantics, tool policy, or the
 timer.
 
