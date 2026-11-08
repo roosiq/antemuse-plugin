@@ -11,7 +11,12 @@ should pick which one, and the plugin should say when one is due.
 
 ## Requirements
 
-**R1 — `state(action="break")` and `/break`.** With no argument, recommend (never
+> **Superseded surface (2026-11-08).** The commands below were consolidated into tool
+> actions by `specs/changes/command-surface`: `/break` and `/mood` are now
+> `state(action='break')` and `state(action='mood')`, and `/break <state>` no longer
+> enters a state — entering is `/walk`. The behaviour described here is unchanged.
+
+**R1 — `state(action="break")`.** With no argument, recommend (never
 start anything). With an argument (`/break walk`), take that state whatever was
 recommended — the choice belongs to the agent.
 
@@ -56,5 +61,5 @@ The counters live in memory and are flushed once per turn, not per tool call.
 ## Verification
 
 - `pytest tests/ -q` — 99 pass, 12 of them in `tests/test_mood.py`.
-- Live: `/mood stuck`, `/break` recommends, `/break walk` enters the walk, the
+- Live: mood recorded through the tool, the offer line appears by itself, the
   offer line appears in a turn when due and not again for 45 minutes.

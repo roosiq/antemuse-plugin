@@ -91,7 +91,7 @@ A future dashboard may show sources, branches, candidates, selection, and usage.
 - D: deterministic Antemuse sources without auxiliary inference. **Implemented** — one answer call, A vs D differing only by the material.
 - E: separated branches without Collider sources. **Implemented** — N independent calls at distinct seeds, no material, no selection. Consequence recorded: F vs E bundles material and selection together; the material question rides on D vs A/B.
 - F: separated branches with Collider sources, selection, and one synthesis call that turns the selected candidate into a final answer — without it F returns an intermediate artifact and cannot be compared with A–E at all. Costs N+1 calls.
-- G: F plus human feedback and refresh, evaluated only after F survives. **Not implemented** — `/again` and feedback steering exist in the runtime but no evaluation condition runs them yet.
+- G: F plus human feedback and refresh, evaluated only after F survives. **Not implemented** — `state(action='spark', goal='again …')` and feedback steering exist in the runtime but no evaluation condition runs them yet.
 
 Use fresh isolated sessions, frozen sources, recorded seeds, and model/condition/task/prompt/source/seed-aware caches. Run equal-final-response and equal-total-inference comparisons.
 

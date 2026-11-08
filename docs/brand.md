@@ -60,7 +60,7 @@ idle        not in a state.
 ```
 /walk  /daydream  /dream  /doomscroll     enter
 /return                                   leave, keep the account
-/states                                   what is happening now
+/return                                  end the state, keep the account
 ```
 
 `/return` is the name, and it was bought with a bug: Hermes ships `/snapshot`

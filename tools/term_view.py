@@ -21,7 +21,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from core import photographs  # noqa: E402  the real cell model
+from core import photographs, surfaces  # noqa: E402  the real renderers
 
 CELL = "▀"          # foreground is the top pixel, background the bottom pixel
 FONT_PX = 16
@@ -85,6 +85,40 @@ def shot(html_path: pathlib.Path, png_path: pathlib.Path, cols: int, rows: int) 
     ], check=True, capture_output=True)
 
 
+def ramp(path: pathlib.Path, cols: int, rows: int) -> list[str]:
+    """The desktop pane's own rendering: luminance ramp, no colour, no escapes.
+
+    Rather than reimplement the ramp, stage the file where `surfaces.art` looks
+    for frames and call it. Anything else would drift from what the pane draws.
+    """
+    import shutil
+    import tempfile
+
+    from PIL import Image, ImageFilter, ImageOps
+
+    # Grade for the ramp before the ramp sees it. A plate lit for truecolor has a
+    # histogram that lands almost entirely in the bottom fifth of the ramp, where
+    # every cell becomes the same dot; crushing the floor and lifting the highlights
+    # is what makes the frame, the field, and the cut separate again.
+    im = Image.open(path).convert("L")
+    im = ImageOps.autocontrast(im, cutoff=(2, 2))
+    im = im.point(lambda v: 0 if v < 70 else min(255, int((v - 70) * 255 / 185)))
+    im = im.filter(ImageFilter.GaussianBlur(1.1))
+
+    root = pathlib.Path(tempfile.mkdtemp(prefix="termview-"))
+    scene = "plate"
+    (root / scene).mkdir()
+    im.save(root / scene / "0001.png")
+    original = surfaces._frames_dir
+    surfaces._frames_dir = lambda pane=False: root          # noqa: ARG005
+    try:
+        return surfaces.art(cols=cols, rows=rows, scene=scene, pane=True,
+                            fit="cover", floor=0.06, gamma=0.85)
+    finally:
+        surfaces._frames_dir = original
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         print(__doc__)
@@ -92,6 +126,10 @@ def main() -> None:
     path = pathlib.Path(sys.argv[1]).resolve()
     cols = int(sys.argv[2]) if len(sys.argv) > 2 else 96
     rows = int(sys.argv[3]) if len(sys.argv) > 3 else 40
+    if "--ramp" in sys.argv:
+        lines = ramp(path, cols, rows)
+        print("\n".join(lines))
+        return
     cells = cells_for(path, cols, rows)
     stamp = f"{path.stem}-{cols}x{rows}"
     txt = path.with_name(f"{stamp}.txt")

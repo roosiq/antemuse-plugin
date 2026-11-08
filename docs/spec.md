@@ -121,19 +121,24 @@ to the journal as events.
 
 ### 3.2 Tool: `state`
 
-One tool, twelve actions:
+One tool, fourteen actions:
 
-`enter` · `exit` · `status` · `list` · `watch` · `card` · `image` · `walks` ·
-`walk_new` · `walk_del` · `break` · `mood`
+`enter` · `exit` · `status` · `list` · `walks` · `walk_new` · `walk_del` ·
+`break` · `mood` · `spark` · `keep` · `watch` · `card` · `image`
+
+The last three are surfaces rather than decisions: they stay handled for older callers
+but are not part of the description a model reads. `spark` and `keep` replaced the
+`/spark`, `/keep` and `/again` commands (see `specs/changes/command-surface`).
 
 Parameters: `action` (required), `name`, `minutes`, `walk`, `feeling`, `spec`,
+`goal`, `verdict`, `candidate`,
 and — Wave 3, J1 — optional `method` (`collide` · `deep` · `chaos` · `spark`),
 `seed`, and `budget` (`calls` 0–32, `tokens` 0–200000, `seconds` 1–900). The
 three experimental fields are refused unless
 `plugins.entries.antemuse.settings.experimental.enabled` is true. They are
 recorded on the active state, and since J2 the run that consumes them is
-`/spark` — the fields still do not start a run by themselves, because a run needs
-a goal and entry has none.
+`state(action='spark', goal=…)` — the fields still do not start a run by themselves,
+because a run needs a goal and entry has none.
 Unknown or unhandled actions fall through to the text frame.
 
 The `state` tool is exempt from every block (`CONTROL_TOOLS = {"state"}`), so a
@@ -913,7 +918,7 @@ All paths relative to `specs/changes/`.
 | `e2e-fixes` | implemented | repair found by real sessions | `/return` exists; state-scoped material; account counts material; clock capped; `settle()` not `clear()`; dependency refused at the door. 80 tests then. |
 | `state-return-report` | implemented | ending behaviour | every ending builds an account from the journal; `[YOU JUST CAME BACK …]`; `nothing arrived` for an empty state. |
 | `consolidate-naming` | implemented | internal restructuring | `core/`; modules named by content; one terminal-imaging module; dead SQLite board removed; no stale identity. 74 tests then. |
-| `break-and-mood` | implemented | new surface + bookkeeping | `/break` recommends or takes; `/mood` reports; strain arithmetic; one offer then 45 minutes. 99 tests then. |
+| `break-and-mood` | implemented | new surface + bookkeeping | recommends, never enters; mood is reported, never inferred; strain arithmetic; one offer then 45 minutes. The commands themselves were later consolidated into `state(action='break'|'mood')`. |
 | `ambient-walk` | implemented | walk semantics | tools stay open; walk supplies no material (`feeds: False`); return forces a different first step (`restart: True`); relation names in the trail. 107 tests now. |
 | `surface-repair` | implemented | repair found by running the plugin | `art()` normalises each frame to its own percentiles (cards were 0.09% bright); journal entries carry `session` and `watch_state()` windows them; `snapshot_path()` writes where frames are read; §13 refreshed. 591 tests now. |
 | `scenes-per-surface` | **partial — pane motion only** | rendering contract | per-state motion, clock grade, dual scoring, 4:5 postcards, origin binding, idle renders nothing. Not implemented; tasks T0–T8 open. |
@@ -922,7 +927,7 @@ All paths relative to `specs/changes/`.
 | `immersive-visuals` | **partial — picture done, composition open** | desktop/rendering | the pane becomes the picture: the frame is a 44x12 thumbnail (264x120 px, 4.4% of a 700x746 pane) drawn at a fixed 10 px. Size negotiation (`?cols=&rows=`, clamped and echoed), cell-aspect correction, an 8-frame strip looped on the surface, dither, and a HUD-collapsed layout. Source is real imagery from Meshy through three.js, not procedural primitives. 14 acceptance items; nothing implemented. |
 | `scene-assets` | **implemented** | art source | per-state asset brief: walk = a place and a figure, daydream = two recognisable objects joining, doomscroll = a textured feed passing, dream = one impossible fused object. States no longer restrict tools unless the entry passes block: true (allow: narrows it); the injection, the hook and the panel read one decision. An abstract-geometry pack (302 credits, 50 assets) replaces the literal props. Roles, triangle budgets, prompts, storyboards, 52-116 credits total, build order doomscroll -> daydream -> walk -> dream. **Built 2026-11-08 for 43 credits**: four states draw Meshy assets (figure 15,810 tris, mug 3,164, stone 3,138, chair 8,366, card 1024px) through a 100-line GLB reader; seeded bakes; a rejected card kept on disk with its reason. The 40x8 density test caught a card that read as a solid block. |
 | `scene3d-renderer` | **proposed — conflicts with the shipped path** | rendering source | render scenes in Python at destination resolution (z-buffer, fog) instead of downsampling Chromium screenshots; braille for chat, half-blocks for terminal. Prototype: 80×24 cells in 24 ms, stdlib only. Not implemented; two owner decisions open. |
-| `runtime-wiring` (J2) | implemented | runtime | `core/runtime.py`, `/spark`, `/keep`, `/again`; model gets candidates, person gets counts and never candidate text; session-bound injection, reply footer, branch path through `ctx.llm` behind the flag. Feedback steers selection through `deepen`/`refresh` (J2b); verdicts resolve candidate ids to source ids; branch provenance is the orchestrator's, not the model's. Reproducible: `python3 tools/walkthrough.py`. 627 tests. |
+| `runtime-wiring` (J2) | implemented | runtime | `core/runtime.py`, now reached as `state(action='spark'|'keep')` (the `/spark`, `/keep`, `/again` commands were consolidated away); model gets candidates, person gets counts and never candidate text; session-bound injection, reply footer, branch path through `ctx.llm` behind the flag. Feedback steers selection through `deepen`/`refresh` (J2b); verdicts resolve candidate ids to source ids; branch provenance is the orchestrator's, not the model's. Reproducible: `python3 tools/walkthrough.py`. 627 tests. |
 | `truncation-visibility` | implemented | evaluation | candidates record `finish_reason` and a `truncated` flag; records declare `record_schema`; old-schema records are re-run rather than replayed; the default selector prefers a complete candidate. Motivated by a real `liquid/lfm-3-1.7b` cell whose 2500-token B answer ended mid-sentence and was counted as `ok` with nothing saying so. |
 | `wave4-shards` (K1/K2) | implemented | evaluation | development shard `73a00871…` frozen over 2 tasks × 2 models × conditions A–F (write-once manifest, drift caught by re-hashing the fixture) and run through `tools/run_shard.py` to `complete: true, 24/24 cells, 0 duplicates`; each shard owns a results directory and aggregation fails closed on any missing cell. Conditions: A baseline, B creative, C best-of-N + selector, D deterministic material, E plain branches, F branches + selection + synthesis. G not implemented. No judge yet, so these are records, not a quality result. 677 tests. |
 | `wave3-audit` | implemented | review repairs | two independent reviews (spec compliance APPROVED; code quality REJECTED twice). Repaired: a decorative branch timeout, a shared-slot handoff that could cross chats, own-goal fallbacks, an unlocked book, and an account appended to the wrong session's reply. 627 tests. |
@@ -930,7 +935,7 @@ All paths relative to `specs/changes/`.
 | `creative-state-evidence` | approved | evaluation | approved by Ryan 2026-11-07; Waves 1–2 are library-only; runtime activation and method promotion remain unapproved. No creative-quality claim is made anywhere in this change. |
 | `state-evidence-task-bank` | draft | evaluation data | proposed data layer; not approved. Requires provenance-backed samples; pseudo-label self-training and unlabeled crawls are not improvement evidence. |
 | `hackathon-submission` | planning | external submission | nothing submitted, nothing pushed. `antemuse.catalog.yaml`, demo script and checklist are drafts. |
-| `command-surface` | **implemented** | public verbs | 14 commands + 12 tool actions for ~9 verbs; `/states` was described as a catalogue and renders the picture; `/keep #n` referenced numbering no surface published; `/break <state>` was a second spelling of `/walk`. Definitions and migration written; the three behaviour fixes are implemented, the renames are not. |
+| `command-surface` | **implemented** | public verbs | 14 commands → 5 (four states + `/return`); `/note`, `/break`, `/mood`, `/state`, `/states`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions. `/break <state>` no longer enters, `/keep` numbering is published, and a test fails when a registered verb has no definition. |
 | `pattern-recommendation` | **proposed** | recommendation | names the state that fits the shape of the work from measured counters only (loop, grind, churn, saturation, data wall, rut, return hangover); one line, one state, one piece of evidence, 45-minute cooling, silence by default. Never enters a state; no model call; no mood inference. Fixtures open. |
 | `hermes-integration` | **verified** | host interfaces | audit of every mechanism against the host source: tool/commands/hooks/injection/ctx.llm/aux tasks/storage/dashboard/memory. Three defects fixed — automation read `messages` but the host passes `user_message`; three modules hardcoded `~/.hermes`; daydream read a memory file an external provider never writes. No provider override, no SDK, no key: any provider by its default interface. |
 

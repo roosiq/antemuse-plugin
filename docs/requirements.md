@@ -122,7 +122,7 @@ Measurement approach (no targets set — **OPEN**):
 |---|---|---|
 | Enablement | `hermes plugins list` / config presence | OPEN |
 | Repeat use | states entered per active week | OPEN |
-| Break acceptance | offers shown vs `/break <state>` taken | OPEN |
+| Break acceptance | offer line shown by itself vs a state entered on purpose | OPEN |
 | Completion | states ended by clock/quit vs abandoned mid-turn | OPEN |
 | Incidents | reported lockouts or lost residue | 0 (a defect, not a metric) |
 | Discoverability | catalog search position for "cognition", "walk", "creativity" | OPEN |
@@ -136,7 +136,7 @@ not business adoption or creative-quality evidence.
 **In scope for 0.9.x**
 
 - four states: walk, daydream, doomscroll, dream;
-- `/break` recommendation and `/mood` reporting;
+- the recommendation line and mood reporting (both now `state` tool actions);
 - walks as user-editable data (WordNet and manual graphs);
 - terminal takeover, chat card, text record, PNG card;
 - deterministic material from WordNet, FrameNet, local memories, public feeds;
@@ -156,7 +156,7 @@ see `specs/changes/creative-state-evidence/spec.md`):
 - `data/collider/` — real Open Collider generated examples with attribution.
 
 These modules exist and are controller-verified at the library level. They are
-**not registered or wired into runtime**: no `/spark` command, no feedback
+**not wired into runtime as a command**: `spark` and `keep` exist as tool actions, and no feedback
 command, no auxiliary hook, and no runtime injection exists in the shipped
 plugin. No creative-quality improvement is claimed.
 
@@ -319,4 +319,4 @@ one green run is not proof of suite stability.
 | **BR-12 — operator-extensible walks** | Implemented | `spec.md` §8 | `core/walks.py::GraphWalk`, `save`, `remove`; `walk_new` / `walk_del` in `__init__.py` | `tests/test_walks.py` covers built-ins, manual graphs, persistence, cursors, relation policy, and deletion boundaries. |
 | **BR-13 — Antemuse, undecorated** | Implemented | `spec.md` §§1, 2 | `plugin.yaml`; `__init__.py`; `SKILL.md`; `docs/brand.md` | `tests/test_manifest.py::test_manifest_name_is_the_brand`, `test_the_registered_skill_is_the_brand`, `test_no_retired_name_appears_anywhere`. |
 | **BR-14 — no clichéd explanation of connections** | Implemented | `spec.md` §§6, 10 | wordless visual paths in `core/tui.py`, `core/photographs.py`, `core/surfaces.py`; model-only material in `core/engine.py` | `tests/test_walk_map.py::test_bare_map_has_no_instrumentation`; `tests/test_surfaces.py::test_card_is_only_a_picture`; `tests/test_tui.py::test_active_frame_is_pictures_only`. |
-| **BR-15 — evidence-gated improvement** | **Not implemented at runtime; library/evaluation controls implemented** | `specs/changes/creative-state-evidence/spec.md` §§2, 7, 9 | `evaluation/`; `core/collider.py`; `core/collision.py`; `core/llm.py`; `core/orchestrator.py`; `core/selection.py`; `core/feedback.py`; `core/presenter.py`; `data/collider/` | Library and evaluation controls are implemented and controller-verified at the library level; final regression results are recorded in the task register. **Gap:** runtime registration/wiring has not happened; no `/spark` or feedback command exists; no auxiliary hook or runtime injection exists; no protected comparative evaluation has been run; no creative-quality improvement is claimed. Runtime selection scores are not improvement evidence. |
+| **BR-15 — evidence-gated improvement** | **Not implemented at runtime; library/evaluation controls implemented** | `specs/changes/creative-state-evidence/spec.md` §§2, 7, 9 | `evaluation/`; `core/collider.py`; `core/collision.py`; `core/llm.py`; `core/orchestrator.py`; `core/selection.py`; `core/feedback.py`; `core/presenter.py`; `data/collider/` | Library and evaluation controls are implemented and controller-verified at the library level; final regression results are recorded in the task register. **Gap:** runtime registration/wiring has not happened; `spark`/`keep` exist only as tool actions with no evaluation behind them; no auxiliary hook or runtime injection exists; no protected comparative evaluation has been run; no creative-quality improvement is claimed. Runtime selection scores are not improvement evidence. |

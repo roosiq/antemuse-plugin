@@ -139,6 +139,9 @@ def clip(cid: str) -> str:
 
 # ------------------------------------------------------------------ gestures
 
+W = 1.0     # weight multiplier: the icon is the reference weight
+
+
 def cut(x1: float, y1: float, x2: float, y2: float, width: float,
         lit: float = 1.0) -> str:
     """A cut between two points: shadowed near wall, lit far wall, dark floor.
@@ -147,6 +150,7 @@ def cut(x1: float, y1: float, x2: float, y2: float, width: float,
     the far wall of it and the floor of it stays black. The lip always falls on
     the side facing away from the light, whichever way the cut runs.
     """
+    width = width * W
     ln = math.hypot(x2 - x1, y2 - y1) or 1.0
     nx, ny = (y2 - y1) / ln, -(x2 - x1) / ln      # normal to the cut
     if nx * LX + ny * LY > 0:                     # keep it pointing away from the light
@@ -178,6 +182,7 @@ def _arc(x: float, y: float, r: float, a0: float, a1: float) -> str:
 
 
 def aperture(x: float, y: float, r: float, colour: str = AMBER) -> str:
+    r = r * (0.6 + 0.4 * W)
     """A machined hole that is lit from inside: seat, dark mouth, emissive rim."""
     return (
         # the light the hole throws onto the panel around it
@@ -292,13 +297,21 @@ def rasterise(svg_path: pathlib.Path, png_path: pathlib.Path,
 
 
 def main() -> None:
+    global W
     out = pathlib.Path(__file__).resolve().parent.parent / "docs" / "brand" / "marks"
     out.mkdir(parents=True, exist_ok=True)
-    for name, fn in PLATES.items():
-        (out / f"{name}.svg").write_text(svg(name, fn(), "box"), encoding="utf-8")
-    (out / "sheet.svg").write_text(sheet(), encoding="utf-8")
+    # Two optical sizes. The icon is the reference; the terminal needs a heavier
+    # cut because one cell at 60 columns is about 3% of the frame, and a stroke
+    # thinner than a cell does not survive the ramp at all.
+    for tag, weight in (("", 1.0), ("term", 2.6)):
+        W = weight
+        target = out if not tag else out / tag
+        target.mkdir(exist_ok=True)
+        for name, fn in PLATES.items():
+            (target / f"{name}.svg").write_text(svg(name, fn(), "box"), encoding="utf-8")
+    W = 1.0
     # The chart-language variant is retired; the flat drafts are cleared out.
-    for stale in ("cut", "sheet.png"):
+    for stale in ("sheet.png",):
         p = out / stale
         if p.is_dir():
             for f in p.iterdir():
@@ -309,6 +322,7 @@ def main() -> None:
     if "--png" in sys.argv:
         for name in PLATES:
             rasterise(out / f"{name}.svg", out / f"{name}.png")
+            rasterise(out / "term" / f"{name}.svg", out / "term" / f"{name}.png")
         rasterise(out / "sheet.svg", out / "sheet.png", S * 4, S)
     print(out)
 
