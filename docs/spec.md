@@ -645,7 +645,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 688 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 693 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -931,6 +931,7 @@ All paths relative to `specs/changes/`.
 | `creative-state-evidence` | approved | evaluation | approved by Ryan 2026-11-07; Waves 1–2 are library-only; runtime activation and method promotion remain unapproved. No creative-quality claim is made anywhere in this change. |
 | `state-evidence-task-bank` | draft | evaluation data | proposed data layer; not approved. Requires provenance-backed samples; pseudo-label self-training and unlabeled crawls are not improvement evidence. |
 | `hackathon-submission` | planning | external submission | nothing submitted, nothing pushed. `antemuse.catalog.yaml`, demo script and checklist are drafts. |
+| `command-surface` | **proposed** | public verbs | 14 commands + 12 tool actions for ~9 verbs; `/states` was described as a catalogue and renders the picture; `/keep #n` referenced numbering no surface published; `/break <state>` was a second spelling of `/walk`. Definitions and migration written; the three behaviour fixes are implemented, the renames are not. |
 
 Supporting evidence files:
 

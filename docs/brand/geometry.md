@@ -87,6 +87,27 @@ dissolve, and a crop drift. Keep all of it. Two rules for anything new:
   state change.
 - The dissolve is the only transition. A cut never slides in.
 
+## Seen the way the product sees it
+
+A plate is not only an icon. Run it through the plugin's own cell model and it
+becomes what `/states` draws: `▀` glyphs, foreground the top pixel, background
+the bottom one, truecolor.
+
+```bash
+python3 tools/term_view.py docs/brand/marks/walk.png 64 32 6
+```
+
+That writes three things beside the source: the literal characters (`.txt`), the
+cells as coloured spans (`.html`), and a pixel-exact painting of those cells
+(`.png`). The `▀` grid is the product's existing rendering path, not a new one —
+`tools/term_view.py` imports `core/photographs.cells`, so what you see is what
+the panel would actually emit.
+
+Consequence worth stating: **at 64x32 the image survives; below about 40 columns
+it stops being a plate and becomes an abstract field.** That is the same
+abstention the plugin already makes for short text, applied to pictures — pick
+the column count for the surface, do not scale the same art everywhere.
+
 ## Two variants, drawn
 
 Both are generated, not hand-drawn: `python3 tools/gen_marks.py` writes

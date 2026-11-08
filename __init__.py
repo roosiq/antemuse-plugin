@@ -1,4 +1,4 @@
-"""Antemuse — the agent can take a walk, daydream, dissociate, dream.
+"""Antemuse — the agent can take a walk, daydream, doomscroll, dream.
 
 A state is a temporary change to how the agent behaves, not a place it goes:
 
@@ -11,8 +11,9 @@ Surfaces:
   pre_llm_call         inject the active state into the turn
   pre_tool_call        block tools the state forbids
   transform_llm_output make the state visible on the reply
-  commands             /walk /daydream /dissociate /dream /doomscroll /return /state
-  tool                 state(action=enter|exit|status|list)
+  commands             see docs/spec.md §10 and specs/changes/command-surface;
+                       one verb, one name — /state is the text frame, /states the picture
+  tool                 state(action=…) — twelve actions, defined in the same place
 """
 from __future__ import annotations
 
@@ -257,10 +258,19 @@ def _states(_raw: str) -> str:
 
 
 def _break(raw: str) -> str:
-    arg = (raw or "").strip()
+    """Recommend a state, and only recommend one.
+
+    `/break walk` used to enter the walk, which made it a second spelling of `/walk`
+    with a different name and no extra meaning. It now names the command that enters,
+    so there is exactly one way to enter a state.
+    """
+    arg = (raw or "").strip().split()[0] if (raw or "").strip() else ""
     if not arg:
         return engine.take_break()
-    return engine.take_break(arg.split()[0])
+    if arg in states.STATES:
+        return (f"/break recommends; it does not enter. Use /{arg} to enter it"
+                f" (or state(action='enter', name='{arg}')).")
+    return engine.take_break(arg)
 
 
 def _mood(raw: str) -> str:
@@ -434,8 +444,13 @@ def register(ctx) -> None:
     ctx.register_command(name="again", handler=_again_handler(ctx),
                          description="Re-run the last goal with the sources your verdicts point at",
                          args_hint="[deepen|refresh]")
-    ctx.register_command(name="state", handler=_state, description="What state the agent is in")
-    ctx.register_command(name="states", handler=_states, description="List every agent state")
+    # The descriptions are the definition a person reads. `/states` was described as a
+    # catalogue and actually renders the picture; `/state` was described as "what state
+    # the agent is in" and returns the text frame.
+    ctx.register_command(name="state", handler=_state,
+                         description="One text frame of the current moment, in the state strip")
+    ctx.register_command(name="states", handler=_states,
+                         description="The picture: full-screen takeover in a terminal, the card in chat")
 
     try:
         from pathlib import Path

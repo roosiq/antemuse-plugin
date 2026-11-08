@@ -65,7 +65,12 @@ class Run:
 
     def account(self) -> str:
         """The person's line: counts and statuses only, never candidate text."""
-        parts = [f"{self.method} · {len(self.candidates)} candidate(s)"]
+        # `/keep love #2` is unusable if no surface ever shows a number: the account
+        # line publishes the range, the count stays the only quantity, and no candidate
+        # text crosses to the person.
+        n = len(self.candidates)
+        listed = f"#{1}–#{n}" if n > 1 else ("#1" if n == 1 else "")
+        parts = [f"{self.method} · {n} candidate(s)" + (f" {listed}" if listed else "")]
         if self.branches:
             parts.append(f"{self.branches} branch(es)")
         if self.failed:
