@@ -77,7 +77,10 @@ if a cut hides a wait, the caption says so (`40 s later`).
 | job | tool | state | why this one |
 |---|---|---|---|
 | record the screen | `Xvfb` + `xterm` + `ffmpeg -f x11grab` | **verified** 2026-11-08 | no window manager or GPU capture needed; 1280×720/30 fps, H.264 via `libopenh264`, 3 s ≈ 37 KB |
-| drive the session | `tmux send-keys` via `tools/demo/human_type.py` | **built + tested** | deterministic retakes; pacing below |
+| show keystrokes | `screenkey` with `-M` | **verified** | real X key events in an amber pill (top-right); mouse buttons fade in the same pill |
+| show the pointer | `x11grab -draw_mouse 1` | **verified** | the real pointer is in the recording; `tools/demo/mouse.py` moves it on an eased path with an overshoot |
+| drive the session | `tools/demo/human_type.py --via xdotool` | **verified** | real X key events (tmux send-keys produces none, so the overlay stays empty) |
+| one-command rig | `tools/demo/capture.sh start\|record\|stop` | **verified** | display, terminal, overlay, focus and recording in one place |
 | captions and cards | `tools/demo/overlays.py` (Pillow) → PNG per beat | **built + tested** | text lives in `beats.json`, not in an escaped ffmpeg string; brand palette enforced |
 | composite | `ffmpeg overlay` with `enable='between(t,a,b)'` | **tested** | one filter graph, no editor, re-renders in seconds |
 | optional desktop capture | OBS Studio (`dnf`, 5.1 MiB) | not installed | only worth it if the demo moves to the real desktop app; adds a GUI dependency |
@@ -94,26 +97,32 @@ overlay does not look bolted on.
 
 ## 5.1 The human, honestly
 
-There is **no webcam on this machine**, and an AI avatar or synthetic voice would
-read as generated — the opposite of the "real situation" the video needs. So the
-human is conveyed by behaviour, not by a face:
+The human is carried by what a hand does on screen, not by a face:
 
-- **Human pace.** `human_type.py` types at 45–145 ms per character, pauses longer
-  at spaces and punctuation, and inserts one typo in the middle of a word that is
-  noticed and backspaced. Seeded, so a retake matches the take.
+- **Visible keystrokes.** `screenkey` renders the last ~1.4 s of real X key events
+  in an amber pill at the top right, including a mouse icon on click. Verified in
+  a take: the pill mirrors the typed text while the terminal is still filling in.
+- **Visible pointer.** `ffmpeg x11grab` records the real pointer (`-draw_mouse 1`),
+  and `tools/demo/mouse.py` moves it along an eased path with a 2 px overshoot
+  before settling. Clicks are real `xdotool click 1` events, so the pill shows them.
+- **Human pace.** `human_type.py --via xdotool` types at 45–145 ms per character,
+  pauses longer at spaces and punctuation, and inserts one seeded typo in the
+  middle of a word that is noticed and backspaced.
 - **A real task.** A scratch repository with a test that genuinely fails, and a
   real `hermes` session working on it. No mock terminal, no pre-baked output.
 - **A real reason.** The session starts from the person's own words ("I've been
-  on this for three hours"), not from a command list.
-- **One visible hesitation.** The pause before `/break` and the typo are the two
-  moments that make it read as a person.
-- **Voice, only if real.** If a voice is wanted, Ryan records 20–30 s on a phone;
-  no TTS. Otherwise the cut is music-free and caption-led, which is normal for
-  muted X playback.
+  on this three hours"), not from a command list.
 
-If a face is wanted later, the honest version is a 200 px webcam inset recorded
-separately and composited with `ffmpeg overlay` — but there is no camera here, so
-the plan does not depend on one.
+Known limit, measured: xterm draws its pointer from the core cursor font, so
+`XCURSOR_SIZE` does not enlarge it — the I-beam stays ~24 px. It is captured and
+it moves, but it is small. Two ways to make it larger, if wanted: an overlay ring
+burned at the recorded click coordinates (post, deterministic), or a GTK terminal
+that honours Xcursor sizing (adds menu bar and scrollbar chrome). The plan ships
+the honest small pointer plus the keystroke pill, and treats a burned-in ring as
+an optional polish pass, not a default.
+
+No voiceover: X autoplay is muted. If a voice is wanted, Ryan records 20–30 s on a
+phone; no TTS, and no AI avatar.
 
 ## 5.2 Filter graph, exactly
 

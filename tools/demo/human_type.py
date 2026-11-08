@@ -29,21 +29,32 @@ import sys
 import time
 
 
+def _xdotool(args: list[str]) -> None:
+    """xdotool occasionally loses the focus race right after a window maps.
+
+    Retry briefly rather than aborting a take for one dropped character.
+    """
+    last = None
+    for _ in range(4):
+        last = subprocess.run(["xdotool", *args], capture_output=True, text=True)
+        if last.returncode == 0:
+            return
+        time.sleep(0.12)
+    raise SystemExit(f"xdotool failed: {' '.join(args)}: {last.stderr.strip() if last else ''}")
+
+
 def send(session: str, text: str, via: str = "tmux") -> None:
     if via == "tmux":
         subprocess.run(["tmux", "send-keys", "-t", session, "-l", text], check=True)
     else:
-        subprocess.run(
-            ["xdotool", "type", "--delay", "0", "--clearmodifiers", "--", text],
-            check=True,
-        )
+        _xdotool(["type", "--delay", "0", "--clearmodifiers", "--", text])
 
 
 def press(session: str, key: str, via: str = "tmux") -> None:
     if via == "tmux":
         subprocess.run(["tmux", "send-keys", "-t", session, key], check=True)
     else:
-        subprocess.run(["xdotool", "key", "--clearmodifiers", key], check=True)
+        _xdotool(["key", "--clearmodifiers", key])
 
 
 def human_type(session: str, text: str, seed: int = 7, typo: bool = False,

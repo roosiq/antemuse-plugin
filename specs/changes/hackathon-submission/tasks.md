@@ -54,6 +54,8 @@ Deadline 2026-11-11 17:00 EST. Target submit Tue 11-10 18:00.
 | H40 | Rehearse the 8-shot run end to end, confirm every screen produces the intended line | A | 30 | H20 | rehearsal notes; no invented output |
 | H46 | Caption/card generator (`tools/demo/overlays.py` + `beats.json`) | A | 40 | — | `[x]` rendered 9 cards; one composited and frame-checked |
 | H47 | Human-pace typing driver (`tools/demo/human_type.py`) | A | 25 | — | `[x]` seeded typo corrected in a real tmux pane |
+| H48 | Visible mouse + keystrokes (`screenkey`, `x11grab -draw_mouse`, `mouse.py`, `capture.sh`) | A | 60 | — | `[x]` take shows the amber key pill mirroring typed text and the pointer moving |
+| H49 | Optional: burn a 40 px ring at recorded click coordinates | A | 30 | H41 | only if the small I-beam tests poorly on a phone |
 | H41 | Capture at 1280×720 via `tmux` + `xvfb-run` + `ffmpeg x11grab` | A | 60 | H40 | raw take ≥ 3 min, readable at phone size |
 | H42 | Edit to ≤ 84 s with burned-in captions; hard cap 90 s | A | 60 | H41 | `ffprobe` duration < 90.0 |
 | H43 | Phone-size legibility pass (watch at 390 px wide) | R | 10 | H42 | R signs off |

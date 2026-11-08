@@ -29,6 +29,9 @@ start() {
   stop || true
   # a fresh pane every take: a leftover session would show the previous take
   tmux kill-session -t "$SESSION" 2>/dev/null || true
+  # a 24 px I-beam is nearly invisible in a 720p recording; make the hand visible
+  export XCURSOR_THEME="${DEMO_CURSOR_THEME:-Adwaita}"
+  export XCURSOR_SIZE="${DEMO_CURSOR_SIZE:-44}"
   Xvfb "$DISPLAY_NUM" -screen 0 "${SIZE}x24" >/dev/null 2>&1 &
   echo $! >> "$PIDFILE"
   sleep 1
