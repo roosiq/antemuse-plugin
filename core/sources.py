@@ -399,9 +399,101 @@ def scroll_text(steps: int = 1) -> List[str]:
     return social.pick(steps)
 
 
+# ------------------------------------------------------------------- trailhead
+
+def _git(root: Path) -> Dict[str, Any]:
+    import subprocess
+    out: Dict[str, Any] = {"commits": None, "first": "", "error": ""}
+    try:
+        count = subprocess.run(["git", "-C", str(root), "rev-list", "--count", "HEAD"],
+                               capture_output=True, text=True, timeout=5)
+        if count.returncode != 0:
+            err = (count.stderr or "not a repository").strip()
+            # an unborn HEAD is the normal state of a brand-new repo, not an error to quote
+            if "unknown revision" in err or "ambiguous argument" in err or "does not have any commits" in err:
+                out["error"] = "the repository is empty"
+            else:
+                out["error"] = err.splitlines()[0][:80]
+            return out
+        out["commits"] = int((count.stdout or "0").strip() or 0)
+        first = subprocess.run(["git", "-C", str(root), "log", "--reverse", "--max-count=1",
+                                "--format=%s"], capture_output=True, text=True, timeout=5)
+        out["first"] = (first.stdout or "").strip()[:120]
+    except Exception as exc:
+        out["error"] = str(exc).splitlines()[0][:80]
+    return out
+
+
+def _spec_files(root: Path) -> List[str]:
+    found: List[str] = []
+    for pattern in ("specs/*/spec.md", "specs/*/*/spec.md", ".specify/specs/*/spec.md",
+                    "docs/spec.md", "AGENTS.md", "spec.md"):
+        try:
+            for hit in sorted(root.glob(pattern)):
+                rel = str(hit.relative_to(root))
+                if rel not in found:
+                    found.append(rel)
+        except Exception:
+            continue
+    return found[:8]
+
+
+def trailhead_text(steps: int = 1) -> List[str]:
+    """What a brand-new project actually contains, and what it does not.
+
+    Every missing piece is named. The exit criterion for this state is one direction,
+    and a direction invented over an empty directory is a guess with a confident voice.
+    """
+    root = storage.project_root()
+    if root is None:
+        return ["no project root · no .git ancestor above this directory"]
+    lines: List[str] = []
+
+    git = _git(root)
+    if git["commits"] is None:
+        lines.append(f"no commits yet · {git['error'] or 'git said nothing'}")
+    else:
+        what = f"{git['commits']} commit(s)"
+        if git["first"]:
+            what += f" · first: {git['first']}"
+        lines.append(f"at the trailhead of {root.name} · {what}")
+
+    try:
+        entries = [c.name + ("/" if c.is_dir() else "") for c in sorted(root.iterdir())
+                   if not c.name.startswith(".")][:12]
+    except Exception:
+        entries = []
+    lines.append("files: " + (", ".join(entries) if entries else "nothing but dotfiles"))
+
+    readme = next((root / n for n in ("README.md", "README.rst", "README.txt") if (root / n).is_file()), None)
+    if readme is None:
+        lines.append("no README · nobody has said what this is")
+    else:
+        try:
+            opening = " ".join(readme.read_text(errors="ignore")[:400].split())[:160]
+        except Exception as exc:
+            opening = f"unreadable · {str(exc).splitlines()[0][:60]}"
+        lines.append(f"README opens: {opening or '(empty)'}")
+
+    specs = _spec_files(root)
+    if specs:
+        lines.append("already decided: " + ", ".join(specs) + " — a trailhead here is late")
+    else:
+        lines.append("no spec files yet · the direction is still unchosen")
+
+    try:
+        from . import seeding
+        seed = seeding.entry("trailhead", when=time.time())
+        lines.append("starts from " + seeding.marker(seed))
+    except Exception:
+        pass
+    return lines
+
+
 PROVIDERS = {
     "walk": walk_text,
     "daydream": memory_pairs,
     "dream": dream_recombine,
     "doomscroll": scroll_text,
+    "trailhead": trailhead_text,
 }

@@ -137,8 +137,9 @@ def _plugin():
 def test_the_commands_are_registered():
     ctx = _Ctx()
     _plugin().register(ctx)
-    assert set(ctx.commands) == {"walk", "daydream", "doomscroll", "dream", "return"}, (
-        "the public surface is the four states and the way out"
+    assert set(ctx.commands) == {"walk", "daydream", "doomscroll", "dream", "trailhead",
+                                "return"}, (
+        "the public surface is the five states and the way out"
     )
     assert {"spark", "keep"} <= set(ctx.tools["state"]["schema"]["parameters"]
                                      ["properties"]["action"]["enum"])

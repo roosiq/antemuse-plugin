@@ -65,7 +65,7 @@ Brand sentence (README/catalog only, not a repeated tagline):
 
 > Antemuse gives the agent somewhere to think, and you something to watch.
 
-The four states are the product. A fifth would have to justify itself against
+The five states are the product. A sixth would have to justify itself against
 them.
 
 ---
@@ -151,7 +151,7 @@ state can always be ended even when every other tool is closed.
 | `/walk [minutes]`, `/daydream`, `/doomscroll`, `/dream` | enter that state; `/walk <name>` selects a walk instead |
 | `/return` | end the state, keep the account |
 
-**Five commands, and nothing else.** Everything a person previously typed has moved:
+**Six commands, and nothing else.** Everything a person previously typed has moved:
 their message is journalled as a `person` entry while a state runs (no `/note`), the
 recommendation line arrives in the turn by itself (no `/break`), mood is reported in
 words and recorded by the agent (no `/mood`), the picture arrives with the state (no
@@ -329,7 +329,7 @@ active, and the 45-minute cooldown has elapsed.
 | `[]` | every tool — enforced only when the entry asks with `block: true`; the refusal reads "the agent is dreaming; no tools in this state. /return to come back." |
 | list | only those names, others named as blocked — also only under `block: true` |
 
-**The default is `free` for all four states.** `enter(..., block=True)` opts in;
+**The default is `free` for every state.** `enter(..., block=True)` opts in;
 `allow=[...]` narrows further and is refused without `block` rather than silently
 ignored. One `_effective_tools()` decision feeds the injection, the pre-tool hook and
 the panel, so the three cannot disagree.
@@ -660,7 +660,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 729 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 735 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -946,11 +946,12 @@ All paths relative to `specs/changes/`.
 | `creative-state-evidence` | approved | evaluation | approved by Ryan 2026-11-07; Waves 1–2 are library-only; runtime activation and method promotion remain unapproved. No creative-quality claim is made anywhere in this change. |
 | `state-evidence-task-bank` | draft | evaluation data | proposed data layer; not approved. Requires provenance-backed samples; pseudo-label self-training and unlabeled crawls are not improvement evidence. |
 | `hackathon-submission` | planning | external submission | nothing submitted, nothing pushed. `antemuse.catalog.yaml`, demo script and checklist are drafts. |
-| `command-surface` | **implemented** | public verbs | 14 commands → 5 (four states + `/return`); `/note`, `/break`, `/mood`, `/state`, `/states`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions. `/break <state>` no longer enters, `/keep` numbering is published, and a test fails when a registered verb has no definition. |
+| `command-surface` | **implemented** | public verbs | 14 commands → 5 (four states + `/return`), then 6 with `trailhead`; `/note`, `/break`, `/mood`, `/state`, `/states`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions. `/break <state>` no longer enters, `/keep` numbering is published, and a test fails when a registered verb has no definition. |
 | `pattern-recommendation` | **implemented (partial)** | recommendation | names the state that fits the shape of the work from measured counters: loop, data wall, saturation, grind, rut. One line, one state, one piece of evidence, cooling, silent by default, never enters. `churn` and `return hangover` are NOT BUILT — the plugin keeps no signal for them and a guess is not a measurement. `core/recommend.py`, 13 tests. |
 | `hermes-integration` | **verified** | host interfaces | audit of every mechanism against the host source: tool/commands/hooks/injection/ctx.llm/aux tasks/storage/dashboard/memory. Three defects fixed — automation read `messages` but the host passes `user_message`; three modules hardcoded `~/.hermes`; daydream read a memory file an external provider never writes. No provider override, no SDK, no key: any provider by its default interface. |
 | `state-entry` | **implemented (partial)** | entry + direction | each state now declares where it starts and which way it moves; walk and dream draw their seed from a 5:3:2 mix of project terms, conversation terms and deliberate randomness, chosen by a deterministic hash and recorded as `seed=<source>:<term>` in the journal. `core/seeding.py`, 9 tests; doomscroll stays undirected by design. |
 | `plugin-updates` | **implemented** | delivery | a recommendation is pushed as its own message through `ctx.post_message`, once per cooling window, instead of waiting for someone to type a slash command. Discord caps app commands at 100 and this machine already syncs 95, so a command-only channel is not a reliable one. |
+| `trailhead-state` | **implemented** | states | a fifth state for a repository that does not exist yet: 5 min, 3 turns, read-only (`read_file`, `search_files`), material is what the project actually contains, and the exit criterion is **one direction** named with the spec file it becomes. Recommended automatically while the project has fewer than 3 commits and no spec, then silent. `core/sources.trailhead_text`, `core/recommend._new_project`; 6 tests. |
 
 Supporting evidence files:
 

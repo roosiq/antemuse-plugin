@@ -488,6 +488,8 @@ def _again_handler(ctx: Any):
 
 
 def register(ctx) -> None:
+    global _HOST
+    _HOST = ctx
     engine.settle()
 
     ctx.register_hook("pre_llm_call", _pre_llm_call)

@@ -19,6 +19,8 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, List, Optional
 
+#: a repository with fewer commits than this, and no spec, is still at the trailhead.
+NEW_COMMITS = 3
 #: "same tool failed N times in a row" — the loop.
 LOOP_FAILS = 3
 #: a long stretch without a state, with a failure close behind it.
@@ -40,6 +42,37 @@ WHY = {
     "saturation": "slow and unstructured: let the open decisions recombine",
     "grind": "cheapest interruption there is",
 }
+
+
+_NEW_CACHE: Dict[str, Any] = {"at": 0.0, "value": None}
+
+
+def _new_project() -> Optional[str]:
+    """Evidence that this repository has not started: no spec, almost no commits.
+
+    Cached for a minute: entry points are checked on every turn, and `git rev-list` twice
+    a turn for a fact that changes once a day is a waste of a subprocess.
+    """
+    now = time.time()
+    if now - float(_NEW_CACHE["at"] or 0) < 60:
+        return _NEW_CACHE["value"]
+    value = None
+    try:
+        from . import sources, storage
+        root = storage.project_root()
+        if root is not None:
+            specs = sources._spec_files(root)
+            git = sources._git(root)
+            commits = git.get("commits")
+            if not specs:
+                if commits is None:
+                    value = "no commits yet and no spec"
+                elif int(commits) < NEW_COMMITS:
+                    value = f"{commits} commit(s) and no spec"
+    except Exception:
+        value = None
+    _NEW_CACHE.update({"at": now, "value": value})
+    return value
 
 
 def _loop(work: Dict[str, Any]) -> Optional[str]:
@@ -119,6 +152,9 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
         return None
 
     for pattern, state, evidence in (
+        # On an empty repository there is no loop worth interrupting: there is nothing
+        # to be stuck in yet. This is the one pattern that outranks everything.
+        ("new project", "trailhead", _new_project()),
         ("loop", "walk", _loop(work)),
         ("wall", "doomscroll", _wall(work)),
         ("saturation", "dream", _saturation(work, open_decisions)),
@@ -126,5 +162,6 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     ):
         if evidence:
             return {"pattern": pattern,
-                    "line": f"this looks like a {state} · {evidence} · /{state} 5"}
+                    "line": f"this looks like a {'trailhead' if state == 'trailhead' else state}"
+                            f" · {evidence} · /{state}" + ("" if state == "trailhead" else " 5")}
     return None

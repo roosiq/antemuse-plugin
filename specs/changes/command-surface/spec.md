@@ -1,6 +1,6 @@
-# Command surface — four states, one way out, everything else automatic
+# Command surface — five states, one way out, everything else automatic
 
-Status: **implemented** 2026-11-08 (consolidated twice: 14 → 11 → 5). Owner: Ryan Cook.
+Status: **implemented** 2026-11-08 (consolidated twice: 14 → 11 → 5; a fifth state, `trailhead`, added the same day — see `trailhead-state`). Owner: Ryan Cook.
 Scope: the `antemuse` plugin's public verbs. No change to state semantics, timers, tool
 policy, or rendering.
 
@@ -18,6 +18,7 @@ That leaves five:
 | `/daydream` | enter: two stored memories, join only if it holds | returns the entered frame | not a search — it does not go looking |
 | `/doomscroll` | enter: a random live feed | returns the entered frame | not research — nothing is retained or ranked |
 | `/dream` | enter: recombine stored concepts into new things | returns the entered frame | not a plan — no decision is produced |
+| `/trailhead` | start a project that does not exist yet | **one direction**, and the spec file that sentence becomes. Reads the repository (`read_file`, `search_files`), changes nothing, and refuses to offer a menu. | a scaffold generator, a plan, or a summary of the repository back to the person. |
 | `/return` | leave the state and keep the account | three lines: where it went, what it touched, what is next | not a cancel — residue survives |
 
 ## What was removed, and where it went

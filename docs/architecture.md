@@ -36,7 +36,7 @@ tool restoration and rendering are all deterministic and clock-driven.
 
 The public surface is small and counted: **one tool** (`state`, 12 actions: `enter`,
 `exit`, `status`, `list`, `watch`, `card`, `image`, `walks`, `walk_new`, `walk_del`,
-`break`, `mood`, `spark`, `keep`), **8 hooks**, and **five commands** — `/walk`,
+`break`, `mood`, `spark`, `keep`), **8 hooks**, and **six commands** — `/walk`,
 `/daydream`, `/doomscroll`, `/dream`, `/return`. Everything else is automatic: the
 person's message is journalled as a `person` entry while a state runs, the recommendation
 line arrives in the turn by itself, the picture arrives with the state, and exploration
@@ -132,7 +132,7 @@ art pipeline (bake time only; three.js never runs in the client)
    injects `[YOU JUST CAME BACK …]`; residue keeps 3, journal keeps 60.
 7. **Restart** — after a walk the next step is forced to differ (`restart: True`).
 
-Tool policy, the one thing that changed today: **default free** for all four states;
+Tool policy, the one thing that changed today: **default free** for every state;
 `block: true` enforces the state's own list; `allow: [...]` narrows and is refused
 without `block` rather than silently ignored.
 
@@ -240,7 +240,8 @@ fixed and recorded.
 | `scene3d-renderer` (Python z-buffer instead of Chromium) | **PROPOSED and conflicting** — the bake pipeline is what ships; one of the two must yield |
 | FLAKE-1 `test_outer_hops_are_farther_than_wander_hops` | narrowed, not eliminated (samples n=64) |
 | `/spark` is not gated by state | accepts, unresolved |
-| Command surface | **LIVE** — 14 commands → 5: the four states and `/return`; `/note`, `/break`, `/mood`, `/state`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions |
+| Command surface | **LIVE** — 14 commands → 5, then 6 with `/trailhead`: the five states and `/return`; `/note`, `/break`, `/mood`, `/state`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions |
+| Trailhead | **PARTIAL** — `trailhead` (5 min, 3 turns, read-only) reads what an empty repository actually contains and exits with **one direction** and the spec file it becomes; recommended while a repo has <3 commits and no spec. **Its own art is not built**: it renders with the `walk` scene until a trailhead pack is generated |
 | State entry | **LIVE** — `core/seeding.py` fixes where a state starts and which way it moves: walk takes 5:3:2 project:conversation:random, dream takes 6:2:2 **memory**:project:random (a dream opens on something said or stored), journalled as `seed=<source>:<term>`; doomscroll stays undirected on purpose |
 | Plugin updates | **LIVE** — a recommendation is posted as its own message via `ctx.post_message`, since slash commands are capped (95/100 on this machine) |
 | Daydream material | **LIVE** — `core/recall.py` keeps a bounded ring (24 × 400 chars) of recent turns captured from `pre_llm_call`/`transform_llm_output`, so a daydream has material under any memory provider; the built-in `MEMORY.md`/`USER.md` are enrichment when present |

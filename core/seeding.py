@@ -24,6 +24,9 @@ MIX = (5, 3, 2)
 #: whole premise is recombining what is already known, so a random frame is the wrong door.
 MIXES = {
     "dream": (("memory", 6), ("project", 2), ("random", 2)),
+    # at a trailhead the project is the only thing there is; the random share exists so
+    # two trailheads in similar repositories do not start from the same word
+    "trailhead": (("project", 8), ("random", 2)),
 }
 
 STOP = set("""

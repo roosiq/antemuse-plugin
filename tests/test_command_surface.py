@@ -56,10 +56,9 @@ def test_commands_do_not_differ_only_by_plurality():
             assert f"`/{name}s`" in SPEC.read_text(), f"/{name} and /{name}s are undocumented neighbours"
 
 
-def test_the_public_surface_is_five():
-    assert registered_commands() == {"walk", "daydream", "doomscroll", "dream", "return"}, (
-        "a command that only duplicates a state or a tool action is not a command"
-    )
+def test_the_public_surface_is_six():
+    assert registered_commands() == {"walk", "daydream", "doomscroll", "dream", "trailhead",
+                                     "return"}
 
 
 def test_a_person_message_becomes_a_note_without_a_command():
