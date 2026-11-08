@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>contact</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script type="module">
+// One mesh, framed and lit, on black — a proof sheet tile for the asset pack.
+// The camera fits the mesh's own bounding sphere, so a 2 cm knot and a 3 m
+// monolith both arrive the same size in the tile.
+const THREE = await import('./three.module.js');
+const { loadGLB } = await import('./glb_mesh.js');
+
+const params = new URLSearchParams(location.search);
+const file = params.get('mesh');
+const W = parseInt(params.get('w') || '400', 10);
+const H = parseInt(params.get('h') || '200', 10);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(1);
+renderer.setClearColor(0x000000, 1);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(35, W / H, 0.01, 500);
+scene.add(new THREE.AmbientLight(0x8894a8, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(2.2, 3.0, 2.6); scene.add(key);
+const rim = new THREE.DirectionalLight(0x7fd8ff, 1.8); rim.position.set(-2.4, -0.6, -2.2); scene.add(rim);
+const warm = new THREE.PointLight(0xffb060, 40, 30); warm.position.set(-2.5, 1.2, 2.0); scene.add(warm);
+
+try {
+  const mat = new THREE.MeshStandardMaterial({ color: 0xcfd6dd, roughness: 0.35, metalness: 0.55 });
+  const mesh = await loadGLB(file.startsWith('/') ? file : '/' + file, THREE, mat);
+  const box = new THREE.Box3().setFromObject(mesh);
+  const size = new THREE.Vector3(); box.getSize(size);
+  const centre = new THREE.Vector3(); box.getCenter(centre);
+  const radius = Math.max(size.x, size.y, size.z) * 0.5 || 1;
+  mesh.position.sub(centre);
+  const pivot = new THREE.Group(); pivot.add(mesh); scene.add(pivot);
+
+  // three-quarter view, slightly above: the angle that shows a solid's silhouette
+  const dist = radius / Math.tan((35 * Math.PI / 180) / 2) * 1.35;
+  cam.position.set(dist * 0.62, dist * 0.42, dist * 0.72);
+  cam.lookAt(0, 0, 0);
+  renderer.render(scene, cam);
+  document.title = JSON.stringify({ mesh: file, triangles: null, radius: +radius.toFixed(3) });
+} catch (err) {
+  document.title = 'ERR ' + err.message;
+}
+</script>

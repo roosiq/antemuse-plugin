@@ -211,3 +211,39 @@ already holds a verified session. Balance after this pack: see §3.0.
 
 **Not done:** the frames are still served at 44 × 12. The assets are full-size; the
 surface that shows them is not. That is `spec.md`, which remains unimplemented.
+
+## 12. The abstract pack (2026-11-08, second pass)
+
+Owner direction: *"geometric, futuristic, abstract, cyberpunk but not analogous to
+current world, classical mathematics."* The first pack was literal — a mug, a stone,
+a chair, a card — and literal objects carry a life the states are not about.
+
+**302 credits, 50 assets, balance 1,058 -> 756.** 42 meshes (38 previews + 4 refined
+with PBR textures) and 8 images, all in `data/meshy/pack/`, with
+`pack/manifest.json` carrying prompt, task id, credits, sha256 and triangle count for
+every file, and `tools/gen_pack.py` as the generator (submit -> grab -> fill -> refine).
+
+| state | what it draws now |
+| --- | --- |
+| walk | stellated solid crossing a lattice plane toward a chrome torus gateway |
+| daydream | dodecahedron and icosahedron drifting together, touching, parting |
+| doomscroll | engraved slabs and plate stacks passing the lens — no words on them |
+| dream | a tesseract frame and a trefoil knot, the two things that cannot exist |
+
+Generation notes worth keeping:
+
+- **The plan caps concurrency near twenty tasks.** `submit` fires the whole pack and
+  earns `429 NoMorePendingTasks` on the tail; `fill` resubmits only what is missing, so
+  the pack drains in waves. `grab` reads `list` for status instead of one `wait` per
+  task — same result, minutes instead of tens of minutes.
+- **A refine is a 3D task.** The first `grab` treated `kind == "refine"` as an image and
+  wrote 0-byte files; the ledger kept them and the files were recovered by keying the
+  download on disk state rather than on "downloaded" having been written.
+- **`tools/contact_sheet.py` is the quality gate.** Every mesh renders at 360 × 200 and
+  is printed as a 30 × 12 ramp thumbnail, four to a line — because the product shows
+  ramps, so a form that needs a photograph to read is the wrong form.
+- **Framing is the remaining work, not the assets.** The solids are large and the
+  cameras were tuned for one scene at a time; `doomscroll` and `walk` were re-framed
+  once (plates 2.4 -> 4.2 and camera 3.9 -> 3.1; lattice lit and pilgrim 2.6 -> 2.2).
+  Card ink sits at 10-19 % and pane ink at 36-54 %; a pass with the pack in the app is
+  what would settle the compositions.
