@@ -96,6 +96,15 @@ def render(pin: str | None = None) -> str:
 def _fields(text: str) -> dict:
     data = yaml.safe_load(text) or {}
     data.pop("sha", None)
+    # image/screenshots embed the pin, so normalise the SHA out of them before
+    # comparing a file pinned to an earlier commit against a render at HEAD.
+    def _norm(url: str) -> str:
+        return re.sub(r"[0-9a-f]{40}", "{sha}", str(url))
+
+    if "image" in data:
+        data["image"] = _norm(data["image"])
+    if isinstance(data.get("screenshots"), list):
+        data["screenshots"] = [_norm(u) for u in data["screenshots"]]
     cap = data.get("capabilities")
     if isinstance(cap, dict):
         cap.pop("empty", None)
