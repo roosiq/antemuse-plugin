@@ -24,10 +24,10 @@ from typing import Any, Dict
 logger = logging.getLogger("antemuse")
 
 try:
-    from .core import (engine, options, panel, runtime, session, settings, states, surfaces,
-                       tui, walks)
+    from .core import (engine, history, options, panel, runtime, session, settings, states,
+                       surfaces, tui, walks)
 except ImportError:  # flat-module load
-    from core import engine, options, panel, recall, runtime, session, settings, states, surfaces, tui, walks  # type: ignore[no-redef]
+    from core import engine, history, options, panel, recall, runtime, session, settings, states, surfaces, tui, walks  # type: ignore[no-redef]
 
 __version__ = "0.9.0"
 
@@ -283,6 +283,9 @@ def _post(text: str) -> bool:
 
 def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> str | None:
     engine.remember_platform(platform, session_id)
+    # Once per session, bounded and in the background: a ledger nobody fills is a ledger no
+    # move can use. It returns immediately, so the turn never waits for it.
+    history.autoscan(session_id or engine.current_session())
     engine.note_turn()
     engine.tick()
     said = _person_text(kwargs)

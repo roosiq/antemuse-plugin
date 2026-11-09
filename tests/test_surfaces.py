@@ -6,6 +6,8 @@ import sys
 import tempfile
 import time
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-surfaces-")
 
@@ -77,6 +79,7 @@ def test_idle_card_is_still_only_a_picture():
     assert not re.search(r"[A-Za-z]{2,}", out)
 
 
+@pytest.mark.real_home
 def test_ascii_art_is_plain_and_non_empty():
     rows = surfaces.art(44, 10)
     assert rows, "no rendered frames found"

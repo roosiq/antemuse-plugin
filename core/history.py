@@ -88,6 +88,12 @@ CREATE TABLE IF NOT EXISTS links (
     at REAL NOT NULL
 );
 CREATE TABLE IF NOT EXISTS cursor (name TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    text TEXT NOT NULL,
+    at REAL NOT NULL
+);
 """
 
 _FAILED: Dict[str, float] = {}
@@ -364,6 +370,31 @@ def known(term: str, exclude_session: str = "") -> bool:
     return bool(seen_before(term, exclude_session).get("sessions"))
 
 
+def note_event(name: str, text: str) -> None:
+    """A line about the ledger itself, kept here because the journal only exists inside a
+    state and a session scan usually runs before one starts."""
+    conn = _connect()
+    if conn is None:
+        return
+    try:
+        with conn:
+            conn.execute("INSERT INTO events(name, text, at) VALUES(?,?,?)",
+                         (name, (text or "")[:300], time.time()))
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+
+def last_events(n: int = 5, name: str = "") -> List[Dict[str, Any]]:
+    if name:
+        rows = _query("SELECT name, text, at FROM events WHERE name=? ORDER BY at DESC LIMIT ?",
+                      (name, n))
+    else:
+        rows = _query("SELECT name, text, at FROM events ORDER BY at DESC LIMIT ?", (n,))
+    return [{"name": r[0], "text": r[1], "at": r[2]} for r in rows]
+
+
 def stats() -> Dict[str, Any]:
     rows = _query("SELECT COUNT(*), COUNT(DISTINCT key) FROM concepts")
     served = _query("SELECT COUNT(*), COUNT(DISTINCT session) FROM served")
@@ -423,7 +454,8 @@ def extract(text: str, limit: int = 24) -> List[str]:
 
 
 def scan_sessions(days: int = 7, batch: int = 400, source: str = "",
-                  db: Optional[Path] = None) -> Dict[str, Any]:
+                  db: Optional[Path] = None,
+                  budget_s: Optional[float] = None) -> Dict[str, Any]:
     """Read past Hermes sessions and record their concepts. Read-only, incremental, bounded.
 
     Only user and assistant text is read: tool output and reasoning are not concepts, and
@@ -448,6 +480,7 @@ def scan_sessions(days: int = 7, batch: int = 400, source: str = "",
                ORDER BY id LIMIT ?""", (start, since, batch)).fetchall()
         scanned, stored, sessions = 0, 0, set()
         last = start
+        deadline = (time.time() + budget_s) if budget_s else None
         for mid, sid, _role, content in message:
             scanned += 1
             last = max(last, mid)
@@ -455,6 +488,10 @@ def scan_sessions(days: int = 7, batch: int = 400, source: str = "",
             for term in extract(content):
                 notice(term, move="session", session=sid)
                 stored += 1
+            # the cursor is only ever advanced to a message actually read, so a budget that
+            # runs out mid-batch loses nothing and re-reads nothing
+            if deadline and time.time() > deadline:
+                break
         _set_cursor("session_scan", str(last))
         return {"ok": True, "scanned": scanned, "stored": stored,
                 "sessions": len(sessions), "cursor": last,
@@ -481,3 +518,77 @@ def _set_cursor(name: str, value: str) -> None:
 
 def session_of(state: Optional[Dict[str, Any]]) -> str:
     return str((state or {}).get("session_id") or "")
+
+
+# --------------------------------------------------------------- automatic scan
+
+AUTO_MESSAGES = 300
+AUTO_BUDGET_S = 2.0
+MIN_INTERVAL = 1800            # half an hour between automatic scans
+_SCAN_LOCK = {"running": False}
+
+
+def _auto_key(session: str) -> str:
+    return f"auto_scan:{session}"
+
+
+def _recently_scanned(session: str) -> bool:
+    rows = _query("SELECT value FROM cursor WHERE name=?", (_auto_key(session),))
+    if rows:
+        return True
+    last = _query("SELECT value FROM cursor WHERE name='auto_scan_last'")
+    if not last:
+        return False
+    try:
+        return (time.time() - float(last[0][0])) < MIN_INTERVAL
+    except Exception:
+        return False
+
+
+def _mark_scanned(session: str) -> None:
+    _set_cursor(_auto_key(session), str(time.time()))
+    _set_cursor("auto_scan_last", str(time.time()))
+
+
+def autoscan(session: str = "", messages: int = AUTO_MESSAGES,
+             budget_s: float = AUTO_BUDGET_S, db: Optional[Path] = None,
+             wait: bool = False) -> Dict[str, Any]:
+    """Scan past sessions once per session, in the background, bounded both ways.
+
+    The turn must never wait for this: it returns immediately and the scan runs in a daemon
+    thread. `wait=True` exists for tests and for a caller that wants the numbers back.
+    """
+    if os.environ.get("ANTEMUSE_NO_SCAN"):
+        return {"ok": False, "reason": "disabled"}
+    if not session:
+        session = active_session()
+    if not session or _recently_scanned(session) or _SCAN_LOCK["running"]:
+        return {"ok": False, "reason": "skipped"}
+
+    _SCAN_LOCK["running"] = True
+    _mark_scanned(session)
+
+    def run() -> Dict[str, Any]:
+        try:
+            result = scan_sessions(days=14, batch=messages, budget_s=budget_s, db=db)
+        except Exception as exc:                      # never escapes a turn
+            _note_failure(f"session scan failed · {str(exc).splitlines()[0][:70]}")
+            return {"ok": False, "reason": "failed"}
+        finally:
+            _SCAN_LOCK["running"] = False
+        if result.get("ok") and result.get("stored"):
+            line = (f"scanned {result['scanned']} messages → {result['stored']} concept "
+                    f"sightings from {result['sessions']} past sessions")
+            note_event("scan", line)
+            try:
+                from . import engine
+                engine.record("state", line, event="history")   # lands when a state is open
+            except Exception:
+                pass
+        return result
+
+    if wait:
+        return run()
+    import threading
+    threading.Thread(target=run, name="antemuse-scan", daemon=True).start()
+    return {"ok": True, "started": True}
