@@ -1,26 +1,50 @@
-# Catalog entry draft — do not submit this file as-is.
+# Catalog entry — target: NousResearch/hermes-agent :: plugin-catalog/antemuse.yaml
 #
-# Target: NousResearch/hermes-agent :: plugin-catalog/antemuse.yaml
-# Gate: the repository must be public and `sha` must be the 40-character freeze
-# commit that `hermes plugins validate --install-deps --json` passed on.
-# Replace PIN_SHA_40 with `git rev-parse HEAD` after the freeze commit, and fill
-# `screenshots:` with raw.githubusercontent.com URLs at that same SHA.
+# Pinned commit: ff1d515842c32362c89db75437463181416d66b4 — the commit the gate
+# below passed on. This file lands after that commit, so it cannot contain its own
+# hash; the pin names the code that was verified:
+#   906 passed, 1 skipped · validate 16/16, warnings [] · doctor 1 tool, 8 hooks
+#
+# Gate before opening the PR: the repository must be public and cloneable without
+# credentials, and `git rev-parse HEAD` at the pin must still equal the sha below.
 
 name: antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: PIN_SHA_40
-description: Deliberate, bounded changes to how the agent works — walk, daydream, dream, doomscroll — with host-enforced tool policy, reply contracts, wordless imagery and an account on return.
+sha: ff1d515842c32362c89db75437463181416d66b4
+description: >-
+  Deliberate, bounded changes to how the agent works — walk, daydream, doomscroll,
+  unstuck and dream — each with a duration, a turn budget, a reply contract, and
+  wordless imagery for the person while the model gets text. The host, not the
+  model, enforces the state: an entry can close tools (block: true) and a blocked
+  tool call never runs; states end on their dose or the clock without a model call;
+  /return produces an account built from the journal and keeps the residue. A
+  recommendation line arrives inside the turn, only when a counter justifies it
+  (minutes, turns, repeated failed calls), and names that counter. Disclosure —
+  doomscroll fetches public RSS/JSON feeds over urllib (8 s timeout, no credentials)
+  and places feed text in the agent's context; daydream reads the operator's
+  ~/.hermes/memories/{MEMORY,USER}.md, and session-scan reads up to 300 recent
+  messages from ~/.hermes/state.db once per session in a background thread
+  (ANTEMUSE_NO_SCAN disables it). Writes go to the profile plugin data dir and
+  <repo>/.antemuse/ only. The terminal takeover may spawn node to rasterise live
+  scenes. Dev-only scripts under tools/ make network calls and are never imported
+  at registration. No credentials, no telemetry, no self-updater, and no model call
+  on entry, exit, expiry or rendering.
 maintainer: roosiq
 tier: community
 category: general
-requires_hermes: ">=0.21.6"
-version: "0.10.0"
-readme: true
-screenshots: []
-# Disclosures (rule 13), repeated in the PR description:
-# - Network: doomscroll fetches public feeds with urllib (8s timeout); no credentials.
-# - Reads outside plugin data: daydream reads ~/.hermes/memories/{MEMORY,USER}.md; walks use local nltk corpora.
-# - Writes: plugin data dir and <repo>/.antemuse/ only.
-# - Child process: the terminal takeover may spawn `node` for live scene rasterisation.
-# - Dev-only tools under tools/ make network calls and spawn browsers; not imported by registration.
-# - No credentials, no telemetry, no hidden model calls on the state path, no self-updater.
+docs_url: https://github.com/roosiq/antemuse-plugin#readme
+version: "0.9.0"
+platforms: [linux, macos]
+capabilities:
+  provides_tools: ["state"]
+  provides_hooks:
+    - pre_llm_call
+    - pre_tool_call
+    - post_tool_call
+    - transform_llm_output
+    - on_session_end
+    - on_session_finalize
+    - on_session_reset
+    - on_session_delete
+  provides_middleware: []
+  requires_env: []
