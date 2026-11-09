@@ -452,8 +452,10 @@ hop (README), approximately seven times farther.
 
 ### 8.2a What each state is for, and the measure that fits it
 
-The states do not share one goal, so they do not share one number. Written down because
-the first experiment measured all five with novelty and that was wrong for four of them.
+The states do not share one goal, so they do not share one number. Full statements of each
+goal — success, failure, measure, non-goals, and the open questions — are in
+[`docs/goals.md`](goals.md). The summary table stays here because it is the one place the
+numbers live.
 
 | state | goal (from its directive) | the measure that fits | measured 2026-11-08 |
 |---|---|---|---|
