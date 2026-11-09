@@ -1,0 +1,290 @@
+{
+"reflection/beam-1.0-501b|dev-lighthouse-door|11|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-lighthouse-door|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|dev-lighthouse-door|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-lighthouse-door|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|dev-lighthouse-door|12|A|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-lighthouse-door|12|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|dev-lighthouse-door|12|B|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-lighthouse-door|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|dev-lighthouse-door|13|A|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-lighthouse-door|13|A|D": {
+"choice": "B",
+"consistent": true
+},
+"reflection/beam-1.0-501b|dev-lighthouse-door|13|B|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-lighthouse-door|13|B|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|dev-late-bus-ticket|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"deepseek-v4.1-flash|dev-late-bus-ticket|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|dev-late-bus-ticket|11|B|D": {
+"choice": null,
+"consistent": false
+},
+"deepseek-v4.1-flash|dev-late-bus-ticket|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|dev-late-bus-ticket|12|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-late-bus-ticket|12|A|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|dev-late-bus-ticket|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-late-bus-ticket|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|dev-late-bus-ticket|13|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-late-bus-ticket|13|A|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|dev-late-bus-ticket|13|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|dev-late-bus-ticket|13|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-lighthouse-door|11|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-lighthouse-door|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-lighthouse-door|11|B|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-lighthouse-door|11|B|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-lighthouse-door|12|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-lighthouse-door|12|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-lighthouse-door|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-lighthouse-door|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-lighthouse-door|13|A|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-lighthouse-door|13|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-lighthouse-door|13|B|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-lighthouse-door|13|B|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-late-bus-ticket|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-late-bus-ticket|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-late-bus-ticket|11|B|D": {
+"choice": null,
+"consistent": false
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-late-bus-ticket|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-late-bus-ticket|12|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-late-bus-ticket|12|A|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-late-bus-ticket|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-late-bus-ticket|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-late-bus-ticket|13|A|D": {
+"choice": null,
+"consistent": false
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-late-bus-ticket|13|A|D": {
+"choice": "B",
+"consistent": true
+},
+"reflection/beam-1.0-501b|meituan/longcat-2.5:free|dev-late-bus-ticket|13|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|meituan/longcat-2.5:free|dev-late-bus-ticket|13|B|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-lighthouse-door|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-lighthouse-door|11|A|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-lighthouse-door|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-lighthouse-door|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-lighthouse-door|12|A|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-lighthouse-door|12|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-lighthouse-door|12|B|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-lighthouse-door|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-lighthouse-door|13|A|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-lighthouse-door|13|A|D": {
+"choice": "B",
+"consistent": true
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-lighthouse-door|13|B|D": {
+"choice": "B",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-lighthouse-door|13|B|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-late-bus-ticket|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-late-bus-ticket|11|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-late-bus-ticket|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-late-bus-ticket|11|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-late-bus-ticket|12|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-late-bus-ticket|12|A|D": {
+"choice": null,
+"consistent": false
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-late-bus-ticket|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-late-bus-ticket|12|B|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-late-bus-ticket|13|A|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-late-bus-ticket|13|A|D": {
+"choice": "A",
+"consistent": true
+},
+"reflection/beam-1.0-501b|Qwen3.8 Flash Next|dev-late-bus-ticket|13|B|D": {
+"choice": "A",
+"consistent": true
+},
+"deepseek-v4.1-flash|Qwen3.8 Flash Next|dev-late-bus-ticket|13|B|D": {
+"choice": "A",
+"consistent": true
+}
+}

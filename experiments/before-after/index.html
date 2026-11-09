@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Antemuse — before / after</title>
+<style>
+ body { font: 16px/1.55 -apple-system, system-ui, sans-serif; margin: 0; background: #101014; color: #e8e6e3; }
+ main { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+ h1 { font-size: 30px; margin: 0 0 6px; }
+ h2 { font-size: 20px; margin: 40px 0 12px; border-top: 1px solid #2a2a33; padding-top: 24px; }
+ h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: #9a97ff; margin: 26px 0 8px; }
+ table { width: 100%; border-collapse: collapse; margin: 10px 0 6px; }
+ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #24242c; vertical-align: top; }
+ th { color: #8f8c99; font-weight: 500; font-size: 13px; }
+ .muted { color: #8f8c99; font-size: 13px; }
+ .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+ .col { background: #17171d; border: 1px solid #24242c; border-radius: 10px; padding: 14px 16px; }
+ .col.after { border-color: #3b3559; }
+ .tag { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9a97ff; margin-bottom: 8px; }
+ .task { margin: 18px 0 30px; }
+ footer { margin-top: 46px; color: #8f8c99; font-size: 13px; border-top: 1px solid #2a2a33; padding-top: 18px; }
+ ul { padding-left: 20px; }
+</style></head>
+<body><main>
+<h1>Antemuse — before / after</h1>
+<p class=muted>Two development tasks × three seeds × three conditions. Same model, same token budget.
+Baseline vs a creativity instruction vs the plugin's deterministic collider material.</p>
+
+<section>
+  <h2>meituan/longcat-2.5:free</h2>
+  <table>
+    <thead><tr><th>condition</th><th>n</th><th>mean words</th><th>mean pairwise distance</th>
+    <th>distance to baseline</th></tr></thead>
+    <tbody><tr><td><b>A</b><br><span class=muted>before — baseline</span></td><td>6</td><td>135.2</td><td>0.564</td><td>0.47</td></tr><tr><td><b>B</b><br><span class=muted>control — creative instruction</span></td><td>6</td><td>119.0</td><td>0.5</td><td>0.499</td></tr><tr><td><b>D</b><br><span class=muted>after — antemuse material</span></td><td>6</td><td>142.2</td><td>0.487</td><td>0.583</td></tr></tbody>
+  </table>
+  <h3>Blind pairwise — both orders, two judge families</h3>
+  <ul><li><b>D_vs_A</b>: 2/6 consistent (0.333)</li><li><b>D_vs_B</b>: 2/8 consistent (0.25)</li></ul>
+  <p class=muted>Order-inconsistent decisions excluded: 10/24.</p>
+  <h3>Same brief, same seed</h3>
+  <div class=task><div class=muted>dev-lighthouse-door</div><div class=pair><div class=col><div class=tag>before — baseline</div><p>The keeper, a man named Aldric who had tended the light for thirty-one years without once finding anything new in the rock, knelt and pressed his palm flat against the door. It was warm. Not sun-warmed—something deeper, something that pulsed faintly against his lifeline like a second heartbeat. There was no handle, no keyhole, only a seam of pale light that traced the outline and widened by a hair when he leaned close enough to hear the sea moving on the other side. Except the sea, he realized with a stillness creeping up his spine, was not on the other side of this wall. The sea was forty feet to the east, and what he heard through the stone was water moving in a current, steady and patient, going somewhere it had been going long before the lighthouse was built. He stood, wiped the salt from his hands onto his coat, and went back up the spiral stairs to log the hour, because the light did not tend itself, and because he had learned in three decades that some doors announce themselves only after you have decided not to open them.</p></div><div class=col><div class=tag>after — antemuse material</div><p>The keeper shouted into the howling wind, but his words came out twisted and unrecognizable, as if the noise had eaten the meaning before it could escape his lips.
+
+He pressed closer, and the door seemed to watch him the way a cell marks its damaged parts for destruction—tagging this impossible intrusion, this broken piece of the cliff, to be swallowed and digested by whatever machinery kept the world whole.
+
+He reached for the handle. The metal was warm.</p></div></div></div><div class=task><div class=muted>dev-late-bus-ticket</div><div class=pair><div class=col><div class=tag>before — baseline</div><p>The paper was impossibly crisp, the kind of off-white that doesn&#x27;t exist anymore, and the ink smelled like a station waiting room — diesel and floor wax and something faintly metallic. Sarah turned it over twice, front and back, as though the other side might explain what the first already had: a single fare, Route 14, Millbrook to Harrowgate, departing 6:15 a.m. tomorrow. The serial number matched her own handwriting, cramped and hurried in the way she used to write things when she was seventeen and late for everything. She hadn&#x27;t thought about Route 14 in years. She hadn&#x27;t thought about the morning she&#x27;d bought that ticket, the argument still ringing in her ears, the door of the bus hissing shut behind her like a held breath finally released. But here it was, arriving exactly when it was supposed to — just thirty years too late, and one day too early.</p></div><div class=col><div class=tag>after — antemuse material</div><p>**Lombard Effect Dynamics applied to the ticket:**
+She wanted to shout the ticket&#x27;s warning loud enough to drown out the noise of her life, but the harder she tried to make the date heard, the less sense the message made—volume without clarity.
+
+**Selective Autophagy applied to the ticket:**
+The ticket behaved like a damaged organelle tagged for disposal, marking itself as a broken part of her past that the present needed to engulf and digest before it poisoned the whole system.
+
+---
+
+**Next paragraph:**
+
+She held the ticket up to the light, and the paper was wrong—too new, too stiff, smelling of a printing press rather than a drawer. The date read tomorrow, and the route number was one the transit authority had decommissioned before she was born. She wanted to call someone, to raise her voice above the noise of the ordinary afternoon and make them understand what had arrived, but the louder she rehearsed the explanation, the more it sounded like nonsense. So she did what the body does with a damaged cell: she tagged the thing as broken, wrapped it in the membrane of her silence, and let the machinery of forgetting begin its work. She placed the ticket inside the envelope again, then inside a book she never opened, then inside the box she kept on the highest shelf. By evening, the ticket had become just another part of her she was quietly digesting, and the tomorrow it promised passed without her boarding.</p></div></div></div>
+</section>
+<section>
+  <h2>Qwen3.8 Flash Next</h2>
+  <table>
+    <thead><tr><th>condition</th><th>n</th><th>mean words</th><th>mean pairwise distance</th>
+    <th>distance to baseline</th></tr></thead>
+    <tbody><tr><td><b>A</b><br><span class=muted>before — baseline</span></td><td>6</td><td>113.8</td><td>0.594</td><td>0.495</td></tr><tr><td><b>B</b><br><span class=muted>control — creative instruction</span></td><td>6</td><td>76.5</td><td>0.559</td><td>0.55</td></tr><tr><td><b>D</b><br><span class=muted>after — antemuse material</span></td><td>6</td><td>77.0</td><td>0.548</td><td>0.623</td></tr></tbody>
+  </table>
+  <h3>Blind pairwise — both orders, two judge families</h3>
+  <ul><li><b>D_vs_A</b>: 3/7 consistent (0.429)</li><li><b>D_vs_B</b>: 2/11 consistent (0.182)</li></ul>
+  <p class=muted>Order-inconsistent decisions excluded: 6/24.</p>
+  <h3>Same brief, same seed</h3>
+  <div class=task><div class=muted>dev-lighthouse-door</div><div class=pair><div class=col><div class=tag>before — baseline</div><p>He wiped his rain-slicked glasses and leaned closer, his breath fogging in the sudden drop of temperature that seemed to radiate from the rock face. The stone was smooth and dark, lacking the usual jagged texture of the eroding cliffside, and a faint, briny scent drifted up from the seam where the door met the earth—a smell not of seawater, but of deep, stagnant caverns untouched by sunlight for centuries. His hand trembled as he reached out, not because he feared what might be behind it, but because the iron handle was warm, pulsing with a rhythm that matched the frantic beating of his own heart.</p></div><div class=col><div class=tag>after — antemuse material</div><p>Elias shouted his name into the salt-thick gale, his voice fracturing into a high, desperate shriek that distorted the very identity he sought to confirm; in that moment of self-preservation, he began to devour his own certainty, tagging every memory of yesterday’s solid rock with the suspicion of decay until the door itself seemed less like an intrusion and more like a necessary excision of a flaw he had previously ignored.</p></div></div></div><div class=task><div class=muted>dev-late-bus-ticket</div><div class=pair><div class=col><div class=tag>before — baseline</div><p>The envelope was plain, unmarked save for the return address in a faded typewriter font that hadn&#x27;t been manufactured since 1994, and when I slid out the stiff cardstock, the smell hit me first—not of ink or paper, but of stale tobacco and diesel fumes from the old municipal transit system. The ticket itself was yellowed at the edges, brittle to the touch, yet the perforation lines were crisp, as if they had been punched only moments ago by a machine long since scrapped. My thumb traced the embossed date: October 14, 2024, tomorrow’s date, printed with an impossibility that made my stomach drop into a cold void, because I remembered buying this exact ticket on a rainy Tuesday in 1993, intending to ride the number 42 bus to see her one last time before she left town forever—a trip I had never actually taken.</p></div><div class=col><div class=tag>after — antemuse material</div><p>She held the ticket up to the light, and the paper seemed to scream at her, its ink blooming into a frantic, illegible mess that distorted the simple fact of its existence into a shout no one could parse.
+
+Yet she did not throw it away; instead, she watched as the edges of the card began to curl inward, dissolving like a cell consuming its own broken organelles, digesting the thirty-year-old memory so that only the clean, terrifying simplicity of tomorrow remained.</p></div></div></div>
+</section>
+<footer>
+Demonstration only: six outputs per condition per model, development tasks, and judges that are
+order-controlled but not human-validated. The preregistered state experiment under
+<code>experiments/state-settings/</code> remains the evidence path.
+</footer>
+</main></body></html>
