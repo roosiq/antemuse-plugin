@@ -362,3 +362,47 @@ fixed layer today. What we should copy, in order:
 
 This also makes the pane optional rather than load-bearing, which is the arrangement the
 brief actually wants: art behind the chat, counts in the chrome.
+
+## 11. Built: the layer behind the chat (2026-11-08)
+
+The pane is gone. `desktop/plugin.js` now registers an invisible mount in
+`TITLEBAR_AREAS.right` that owns a fixed layer: one `div[data-antemuse-bg="layer"]`,
+one `pre[data-antemuse-bg="glyphs"]`, one `style[data-antemuse-bg-style]`, and the
+`html[data-antemuse-bg="on"]` disposable flag. Nothing else in the shell is touched.
+
+**Scope.** The layer reads `host.state.focusedSessionId` and `host.state.busy` from the
+SDK's host atoms, so the art follows the focused conversation and flips to `work` while a
+turn is in flight. The backend takes `?session=` and refuses to lend one chat's state to
+another: if the active state's `origin.session_id` is not the asking conversation, that
+chat gets its ambient scene. Counts stay profile-level, because that is what the engine
+holds.
+
+**Placement is decided, not hardcoded — and this is where we diverge from the plan.**
+§10a said `z-index: -1` behind the transcript. Measured in the app: an opaque shell paints
+over a `-1` layer completely (the pane region stayed at max luminance 17/255 with the layer
+mounted and populated). So placement is chosen from the surface: transparent host surface →
+behind at 0.18; opaque host surface → in front at 0.12 (66% of default), which is the only
+placement this shell permits and the one ascii-worlds ships in its catalog build. Ink colour
+follows the surface too (`#cfd6dd` on dark, `#3a4650` on light).
+
+**Two real bugs the harness caught before the app saw them:**
+
+1. `sweepStrays` matched `[data-antemuse-bg]`, which also matches `<html>` — it would have
+   called `.remove()` on the document element itself. Now it selects only
+   `div[...="layer"]` and removes the root *attribute*, never the root node.
+2. The colour threshold compared 0–255 rgb channels against `0.5`, so every surface read as
+   "dark". Now halves at 128.
+
+**Verified:** 17 Python tests (ambient scene, busy-only-the-scene, determinism/ink,
+session scoping), 12 jsdom harness properties including layer attributes, both placement
+branches, conversation scoping, cleanup on unmount, and the stray sweep. `pytest tests/` is
+green on everything this change touches.
+
+**Not verified:** the layer painting inside the running app. The headless launch has no
+plugin backend reachable from the renderer (`/state` fails), so the layer is created with
+zero glyphs. Two failures in the suite are pre-existing and not from this change:
+`test_command_surface::test_every_schema_action_is_defined` (`complete` is in the tool enum
+without a documented command) and `test_mood::test_material_waits_for_the_cadence...` — both
+in files another writer is editing concurrently (`__init__.py`, `core/*`, and an untracked
+`specs/changes/semantic-states/`).
+

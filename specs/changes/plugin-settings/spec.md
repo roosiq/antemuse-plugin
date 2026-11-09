@@ -1,7 +1,26 @@
 # Plugin settings — what a person may change, and what stays fixed
 
-Status: **PROPOSED** 2026-11-08. Owner: Ryan Cook. Nothing implemented yet; this is the
-contract to build against. No new command.
+Status: **implemented** 2026-11-08. Owner: Ryan Cook. No new command.
+
+### Revision 2026-11-08: the desktop app renders it
+
+Ryan asked for the settings to be editable in the Hermes desktop app as well. That
+settles open decision 2, and it changes the shape of the surface in a useful way: the
+desktop renders a **form automatically for any plugin whose manifest declares
+`config_schema`** (`apps/desktop/src/app/settings/plugin-settings.tsx`, saving through
+`plugins.manage` → `save_plugin_setting`). So there is no bespoke UI to write and nothing
+to keep in sync — the schema *is* the settings page.
+
+Two consequences:
+
+1. Keys are **flat** (`recommend_enabled`, not `recommend.enabled`). The host's form
+   addresses top-level schema keys, and a nested form nobody renders is not a setting.
+2. The plugin's own `registerSettingsPage` was **removed** from `desktop/plugin.js`. It
+   rendered the state pane under a settings title, which would have shadowed the real
+   form with a second, divergent copy of the same controls.
+
+Verified against the host: the schema validates with no warnings, a wrong type warns
+rather than blocking, and `ctx.get_config` reads exactly the path the form writes.
 
 ## Where settings actually live
 
@@ -29,12 +48,12 @@ off in a dropdown has no identity.
 
 | key | type | default | bounds | what it does |
 |---|---|---|---|---|
-| `recommend.enabled` | bool | `true` | — | may the recommender speak at all |
-| `recommend.cooling_minutes` | int | `45` | 10–240 | how long one recommendation holds |
-| `recommend.long_stretch_minutes` | int | `0` (measured) | 0 or 30–360 | `0` keeps the measured p75; any other value overrides it, and the line says `fixed at N` |
-| `picture.enabled` | bool | `true` | — | post the state picture into the chat on entry |
-| `picture.narrow` | bool | platform default | — | force the narrow card on wide clients |
-| `journal.cap` | int | `60` | 20–60 | **reduce only**: the journal may be shortened, never lengthened past the spec's cap |
+| `recommend_enabled` | bool | `true` | — | may the recommender speak at all |
+| `recommend_cooling_minutes` | int | `45` | 10–240 | how long one recommendation holds |
+| `long_stretch_minutes` | int | `0` (measured) | 0 or 30–360 | `0` keeps the measured p75; any other value overrides it, and the line says `fixed at N` |
+| `picture_enabled` | bool | `true` | — | post the state picture into the chat on entry |
+| `picture_narrow` | bool | platform default | — | force the narrow card on wide clients |
+| `journal_cap` | int | `60` | 20–60 | **reduce only**: the journal may be shortened, never lengthened past the spec's cap |
 | `states.<name>.minutes` | int | state default | 1 … default | **reduce only**: a state may be made shorter, never longer. The long states are long on purpose |
 
 Nine settings at most, and every one of them is bounded in both directions. Nothing here

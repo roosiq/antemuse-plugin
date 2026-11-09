@@ -375,8 +375,13 @@ function ChatBackdrop({ ctx }) {
     let stopped = false
 
     const paint = () => {
+      const probe = (typeof window !== 'undefined')
+        ? (window.__antemuse = window.__antemuse || { paints: 0, grids: [], errors: [], lines: 0 })
+        : null
+      if (probe) probe.paints += 1
       if (stopped || !handleRef.current) return
       const grid = gridFor(handleRef.current)
+      if (probe) probe.grids.push(grid)
       if (!grid) return
       const session = host && host.state && host.state.focusedSessionId
         ? host.state.focusedSessionId.get() : null
@@ -389,6 +394,7 @@ function ChatBackdrop({ ctx }) {
         (payload) => {
           if (stopped || !handleRef.current) return
           const lines = (payload && payload.frame && payload.frame.lines) || []
+          if (probe) { probe.lines = lines.length; probe.payloadKeys = payload ? Object.keys(payload) : null }
           const text = lines.join('\n')
           if (text && text !== last) {
             last = text
@@ -402,7 +408,14 @@ function ChatBackdrop({ ctx }) {
             handleRef.current.pre.style.fontSize = size.toFixed(2) + 'px'
           }
         },
-        () => { /* backend down: an empty layer, never a broken app */ }
+        (err) => {
+          // An empty layer is never a broken app, but a silent one is undebuggable:
+          // record the failure where the host console can show it.
+          if (probe) probe.errors.push(String((err && err.message) || err))
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[antemuse] /state failed for', q, '-', (err && err.message) || err)
+          }
+        }
       )
     }
 
@@ -475,13 +488,10 @@ export default {
       title: copy.watch,
       run: () => { if (ctx.navigate) ctx.navigate(`/${ID}`) }
     })
-    if (ctx.registerSettingsPage) {
-      ctx.registerSettingsPage({
-        id: ID,
-        title: 'Antemuse',
-        icon: 'Waves',
-        render: () => jsx(StateView, { ctx })
-      })
-    }
+    // Settings are NOT a bespoke page: the host renders this plugin's manifest
+    // `config_schema` as a form under Settings ▸ Plugins and saves it to
+    // plugins.entries.antemuse.settings. Registering our own page here would shadow
+    // that form with a second, divergent copy of the same controls.
+
   }
 }

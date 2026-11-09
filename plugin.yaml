@@ -17,6 +17,52 @@ requires_hermes: ">=0.21.6"
 python_dependencies:
   - "pillow>=10,<14"
   - "nltk>=3.8,<4"
+# Settings the Hermes desktop app renders as a form (Settings ▸ Plugins ▸ Antemuse,
+# from this schema) and writes to plugins.entries.antemuse.settings.<key>.
+# A setting may change how loud or how long a state is; it may not change what a state is.
+config_schema:
+  recommend_enabled:
+    type: bool
+    default: true
+    label: Recommend states
+    description: >-
+      Let the plugin suggest a state when the shape of the work has a name (a loop,
+      a data wall, a long stretch). Off means silence: nothing is suggested, ever.
+  recommend_cooling_minutes:
+    type: int
+    default: 45
+    label: Minutes between recommendations
+    description: >-
+      How long one recommendation holds before another may replace it. Below 10 is
+      clamped to 10, above 240 to 240: a plugin that speaks every turn is a nag.
+  long_stretch_minutes:
+    type: int
+    default: 0
+    label: Long-stretch threshold
+    description: >-
+      Minutes without a state before one is recommended. 0 keeps the measured
+      threshold (the 75th percentile of your own stretches, clamped 60-180).
+      Any other value overrides it, and the line says "fixed at N".
+  picture_enabled:
+    type: bool
+    default: true
+    label: Post the picture in chat
+    description: >-
+      Post the state's wordless card as its own message when a state begins.
+  picture_narrow:
+    type: bool
+    default: false
+    label: Narrow picture
+    description: >-
+      Use the narrow card on wide clients. The card adapts to the platform anyway;
+      this forces the smaller of the two layouts.
+  journal_cap:
+    type: int
+    default: 60
+    label: Journal entries kept
+    description: >-
+      How many journal entries the state keeps. Reduce only: values above 60 are
+      clamped to 60, and below 20 to 20.
 provides_tools:
   - state
 provides_hooks:

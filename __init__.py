@@ -24,9 +24,10 @@ from typing import Any, Dict
 logger = logging.getLogger("antemuse")
 
 try:
-    from .core import engine, options, panel, runtime, session, states, surfaces, tui, walks
+    from .core import (engine, options, panel, runtime, session, settings, states, surfaces,
+                       tui, walks)
 except ImportError:  # flat-module load
-    from core import engine, options, panel, recall, runtime, session, states, surfaces, tui, walks  # type: ignore[no-redef]
+    from core import engine, options, panel, recall, runtime, session, settings, states, surfaces, tui, walks  # type: ignore[no-redef]
 
 __version__ = "0.9.0"
 
@@ -361,11 +362,12 @@ def _picture() -> bool:
     nothing from the injected material is ever rendered into it.
     """
     try:
-        from core import surfaces
+        from core import settings, surfaces
         view = engine.watch_state()
         if not view.get("active"):
             return False
-        return _post(surfaces.card(view, engine.platform() or "discord"))
+        return _post(surfaces.card(view, engine.platform() or "discord",
+                                   narrow=settings.flag("picture_narrow")))
     except Exception as exc:
         logger.debug("antemuse: no picture posted: %s", exc)
         return False
@@ -516,6 +518,7 @@ def _again_handler(ctx: Any):
 def register(ctx) -> None:
     global _HOST
     _HOST = ctx
+    settings.bind(ctx)
     engine.settle()
 
     ctx.register_hook("pre_llm_call", _pre_llm_call)

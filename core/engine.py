@@ -106,7 +106,12 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
             "text": report["text"], "at": now,
             "session": data.get("session_id") or "",
         })
-        data["journal"] = data["journal"][-60:]
+        try:
+            from . import settings
+            cap = settings.number("journal_cap")
+        except Exception:
+            cap = 60
+        data["journal"] = data["journal"][-cap:]
         data["active"] = None
         # the expiry must reach disk: the caller holds a copy, and an unsaved expiry
         # means the state silently outlives its ceiling
@@ -321,7 +326,12 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
             "text": report["text"], "at": time.time(), "reason": reason,
             "session": data.get("session_id") or "",
         })
-        data["journal"] = data["journal"][-60:]
+        try:
+            from . import settings
+            cap = settings.number("journal_cap")
+        except Exception:
+            cap = 60
+        data["journal"] = data["journal"][-cap:]
         data["active"] = None
         _save(data)
     try:
@@ -652,7 +662,12 @@ def record(who: str, text: str, event: str = "") -> None:
             "at": time.time(),
             "session": data.get("session_id") or "",
         })
-        data["journal"] = data["journal"][-60:]
+        try:
+            from . import settings
+            cap = settings.number("journal_cap")
+        except Exception:
+            cap = 60
+        data["journal"] = data["journal"][-cap:]
         _save(data)
 
 

@@ -1,0 +1,91 @@
+"""The settings a person may change, read through the host, clamped, never guessed.
+
+Declared in `plugin.yaml`'s `config_schema`, which the Hermes desktop app renders as a
+form under Settings ▸ Plugins ▸ Antemuse and writes to
+`plugins.entries.antemuse.settings.<key>`. There is no second settings store: the plugin
+reads what the host stored, and the schema is the single definition of the surface.
+
+A setting may change how loud or how long a state is. It may not change what a state is.
+"""
+from __future__ import annotations
+
+from typing import Any, Dict
+
+_TRUE = {"1", "true", "yes", "on", "t"}
+
+#: (key, default, low, high) — bounds are clamped in both directions.
+INT_BOUNDS = {
+    "recommend_cooling_minutes": (45, 10, 240),
+    "long_stretch_minutes": (0, 0, 360),
+    "journal_cap": (60, 20, 60),
+}
+BOOL_DEFAULTS = {
+    "recommend_enabled": True,
+    "picture_enabled": True,
+    "picture_narrow": False,
+}
+
+_host: Any = None
+_warned: set = set()
+
+
+def bind(ctx: Any) -> None:
+    """Keep the host context so reads go through it, not through a file."""
+    global _host
+    _host = ctx
+
+
+def _raw(key: str, default: Any) -> Any:
+    host = _host
+    get = getattr(host, "get_config", None)
+    if callable(get):
+        try:
+            return get(key, default)
+        except Exception:
+            return default
+    return default
+
+
+def flag(key: str) -> bool:
+    default = BOOL_DEFAULTS.get(key, False)
+    value = _raw(key, default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in _TRUE
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
+def number(key: str) -> int:
+    default, low, high = INT_BOUNDS[key]
+    value = _raw(key, default)
+    try:
+        got = int(value)
+    except Exception:
+        got = default
+    # long_stretch_minutes treats 0 as "keep the measured threshold", so the floor there
+    # is 0 or 30..360: a 5-minute override is not a stretch, it is a fidget.
+    if key == "long_stretch_minutes" and 0 < got < 30:
+        got = 30
+    clamped = max(low, min(high, got))
+    if clamped != got and key not in _warned:
+        _warned.add(key)
+        try:
+            import logging
+            logging.getLogger(__name__).warning(
+                "antemuse: settings.%s=%r out of range, using %d", key, value, clamped)
+        except Exception:
+            pass
+    return clamped
+
+
+def all_values() -> Dict[str, Any]:
+    out: Dict[str, Any] = {k: flag(k) for k in BOOL_DEFAULTS}
+    out.update({k: number(k) for k in INT_BOUNDS})
+    return out
+
+
+def reset_warnings() -> None:
+    _warned.clear()

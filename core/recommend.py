@@ -103,7 +103,10 @@ def _long_stretch(minutes: int, turns: int) -> Optional[str]:
     falls back to 90 and the evidence says which one is being used.
     """
     from . import normal
-    limit = normal.long_stretch_threshold()
+    from . import normal, settings
+    override = settings.number("long_stretch_minutes")
+    limit = normal.long_stretch_threshold() if not override else {
+        "minutes": override, "source": "fixed", "raw": None, "usual": None}
     threshold = int(limit["minutes"])
     if minutes < threshold or turns < LONG_TURNS:
         return None
@@ -178,6 +181,10 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     the work; a loop outranks a wall (a blocked tool is more actionable than a blocked
     URL); saturation outranks grind because the advice differs.
     """
+    from . import settings
+    if not settings.flag("recommend_enabled"):
+        return None
+
     now = now if now is not None else time.time()
     work = data.get("work") or {}
     minutes = int(data.get("minutes") or 0)

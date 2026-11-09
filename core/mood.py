@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 FEELINGS = ("stuck", "tired", "sharp", "flat", "saturated")
 
 STALE_AFTER_MIN = 240      # a self-report older than four hours stops counting
-OFFER_AFTER_MIN = 45       # do not repeat the same nudge more often than this
+OFFER_AFTER_MIN = 45       # fallback only: the live value is settings.recommend_cooling_minutes
 
 
 def _now() -> float:
@@ -60,7 +60,12 @@ def view(work: Dict[str, Any], mood: List[Dict[str, Any]],
     since = [m for m in mood if now - float(m.get("at") or 0) <= STALE_AFTER_MIN * 60]
     feeling = (since[-1].get("feeling") if since else None)
 
-    cooling = (now - offered_at) < OFFER_AFTER_MIN * 60
+    try:
+        from . import settings
+        cooling_minutes = settings.number("recommend_cooling_minutes")
+    except Exception:
+        cooling_minutes = OFFER_AFTER_MIN
+    cooling = (now - offered_at) < cooling_minutes * 60
 
     return {
         "minutes": int(minutes),
