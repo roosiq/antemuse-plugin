@@ -16,7 +16,7 @@ maintainer: roosiq
 tier: community
 category: general
 docs_url: https://github.com/roosiq/antemuse-plugin#readme
-version: 0.9.0
+version: "0.9.0"
 requires_hermes: '>=0.21.6'
 platforms:
 - linux
