@@ -87,11 +87,11 @@ def test_the_scroll_pool_is_comedy_not_news():
 # --------------------------------------------------------------------- dream
 
 def test_a_dream_connection_names_a_task_on_each_side_across_projects(monkeypatch):
-    work = [("repo-a", "shipper retries the same lane twice"),
-            ("repo-a", "docs for the lane"),
-            ("repo-b", "shipper drops the second retry"),
-            ("repo-b", "unrelated note about tiles")]
-    monkeypatch.setattr(sources, "day_work", lambda hours=24: work)
+    terms = {"repo-a": {"subjects": ["shipper retries the same lane twice"],
+                        "files": ["lane.py"], "words": {"shipper", "lane", "retries"}},
+             "repo-b": {"subjects": ["shipper drops the second retry"],
+                        "files": ["retry.py"], "words": {"shipper", "retry", "drops"}}}
+    monkeypatch.setattr(sources, "_day_window", lambda hours: (terms, 24))
     lines = sources.day_connections(1)
     assert lines and lines[0].startswith("connection ·"), lines
     assert "repo-a:" in lines[0] and "repo-b:" in lines[0], lines[0]
@@ -99,15 +99,16 @@ def test_a_dream_connection_names_a_task_on_each_side_across_projects(monkeypatc
 
 
 def test_a_thin_day_says_so_and_invents_instead(monkeypatch):
-    monkeypatch.setattr(sources, "day_work", lambda hours=24: [])
+    monkeypatch.setattr(sources, "_day_window", lambda hours: ({}, 168))
     lines = sources.day_connections(2)
-    assert lines[0].startswith("note · the day is thin"), lines[0]
+    assert lines[0].startswith("note · no connection today"), lines[0]
     assert any("invented · " in l for l in lines[1:]), lines
 
 
 def test_no_shared_work_is_reported_rather_than_papered_over(monkeypatch):
-    work = [("a", "alpha zulu"), ("b", "bravo yankee"), ("a", "charlie xray")]
-    monkeypatch.setattr(sources, "day_work", lambda hours=24: work)
+    terms = {"a": {"subjects": ["alpha zulu"], "files": [], "words": {"alpha", "zulu"}},
+             "b": {"subjects": ["bravo yankee"], "files": [], "words": {"bravo", "yankee"}}}
+    monkeypatch.setattr(sources, "_day_window", lambda hours: (terms, 24))
     we_have = sources.day_connections(1)
     assert "no connection" in we_have[0] or "connection ·" in we_have[0], we_have
 

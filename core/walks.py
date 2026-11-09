@@ -392,6 +392,38 @@ class GraphWalk:
                 return None
             return self.graph.far_from(node_, samples=self.samples, avoid=avoid)
 
+        def unseen(node_) -> bool:
+            try:
+                from . import history
+                return not history.known(str(node_.get("label") or ""))
+            except Exception:
+                return True
+
+        def pick(cands):
+            """Of the candidates, prefer one the ledger has not been to.
+
+            Distance is the walk's goal; landing on the same concept a third session running
+            is not distance, it is a habit. When every candidate is known the walk takes one
+            anyway and says so, because a dead walk is worse than a repeated one.
+            """
+            if not cands:
+                return None
+            fresh = [c for c in cands if unseen(c[1] if isinstance(c, tuple) else c)]
+            return RNG.choice(fresh) if fresh else RNG.choice(cands)
+
+        def far_fresh(node_, avoid=None, tries: int = 5):
+            """`far_from` returns one node; ask a few times so there is something to choose."""
+            best = None
+            for _ in range(tries):
+                cand = far(node_, avoid=avoid)
+                if cand is None:
+                    continue
+                if best is None:
+                    best = cand
+                if unseen(cand):
+                    return cand
+            return best
+
         def visited(node_) -> str:
             """Has the ledger been here? This is the answer a walk never had."""
             try:
@@ -428,8 +460,8 @@ class GraphWalk:
             mode = mode_at(n)
             # --- navigation policies that leave the neighbourhood -----------------
             if mode == "vault":
-                near = far(node, avoid=[prev_id])
-                beyond = far(near, avoid=[node["id"], prev_id]) if near else None
+                near = far_fresh(node, avoid=[prev_id])
+                beyond = far_fresh(near, avoid=[node["id"], prev_id]) if near else None
                 if near is not None and beyond is not None:
                     gloss = (beyond.get("gloss") or "").split(";")[0][:90]
                     hops += 2
@@ -443,7 +475,7 @@ class GraphWalk:
                     prev_id, node = near["id"], beyond
                     continue
             elif mode == "orbit":
-                skip = far(node, avoid=[prev_id])
+                skip = far_fresh(node, avoid=[prev_id])
                 if skip is not None:
                     hops += 1
                     if skip["label"] not in trail:
@@ -479,7 +511,7 @@ class GraphWalk:
                     prev_id, node = chain[-2]["id"], chain[-1]
                     continue
             elif mode == "far":
-                skip = far(node, avoid=[prev_id])
+                skip = far_fresh(node, avoid=[prev_id])
                 if skip is not None:
                     hops += 1
                     if skip["label"] not in trail:
@@ -505,7 +537,8 @@ class GraphWalk:
                     out.append(f"{node['label']} · only way back — the walk picks up again at {restart['label']}")
                     prev_id, node = node["id"], restart
                     continue
-            rel, nxt = RNG.choice(forward or options)
+            choice = pick([(r, n) for r, n in (forward or options)])
+            rel, nxt = choice if choice else RNG.choice(forward or options)
             gloss = (nxt.get("gloss") or "").split(";")[0][:90]
             hops += 1
             if nxt["label"] not in trail:

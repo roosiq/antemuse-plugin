@@ -77,3 +77,18 @@ subjects**, and no state reads a transcript. The ledger stores identity — a te
 stable key, the move, the session, the time — and never a message body. No provider and no
 `MEMORY.md` is written. Dream now additionally connects concepts that circle across sessions,
 which is a second input drawn from the ledger, not a transcript read.
+
+## Acceptance #6 closed, 2026-11-08 — every state now has a number after the rebuild
+
+Criterion 6 asked for each state's own measure, computed deterministically, before and after.
+`gap-closure` supplies the three that were missing, and `tools/measure_state_gaps.py` keeps the
+numbers reproducible without a model:
+
+- **walk** — 9.0 % of 600 destination steps repeated a concept from the previous session with
+  steering off; 7.8 % with it. Small effect, reported as small: most repeats are the fixed task
+  anchor, which is the walk's whole point.
+- **dream** — 0/40 real connections before (every trial fell through to `no connection today`
+  and then `inventing instead`); 40/40 now, both sides named.
+- **unstuck** — 100/100 directions carry evidence and 28 % are distinct at dose 1, up from a
+  reading where the measurement had been picking the `starts from seed=` header instead of the
+  direction.

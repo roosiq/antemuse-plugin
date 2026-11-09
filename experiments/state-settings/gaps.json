@@ -1,0 +1,48 @@
+{
+  "dream": {
+    "examples": [
+      "connection \u00b7 antemuse: chore: move the antemuse plugin to its own reposit \u2194 antemuse-plugin: docs: the states do the moves now, so the spec say \u00b7 shar",
+      "connection \u00b7 antemuse-plugin: docs: the states do the moves now, so the spec say \u2194 ryancook.name: agents: refresh workshop snapshot (automated) \u00b7 shar",
+      "connection \u00b7 antemuse: chore: move the antemuse plugin to its own reposit \u2194 antemuse-plugin: docs: the states do the moves now, so the spec say \u00b7 shar"
+    ],
+    "invented": 0,
+    "no_connection": 0,
+    "rate": 1.0,
+    "real": 40,
+    "steps": 2,
+    "trials": 20
+  },
+  "unstuck": {
+    "distinct_directions": 28,
+    "distinct_rate": 0.28,
+    "evidence_rate": 1.0,
+    "sample": [
+      "do something with 'workshop' \u00b7 because history \u00b7 served earlier today ",
+      "continue 'docs: the states do the moves now, so the spec\u2026' \u00b7 because h",
+      "make 'Ryan requires transformer detectors, provenance/isolation, p' th",
+      "do something with 'snapshot' \u00b7 because history \u00b7 served earlier today "
+    ],
+    "trials": 100,
+    "with_evidence": 100
+  },
+  "walk": {
+    "concepts_in_ledger": 1100,
+    "dose": 6,
+    "rate": 0.078,
+    "repeated": 47,
+    "sessions": 2,
+    "steering": true,
+    "steps": 600,
+    "trials": 100
+  },
+  "walk_without_steering": {
+    "concepts_in_ledger": 1104,
+    "dose": 6,
+    "rate": 0.09,
+    "repeated": 54,
+    "sessions": 2,
+    "steering": false,
+    "steps": 600,
+    "trials": 100
+  }
+}

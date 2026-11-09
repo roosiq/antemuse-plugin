@@ -490,10 +490,12 @@ REPOS = ["concept.cooking", "antemuse", "antemuse-plugin", "toslop", "toslop-mod
          "ryancook.name", "slopslingers-infra", "brand-agents"]
 
 
-def _git_log(root: Path, since: str) -> List[str]:
+def _git_log(root: Path, since: str, name_only: bool = False) -> List[str]:
+    args = ["git", "-C", str(root), "log", f"--since={since}", "--pretty=%s"]
+    if name_only:
+        args += ["--name-only", "--pretty=format:%s"]
     try:
-        run = subprocess.run(["git", "-C", str(root), "log", f"--since={since}",
-                              "--pretty=%s"], capture_output=True, text=True, timeout=8)
+        run = subprocess.run(args, capture_output=True, text=True, timeout=8)
     except Exception:
         return []
     if run.returncode != 0:
@@ -513,6 +515,36 @@ def day_work(hours: int = 24) -> List[tuple]:
     return out
 
 
+FILE_WORDS = re.compile(r"[A-Za-z][A-Za-z0-9\-]{3,}")
+
+
+def project_terms(hours: int = 24) -> Dict[str, Dict[str, object]]:
+    """Per project: the subjects of its commits and the files they touched.
+
+    Commit subjects alone are a thin signal — most of them say "repair", "tests", "docs". The
+    changed file names are what the work was *about*, they cost nothing to read, and they are
+    still this repository's own material: no transcript, no memory provider, no network.
+    """
+    out: Dict[str, Dict[str, object]] = {}
+    for name in REPOS:
+        root = Path.home() / name
+        if not (root / ".git").exists():
+            continue
+        lines = _git_log(root, f"{hours} hours ago", name_only=True)
+        subjects = [l for l in lines if " " in l or not l.endswith((".py", ".md", ".js", ".ts",
+                                                                  ".json", ".yaml", ".html"))]
+        files = [l for l in lines if l.endswith((".py", ".md", ".js", ".ts", ".json", ".yaml",
+                                                 ".html", ".jsonc", ".css"))]
+        words = set()
+        for text in subjects + [Path(f).stem for f in files] + [Path(f).name for f in files]:
+            for w in FILE_WORDS.findall(text.lower()):
+                if w not in GENERIC_BRIDGES and len(w) >= 4:
+                    words.add(w)
+        if words:
+            out[name] = {"subjects": subjects[:12], "files": files[:20], "words": words}
+    return out
+
+
 CONNECTION_FORMS = [
     "may be the same move in two places — worth checking whether {a} can stop doing it twice",
     "may be blocked on what {b} already solved — worth reading the other repo before retrying",
@@ -525,39 +557,62 @@ GENERIC_BRIDGES = set("""
 move earlier later update change add remove fix docs doc chore test tests spec specs
 state states work working thing things more less first second next last make made
 what written only also into over when where still from with this that these those
+py md js ts json yaml yml html css jsonc readme init main index setup config
 """.split())
+
+
+#: A day is what happened; when nothing happened, the state looks further back and *says* how
+#: far. Widening silently would be a lie about the day.
+DREAM_WINDOWS = (24, 72, 168)
+
+
+def _day_window(hours: int) -> tuple:
+    """The narrowest window that has more than one project in it, and which one it was."""
+    for h in (hours,) + tuple(w for w in DREAM_WINDOWS if w > hours):
+        terms = project_terms(h)
+        commits = sum(len(v["subjects"]) for v in terms.values())
+        if len(terms) >= 2 and commits >= 3:
+            return terms, h
+    return project_terms(DREAM_WINDOWS[-1]), DREAM_WINDOWS[-1]
+
+
+def _window_note(used: int) -> str:
+    if used <= 24:
+        return ""
+    return (f" · window: {used // 24} days (today had too few projects to connect"
+            f"{'' if used < 168 else ', and a week is as far back as this looks'})")
 
 
 def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
     """Connections between the day's tasks, across projects.
 
     The act is consolidation: what happened, and what connects that nobody wrote down. The
-    material is each project's own commit subjects for the day — local, and already the kind
-    of thing this plugin reads. When the day has too little in it, the state says so and
-    invents instead, which is a fallback and is labelled as one.
+    material is each project's own commit subjects *and the files they touched* — local, and
+    already the kind of thing this plugin reads. When the day has too little in it the state
+    looks a little further back and says so; when even that is empty it invents, labelled.
     """
-    work = day_work(hours)
-    if len(work) < 3:
+    terms, used = _day_window(hours)
+    note = _window_note(used)
+    n_projects = len(terms)
+    if n_projects < 2:
         invented = dream_recombine(steps)
-        note = f"the day is thin ({len(work)} commits in {hours}h) · inventing instead"
-        return [f"note · {note}"] + invented[:max(1, steps - 1)]
+        why = f"only {n_projects} project{'s' if n_projects != 1 else ''} had commits in {used}h"
+        return [f"note · no connection today ({why}) · inventing instead"] + invented[:max(1, steps - 1)]
 
-    words = {item: _words(item[1]) for item in work}
+    # document = project, not commit: a word in every project is boilerplate, a word in two
+    # of them is what the connection is made of
     df: Dict[str, int] = {}
-    for ws in words.values():
-        for w in ws:
+    for v in terms.values():
+        for w in v["words"]:
             df[w] = df.get(w, 0) + 1
-    # a day is a small corpus: a quarter of fifteen subjects is three, which is almost
-    # boilerplate. Half is the honest bar for "this word says something here".
-    common = max(2, len(work) // 2)
-    distinctive = {w for w, n in df.items() if n <= common and w not in GENERIC_BRIDGES}
-
     pairs = []
-    for i, a in enumerate(work):
-        for b in work[i + 1:]:
-            if a[0] == b[0]:
-                continue                      # cross project, or it is not a connection
-            shared = (words[a] & words[b]) & distinctive
+    names = sorted(terms)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            # a word in *every* project is boilerplate only when there are three of them:
+            # with two projects active, anything they share is what the connection is made of
+            boiler = (lambda w: n_projects >= 3 and df.get(w, 0) >= n_projects)
+            shared = {w for w in terms[a]["words"] & terms[b]["words"] if not boiler(w)}
             if shared:
                 pairs.append((float(len(shared)), a, b, sorted(shared)[:3]))
     pairs.sort(key=lambda row: row[0], reverse=True)
@@ -576,20 +631,21 @@ def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
         if not pairs:
             if n == 0:
                 out.append("no connection today · the day's commits share nothing distinctive "
-                           "across projects, and saying so is the finding")
+                           "across projects, and saying so is the finding" + note)
                 continue
-            # the dose still has to be served: the directive says invention stands in when
-            # the day has too little in it, and the line says that is what it is
             invented = dream_recombine(1)
             out.append("inventing instead · " + (invented[0] if invented else "nothing to invent"))
             continue
         score, a, b, bridged = pairs.pop(0)
         form = RNG.choice(CONNECTION_FORMS)
-        line = (f"connection · {a[0]}: {a[1][:60]} ↔ {b[0]}: {b[1][:60]} · "
-                f"shared: {', '.join(bridged)} · {form.format(a=a[0], b=b[0])}")
-        _note_terms(a[1] + " " + b[1], "dream")
+        subject_a = str(terms[a]["subjects"][0] if terms[a]["subjects"] else "")
+        subject_b = str(terms[b]["subjects"][0] if terms[b]["subjects"] else "")
+        line = (f"connection · {a}: {subject_a[:50]} ↔ {b}: {subject_b[:50]} · "
+                f"shared: {', '.join(bridged)} · {form.format(a=a, b=b)}{note}")
+        _note_terms(subject_a + " " + subject_b, "dream")
         out.append(line)
     return out
+
 
 # ---------------------------------------------------------------------- feed
 
@@ -746,6 +802,15 @@ def _graph_path(root: Path, hints: List[str]) -> str:
         return ""
 
 
+def _clip(text: str, limit: int) -> str:
+    """Shorten a quote at a word boundary. A sentence cut mid-word reads like a defect."""
+    text = " ".join((text or "").split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:·-")
+    return (cut or text[:limit].rstrip()) + "…"
+
+
 def unstuck_text(steps: int = 1) -> List[str]:
     """Directions, one per step, each bound to the evidence that produced it.
 
@@ -798,8 +863,8 @@ def unstuck_text(steps: int = 1) -> List[str]:
     # history as an input: what was actually done, in its own words
     history = _git_log(root, "7 days ago")[:5]
     if history:
-        found.append((f"continue '{history[0][:50]}'",
-                      f"history · last commit: {history[0][:70]}",
+        found.append((f"continue '{_clip(history[0], 50)}'",
+                      f"history · last commit: {_clip(history[0], 70)}",
                       "open the file that commit touched and write the next call in the same shape"))
     else:
         missing.append("history (no commits in the last 7 days)")

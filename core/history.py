@@ -333,15 +333,18 @@ def circling(days: int = 7, min_sessions: int = 2, limit: int = 12,
                      ORDER BY n DESC, last DESC LIMIT ?""",
                   (since, min_sessions, ceiling, limit))
     return [{"label": r[0], "kind": r[1], "key": r[2], "sessions": r[3], "last": r[4]}
-            for r in rows]
+            for r in rows if _is_concept(r[0])]
 
 
 def unused(days: int = 7, limit: int = 12) -> List[str]:
     since = time.time() - days * 86400
-    return [r[0] for r in _query("""SELECT DISTINCT c.label FROM served s
-                                    JOIN concepts c ON c.id = s.concept_id
-                                    WHERE s.at >= ? AND s.used_at IS NULL
-                                    ORDER BY s.at DESC LIMIT ?""", (since, limit))]
+    rows = _query("""SELECT DISTINCT c.label FROM served s
+                     JOIN concepts c ON c.id = s.concept_id
+                     WHERE s.at >= ? AND s.used_at IS NULL
+                     ORDER BY s.at DESC LIMIT ?""", (since, limit * 4))
+    # a ledger written before the specificity rule holds short dictionary nouns like "drops";
+    # they are not concepts and must not become recommendations
+    return [r[0] for r in rows if _is_concept(r[0])][:limit]
 
 
 def recent(days: int = 3, limit: int = 40) -> List[Dict[str, Any]]:
