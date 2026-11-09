@@ -231,6 +231,22 @@ def notice(term: str, move: str = "", session: str = "", kind: str = "",
         conn.close()
 
 
+def session_label(session: str) -> str:
+    """A session as a person reads it: a date when it has one, a short id when it does not."""
+    import datetime as _dt
+    raw = (session or "").strip()
+    if not raw:
+        return "session"
+    for fmt, width in (("%Y%m%d_%H%M%S", 15), ("%Y-%m-%d", 10)):
+        try:
+            return _dt.datetime.strptime(raw[:width], fmt).strftime("%b %-d %H:%M")
+        except Exception:
+            continue
+    if raw.startswith("local-"):
+        return "local " + raw[6:14]
+    return raw[:14]
+
+
 def detail(term: str, limit: int = 8) -> Dict[str, Any]:
     """Everything the ledger knows about one concept, with the evidence behind it.
 

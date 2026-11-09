@@ -22,6 +22,12 @@ sys.path.insert(0, str(ROOT))
 
 OUT = ROOT / "experiments" / "graph"
 
+
+def _embeddings_path() -> Path:
+    import os
+    base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")).expanduser()
+    return base / "antemuse" / "embeddings.json"
+
 COLOURS = {
     "concept": (216, 160, 91),     # amber: the things the plugin serves
     "session": (86, 148, 159),     # teal: where they were met
@@ -354,7 +360,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--limit", type=int, default=400)
     parser.add_argument("--semantic", action="store_true",
                         help="place concepts by meaning (needs experiments/graph/embeddings.json)")
-    parser.add_argument("--embeddings", default=str(ROOT / "experiments" / "graph" / "embeddings.json"))
+    parser.add_argument("--embeddings", default=str(_embeddings_path()))
     parser.add_argument("--out", default=str(OUT))
     args = parser.parse_args(argv)
 

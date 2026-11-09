@@ -20,7 +20,7 @@ moment to read.
 **Embeddings are a data artefact, not a dependency.** `tools/graph_embed.py` runs under whatever
 interpreter has torch (here `/home/ryan/ontology-embedding-experiment/.venv`), embeds the
 ledger's concept labels with `BAAI/bge-small-en-v1.5` (384 dimensions, cached locally), and
-writes unit vectors to `experiments/graph/embeddings.json`. The plugin itself never imports
+writes unit vectors to `$XDG_CACHE_HOME/antemuse/embeddings.json` (~/.cache/antemuse/). The plugin itself never imports
 torch; the export reads the JSON.
 
 **The projection is PCA, then stress majorization.** PCA alone keeps two of 384 directions and

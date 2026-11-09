@@ -23,7 +23,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
-OUT = ROOT / "experiments" / "graph" / "embeddings.json"
+
+
+def _embeddings_path() -> Path:
+    """Derived data lives in the cache, not in the repo: it is machine-specific, and the
+    evidence is the JSON the export writes, not the vectors behind it."""
+    import os as _os
+    base = Path(_os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")).expanduser()
+    return base / "antemuse" / "embeddings.json"
+
+
+OUT = _embeddings_path()
 
 
 def ledger_labels(limit: int = 800) -> list:

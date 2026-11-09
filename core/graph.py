@@ -28,19 +28,6 @@ def _rows(history, sql: str, args: Iterable[Any] = ()) -> List[Tuple]:
         return []
 
 
-def session_label(session: str) -> str:
-    """`20261108_091834_aa6c8db0` is an id, not a label. A person reads a date."""
-    import datetime as _dt
-    raw = (session or "").strip()
-    for fmt in ("%Y%m%d_%H%M%S", "%Y-%m-%d"):
-        try:
-            stamp = _dt.datetime.strptime(raw[:len("20261108_091834")], fmt)
-            return stamp.strftime("%b %-d %H:%M")
-        except Exception:
-            continue
-    return raw.replace("_", " ")[:14] or "session"
-
-
 def _tokens(text: str) -> Set[str]:
     import re
     return {w for w in re.findall(r"[a-z][a-z0-9\-]{2,}", (text or "").lower())}
@@ -97,7 +84,7 @@ def snapshot(limit: int = MAX_NODES, max_edges: int = MAX_EDGES) -> Dict[str, An
         if per_session.get(session, 0) >= 4:
             continue
         per_session[session] = per_session.get(session, 0) + 1
-        sid = node("session", session, session_label(session))
+        sid = node("session", session, history.session_label(session))
         edge(by_id[cid], sid, "served_in", weight=per_session.get(session, 1),
              evidence={"last_seen": at})
 

@@ -22,7 +22,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-EMB = ROOT / "experiments" / "graph" / "embeddings.json"
+import os as _os
+EMB = Path(_os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")).expanduser() / "antemuse" / "embeddings.json"
 
 
 def when(ts: float) -> str:
@@ -49,6 +50,7 @@ def nearest(label: str, top: int = 6) -> list:
 
 
 def render(detail: dict, text: bool = False, meaning: int = 6) -> str:
+    from core import history
     if not detail.get("ok"):
         return f"· {detail.get('reason', 'unknown concept')}"
     c = detail["concept"]
@@ -58,7 +60,8 @@ def render(detail: dict, text: bool = False, meaning: int = 6) -> str:
     if detail["sessions"]:
         lines.append("  sessions")
         for s in detail["sessions"][:6]:
-            lines.append(f"    {s['session']}  {s['count']}×  last {when(s['at'])}")
+            label = history.session_label(s["session"])
+            lines.append(f"    {label}  {s['count']}×  last {when(s['at'])}")
 
     if detail["messages"]:
         ids = [m["id"] for m in detail["messages"][:8]]

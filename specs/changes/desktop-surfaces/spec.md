@@ -549,3 +549,33 @@ prism ringed (`dream`), a slatted grille (`doomscroll`). Coverage after tuning s
 composition and skips the state poll, so a scene can be judged on its own. Unset it and the
 poll returns. This exists because the alternative was entering states to take screenshots.
 
+## 17. Generated stills: img2img over the renderer, then a fixed grade (2026-11-08)
+
+The ask was generated imagery to the same design standard. Two things came out of trying it,
+and both matter more than the images.
+
+**Text-to-image cannot hold the standard.** SD1.5 Q8 on the local box, prompted with the brand
+vocabulary (machined monolith, black void, amber key, cyan rim), produced a wall sconce on
+concrete, then an organic river stone, then blocks on a grey floor. It inserts interiors,
+floors, horizons, and warm studio light no matter how the negative prompt is written; it also
+ignores "amber" for "silver" unless the word is orange. A 3-image sweep had zero usable frames
+by the brand's own checklist.
+
+**Image-to-image inherits the composition and only adds surface.** So the pipeline is: render
+in three (§16 scenes), then img2img at denoise 0.26–0.28 with a material prompt, then a
+deterministic grade that enforces the palette — black point at 0.04, gentle S-curve, teal into
+mid-shadows, amber into highlights, true black under 0.035 luminance, 0.5% grain. The render
+owns geometry; the generator owns microtexture and light; the grade owns the palette. Measured:
+75.7% of shipped pixels are exactly black, and the set is 0.216 MB for 18 stills.
+
+**The weakness is inherited, not generated.** Coverage per state, as fraction of non-black
+pixels, for the three shipped stills each: walk 22.9/35.9/4.0%, daydream 0.9/0.6/1.1%,
+dream 1.0/5.3/29.7%, doomscroll 0.3/15.2/6.2%, work 0.4/0.6/0.4%, idle 2.1/2.3/1.8%. Sparse inits stay sparse — the generator cannot add
+structure that was not there, so `work` and `idle` read as nearly empty and `doomscroll` reads
+as debris rather than a feed. Anything that improves them has to be more content in the scene,
+not a better prompt.
+
+A/B at denoise 0.22: the generated frame is softer and its bevels drift, while the renderer's
+edges stay exact. Below ~0.2 the generator contributes nothing visible; above ~0.35 it starts
+moving geometry. The useful window is narrow and the win is texture, not form.
+
