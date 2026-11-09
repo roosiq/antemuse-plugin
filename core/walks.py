@@ -392,11 +392,32 @@ class GraphWalk:
                 return None
             return self.graph.far_from(node_, samples=self.samples, avoid=avoid)
 
+        def visited(node_) -> str:
+            """Has the ledger been here? This is the answer a walk never had."""
+            try:
+                from . import history
+                past = history.seen_before(str(node_.get("label") or ""))
+                if past.get("sessions"):
+                    return (f" · seen {history.when(past.get('last_session_at'))}"
+                            f" in {past['sessions']} other session"
+                            f"{'s' if past['sessions'] != 1 else ''}")
+            except Exception:
+                pass
+            return ""
+
+        def remember(node_) -> None:
+            try:
+                from . import history
+                history.notice(str(node_.get("label") or ""), move="walk")
+            except Exception:
+                pass
+
         def line(a, b, how, jumped: bool = False):
             gloss = (b.get("gloss") or "").split(";")[0][:90]
+            remember(b)
             return (f"{a['label']} ({a['pos'] or 'thing'}) → {b['label']} "
                     f"({b['pos'] or 'thing'}) · {how}"
-                    + (f" · “{gloss}”" if gloss else "") + back(jumped))
+                    + (f" · “{gloss}”" if gloss else "") + back(jumped) + visited(b))
 
         def mode_at(n):
             if self.jump != "composite":
@@ -414,9 +435,11 @@ class GraphWalk:
                     hops += 2
                     if beyond["label"] not in trail:
                         trail.append(beyond["label"])
+                    remember(beyond)
                     out.append(f"{node['label']} → {beyond['label']} "
                                f"({beyond['pos'] or 'thing'}) · vaulted past {near['label']}"
-                               + (f" · “{gloss}”" if gloss else "") + back(jumped=True))
+                               + (f" · “{gloss}”" if gloss else "") + back(jumped=True)
+                               + visited(beyond))
                     prev_id, node = near["id"], beyond
                     continue
             elif mode == "orbit":
@@ -487,8 +510,10 @@ class GraphWalk:
             hops += 1
             if nxt["label"] not in trail:
                 trail.append(nxt["label"])
+            remember(nxt)
             out.append(f"{node['label']} ({node['pos'] or 'thing'}) → {nxt['label']} ({nxt['pos'] or 'thing'})"
-                       f" · took its {rel}" + (f" · “{gloss}”" if gloss else "") + back())
+                       f" · took its {rel}" + (f" · “{gloss}”" if gloss else "") + back()
+                       + visited(nxt))
             prev_id, node = node["id"], nxt
         if out and prefix:
             out[0] = prefix + out[0]

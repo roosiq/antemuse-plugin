@@ -415,6 +415,16 @@ def possibility(a: str, b: str, shared: set) -> str:
         shared=term, a=_short(a, 5), b=_short(b, 5))
 
 
+def _note_terms(text: str, move: str, limit: int = 6) -> None:
+    """Record what a state served. Identity only, and never in the way of the material."""
+    try:
+        from . import history
+        for term in history.extract(text, limit=limit):
+            history.notice(term, move=move)
+    except Exception:
+        pass
+
+
 def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
     """Bring two memories back and say whether the connection is worth joining.
 
@@ -464,8 +474,10 @@ def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
         mark = "JOINED" if shared >= join_threshold else "adjacent"
         support = (f"shared: {', '.join(sorted(common)[:4])}" if shared
                    else f"nothing shared (best of {len(best)} pairs, needs {join_threshold})")
-        out.append(f"{mark} · {a[:70]}… ↔ {b[:70]}… · {support} "
-                   f"· {possibility(a, b, common)}")
+        line = (f"{mark} · {a[:70]}… ↔ {b[:70]}… · {support} "
+                f"· {possibility(a, b, common)}")
+        _note_terms(a + " " + b, "daydream")
+        out.append(line)
     return out
 
 
@@ -551,6 +563,15 @@ def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
     pairs.sort(key=lambda row: row[0], reverse=True)
 
     out: List[str] = []
+    try:
+        from . import history
+        for row in history.circling(days=7, min_sessions=2, limit=max(1, steps)):
+            out.append(f"connection · the work keeps returning to '{row['label']}' "
+                       f"({row['sessions']} sessions in 7 days) and nothing in the day's "
+                       f"commits says why · worth finding the task that keeps asking")
+    except Exception:
+        pass
+
     for n in range(steps):
         if not pairs:
             if n == 0:
@@ -564,8 +585,10 @@ def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
             continue
         score, a, b, bridged = pairs.pop(0)
         form = RNG.choice(CONNECTION_FORMS)
-        out.append(f"connection · {a[0]}: {a[1][:60]} ↔ {b[0]}: {b[1][:60]} · "
-                   f"shared: {', '.join(bridged)} · {form.format(a=a[0], b=b[0])}")
+        line = (f"connection · {a[0]}: {a[1][:60]} ↔ {b[0]}: {b[1][:60]} · "
+                f"shared: {', '.join(bridged)} · {form.format(a=a[0], b=b[0])}")
+        _note_terms(a[1] + " " + b[1], "dream")
+        out.append(line)
     return out
 
 # ---------------------------------------------------------------------- feed
@@ -780,6 +803,21 @@ def unstuck_text(steps: int = 1) -> List[str]:
                       "open the file that commit touched and write the next call in the same shape"))
     else:
         missing.append("history (no commits in the last 7 days)")
+
+    # the ledger as an input: what keeps coming back, and what was served but never used
+    try:
+        from . import history
+        for row in history.circling(days=7, min_sessions=2, limit=2):
+            found.append((f"settle '{row['label']}'",
+                          f"history · it surfaced in {row['sessions']} sessions in 7 days "
+                          f"and was never resolved",
+                          "write the one sentence that settles what it means here, or delete it"))
+        for label in history.unused(days=7, limit=2):
+            found.append((f"do something with '{label}'",
+                          f"history · served {history.when(time.time())} and never used",
+                          "use it in the next work turn or drop it from the pipeline"))
+    except Exception:
+        missing.append("concept history (the ledger could not be read)")
 
     # the concept graph as an input: adjacent, and not yet touched here
     graph_line = _graph_path(root, specs + [p.stem for p in root.glob("*.md")] + entries)

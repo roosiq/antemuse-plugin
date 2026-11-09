@@ -132,3 +132,31 @@ def test_still_one_thing_at_dose_one(tmp_path, monkeypatch):
     (tmp_path / "README.md").write_text("a thing\n")
     lines = [l for l in sources.unstuck_text(1) if l.startswith("direction")]
     assert len(lines) == 1, lines
+
+
+# ------------------------------------------------------------ concept ledger
+
+def test_a_step_that_lands_somewhere_known_says_when(tmp_path, monkeypatch):
+    """The ledger's whole point in a walk: not "is this a word" but "have we been here"."""
+    if not _has("wordnet"):
+        pytest.skip("wordnet not installed")
+    from core import history, walks
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    monkeypatch.setattr(history, "seen_before",
+                        lambda term, exclude_session="": {"sessions": 2,
+                                                          "last_session_at": __import__("time").time() - 2 * 86400})
+    monkeypatch.setattr(history, "when", lambda ts: "2 days ago")
+    spec = dict(walks.BUILTIN["outer"], name="outer")
+    line = walks.GraphWalk(spec, tmp_path / "c.json").step(1)[0]
+    assert "seen 2 days ago in 2 other sessions" in line, line
+
+
+def test_a_walk_records_where_it_went(tmp_path, monkeypatch):
+    if not _has("wordnet"):
+        pytest.skip("wordnet not installed")
+    from core import history, walks
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path / "home"))
+    (tmp_path / "home").mkdir()
+    spec = dict(walks.BUILTIN["outer"], name="outer")
+    walks.GraphWalk(spec, tmp_path / "c.json").step(2)
+    assert history.stats()["servings"] >= 2, history.stats()

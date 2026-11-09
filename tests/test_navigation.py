@@ -152,5 +152,6 @@ def test_memory_is_an_input_and_its_absence_is_named(tmp_path, monkeypatch):
                for l in sources.unstuck_text(2))
 
     monkeypatch.setattr(sources, "memory_pool", lambda: ["the tile renderer kept stalling"])
-    lines = sources.unstuck_text(6)
+    # more inputs than before (ledger, graph, history), so a dose of six is a sample
+    lines = sources.unstuck_text(12)
     assert any("from memory" in l for l in lines), lines

@@ -141,6 +141,18 @@ be 1.
 
 ---
 
+## The concept ledger — how a move knows it has been here before
+
+States were re-deriving their world every time: the journal decays, `residue` is a two-turn
+note, the recall ring is this conversation, a walk's `seen` set is twelve terms. `core/history.py`
+adds the missing layer — identity only (term, kind, stable key, which move served it, which
+session, when), never message text, never the agent's memory.
+
+What it answers: **where was this met before**, **which concepts keep circling across sessions**,
+**which were served and never used**. Past-session concepts are read from Hermes' own `state.db`,
+read-only and incrementally, from user and assistant text only — no tool output, no reasoning.
+The store is derived and fail-open: delete it and every state still runs.
+
 ## idle and work — the floor, not states
 
 Neither is in `STATES` and neither is enterable. `work` is the ordinary condition, `idle` is
