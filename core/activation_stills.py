@@ -76,20 +76,44 @@ def fit(coords_in: Dict[str, tuple], width: int, height: int, pad: int = 46) -> 
             for k, v in coords_in.items()}
 
 
+# A palette is a mood, not information: same geometry, different ink. "amber" is the warm
+# night-light the stills were tuned on; "nous" is the house palette — deep navy ground, an
+# electric blue halo, off-white cores — measured off nousresearch.com (#19192e ground,
+# #0000f2 accent, #f2f2f2 text) rather than guessed.
+PALETTES = {
+    "amber": {
+        "ground": (6, 6, 8),
+        "edge": (120, 120, 134, 34),
+        "dim": (110, 110, 122, 110),
+        "halo": (214, 156, 74),
+        "core": (255, 214, 126),
+    },
+    "nous": {
+        "ground": (25, 25, 46),
+        "edge": (142, 142, 200, 26),
+        "dim": (126, 126, 176, 96),
+        "halo": (0, 40, 242),
+        "core": (242, 242, 252),
+    },
+}
+
+
 def frame_image(pos: Dict[str, list], edges: List[tuple], active: Dict[str, Dict[str, Any]],
-                width: int = STILL_SIZE[0], height: int = STILL_SIZE[1]):
+                width: int = STILL_SIZE[0], height: int = STILL_SIZE[1],
+                palette: str = "amber"):
     """One still: the map dimmed, the firing concepts lit, nothing written on it."""
     from PIL import Image, ImageDraw, ImageFilter
 
-    img = Image.new("RGB", (width, height), (6, 6, 8))
+    ink = PALETTES.get(palette, PALETTES["amber"])
+    img = Image.new("RGB", (width, height), ink["ground"])
     draw = ImageDraw.Draw(img, "RGBA")
     for a, b in edges:
         if a in pos and b in pos:
-            draw.line([tuple(pos[a]), tuple(pos[b])], fill=(120, 120, 134, 34), width=1)
+            draw.line([tuple(pos[a]), tuple(pos[b])], fill=ink["edge"], width=1)
     for label, p in pos.items():
         if label in active:
             continue
-        draw.ellipse([p[0] - 1.6, p[1] - 1.6, p[0] + 1.6, p[1] + 1.6], fill=(110, 110, 122, 110))
+        draw.ellipse([p[0] - 1.6, p[1] - 1.6, p[0] + 1.6, p[1] + 1.6], fill=ink["dim"])
 
     glow = Image.new("RGB", (width, height), (0, 0, 0))
     gdraw = ImageDraw.Draw(glow, "RGBA")
@@ -100,7 +124,8 @@ def frame_image(pos: Dict[str, list], edges: List[tuple], active: Dict[str, Dict
         w = max(0.05, float(slot.get("weight", 0.0)))
         r = 4.0 + 16.0 * w
         gdraw.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r],
-                      fill=(int(214 * w) + 30, int(156 * w) + 24, int(74 * w) + 10, 255))
+                      fill=(int(ink["halo"][0] * w) + 30, int(ink["halo"][1] * w) + 24,
+                            int(ink["halo"][2] * w) + 10, 255))
     glow = glow.filter(ImageFilter.GaussianBlur(radius=7))
     img = Image.blend(img, Image.composite(glow, img, glow.convert("L")), 0.85)
     draw = ImageDraw.Draw(img, "RGBA")
@@ -111,7 +136,8 @@ def frame_image(pos: Dict[str, list], edges: List[tuple], active: Dict[str, Dict
         w = max(0.05, float(slot.get("weight", 0.0)))
         r = 2.0 + 5.0 * w
         draw.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r],
-                     fill=(255, int(214 * w) + 40, int(126 * w) + 30, 255))
+                     fill=(int(ink["core"][0] * w) + 13, int(ink["core"][1] * w) + 40,
+                           int(ink["core"][2] * w) + 30, 255))
     return img
 
 
@@ -133,7 +159,7 @@ def _edges(labels: List[str], vectors: Dict[str, List[float]]) -> List[tuple]:
 
 def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
            count: int = STILL_COUNT, size: tuple = STILL_SIZE,
-           now: Optional[float] = None) -> List[Path]:
+           now: Optional[float] = None, palette: str = "amber") -> List[Path]:
     """Write (or reuse) the stills for one state and return their paths, newest first.
 
     Three stills rather than a loop: the pane cross-fades, and a state's arc is seconds long —
@@ -178,7 +204,7 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     drawn = []
     for i, frame in enumerate(frames):
         path = base / f"f{i}-{stamp}.jpg"
-        frame_image(pos, edges, frame["activations"], *size).save(path, quality=86)
+        frame_image(pos, edges, frame["activations"], *size, palette=palette).save(path, quality=86)
         drawn.append(path)
 
     # The look, not the information: three.js post-processes the same stills at bake time.
@@ -228,7 +254,8 @@ def _postprocess(drawn: List[Path]) -> List[Path]:
         return []
 
 
-def fresh(move: str = "", session: str = "", dest: Optional[Path] = None) -> List[Path]:
+def fresh(move: str = "", session: str = "", dest: Optional[Path] = None,
+          palette: str = "amber") -> List[Path]:
     """Stills no older than STILL_TTL_S, regenerating when they are stale."""
     dest = Path(dest) if dest else None
     if dest is None:
@@ -245,4 +272,4 @@ def fresh(move: str = "", session: str = "", dest: Optional[Path] = None) -> Lis
             age = time.time() - max(p.stat().st_mtime for p in existing)
             if age < STILL_TTL_S:
                 return existing
-    return stills(move=move, session=session, dest=dest)
+    return stills(move=move, session=session, dest=dest, palette=palette)
