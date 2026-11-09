@@ -94,9 +94,24 @@ def distance(line: str) -> float | None:
         return None
 
 
+WALK_NAME = ""
+FRESH_CACHE = False
+
+
 def trial(state: str, dose: int, vocab: set[str]) -> dict:
-    provider = sources.PROVIDERS[state]
-    items = list(provider(dose)) if dose else []
+    if state == "walk" and WALK_NAME:
+        from core import walks
+        items = list(walks.get(WALK_NAME).step(dose)) if dose else []
+    else:
+        if FRESH_CACHE and state == "doomscroll":
+            # measure the source pool's variety, not the seen-set's memory of it
+            try:
+                from core import social
+                social.CACHE.unlink()
+            except Exception:
+                pass
+        provider = sources.PROVIDERS[state]
+        items = list(provider(dose)) if dose else []
     seen: set[str] = set()
     per_position: list[dict] = []
     distances: list[float] = []
@@ -162,14 +177,20 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--state", choices=sorted(DOSES))
     ap.add_argument("--trials", type=int, default=200)
+    ap.add_argument("--walk", default="", help="measure a named walk (outer, vault, run3, orbit)")
+    ap.add_argument("--fresh-cache", action="store_true",
+                    help="doomscroll: drop the feed cache per trial, measuring source variety")
     ap.add_argument("--json", default=str(OUT))
     args = ap.parse_args()
 
+    global WALK_NAME, FRESH_CACHE
+    WALK_NAME, FRESH_CACHE = args.walk, args.fresh_cache
     vocab = corpus_vocab()
     chosen = [args.state] if args.state else sorted(DOSES)
     results = []
     for state in chosen:
-        print(f"\n{state}  ·  corpus vocabulary: {len(vocab)} words")
+        label = f" · walk {args.walk}" if args.walk and state == "walk" else ""
+        print(f"\n{state}{label}  ·  corpus vocabulary: {len(vocab)} words")
         for dose in DOSES[state]:
             got = summarise(state, dose, args.trials, vocab)
             results.append(got)

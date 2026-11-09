@@ -439,55 +439,86 @@ def _spec_files(root: Path) -> List[str]:
 
 
 def unstuck_text(steps: int = 1) -> List[str]:
-    """What a brand-new project actually contains, and what it does not.
+    """Directions, one per step, each bound to the evidence that produced it.
 
-    Every missing piece is named. The exit criterion for this state is one direction,
-    and a direction invented over an empty directory is a guess with a confident voice.
+    The state's act is to choose a direction, so its material is *directions* — not a
+    status report. Every direction carries what it came from and a first move that can be
+    started in one turn; a direction with no evidence is a guess with a confident voice
+    and is not offered.
+
+    Memory is an input, not decoration: something the person recently said or stored is
+    what makes a direction *theirs* rather than a generic suggestion. When no memory is
+    readable, that is stated as a missing input instead of being papered over.
     """
     root = storage.project_root()
     if root is None:
         return ["no project root · no .git ancestor above this directory"]
-    lines: List[str] = []
+
+    found: List[tuple[str, str, str]] = []          # direction, evidence, first move
+    missing: List[str] = []
 
     git = _git(root)
-    if git["commits"] is None:
-        lines.append(f"no commits yet · {git['error'] or 'git said nothing'}")
-    else:
-        what = f"{git['commits']} commit(s)"
-        if git["first"]:
-            what += f" · first: {git['first']}"
-        lines.append(f"unstuck: {root.name} · {what}")
-
+    specs = _spec_files(root)
+    readme = next((root / n for n in ("README.md", "README.rst", "README.txt")
+                   if (root / n).is_file()), None)
     try:
-        entries = [c.name + ("/" if c.is_dir() else "") for c in sorted(root.iterdir())
-                   if not c.name.startswith(".")][:12]
+        entries = [c.name for c in root.iterdir() if not c.name.startswith(".")]
     except Exception:
         entries = []
-    lines.append("files: " + (", ".join(entries) if entries else "nothing but dotfiles"))
 
-    readme = next((root / n for n in ("README.md", "README.rst", "README.txt") if (root / n).is_file()), None)
+    if git["commits"] is None:
+        found.append(("decide what this is before writing code",
+                      f"no commits · {git['error'] or 'git said nothing'}",
+                      "write one paragraph in README.md: the thing, for whom, and what it refuses"))
     if readme is None:
-        lines.append("no README · nobody has said what this is")
-    else:
-        try:
-            opening = " ".join(readme.read_text(errors="ignore")[:400].split())[:160]
-        except Exception as exc:
-            opening = f"unreadable · {str(exc).splitlines()[0][:60]}"
-        lines.append(f"README opens: {opening or '(empty)'}")
+        found.append(("state the purpose in a README",
+                      "no README · nobody has said what this is",
+                      "create README.md with four lines: what, for whom, why now, what it is not"))
+    if not specs:
+        found.append(("write the first spec section",
+                      "no spec files yet · the direction is still unchosen",
+                      "create specs/changes/<change>/spec.md with the goal and one acceptance check"))
+    if len(entries) <= 3:
+        found.append(("build the smallest end-to-end slice",
+                      f"only {len(entries)} top-level entr{'y' if len(entries) == 1 else 'ies'}",
+                      "make one command run from input to output, however small, and run it"))
+    if specs and readme and git["commits"]:
+        found.append(("pick the next unfinished acceptance check",
+                      f"{len(specs)} spec file(s) and {git['commits']} commit(s) already exist",
+                      "open the newest spec, find a check with no test, write that test first"))
 
-    specs = _spec_files(root)
-    if specs:
-        lines.append("already decided: " + ", ".join(specs) + " — no longer a greenfield")
+    # memory as an input: what the person said or stored is the subject matter
+    pool = memory_pool()
+    if pool:
+        term = RNG.choice(pool)
+        head = " ".join(term.split())[:60]
+        found.append((f"make '{head}' the subject of the first slice",
+                      "from memory · something you said or stored",
+                      "write one test that uses it, and let the test name the interface"))
     else:
-        lines.append("no spec files yet · the direction is still unchosen")
+        missing.append("memory (nothing said or stored this session, and no readable MEMORY.md)")
 
+    if not found:
+        return ["no direction available · the evidence this state needs is missing: "
+                + "; ".join(missing or ["nothing to read"])]
+
+    RNG.shuffle(found)
+    want = max(0, int(steps))
+    if want == 0:
+        return ["unstuck · no direction asked for at this dose"]
+    take = found[:want] or found[:1]
+    out: List[str] = []
+    for i, (direction, evidence, first) in enumerate(take, start=1):
+        out.append(f"direction {i} · {direction} · because {evidence} · first: {first}")
     try:
         from . import seeding
         seed = seeding.entry("unstuck", when=time.time())
-        lines.append("starts from " + seeding.marker(seed))
+        out.insert(0, "starts from " + seeding.marker(seed))
     except Exception:
         pass
-    return lines
+    if missing:
+        out.append("missing input · " + "; ".join(missing))
+    return out
 
 
 PROVIDERS = {

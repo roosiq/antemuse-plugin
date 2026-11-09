@@ -19,6 +19,7 @@ def _repo(path: Path, commits: int = 0, spec: bool = False) -> Path:
     if spec:
         (path / "specs" / "changes" / "x").mkdir(parents=True, exist_ok=True)
         (path / "specs" / "changes" / "x" / "spec.md").write_text("# x\n")
+        (path / "README.md").write_text("# started\n\nA project that already has a direction.\n")
     for i in range(commits):
         (path / f"f{i}.py").write_text("x = 1\n")
         subprocess.run(["git", "-C", str(path), "add", "."], check=True)
@@ -34,10 +35,11 @@ def test_the_state_exists_with_a_read_only_budget():
 
 
 def test_material_names_what_is_missing_instead_of_inventing_it(monkeypatch, tmp_path):
+    """Every direction is bound to evidence; the evidence IS the missing thing."""
     repo = _repo(tmp_path / "fresh")
     monkeypatch.chdir(repo)
-    lines = " | ".join(sources.unstuck_text())
-    assert "no commits yet" in lines
+    lines = " | ".join(sources.unstuck_text(6))
+    assert "no commits" in lines
     assert "no README" in lines
     assert "no spec files yet" in lines
     assert "invented" not in lines.lower()
@@ -46,9 +48,10 @@ def test_material_names_what_is_missing_instead_of_inventing_it(monkeypatch, tmp
 def test_material_reports_a_project_that_already_has_a_spec(monkeypatch, tmp_path):
     repo = _repo(tmp_path / "started", commits=4, spec=True)
     monkeypatch.chdir(repo)
-    lines = " | ".join(sources.unstuck_text())
-    assert "already decided" in lines and "specs/changes/x/spec.md" in lines
-    assert "no longer a greenfield" in lines
+    lines = " | ".join(sources.unstuck_text(6))
+    assert "spec file(s) and 4 commit(s) already exist" in lines
+    assert "pick the next unfinished acceptance check" in lines
+    assert "no spec files yet" not in lines, "a project with a spec is not a greenfield"
 
 
 def test_the_recommendation_fires_on_a_repository_with_nothing_in_it(monkeypatch, tmp_path):

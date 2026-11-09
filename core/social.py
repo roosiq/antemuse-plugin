@@ -26,10 +26,23 @@ TTL = 600
 UA = "antemuse/0.9 (+https://antemuse.com)"
 TIMEOUT = 8
 
+#: Every feed is one draw from a pool that is shuffled per fetch, so a scroll does not
+#: keep returning the same timeline because it was the first one that answered.
+BLUESKY_FEEDS = [
+    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot",
+    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/thevids",
+    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/with-friends",
+    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/science",
+]
+
+MASTODON_INSTANCES = [
+    "https://fosstodon.org", "https://mastodon.social", "https://hachyderm.io",
+    "https://mstdn.social", "https://techhub.social",
+]
+
 SOURCES = {
-    "bluesky": "https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed"
-               "?feed=at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot&limit=40",
-    "mastodon": "https://fosstodon.org/api/v1/timelines/public?limit=30",
+    "bluesky": "https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed?feed={feed}&limit=40",
+    "mastodon": "{instance}/api/v1/timelines/public?limit=30",
     "hn": "https://hn.algolia.com/api/v1/search?tags=front_page",
     "rss": None,
 }
@@ -37,6 +50,14 @@ SOURCES = {
 FEEDS = [
     "https://feeds.arstechnica.com/arstechnica/index",
     "https://www.theverge.com/rss/index.xml",
+    "https://feeds.bbci.co.uk/news/technology/rss.xml",
+    "https://www.theguardian.com/world/rss",
+    "https://lwn.net/headlines/rss",
+    "https://www.quantamagazine.org/feed/",
+    "https://phys.org/rss-feed/",
+    "https://news.ycombinator.com/rss",
+    "https://www.sciencedaily.com/rss/top/science.xml",
+    "https://www.eff.org/rss/updates.xml",
 ]
 
 
@@ -56,8 +77,24 @@ def _clean(text: str, limit: int = 220) -> str:
     return text[:limit]
 
 
-def _bluesky() -> List[Dict[str, str]]:
-    data = _get(SOURCES["bluesky"])
+def _rotate() -> Dict[str, Any]:
+    """Which feeds this fetch will try, shuffled — the pool is not sampled twice the same."""
+    return {
+        "bluesky": RNG.sample(BLUESKY_FEEDS, min(2, len(BLUESKY_FEEDS))),
+        "mastodon": RNG.sample(MASTODON_INSTANCES, min(2, len(MASTODON_INSTANCES))),
+        "rss": RNG.sample(FEEDS, min(4, len(FEEDS))),
+    }
+
+
+def _bluesky(feeds: List[str] | None = None) -> List[Dict[str, str]]:
+    feeds = feeds or _rotate()["bluesky"]
+    data: Dict[str, Any] = {"feed": []}
+    for feed in feeds:
+        try:
+            got = _get(SOURCES["bluesky"].format(feed=feed))
+        except Exception:
+            continue
+        data["feed"].extend((got or {}).get("feed", []) if isinstance(got, dict) else [])
     out = []
     for item in data.get("feed", []):
         post = item.get("post") or {}
@@ -69,8 +106,17 @@ def _bluesky() -> List[Dict[str, str]]:
     return out
 
 
-def _mastodon() -> List[Dict[str, str]]:
-    data = _get(SOURCES["mastodon"])
+def _mastodon(instances: List[str] | None = None) -> List[Dict[str, str]]:
+    instances = instances or _rotate()["mastodon"]
+    merged: List[Any] = []
+    for host in instances:
+        try:
+            got = _get(SOURCES["mastodon"].format(instance=host))
+        except Exception:
+            continue
+        if isinstance(got, list):
+            merged.extend(got)
+    data = merged
     out = []
     for st in data if isinstance(data, list) else []:
         text = _clean(re.sub(r"<[^>]+>", " ", st.get("content", "")))
@@ -91,9 +137,9 @@ def _hn() -> List[Dict[str, str]]:
     return out
 
 
-def _rss() -> List[Dict[str, str]]:
+def _rss(feeds: List[str] | None = None) -> List[Dict[str, str]]:
     out = []
-    for url in FEEDS:
+    for url in (feeds or _rotate()["rss"]):
         try:
             body = _get(url)
         except Exception:
@@ -139,18 +185,45 @@ def cache(refresh: bool = False, ttl: int = TTL) -> Dict[str, Any]:
 
 
 def pick(steps: int = 1) -> List[str]:
-    """Uniform across sources first, then across items — no feed hogging the scroll."""
+    """Sample across sources, without repeating what this cache already served.
+
+    Stratifying by source (rather than sampling items) stops one loud feed taking the
+    whole scroll. The seen-set is what stops the *next* scroll returning the same six
+    items: when the cache cannot fill a dose with unseen material it refetches, so a
+    scroll that has run dry says so instead of pretending to be new.
+    """
     data = cache()
-    items = data.get("items") or []
-    if not items:
-        missing = ", ".join(data.get("failed") or []) or "no network"
-        return [f"feed unavailable · {missing}"]
-    by_source: Dict[str, List[Dict[str, str]]] = {}
-    for item in items:
-        by_source.setdefault(item["source"], []).append(item)
-    out = []
-    for _ in range(steps):
-        source = RNG.choice(list(by_source))
-        item = RNG.choice(by_source[source])
-        out.append(f"{item['source']} · @{item['author']} · {item['text']}")
-    return out
+    out: List[str] = []
+    for _attempt in range(2):
+        items = data.get("items") or []
+        seen = set(data.get("seen") or [])
+        fresh = [i for i in items if i.get("url") not in seen]
+        if len(fresh) < steps and _attempt == 0:
+            data = cache(refresh=True)
+            continue
+        pool = fresh or items
+        by_source: Dict[str, List[Dict[str, str]]] = {}
+        for item in pool:
+            by_source.setdefault(item["source"], []).append(item)
+        sources_order = list(by_source)
+        RNG.shuffle(sources_order)
+        while len(out) < steps and sources_order:
+            for name in list(sources_order):
+                bucket = by_source[name]
+                if not bucket:
+                    sources_order.remove(name)
+                    continue
+                item = bucket.pop(RNG.randrange(len(bucket)))
+                out.append(f"{item['source']} · @{item['author']} · {item['text']}")
+                seen.add(item.get("url"))
+                if len(out) >= steps:
+                    break
+        data["seen"] = sorted(s for s in seen if s)
+        try:
+            CACHE.write_text(json.dumps(data))
+        except Exception:
+            pass
+        if out:
+            return out
+    missing = ", ".join(data.get("failed") or []) or "no network"
+    return [f"feed unavailable · {missing}"]

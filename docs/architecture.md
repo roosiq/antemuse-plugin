@@ -60,7 +60,7 @@ core/engine.py  ── the one owner of state
   ├── core/states.py        four state definitions: minutes, turns, cadence, tools,
   │                         directive, contract, feeds, restart
   ├── core/options.py       block / allow parsing, refusal of allow without block
-  ├── core/walks.py         WordNet steps: wander, outer, named edge
+  ├── core/walks.py         WordNet steps: wander, outer, vault, run3, orbit
   ├── core/social.py        doomscroll feed, cached, no model calls
   ├── core/photographs.py   stored memories for daydream/dream
   ├── core/mood.py          /mood, reported never inferred
@@ -93,7 +93,7 @@ art pipeline (bake time only; three.js never runs in the client)
 | `core/engine.py` | state lifecycle, ticks, policy, journal, residue, origin | **LIVE** | `tests/test_states.py`, `test_plugin_api.py`; live in this session |
 | `core/states.py` | the four definitions | **LIVE** | durations, turns, cadences pinned by tests |
 | `core/options.py` | `block` / `allow`, refusal of `allow` without `block` | **LIVE** | `enter(..., block=True)` verified against the engine |
-| `core/walks.py` | WordNet 117,659 synsets; `wander`, `outer`, named edges | **LIVE** | `tests/test_walks.py` (FLAKE-1 narrowed, see §10) |
+| `core/walks.py` | WordNet 117,659 synsets; `wander`, `outer`, `vault`, `run3`, `orbit`, named edges | **LIVE** | `tests/test_walks.py` (FLAKE-1 narrowed, see §10) |
 | `core/social.py` | doomscroll feed | **LIVE** | exercised through `tests/test_sources.py` |
 | `core/photographs.py` | stored memories for daydream/dream | **LIVE** | `tests/test_photographs.py` |
 | `core/mood.py` | `/mood`, strain arithmetic | **LIVE** | `tests/test_mood.py` |

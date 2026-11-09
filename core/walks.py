@@ -77,6 +77,32 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
         "seed": {"mode": "continue"},
         "avoid_backtrack": False,
     },
+    "vault": {
+        "title": "Vault — two far jumps per step: the graph it lands in is not the one it left",
+        "graph": "wordnet",
+        "relations": ALL_RELATIONS,
+        "jump": "vault",
+        "samples": 64,
+        "seed": {"mode": "continue"},
+        "avoid_backtrack": False,
+    },
+    "run3": {
+        "title": "Run3 — three adjacent edges reported as one arc, so the step covers distance",
+        "graph": "wordnet",
+        "relations": ALL_RELATIONS,
+        "jump": "run:3",
+        "seed": {"mode": "continue"},
+        "avoid_backtrack": True,
+    },
+    "orbit": {
+        "title": "Orbit — one near edge, then one far jump, alternating",
+        "graph": "wordnet",
+        "relations": ALL_RELATIONS,
+        "jump": "orbit",
+        "samples": 48,
+        "seed": {"mode": "continue"},
+        "avoid_backtrack": True,
+    },
     "lateral": {
         "title": "Lateral — similars, also-sees and opposites, never up or down",
         "graph": "wordnet",
@@ -156,7 +182,8 @@ class WordNetGraph(Graph):
             return None
         return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
 
-    def far_from(self, node: Dict[str, Any], samples: int = 32) -> Optional[Dict[str, Any]]:
+    def far_from(self, node: Dict[str, Any], samples: int = 32,
+                 avoid: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
         """The farthest synset in a small random sample — a jump, not a step.
 
         Distance is WordNet's own path similarity; a candidate with no path at
@@ -169,13 +196,14 @@ class WordNetGraph(Graph):
             return None
         if self._words is None:
             self._words = list(wn.words())      # a corpus view is not a sequence
+        skip = set(avoid or [])
         best, best_sim = None, 2.0
         for _ in range(samples):
             try:
                 cand = wn.synsets(RNG.choice(self._words))[0]
             except Exception:
                 continue
-            if cand.name() == cur.name():
+            if cand.name() in skip or cand.name() == cur.name():
                 continue
             sim = cur.path_similarity(cand)
             score = 0.0 if sim is None else sim
@@ -256,6 +284,9 @@ class GraphWalk:
         self.avoid_backtrack = bool(spec.get("avoid_backtrack", True))
         self.seed_spec = spec.get("seed") or {"mode": "continue"}
         self.jump = spec.get("jump")
+        # how wide a far search looks. Wider is further out: 32 samples is a jump to the
+        # edge of the neighbourhood, 64 is a jump out of it.
+        self.samples = int(spec.get("samples") or 32)
 
     # -- cursor, per walk name, so two walks never fight over one place
     def _cursors(self) -> Dict[str, Dict[str, Any]]:
@@ -332,15 +363,57 @@ class GraphWalk:
         prev_id = self._read_cursor().get("prev", "")
         prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
         out: List[str] = []
-        for _ in range(steps):
-            if self.jump == "far" and hasattr(self.graph, "far_from"):
-                far = self.graph.far_from(node)
-                if far is not None:
-                    gloss = (far.get("gloss") or "").split(";")[0][:90]
-                    out.append(f"{node['label']} ({node['pos'] or 'thing'}) → {far['label']} "
-                               f"({far['pos'] or 'thing'}) · took its far edge"
+        def far(node_, avoid=None):
+            if not hasattr(self.graph, "far_from"):
+                return None
+            return self.graph.far_from(node_, samples=self.samples, avoid=avoid)
+
+        def line(a, b, how):
+            gloss = (b.get("gloss") or "").split(";")[0][:90]
+            return (f"{a['label']} ({a['pos'] or 'thing'}) → {b['label']} "
+                    f"({b['pos'] or 'thing'}) · {how}"
+                    + (f" · “{gloss}”" if gloss else ""))
+
+        for n in range(steps):
+            # --- navigation policies that leave the neighbourhood -----------------
+            if self.jump == "vault":
+                near = far(node, avoid=[prev_id])
+                beyond = far(near, avoid=[node["id"], prev_id]) if near else None
+                if near is not None and beyond is not None:
+                    gloss = (beyond.get("gloss") or "").split(";")[0][:90]
+                    out.append(f"{node['label']} → {beyond['label']} "
+                               f"({beyond['pos'] or 'thing'}) · vaulted past {near['label']}"
                                + (f" · “{gloss}”" if gloss else ""))
-                    prev_id, node = node["id"], far
+                    prev_id, node = near["id"], beyond
+                    continue
+            elif self.jump == "orbit" and n % 2 == 0:
+                skip = far(node, avoid=[prev_id])
+                if skip is not None:
+                    out.append(line(node, skip, "took its far edge"))
+                    prev_id, node = node["id"], skip
+                    continue
+            elif isinstance(self.jump, str) and self.jump.startswith("run:"):
+                length = max(2, int(self.jump.split(":", 1)[1]))
+                start, chain, rels, walked = node, [node], [], prev_id
+                for _ in range(length):
+                    opts = [(r, c) for r, c in self.graph.edges(chain[-1])
+                            if r in self.relations and c["id"] != walked]
+                    if not opts:
+                        break
+                    rel, nxt = RNG.choice(opts)
+                    rels.append(rel)
+                    walked, chain = chain[-1]["id"], chain + [nxt]
+                if len(chain) > 2:
+                    names = " → ".join(c["label"] for c in chain)
+                    out.append(f"{names} · ran {len(chain) - 1} edges "
+                               f"({', '.join(sorted(set(rels)))})")
+                    prev_id, node = chain[-2]["id"], chain[-1]
+                    continue
+            elif self.jump == "far":
+                skip = far(node, avoid=[prev_id])
+                if skip is not None:
+                    out.append(line(node, skip, "took its far edge"))
+                    prev_id, node = node["id"], skip
                     continue
             options = [(rel, n) for rel, n in self.graph.edges(node) if rel in self.relations]
             if not options:

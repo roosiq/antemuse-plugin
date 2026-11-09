@@ -1,471 +1,65 @@
 [
   {
-    "state": "daydream",
-    "dose": 1,
-    "trials": 150,
-    "served_per_trial": 1.0,
-    "novel_rate": 0.6333333333333333,
-    "fresh_rate": 1.0,
-    "by_position": {
-      "1": {
-        "novel": 0.6333333333333333,
-        "fresh": 1.0,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.14248861160625864,
-    "diversity": 0.8866666666666667,
-    "empty_trials": 0
-  },
-  {
-    "state": "daydream",
-    "dose": 2,
-    "trials": 150,
-    "served_per_trial": 2.0,
-    "novel_rate": 0.7,
-    "fresh_rate": 1.0,
-    "by_position": {
-      "1": {
-        "novel": 0.7333333333333333,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.6666666666666666,
-        "fresh": 1.0,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.15244560170302743,
-    "diversity": 0.8,
-    "empty_trials": 0
-  },
-  {
-    "state": "daydream",
-    "dose": 4,
-    "trials": 150,
-    "served_per_trial": 4.0,
-    "novel_rate": 0.6316666666666667,
-    "fresh_rate": 0.9766666666666667,
-    "by_position": {
-      "1": {
-        "novel": 0.66,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.6133333333333333,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.64,
-        "fresh": 0.9733333333333334,
-        "n": 150
-      },
-      "4": {
-        "novel": 0.6133333333333333,
-        "fresh": 0.9333333333333333,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.1482217021557123,
-    "diversity": 0.6183333333333333,
-    "empty_trials": 0
-  },
-  {
-    "state": "doomscroll",
-    "dose": 1,
-    "trials": 150,
-    "served_per_trial": 1.0,
-    "novel_rate": 0.8133333333333334,
-    "fresh_rate": 1.0,
-    "by_position": {
-      "1": {
-        "novel": 0.8133333333333334,
-        "fresh": 1.0,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.05779399479089882,
-    "diversity": 0.48,
-    "empty_trials": 0
-  },
-  {
-    "state": "doomscroll",
-    "dose": 3,
-    "trials": 150,
-    "served_per_trial": 3.0,
-    "novel_rate": 0.8555555555555555,
-    "fresh_rate": 0.9888888888888889,
-    "by_position": {
-      "1": {
-        "novel": 0.88,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.8466666666666667,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.84,
-        "fresh": 0.9666666666666667,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.05839705614046385,
-    "diversity": 0.21555555555555556,
-    "empty_trials": 0
-  },
-  {
-    "state": "doomscroll",
-    "dose": 6,
-    "trials": 150,
-    "served_per_trial": 6.0,
-    "novel_rate": 0.8455555555555555,
-    "fresh_rate": 0.9677777777777777,
-    "by_position": {
-      "1": {
-        "novel": 0.7933333333333333,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.9066666666666666,
-        "fresh": 0.9866666666666667,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.82,
-        "fresh": 0.9533333333333334,
-        "n": 150
-      },
-      "4": {
-        "novel": 0.86,
-        "fresh": 0.9666666666666667,
-        "n": 150
-      },
-      "5": {
-        "novel": 0.8666666666666667,
-        "fresh": 0.96,
-        "n": 150
-      },
-      "6": {
-        "novel": 0.8266666666666667,
-        "fresh": 0.94,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.05835587359943978,
-    "diversity": 0.10888888888888888,
-    "empty_trials": 0
-  },
-  {
-    "state": "dream",
-    "dose": 1,
-    "trials": 150,
-    "served_per_trial": 1.0,
-    "novel_rate": 0.05333333333333334,
-    "fresh_rate": 1.0,
-    "by_position": {
-      "1": {
-        "novel": 0.05333333333333334,
-        "fresh": 1.0,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.10651206201206201,
-    "diversity": 1.0,
-    "empty_trials": 0
-  },
-  {
-    "state": "dream",
-    "dose": 2,
-    "trials": 150,
-    "served_per_trial": 2.0,
-    "novel_rate": 0.08333333333333333,
-    "fresh_rate": 0.9066666666666666,
-    "by_position": {
-      "1": {
-        "novel": 0.06,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.10666666666666667,
-        "fresh": 0.8133333333333334,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.10825667620969635,
-    "diversity": 1.0,
-    "empty_trials": 0
-  },
-  {
-    "state": "dream",
-    "dose": 4,
-    "trials": 150,
-    "served_per_trial": 4.0,
-    "novel_rate": 0.07166666666666667,
-    "fresh_rate": 0.8266666666666667,
-    "by_position": {
-      "1": {
-        "novel": 0.08,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.08666666666666667,
-        "fresh": 0.88,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.06,
-        "fresh": 0.78,
-        "n": 150
-      },
-      "4": {
-        "novel": 0.06,
-        "fresh": 0.6466666666666666,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.1087769996632873,
-    "diversity": 1.0,
-    "empty_trials": 0
-  },
-  {
     "state": "unstuck",
     "dose": 0,
-    "trials": 150,
+    "trials": 30,
     "served_per_trial": 0.0,
     "novel_rate": null,
     "fresh_rate": null,
     "by_position": {},
     "mean_distance": null,
     "diversity": null,
-    "empty_trials": 150
+    "empty_trials": 30
   },
   {
     "state": "unstuck",
     "dose": 1,
-    "trials": 150,
-    "served_per_trial": 5.0,
+    "trials": 30,
+    "served_per_trial": 2.0,
     "novel_rate": 0.0,
     "fresh_rate": 1.0,
     "by_position": {
       "1": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 150
+        "n": 30
       },
       "2": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.0,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "4": {
-        "novel": 0.0,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "5": {
-        "novel": 0.0,
-        "fresh": 1.0,
-        "n": 150
+        "n": 30
       }
     },
-    "mean_distance": null,
-    "diversity": 0.006666666666666667,
+    "mean_distance": 0.07019230769230769,
+    "diversity": 0.23333333333333334,
     "empty_trials": 0
   },
   {
     "state": "unstuck",
     "dose": 2,
-    "trials": 150,
-    "served_per_trial": 5.0,
+    "trials": 30,
+    "served_per_trial": 3.0,
     "novel_rate": 0.0,
     "fresh_rate": 1.0,
     "by_position": {
       "1": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 150
+        "n": 30
       },
       "2": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 150
+        "n": 30
       },
       "3": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 150
-      },
-      "4": {
-        "novel": 0.0,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "5": {
-        "novel": 0.0,
-        "fresh": 1.0,
-        "n": 150
+        "n": 30
       }
     },
-    "mean_distance": null,
-    "diversity": 0.006666666666666667,
-    "empty_trials": 0
-  },
-  {
-    "state": "walk",
-    "dose": 3,
-    "trials": 150,
-    "served_per_trial": 3.0,
-    "novel_rate": 0.6955555555555556,
-    "fresh_rate": 0.8711111111111111,
-    "by_position": {
-      "1": {
-        "novel": 0.6866666666666666,
-        "fresh": 0.9933333333333333,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.7133333333333334,
-        "fresh": 0.8333333333333334,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.6866666666666666,
-        "fresh": 0.7866666666666666,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.3021969680320247,
-    "diversity": 0.84,
-    "empty_trials": 0
-  },
-  {
-    "state": "walk",
-    "dose": 6,
-    "trials": 150,
-    "served_per_trial": 6.0,
-    "novel_rate": 0.7,
-    "fresh_rate": 0.7988888888888889,
-    "by_position": {
-      "1": {
-        "novel": 0.7266666666666667,
-        "fresh": 0.9866666666666667,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.6866666666666666,
-        "fresh": 0.8066666666666666,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.6866666666666666,
-        "fresh": 0.7866666666666666,
-        "n": 150
-      },
-      "4": {
-        "novel": 0.68,
-        "fresh": 0.76,
-        "n": 150
-      },
-      "5": {
-        "novel": 0.7133333333333334,
-        "fresh": 0.7133333333333334,
-        "n": 150
-      },
-      "6": {
-        "novel": 0.7066666666666667,
-        "fresh": 0.74,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.32610882358529675,
-    "diversity": 0.85,
-    "empty_trials": 0
-  },
-  {
-    "state": "walk",
-    "dose": 12,
-    "trials": 150,
-    "served_per_trial": 12.0,
-    "novel_rate": 0.7183333333333334,
-    "fresh_rate": 0.7833333333333333,
-    "by_position": {
-      "1": {
-        "novel": 0.7133333333333334,
-        "fresh": 1.0,
-        "n": 150
-      },
-      "2": {
-        "novel": 0.7666666666666667,
-        "fresh": 0.8533333333333334,
-        "n": 150
-      },
-      "3": {
-        "novel": 0.7733333333333333,
-        "fresh": 0.82,
-        "n": 150
-      },
-      "4": {
-        "novel": 0.72,
-        "fresh": 0.78,
-        "n": 150
-      },
-      "5": {
-        "novel": 0.7066666666666667,
-        "fresh": 0.7533333333333333,
-        "n": 150
-      },
-      "6": {
-        "novel": 0.7,
-        "fresh": 0.7466666666666667,
-        "n": 150
-      },
-      "7": {
-        "novel": 0.7066666666666667,
-        "fresh": 0.76,
-        "n": 150
-      },
-      "8": {
-        "novel": 0.6933333333333334,
-        "fresh": 0.7333333333333333,
-        "n": 150
-      },
-      "9": {
-        "novel": 0.6733333333333333,
-        "fresh": 0.6866666666666666,
-        "n": 150
-      },
-      "10": {
-        "novel": 0.7266666666666667,
-        "fresh": 0.74,
-        "n": 150
-      },
-      "11": {
-        "novel": 0.7533333333333333,
-        "fresh": 0.7666666666666667,
-        "n": 150
-      },
-      "12": {
-        "novel": 0.6866666666666666,
-        "fresh": 0.76,
-        "n": 150
-      }
-    },
-    "mean_distance": 0.29379987905069443,
-    "diversity": 0.7444444444444445,
+    "mean_distance": 0.06971153846153846,
+    "diversity": 0.28888888888888886,
     "empty_trials": 0
   }
 ]

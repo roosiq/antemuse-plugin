@@ -423,6 +423,19 @@ Adding a graph means one class with `resolve`, `random_node`, and `edges`.
 | `upward` | wordnet | hypernym, holonym | — | continue | no |
 | `downward` | wordnet | hyponym, meronym | — | continue | no |
 | `lateral` | wordnet | similar, also, antonym | — | continue | yes |
+| `vault` | wordnet | all | vault (two far jumps) | continue | no |
+| `run3` | wordnet | all | run:3 (three edges per arc) | continue | yes |
+| `orbit` | wordnet | all | orbit (near, far, near, far) | continue | yes |
+
+`vault` widens the far search to 64 samples and jumps twice per step, reporting the
+concept it jumped *past*; `run3` reports three adjacent edges as one arc; `orbit`
+alternates one near edge with one far jump. They exist because measuring the generator
+(§15, `state-settings-experiment`) showed the navigation policy, not the dose, decides
+whether material is new: at 40 trials per cell, adjacent `wander` delivered 68–71 % novel
+concepts with freshness falling to 80 % at dose 12, while `outer` delivered 98–99 % novel
+at 100 % freshness and 100 % distinct lines at every dose. Going further out is not a taste
+— it is the difference between a walk that revisits its own neighbourhood and one that
+does not.
 
 `outer` samples 32 random synsets per step and takes the one with the lowest
 WordNet path similarity, so it jumps rather than steps. Measured over twenty hops
@@ -657,7 +670,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 793 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 805 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
