@@ -186,3 +186,59 @@ from a fresh block.
 4. Every state's report states N per arm, CI, exclusions, and the decision-rule row it hit.
 5. No setting default changes without a report and a linked decision.
 6. If H1 fails for a state, the docs say so in the same release.
+
+## Revision 2026-11-08 — the primary outcome is deterministic, and the model lane is exploratory
+
+Run first, then redesigned. `tools/experiment_run.py` executes real `hermes chat -q` turns,
+and one six-turn entry costs **~4.0 M input tokens**; a 60-per-arm floor for one state would
+have cost ~150 M. A design that cannot be run is not a design.
+
+The question the model lane was built to answer — *does the sixth item earn its keep?* — is
+a question about the **material**, and the material is produced by code. `tools/experiment_deterministic.py`
+runs the state's own provider, parses the poles of every delivered line, and measures, per
+state and dose, with no model and no tokens:
+
+| metric | means | catches |
+|---|---|---|
+| `novel` | share of poles whose head word is not in this repository's own vocabulary (6,011 words) | the state handing back what the project already says |
+| `fresh` | share of poles not already served earlier in the same dose | one item repeated at positions 3–6 |
+| `distinct lines` | unique lines / lines across trials | a frozen source (the same six items every session) |
+
+150 trials per cell, all five states, fifteen cells: **seconds, zero tokens.** Results are in
+`experiments/state-settings/deterministic.json`.
+
+### What the numbers say (measured 2026-11-08)
+
+| state | dose | novel | fresh | distinct lines | reading |
+|---|---|---|---|---|---|
+| walk | 3 / 6 / 12 | 70 / 70 / 72 % | 87 / 80 / 78 % | 84 / 85 / 74 % | novelty is flat with dose; **freshness falls** — at 12, one item in five is a repeat |
+| daydream | 1 / 2 / 4 | 63 / 70 / 63 % | 100 / 100 / 98 % | 89 / 80 / 62 % | 2 is inside the knee; 4 buys repetition |
+| doomscroll | 1 / 3 / 6 | 81 / 86 / 85 % | 100 / 99 / 97 % | 48 / 22 / 11 % | freshness is fine and **variety is not**: the feed is frozen, so six items are near-duplicates across sessions |
+| dream | 1 / 2 / 4 | 5 / 8 / 7 % | 100 / 91 / 83 % | 100 / 100 / 100 % | structurally varied, lexically boilerplate: the forms are template, not invention |
+| unstuck | 0 / 1 / 2 | 0 / 0 / — | 100 / 100 / — | 1 / 1 / — | **dose does nothing** (5 lines at any dose) and every session says the same thing |
+
+### Decision rule (replaces the model-lane table)
+
+1. A dose may not exceed the smallest k at which `fresh` falls below **0.85**.
+   On this data: walk 6 → **4 or fewer**, daydream 2 → **2**, doomscroll 6 → keep, dream 2 → **2**.
+2. `distinct lines < 0.30` is a **source defect**, not a dose problem. It fails doomscroll at
+   dose 6 and unstuck at any dose; the fix is more feed or a real direction source, not a
+   smaller dose.
+3. `novel < 0.20` with `distinct = 1.00` is a **generator defect** (dream): the dose is
+   irrelevant while the forms are template sentences.
+4. No dose changes on this data until the run is at **≥ 150 trials/cell in a clean tree** and
+   the numbers are reproduced by someone other than the person who wrote the tool.
+
+### The model lane is now exploratory
+
+`tools/experiment_run.py` stays, with its ledger, as the *cost and plausibility* check: does
+the material reach a real turn at all, and what does a turn cost. Its outcomes are reported
+as exploratory, never as the decision. The three entries it produced are excluded, and the
+reason is recorded per entry.
+
+### What this revision refuses
+
+- It does not claim a state makes anyone more creative. Novelty is a property of the
+  generator; usage is a property of a mind. The deterministic lane answers the first, and
+  explicitly not the second.
+- It does not treat "more novel" as "better" without a human reading the sample.

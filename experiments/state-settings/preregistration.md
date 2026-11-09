@@ -135,3 +135,30 @@ rather than fixed silently.
 `walk`'s 3-minute ceiling cannot contain a 6-turn dose at real turn latency. Either the
 dose falls to ~3 turns or the ceiling becomes ~8 minutes; that decision waits for the
 experiment, and is recorded here because it was found by running, not by reading.
+
+---
+
+## v2 — the primary outcome is deterministic (2026-11-08)
+
+The model lane was preregistered first and priced second. One six-turn entry measured
+~4.0 M input tokens; the 60-per-arm floor for a single state is ~150 M. The lane is kept
+for cost and plausibility, and **its outcomes are exploratory**.
+
+The primary analysis is now `tools/experiment_deterministic.py`: the state's own provider,
+the poles of each delivered line, and three counts — `novel` against this repository's
+6,011-word vocabulary, `fresh` within a dose, and `distinct lines` across trials. Fifteen
+cells, 150 trials each, seconds, zero model calls.
+
+Frozen in this revision, before the deciding run:
+
+- **Margin:** a dose may not exceed the smallest k where `fresh < 0.85`.
+- **Source defect:** `distinct lines < 0.30` — a frozen source is not a dose finding.
+- **Generator defect:** `novel < 0.20` with `distinct = 1.00` — a template is not invention.
+- **Reproduction:** no dose changes until 150 trials/cell reproduce in a clean tree, by
+  someone who did not write the tool.
+
+Exploratory findings from the first pass (not decisions): walk's freshness falls from 87 %
+at dose 3 to 78 % at 12; doomscroll's variety falls to 11 % distinct lines at dose 6 because
+its feed is frozen; dream is structurally varied and lexically boilerplate; `unstuck` serves
+five lines at any dose and says the same thing every session, so its dose is meaningless
+until its direction source is real.

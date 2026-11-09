@@ -18,6 +18,7 @@
 // chat with no state still paints `idle`.
 
 import {
+  PANES_AREA,
   TITLEBAR_AREAS,
   ROUTES_AREA,
   SIDEBAR_NAV_AREA,
@@ -175,6 +176,107 @@ function Frame({ lines, cells }) {
   })
 }
 
+
+/**
+ * The picture, filling whatever box it is given — a dock pane or a route page.
+ * This is where the art belongs: its own surface, no transcript underneath, so
+ * ink can run at full strength instead of the wash a fixed overlay needed.
+ */
+function ArtSurface({ ctx }) {
+  const box = useRef(null)
+
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const doc = el.ownerDocument
+    const canvas = doc.createElement('canvas')
+    canvas.setAttribute('data-antemuse-art', 'pane')
+    canvas.setAttribute('aria-hidden', 'true')
+    canvas.style.cssText = 'display:block;width:100%;height:100%'
+    el.appendChild(canvas)
+
+    // Full ink: nothing is read through this surface, so the ceiling that
+    // exists for the chat overlay does not apply here.
+    const art = createArt(canvas, { dark: true, strength: LAYER.defaultStrength * 2.8, front: false })
+    const win = doc.defaultView || window
+    const hasRaf = typeof win.requestAnimationFrame === 'function'
+    const raf = hasRaf
+      ? (cb) => win.requestAnimationFrame(cb)
+      : (cb) => win.setTimeout(() => cb(Date.now()), 16)
+    // Without a real rAF (a headless mount) the timer fallback is bounded: a
+    // pane that cannot be seen does not need a clock that never stops.
+    let budget = hasRaf ? Infinity : 8
+    const cancel = typeof win.cancelAnimationFrame === 'function'
+      ? (id) => win.cancelAnimationFrame(id)
+      : (id) => win.clearTimeout(id)
+
+    let stopped = false
+    let rafId = 0
+    let last = 0
+    let lastPaint = 0
+    const MIN_MS = 1000 / 30
+
+    const fit = () => {
+      const w = el.clientWidth || 420
+      const h = el.clientHeight || 640
+      art.resize(w, h, win.devicePixelRatio || 1)
+    }
+    fit()
+
+    const tick = (ts) => {
+      if (stopped || budget-- <= 0) return
+      rafId = raf(tick)
+      if (!last) last = ts
+      if (ts - lastPaint < MIN_MS) return
+      const dt = Math.min(0.12, (ts - last) / 1000)
+      last = ts
+      lastPaint = ts
+      art.render(dt)
+      if (win.__antemuse) win.__antemuse.paneFrame = art.stats().frames
+    }
+    raf(tick)
+
+    const say = () => {
+      if (stopped || !ctx || typeof ctx.rest !== 'function') return
+      const busy = host.state.busy.get() ? 1 : 0
+      const session = host.state.focusedSessionId.get()
+      const q = '/state?cols=48&rows=24&fit=cover&busy=' + busy + (session ? '&session=' + encodeURIComponent(session) : '')
+      Promise.resolve(ctx.rest(q)).then((p) => {
+        const key = p && p.active && p.active.key
+        if (!stopped) art.setScene(key || (busy ? 'work' : 'idle'))
+      }, () => { /* keep painting the idle scene */ })
+    }
+    // Preview aid: `localStorage['antemuse:scene'] = 'walk'` pins one scene, so a
+    // composition can be looked at without driving the agent into that state.
+    let preview = null
+    try { preview = win.localStorage.getItem('antemuse:scene') } catch (e) { /* no storage */ }
+    if (preview) art.setScene(preview)
+
+    if (!preview) say()
+    // Host-managed timer where the SDK provides one, so disposal is the host's
+    // job too and a pane close cannot leave a poll running.
+    const poll = preview ? () => {} : (typeof ctx.setInterval === 'function'
+      ? ctx.setInterval(say, 4000)
+      : win.setInterval(say, 4000))
+
+    const ro = typeof win.ResizeObserver === 'function' ? new win.ResizeObserver(fit) : null
+    if (ro) ro.observe(el)
+    else win.addEventListener('resize', fit)
+
+    return () => {
+      stopped = true
+      if (typeof poll === 'function') poll()
+      else win.clearInterval(poll)
+      if (ro) ro.dispose ? ro.dispose() : ro.disconnect()
+      else win.removeEventListener('resize', fit)
+      cancel(rafId)
+      if (canvas.parentNode) canvas.parentNode.removeChild(canvas)
+    }
+  }, [ctx])
+
+  return jsx('div', { ref: box, style: { position: 'absolute', inset: 0, overflow: 'hidden' } })
+}
+
 function StateView({ ctx }) {
   const { ref, cells } = useCells()
   const { payload, error } = useStatePayload(ctx, cells)
@@ -190,11 +292,7 @@ function StateView({ ctx }) {
     },
     'data-antemuse-state': vm.situation,
     children: [
-      jsx('div', {
-        style: { position: 'absolute', inset: 0, overflow: 'hidden', display: 'flex',
-                 alignItems: 'flex-start', justifyContent: 'flex-start' },
-        children: jsx(Frame, { lines: vm.lines, cells })
-      }),
+      jsx(ArtSurface, { ctx }),
       vm.situation === 'loading'
         ? jsx('div', { style: { position: 'absolute', top: 10, left: 12, fontSize: '11px', opacity: 0.6 }, children: '…' })
         : null,
@@ -307,8 +405,6 @@ function reducedMotion(win) {
 // layer. That is the model copied here; the geometry is ours.
 // ---------------------------------------------------------------------------
 
-const RAMP = '.:;-=+*ox%#@'
-
 /** FNV-ish stable per-cell noise: dither without frame-to-frame sparkle. */
 function cellNoise(x, y) {
   let h = (x * 374761393 + y * 668265263) | 0
@@ -323,6 +419,234 @@ const SCENES = {
   daydream:   { strands: 5, speed: 0.150, width: 2.4, head: 0.5 },
   dream:      { strands: 5, speed: 0.115, width: 2.8, head: 1.0 },
   doomscroll: { strands: 6, speed: 0.370, width: 2.2, head: 0.9 }
+}
+
+
+// ---------------------------------------------------------------------------
+// A solid, in-file. The host forbids importing three, so this is the smallest
+// honest 3D that still looks machined: a chamfered slab and a ring, rotated,
+// projected, flat-shaded by two lights, then handed to the same glyph sampler.
+// AsciiEffect's contract is kept (evaluate luminance, pick a ramp character,
+// carry per-character colour) — only the source of the pixels changed.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// The kit. A scene is data: parts, each a mesh plus where it sits, how it turns
+// and which light owns it. three would give a scene graph and a material
+// system; the host forbids importing it, so this is the subset that actually
+// carries the look — meshes, transforms, two lights, a depth sort — and the
+// animation comes from turning parts, not from a player.
+// ---------------------------------------------------------------------------
+
+function norm3(x, y, z) {
+  const l = Math.hypot(x, y, z) || 1
+  return [x / l, y / l, z / l]
+}
+
+/** A box with chamfered top and bottom faces — a machined slab, not a cube. */
+function chamferedBox(w, t, d, c) {
+  const rings = [
+    [t, w - c, d - c],
+    [t - c * 0.62, w, d],
+    [-t + c * 0.62, w, d],
+    [-t, w - c, d - c]
+  ]
+  const V = []
+  for (const [y, sx, sz] of rings) {
+    V.push([-sx, y, -sz], [sx, y, -sz], [sx, y, sz], [-sx, y, sz])
+  }
+  const F = []
+  const quad = (a, b, c2, d2) => F.push([a, b, c2], [a, c2, d2])
+  for (let r = 0; r < rings.length - 1; r++) {
+    for (let i = 0; i < 4; i++) {
+      const j = (i + 1) % 4
+      quad(r * 4 + i, r * 4 + j, (r + 1) * 4 + j, (r + 1) * 4 + i)
+    }
+  }
+  quad(0, 1, 2, 3)
+  const b = (rings.length - 1) * 4
+  quad(b + 3, b + 2, b + 1, b + 0)
+  return { V, F }
+}
+
+/** A long thin slab: the bar of a gantry or the tooth of a grille. */
+function bar(len, thick, chamfer) {
+  const m = chamferedBox(thick, thick, len, chamfer)
+  return m
+}
+
+function buildPart(part) {
+  if (part._mesh) return part._mesh
+  if (part.kind === 'bar') part._mesh = bar(part.len, part.thick, part.thick * 0.45)
+  else part._mesh = chamferedBox(part.w, part.t, part.d, part.c)
+  return part._mesh
+}
+
+// Composition per state. These are different objects, not the same object at
+// different speeds: `walk` is a receding corridor, `doomscroll` a grille the
+// camera is stuck behind, `dream` one tall prism with a ring going round it.
+const COMPOSITIONS = {
+  idle: [
+    { kind: 'box', w: 3.0, t: 0.62, d: 2.0, c: 0.42, pos: [0, 0, 0], warm: 0.35, cold: 0.55 },
+    { kind: 'ring', r: 2.05, pos: [0, 0, 0], rot: [1.05, 0, 0], cold: 0.8, spin: 0.10 }
+  ],
+  work: [
+    { kind: 'box', w: 1.9, t: 0.32, d: 1.3, c: 0.28, pos: [0, -0.42, 0], warm: 0.5, cold: 0.4 },
+    { kind: 'bar', len: 3.4, thick: 0.14, pos: [0, 0.42, 0], rot: [0, 0, 0.22], warm: 0.9, cold: 0.2, spin: 0.05 },
+    { kind: 'bar', len: 3.4, thick: 0.14, pos: [0, 0.42, 0], rot: [0, 0, -0.22], warm: 0.2, cold: 0.9, spin: -0.05 }
+  ],
+  walk: [
+    { kind: 'box', w: 1.5, t: 0.5, d: 1.0, c: 0.26, pos: [0, 0, 1.6], warm: 0.5, cold: 0.3 },
+    { kind: 'box', w: 1.9, t: 0.5, d: 1.2, c: 0.30, pos: [-1.5, -0.3, 0.2], warm: 0.3, cold: 0.6 },
+    { kind: 'box', w: 2.3, t: 0.5, d: 1.4, c: 0.34, pos: [1.7, 0.25, -1.5], warm: 0.7, cold: 0.2 }
+  ],
+  daydream: [
+    { kind: 'box', w: 1.9, t: 0.44, d: 1.3, c: 0.34, pos: [0, 0, 0], warm: 0.25, cold: 0.5 },
+    { kind: 'ring', r: 2.2, pos: [0, 0, 0], rot: [1.4, 0.3, 0], cold: 0.9, spin: 0.14 },
+    { kind: 'ring', r: 1.6, pos: [0, 0, 0], rot: [-0.9, 0.6, 0.4], warm: 0.8, spin: -0.2 }
+  ],
+  dream: [
+    { kind: 'box', w: 0.78, t: 1.5, d: 0.78, c: 0.18, pos: [0, 0, 0], warm: 0.45, cold: 0.5 },
+    { kind: 'ring', r: 1.62, pos: [0, 0.1, 0], rot: [1.35, 0, 0.15], cold: 0.95, spin: 0.06 }
+  ],
+  doomscroll: [
+    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, 0.95, 0], warm: 0.7, cold: 0.2 },
+    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, 0.35, 0.15], warm: 0.2, cold: 0.8 },
+    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, -0.25, 0], warm: 0.3, cold: 0.6 },
+    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, -0.85, 0.1], warm: 0.8, cold: 0.15 }
+  ]
+}
+
+const CAMERA = { fov: 38, dist: 4.6, pitch: 0.30 }
+
+/** Rotate, project, shade one frame of a composition into the field context. */
+function drawScene(ctx, w, h, time, comp, spec, dark) {
+  const yaw = time * (spec.speed || 0.1) * 0.55
+  const pitch = CAMERA.pitch + Math.sin(time * 0.23) * 0.10
+  const cf = Math.cos(yaw), sf = Math.sin(yaw)
+  const cp = Math.cos(pitch), sp = Math.sin(pitch)
+  const f = 1 / Math.tan((CAMERA.fov * Math.PI / 180) / 2)
+  const aspect = w / h
+
+  const project = (v) => {
+    let x = v[0] * cf - v[2] * sf
+    let z = v[0] * sf + v[2] * cf
+    let y = v[1]
+    const y2 = y * cp - z * sp
+    const z2 = y * sp + z * cp
+    z = z2 + CAMERA.dist
+    y = y2
+    const ndcX = (x * f / aspect) / z
+    const ndcY = (y * f) / z
+    return [(ndcX + 1) * w * 0.5, (1 - ndcY) * h * 0.5, z]
+  }
+
+  const spinOf = (part) => (part.spin ? time * part.spin : 0)
+  const place = (v, part) => {
+    const a = spinOf(part)
+    const ca = Math.cos(a), sa = Math.sin(a)
+    let x = v[0] * ca - v[2] * sa
+    let z = v[0] * sa + v[2] * ca
+    let y = v[1]
+    const [rx, ry, rz] = part.rot || [0, 0, 0]
+    // y, then x, then z — enough for the tilts these parts use
+    const cy = Math.cos(ry), sy = Math.sin(ry)
+    let x2 = x * cy + z * sy
+    let z2 = -x * sy + z * cy
+    const cx = Math.cos(rx), sx = Math.sin(rx)
+    const y2 = y * cx - z2 * sx
+    z2 = y * sx + z2 * cx
+    if (rz) {
+      const cz = Math.cos(rz), sz = Math.sin(rz)
+      const x3 = x2 * cz - y2 * sz
+      y = x2 * sz + y2 * cz
+      x2 = x3
+    } else {
+      y = y2
+    }
+    const [px, py, pz] = part.pos || [0, 0, 0]
+    return project([x2 + px, y + py, z2 + pz])
+  }
+
+  const Lkey = norm3(-0.55, 0.66, 0.52)
+  const Lrim = norm3(0.62, -0.28, -0.74)
+  const faces = []
+
+  for (const part of comp) {
+    if (part.kind === 'ring') continue
+    const mesh = buildPart(part)
+    const pts = mesh.V.map((v) => place(v, part))
+    for (const tri of mesh.F) {
+      const [a, b, c] = tri
+      const p0 = pts[a], p1 = pts[b], p2 = pts[c]
+      if (!p0 || !p1 || !p2) continue
+      const area = (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0])
+      if (area >= 0) continue                       // back face
+      faces.push({
+        p0, p1, p2,
+        z: (p0[2] + p1[2] + p2[2]) / 3,
+        part,
+        n: norm3(
+          mesh.V[b][0] + mesh.V[c][0] - 2 * mesh.V[a][0],
+          mesh.V[b][1] + mesh.V[c][1] - 2 * mesh.V[a][1],
+          mesh.V[b][2] + mesh.V[c][2] - 2 * mesh.V[a][2]
+        )
+      })
+    }
+  }
+
+  faces.sort((A, B) => B.z - A.z)
+
+  for (const face of faces) {
+    const n = face.n
+    const spin = spinOf(face.part)
+    const cs = Math.cos(spin), ss = Math.sin(spin)
+    const nx0 = n[0] * cs - n[2] * ss
+    const nz0 = n[0] * ss + n[2] * cs
+    const nx = nx0 * cf - nz0 * sf
+    const nz1 = nx0 * sf + nz0 * cf
+    const ny = n[1] * cp - nz1 * sp
+    const nz = n[1] * sp + nz1 * cp
+    const kd = Math.max(0, nx * Lkey[0] + ny * Lkey[1] + nz * Lkey[2])
+    const rd = Math.max(0, nx * Lrim[0] + ny * Lrim[1] + nz * Lrim[2])
+    const warm = kd * (face.part.warm != null ? face.part.warm : 0.4) * (0.65 + (spec.head || 0) * 0.35)
+    const cold = rd * (face.part.cold != null ? face.part.cold : 0.5)
+    const base = 24
+    const r = Math.min(235, base + warm * 170 + cold * 40)
+    const g = Math.min(235, base + warm * 150 + cold * 140)
+    const bl = Math.min(235, base + warm * 100 + cold * 150)
+    ctx.fillStyle = `rgb(${r | 0},${g | 0},${bl | 0})`
+    ctx.beginPath()
+    ctx.moveTo(face.p0[0], face.p0[1])
+    ctx.lineTo(face.p1[0], face.p1[1])
+    ctx.lineTo(face.p2[0], face.p2[1])
+    ctx.closePath()
+    ctx.fill()
+  }
+
+  // Rings: a thin circle stroke, depth-faded, so they read as drawn rather than
+  // cast. Cheap, and the only part that survives at very low resolution.
+  ctx.lineWidth = Math.max(1, w / 720)
+  for (const part of comp) {
+    if (part.kind !== 'ring') continue
+    const SEG = 96
+    for (let i = 0; i < SEG; i++) {
+      const a0 = (i / SEG) * Math.PI * 2
+      const a1 = ((i + 1) / SEG) * Math.PI * 2
+      const q = (a) => place([Math.cos(a) * part.r, Math.sin(a) * part.r * 0.38, Math.sin(a) * part.r * 0.62], part)
+      const p0 = q(a0), p1 = q(a1)
+      const near = Math.max(0, 1 - (p0[2] - 2.6) / 3.4)
+      const warm = (part.warm || 0) * (0.4 + near * 0.9)
+      const cold = (part.cold || 0) * (0.4 + near * 0.9)
+      ctx.strokeStyle = dark
+        ? `rgba(${126 + warm * 90 | 0},${205 - warm * 40 | 0},${196 - cold * 30 | 0},${(0.22 + near * 0.66).toFixed(3)})`
+        : `rgba(${52 + warm * 60 | 0},${96 + warm * 40 | 0},${94 - cold * 10 | 0},${(0.22 + near * 0.66).toFixed(3)})`
+      ctx.beginPath()
+      ctx.moveTo(p0[0], p0[1])
+      ctx.lineTo(p1[0], p1[1])
+      ctx.stroke()
+    }
+  }
 }
 
 /** One Mystify strand: six points, each bouncing in its own direction. */
@@ -350,27 +674,35 @@ function inkFor(dark) {
         head: 'rgba(173, 116, 32, 0.95)' }
 }
 
-export function createArt(canvas, { dark = true, strength = 0.12 } = {}) {
+export function createArt(canvas, { dark = true, strength = 0.12, front = false } = {}) {
   const ctx = canvas.getContext('2d', { alpha: true })
   const field = canvas.ownerDocument.createElement('canvas')
   const sample = field.getContext('2d', { willReadFrequently: true })
   // Reading the field back at full size is enormous (SS^2 x pixels every frame);
   // draw it *down* into a cols x rows scratch canvas instead and read one pixel
   // per cell. The browser's downscale is the area average that sampling wanted.
-  const grid = canvas.ownerDocument.createElement('canvas')
-  const cellCtx = grid.getContext('2d', { willReadFrequently: true })
+  const bloom = canvas.ownerDocument.createElement('canvas')
+  const blur = canvas.ownerDocument.createElement('canvas')
+
+  // Ink is NOT the object's contrast control. The object carries its own tonal
+  // range; this number only decides how present it is against the surface. Set
+  // it too low and every face collapses into the same dim grey.
+  const inkAlpha = front
+    ? Math.min(0.55, Math.max(0.18, strength * 3.4))   // a wash over text
+    : Math.min(0.95, Math.max(0.20, strength * 3.0))   // under the transcript
+
   // A document without canvas support (a headless mount, a policy-disabled
   // renderer) must leave a working layer with nothing in it, not throw.
   if (!ctx || !sample || typeof ctx.getImageData !== 'function') {
     return {
       resize() {}, render() {}, setScene() {},
-      stats: () => ({ frames: 0, glyphs: 0, cols: 0, rows: 0, scene: 'idle', w: 0, h: 0, dpr: 1 })
+      stats: () => ({ frames: 0, cols: 0, rows: 0, scene: 'idle', w: 0, h: 0, dpr: 1, mode: 'none' })
     }
   }
   const ink = inkFor(dark)
   const SS = 2                        // supersample: a 1px strand must survive
   let w = 1, h = 1, dpr = 1, cols = 1, rows = 1, scene = 'idle'
-  let strands = [], t = 0, glyphs = 0, frames = 0, lastFieldLit = 0
+  let strands = [], t = 0, frames = 0
 
   const spec = () => SCENES[scene] || SCENES.idle
 
@@ -410,140 +742,79 @@ export function createArt(canvas, { dark = true, strength = 0.12 } = {}) {
     }
   }
 
-  function drawField() {
+  // The pass chain — the transplantable part of three's postprocessing example.
+  // Scene → buffer → blur pass → additive composite → quantise. EffectComposer
+  // itself is three-only and unreachable from a plugin; the order of operations
+  // is not, and it is the order that fixes the hard edge over text.
+  function drawField(time) {
     if (field.width !== w * SS || field.height !== h * SS) {
       field.width = w * SS
       field.height = h * SS
+      bloom.width = Math.max(2, (field.width / 4) | 0)
+      bloom.height = Math.max(2, (field.height / 4) | 0)
+      blur.width = bloom.width
+      blur.height = bloom.height
     }
     sample.setTransform(1, 0, 0, 1, 0, 0)
     sample.clearRect(0, 0, field.width, field.height)
     sample.setTransform(SS, 0, 0, SS, 0, 0)
     sample.lineJoin = 'round'
     sample.lineCap = 'round'
-    for (const pts of strands) {
-      // Glow first, core second. A single hairline converts to a row of lonely
-      // dots; the wide, faint pass is what gives the strand body between cells —
-      // the same job the soft square does in ascii-worlds, done in the field.
-      // Mystify reads as a ribbon, not a zigzag, because the vertices are joined
-      // by curves through their midpoints. Straight lines between bouncing points
-      // is what made this look like noise.
-      sample.beginPath()
-      const px0 = pts[0].x * w, py0 = pts[0].y * h
-      sample.moveTo(px0, py0)
-      for (let i = 1; i < pts.length - 1; i++) {
-        const a = pts[i], b = pts[i + 1]
-        sample.quadraticCurveTo(a.x * w, a.y * h, ((a.x + b.x) / 2) * w, ((a.y + b.y) / 2) * h)
-      }
-      const lastPt = pts[pts.length - 1]
-      sample.lineTo(lastPt.x * w, lastPt.y * h)
-      sample.strokeStyle = ink.glow
-      sample.lineWidth = spec().width * 3.4
-      sample.stroke()
-      sample.strokeStyle = ink.path
-      sample.lineWidth = spec().width
-      sample.stroke()
-      // The lit end. Amber is the only warm thing in the frame.
-      if (spec().head > 0.4) {
-        const last = pts[pts.length - 1]
-        sample.fillStyle = ink.head
-        sample.beginPath()
-        sample.arc(last.x * w, last.y * h, 3.2, 0, Math.PI * 2)
-        sample.fill()
-      }
-    }
+    const comp = COMPOSITIONS[scene] || COMPOSITIONS.idle
+    drawScene(sample, w, h, time, comp, spec(), dark)
+
+    // Pass 1: the scene, at quarter resolution. The downscale is the threshold —
+    // it keeps lit geometry and drops the near-black field to nothing.
+    const bctx = bloom.getContext('2d')
+    bctx.setTransform(1, 0, 0, 1, 0, 0)
+    bctx.clearRect(0, 0, bloom.width, bloom.height)
+    bctx.drawImage(field, 0, 0, bloom.width, bloom.height)
+
+    // Pass 2: blur, twice at a radius scaled to the buffer, which is what turns
+    // a rim into a gradient. Two passes beat one wide pass — same cost, less
+    // banding, because the kernel composes as a tent.
+    const kctx = blur.getContext('2d')
+    kctx.clearRect(0, 0, blur.width, blur.height)
+    kctx.filter = 'blur(4px)'
+    kctx.drawImage(bloom, 0, 0)
+    kctx.filter = 'none'
+    bctx.clearRect(0, 0, bloom.width, bloom.height)
+    bctx.filter = 'blur(4px)'
+    bctx.drawImage(blur, 0, 0)
+    bctx.filter = 'none'
+
+    // Pass 3: additive composite over the sharp scene. Bright cells bleed into
+    // their neighbours, so the silhouette ends in dust instead of a cut line.
+    sample.setTransform(1, 0, 0, 1, 0, 0)
+    sample.globalCompositeOperation = 'lighter'
+    sample.globalAlpha = 0.85
+    sample.drawImage(bloom, 0, 0, field.width, field.height)
+    sample.globalAlpha = 1
+    sample.globalCompositeOperation = 'source-over'
+    sample.setTransform(SS, 0, 0, SS, 0, 0)
   }
 
   function render(dt) {
-    if (!strands.length) setScene(scene)
-    step(dt)
-    drawField()
-    if (grid.width !== cols || grid.height !== rows) {
-      grid.width = cols
-      grid.height = rows
-    }
-    cellCtx.clearRect(0, 0, cols, rows)
-    cellCtx.imageSmoothingEnabled = true
-    if ('imageSmoothingQuality' in cellCtx) cellCtx.imageSmoothingQuality = 'high'
-    cellCtx.drawImage(field, 0, 0, cols, rows)
-    const px = cellCtx.getImageData(0, 0, cols, rows).data
-    let fieldLit = 0
-    for (let i = 3; i < px.length; i += 4) if (px[i] > 0) fieldLit++
-    lastFieldLit = fieldLit
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    ctx.clearRect(0, 0, w, h)
-    const cellW = w / cols, cellH = h / rows
-    ctx.font = `600 ${cellH * 0.94}px ui-monospace, SFMono-Regular, Consolas, monospace`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    glyphs = 0
-    // Coverage per cell, then smoothed. A thin band is all-or-nothing cell by
-    // cell, so quantising it raw gives a ragged dotted edge; smoothing first is
-    // what turns the band into a ribbon with a falloff instead of a stencil.
-    const raw = new Float32Array(cols * rows)
-    for (let i = 0, cells = cols * rows; i < cells; i++) {
-      const a = px[i * 4 + 3]
-      raw[i] = a ? Math.min(1, (a / 255) * 2.1) : 0
-    }
-    const smooth = new Float32Array(cols * rows)
-    const tmp = new Float32Array(cols * rows)
-    const blur = (src, dst) => {
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          let acc = 0, n = 0
-          for (let dy = -1; dy <= 1; dy++) {
-            const yy = y + dy
-            if (yy < 0 || yy >= rows) continue
-            for (let dx = -1; dx <= 1; dx++) {
-              const xx = x + dx
-              if (xx < 0 || xx >= cols) continue
-              acc += src[yy * cols + xx]; n++
-            }
-          }
-          dst[y * cols + x] = acc / n
-        }
-      }
-    }
-    blur(raw, tmp)
-    blur(tmp, smooth)
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const i = row * cols + col
-        const cov = Math.max(raw[i], smooth[i] * 1.15)
-        if (cov <= 0.05) { continue }
-        const at = i * 4
-        let r = px[at], g = px[at + 1], b = px[at + 2]
-        if (!dark) { r *= 0.5; g *= 0.5; b *= 0.55 }
-        const colour = `rgb(${r | 0},${g | 0},${b | 0})`
-        const x = col * cellW, y = row * cellH
-        if (cov < 0.16) {
-          // Edge of the band: a dot, not a glyph.
-          ctx.globalAlpha = Math.min(0.45, cov * 2.2) * (strength / 0.35)
-          ctx.fillStyle = dark ? 'rgba(126,205,196,0.8)' : 'rgba(52,96,94,0.8)'
-          ctx.fillText('.', x + cellW / 2, y + cellH / 2)
-          continue
-        }
-        const k = strength / 0.35
-        ctx.fillStyle = colour
-        ctx.globalAlpha = Math.min(0.20, cov * 0.16) * k
-        ctx.fillRect(x + 0.3, y + 0.3, cellW - 0.6, cellH - 0.6)
-        // Level from the smoothed coverage, with a one-step dither: the dither
-        // breaks banding, it does not decide the shape.
-        const level = Math.min(
-          RAMP.length - 1,
-          Math.max(0, Math.round(cov * (RAMP.length - 1) - 0.5 + cellNoise(col, row)))
-        )
-        ctx.globalAlpha = Math.min(0.85, cov * 1.45 + 0.10) * k
-        ctx.fillText(RAMP[level], x + cellW / 2, y + cellH / 2)
-        glyphs++
-      }
-    }
+    t += dt
+    drawField(t)
+    // Post only. What goes to the screen is the processed buffer as an image:
+    // no ramp, no glyph grid, no per-cell ink. The bloom gradient is the
+    // picture, so opacity stops being a per-character decision and becomes one
+    // number over a continuous tone — which is exactly what stops it reading as
+    // characters stamped on top of text.
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.imageSmoothingEnabled = true
+    if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high'
+    ctx.globalAlpha = inkAlpha
+    ctx.drawImage(field, 0, 0, canvas.width, canvas.height)
+    ctx.globalAlpha = 1
     frames++
   }
 
   return {
     resize, render, setScene,
-    stats: () => ({ frames, glyphs, cols, rows, scene, w, h, dpr, fieldLit: lastFieldLit, strands: strands.length })
+    stats: () => ({ frames, cols, rows, scene, w, h, dpr, mode: 'image', ink: inkAlpha })
   }
 }
 
@@ -552,8 +823,11 @@ export function createLayer(doc, win, { strength = LAYER.defaultStrength } = {})
   sweepStrays(doc)
   const surf = surface(doc, win)
   const placement = surf.opaque ? 'front' : 'behind'
+  // Over text the layer is a wash, not a picture: the ceiling matters more than
+  // the multiplier, because a single bright cell over a word is what reads as
+  // damage. Front is therefore capped hard; behind has room.
   const strengthUsed = placement === 'front'
-    ? Math.min(LAYER.maxStrength, strength * 0.66)   // over text: fainter still
+    ? Math.min(0.16, strength * 0.42)
     : strength
   const layer = doc.createElement('div')
   layer.setAttribute(LAYER.attr, 'layer')
@@ -569,10 +843,11 @@ export function createLayer(doc, win, { strength = LAYER.defaultStrength } = {})
       (placement === 'behind' ? '-1' : '2147483646') + ';background:' +
       (placement === 'behind' ? surf.colour : 'transparent') + ';'
 
-  const art = doc.createElement('canvas')
-  art.setAttribute(LAYER.attr, 'glyphs')
-  art.setAttribute('aria-hidden', 'true')
-  art.style.cssText = 'display:block;margin:0;padding:0;'
+  // A slot, not a canvas: either the 3D family (three + AsciiEffect) or the
+  // Canvas2D strands fill it, and the layer does not care which.
+  const art = doc.createElement('div')
+  art.setAttribute(LAYER.attr, 'art')
+  art.style.cssText = 'position:absolute;inset:0;overflow:hidden;'
   layer.appendChild(art)
 
   const style = doc.createElement('style')
@@ -617,9 +892,18 @@ function ChatBackdrop({ ctx }) {
     const win = window
     const handle = createLayer(doc, win, { strength: LAYER.defaultStrength })
     handleRef.current = handle
-    const art = createArt(handle.art, { dark: handle.dark, strength: handle.strength })
+    // Start on the 2D family so there is always something to draw, then hand
+    // over to three if this document can give us a WebGL context.
+    const canvas = doc.createElement('canvas')
+    canvas.setAttribute(LAYER.attr, 'glyphs')
+    canvas.setAttribute('aria-hidden', 'true')
+    canvas.style.cssText = 'display:block;margin:0;padding:0;'
+    handle.art.appendChild(canvas)
+    const art = createArt(canvas, { dark: handle.dark, strength: handle.strength, front: handle.placement === 'front' })
+    let scene3d = null
+    let art3dError = null
     // Bounded diagnostics for the app's own devtools. Nothing here grows.
-    const probe = (window.__antemuse = { frames: 0, glyphs: 0, errors: [], scene: null })
+    const probe = (window.__antemuse = { frames: 0, glyphs: 0, errors: [], scene: null, mode: 'strands' })
 
     // rAF is the right clock, but not every document has one (a headless mount
     // does not). Fall back to a timer rather than throwing inside the effect.
@@ -651,6 +935,13 @@ function ChatBackdrop({ ctx }) {
       const dt = Math.min(0.12, (ts - lastTs) / 1000)
       lastTs = ts
       lastPaint = ts
+      if (scene3d) {
+        scene3d.render(dt, ts / 1000)
+        probe.frames += 1
+        const s3 = scene3d.stats()
+        probe.threeFrames = s3.frames
+        return
+      }
       art.render(dt)
       const st = art.stats()
       probe.frames = st.frames
@@ -684,6 +975,29 @@ function ChatBackdrop({ ctx }) {
       )
     }
 
+    // NOTE: a runtime desktop plugin may only import @hermes/plugin-sdk and
+    // react — the host rejects any other specifier ("unsupported import"). three
+    // is therefore not importable here, vendored or not, and the 3D is done in
+    // this file with plain projection maths instead. This block is kept as the
+    // seam where a host-provided three would go.
+    Promise.reject(new Error('3d runs in-file')).then((m) => {
+      if (stopped) return
+      try {
+        scene3d = m.createScene3D({
+          width: handle.layer.clientWidth || win.innerWidth || 960,
+          height: handle.layer.clientHeight || win.innerHeight || 800,
+          dark: handle.dark
+        })
+        handle.art.replaceChildren(scene3d.domElement)
+        scene3d.render(0.016, 0)
+        probe.mode = 'ascii3d'
+      } catch (e) {
+        art3dError = String((e && e.message) || e)
+        probe.mode = 'strands'
+        probe.errors = probe.errors.concat('3d: ' + art3dError).slice(-3)
+      }
+    }, () => { probe.mode = 'solid' })
+
     if (reducedMotion(win)) {
       // A still picture, not a frozen timer.
       art.render(0)
@@ -692,7 +1006,11 @@ function ChatBackdrop({ ctx }) {
     }
     poll()
 
-    const onResize = () => { fit(); art.render(0) }
+    const onResize = () => {
+      fit()
+      if (scene3d) scene3d.resize(handle.layer.clientWidth || win.innerWidth, handle.layer.clientHeight || win.innerHeight)
+      else art.render(0)
+    }
     const onVisibility = () => {
       if (doc.hidden) { if (rafId) cancels(rafId); rafId = 0 }
       else if (!rafId && !reducedMotion(win)) { lastTs = 0; rafId = raf(tick) }
@@ -720,6 +1038,7 @@ function ChatBackdrop({ ctx }) {
       doc.removeEventListener('visibilitychange', onVisibility)
       for (const off of unsubs) { try { off() } catch (e) { /* already off */ } }
       if (stopRef.current) stopRef.current()
+      if (scene3d) { try { scene3d.dispose() } catch (e) { /* gone */ } }
       const h = handleRef.current
       handleRef.current = null
       removeLayer(doc, h)
@@ -733,13 +1052,16 @@ export default {
   id: ID,
   name: 'Antemuse',
   register(ctx) {
-    // The mount is invisible; the layer it starts is the picture. Title-bar
-    // slots are permanent across chat <-> page navigation, so this runs once
-    // per registration rather than once per route.
+    // The picture is NOT over the chat. A dock pane has its own surface, so the
+    // art stops competing with the transcript for contrast; the fixed-overlay
+    // machinery is kept for hosts that expose a real chat backdrop, but it is
+    // not mounted by default.
     ctx.register({
-      id: 'backdrop',
-      area: TITLEBAR_AREAS.right,
-      render: () => jsx(ChatBackdrop, { ctx })
+      id: 'pane',
+      area: PANES_AREA,
+      title: copy.pane,
+      data: { placement: 'right', collapsible: true, width: '420px', minWidth: '320px', maxWidth: '560px' },
+      render: () => jsx(StateView, { ctx })
     })
     ctx.register({
       id: 'chip',

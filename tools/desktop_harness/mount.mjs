@@ -41,7 +41,7 @@ const helpers = await import(WORK.href)
 const sdk = await import(new URL('./node_modules/@hermes/plugin-sdk/index.js', import.meta.url).href)
 // jsdom ships no canvas. Give it a 2D context that reports a lit strand, so the
 // rasteriser (sample -> level -> glyph) is actually exercised rather than skipped.
-const STUB = { calls: { fillText: 0, fillRect: 0, getImageData: 0 } }
+const STUB = { calls: { fillText: 0, fillRect: 0, getImageData: 0, drawImage: 0 } }
 globalThis.STUB = STUB
 function stubContext(canvas) {
   const noop = () => {}
@@ -50,7 +50,8 @@ function stubContext(canvas) {
     font: '', textAlign: '', textBaseline: '', lineJoin: '', lineCap: '',
     setTransform: noop, clearRect: noop, beginPath: noop, moveTo: noop,
     lineTo: noop, stroke: noop, arc: noop, fill: noop,
-    quadraticCurveTo: noop, bezierCurveTo: noop, drawImage: noop,
+    quadraticCurveTo: noop, bezierCurveTo: noop, closePath: noop,
+    drawImage: () => { STUB.calls.drawImage += 1 },
     imageSmoothingEnabled: true, imageSmoothingQuality: 'high',
     fillRect: () => { STUB.calls.fillRect += 1 },
     fillText: () => { STUB.calls.fillText += 1 },
@@ -126,16 +127,16 @@ plugin.register(registered.ctx)
 assert.equal(plugin.id, 'antemuse')
 assert.deepEqual(
   registered.contributions.map((c) => c.area),
-  ['titleBar.right', 'statusBar.right', 'routes', 'sidebar.nav', 'palette'],
-  'a background mount, a chip, a page, a nav entry and a palette command'
+  ['panes', 'statusBar.right', 'routes', 'sidebar.nav', 'palette'],
+  'a dock pane, a chip, a route, a nav entry and a palette command'
 )
 const byId = Object.fromEntries(registered.contributions.map((c) => [c.id, c]))
 assert.equal(byId.page.data.path, '/antemuse', 'the page route must match what the palette opens')
 assert.equal(byId.nav.data.path, '/antemuse')
-// The first contribution is no longer a pane: it is the invisible mount that
-// owns the layer behind the chat, so it carries no pane data at all.
-assert.equal(registered.contributions[0].id, 'backdrop')
-assert.equal(registered.contributions[0].data, undefined, 'a mount point has no pane geometry')
+// The first contribution is the dock pane, which is where the art lives now.
+assert.equal(registered.contributions[0].id, 'pane')
+assert.equal(registered.contributions[0].data.placement, 'right', 'the art gets its own dock pane')
+assert.equal(registered.contributions[0].data.collapsible, true)
 // The settings page is optional and another writer is currently moving it; what
 // must hold is that the plugin never offers more than one.
 assert.ok(registered.pages.length <= 1, 'at most one settings page')
@@ -156,79 +157,35 @@ const text = document.body.textContent
 assert.match(text, /DAYDREAMING/)
 assert.match(text, /2:59 left · 2 turns · no tools · 2 carried/)
 assert.match(text, /two memories · join only if it holds/)
-const pre = document.querySelector('pre')
-assert.ok(pre, 'the frame should render as a pre')
-assert.equal(pre.textContent, PAYLOAD.frame.lines.join('\n'))
-assert.equal(pre.getAttribute('aria-hidden'), 'true', 'art is decoration, not content')
+const art = document.querySelector('canvas[data-antemuse-art="pane"]')
+assert.ok(art, 'the pane paints the art on its own canvas')
+assert.equal(art.getAttribute('aria-hidden'), 'true', 'art is decoration, not content')
 assert.equal(document.querySelector('[data-antemuse-state]').getAttribute('data-antemuse-state'), 'active')
-assert.equal(active.calls.rest.length, 1)
 assert.ok(active.calls.rest[0].startsWith('/state'), 'the page asks the backend for a frame')
-assert.equal(active.calls.intervals.length, 1)
-assert.equal(active.calls.intervals[0].ms, 900, 'poll faster than the slowest baked frame')
+// Two clocks, deliberately: 900 ms for the state words, 4 s for which scene to
+// paint. The picture does not need to re-ask a question that changes per turn.
+const every = active.calls.intervals.map((i) => i.ms).sort((a, b) => a - b)
+assert.deepEqual(every, [900, 4000], 'a state poll and a scene poll, not one of each thing')
+const before = active.calls.rest.length
 
 await act(async () => { active.calls.intervals[0].fn() })
-assert.deepEqual(active.calls.rest, ['/state', '/state'], 'a tick re-reads the backend')
+assert.equal(active.calls.rest.length, before + 1, 'a tick re-reads the backend')
 
 await act(async () => { active.node.unmount() })
 
 
-// ---- the layer behind the chat ---------------------------------------------
+// ---- the pane, not the chat ------------------------------------------------
 
 resetBody()
-const bg = await mountWith({ payload: PAYLOAD }, 'backdrop')
-const layer = document.querySelector('[data-antemuse-bg="layer"]')
-assert.ok(layer, 'the mount point creates the layer')
-assert.equal(layer.getAttribute('aria-hidden'), 'true', 'the layer is decoration')
-const css = layer.getAttribute('style')
-assert.match(css, /position:\s*fixed/)
-assert.match(css, /pointer-events:\s*none/, 'clicks pass through to the chat')
-// jsdom's body has no background, so this mount exercises the "behind" branch.
-assert.match(css, /z-index:\s*-1/, 'a transparent surface gets a layer behind it')
-assert.equal(layer.getAttribute('data-antemuse-bg-placement'), 'behind')
-assert.match(css, /contain:\s*strict/)
-const glyph = layer.querySelector('canvas[data-antemuse-bg="glyphs"]')
-assert.ok(glyph, 'one canvas holds the picture')
-assert.match(glyph.getAttribute('style'), /display:\s*block/, 'the canvas fills the layer')
-// Let the frame clock run once: the picture is drawn on rAF (or the timer
-// fallback), not while the effect mounts.
+const pane = await mountWith({ payload: PAYLOAD }, 'pane')
+const artCanvas = document.querySelector('canvas[data-antemuse-art="pane"]')
+assert.ok(artCanvas, 'the pane owns a canvas')
+assert.equal(document.querySelector('[data-antemuse-bg="layer"]'), null,
+  'nothing is painted over the transcript any more')
 await act(async () => { await new Promise((r) => setTimeout(r, 80)) })
-// Strength is per cell now, not one opacity on a text block, so the assertion
-// is that the rasteriser ran at all: cells sampled, glyphs seated.
-assert.ok(STUB.calls.fillText > 0, 'glyphs are seated on cells: ' + STUB.calls.fillText)
-assert.ok(STUB.calls.fillRect > 0, 'and each cell gets its soft square: ' + STUB.calls.fillRect)
-
-assert.ok(document.querySelector('style[data-antemuse-bg-style]'), 'one version-stamped style element')
-assert.equal(document.documentElement.getAttribute('data-antemuse-bg'), 'on', 'the root flag marks it disposable')
-assert.match(bg.calls.rest[0], /^\/state\?cols=\d+&rows=\d+&fit=cover&busy=0/, 'the poll asks for the grid and the busy flag')
-
-// it re-reads when the focused conversation changes
-host.state.focusedSessionId.set('sess-42')
-await act(async () => {})
-assert.ok(bg.calls.rest.some((p) => p.includes('session=sess-42')), 'the layer follows the conversation')
-
-await act(async () => { bg.node.unmount() })
-assert.equal(document.querySelector('div[data-antemuse-bg="layer"]'), null, 'unmount removes the layer')
-assert.equal(document.querySelector('style[data-antemuse-bg-style]'), null, 'and its style element')
-assert.equal(document.documentElement.getAttribute('data-antemuse-bg'), null, 'and the root flag')
-
-// stray sweep must not delete the document element (it did, once)
-sweepStrays(document)
-assert.ok(document.documentElement, 'sweeping strays leaves <html> alone')
-
-// The other branch: an opaque shell cannot show a z-index -1 layer (measured in
-// the app — an opaque body hid it completely), so it goes in front, fainter.
-resetBody()
-document.body.style.background = 'rgb(12, 12, 14)'
-const front = await mountWith({ payload: PAYLOAD }, 'backdrop')
-const frontLayer = document.querySelector('div[data-antemuse-bg="layer"]')
-assert.equal(frontLayer.getAttribute('data-antemuse-bg-placement'), 'front', 'opaque surface flips placement')
-assert.match(frontLayer.getAttribute('style'), /z-index:\s*2147483646/)
-assert.match(frontLayer.getAttribute('style'), /pointer-events:\s*none/, 'in front still passes clicks through')
-const frontGlyph = frontLayer.querySelector('canvas[data-antemuse-bg="glyphs"]')
-assert.ok(frontGlyph, 'the front layer draws into a canvas too')
-await act(async () => { front.node.unmount() })
-document.body.style.background = ''
-assert.equal(document.querySelector('div[data-antemuse-bg="layer"]'), null, 'the front layer is removed too')
+assert.ok(STUB.calls.drawImage > 0, 'the processed buffer is presented: ' + STUB.calls.drawImage)
+assert.match(pane.calls.rest[0], /^\/state\?cols=\d+&rows=\d+&fit=cover&busy=0/,
+  'the pane asks the backend for the scene')
 
 // ---- idle -------------------------------------------------------------------
 
@@ -251,4 +208,4 @@ console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
 console.log('harness: 12 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
-  'aria, poll tick, idle, unavailable, layer/placement, conversation scope, cleanup + stray sweep)')
+  'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean)')

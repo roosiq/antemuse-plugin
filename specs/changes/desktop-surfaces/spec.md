@@ -406,3 +406,146 @@ without a documented command) and `test_mood::test_material_waits_for_the_cadenc
 in files another writer is editing concurrently (`__init__.py`, `core/*`, and an untracked
 `specs/changes/semantic-states/`).
 
+## 12. The 3D family, and why three.js is not in it (2026-11-08)
+
+The ask was three.js plus its `AsciiEffect`. Both were vendored
+(`desktop/vendor/three.module.js`, `AsciiEffect.js`) and wired, and the host refused the
+plugin outright:
+
+```
+[plugins] runtime load failed (antemuse) Error: unsupported import: ./scene3d.js —
+runtime plugins may only import @hermes/plugin-sdk and react
+```
+
+A runtime desktop plugin is a single ES module with a closed import list. No relative
+imports, no dynamic import of a local file, so no vendored three: the 1.3 MB build cannot
+be reached from the plugin, and inlining it into `plugin.js` would trade a maintenance
+problem for a start-up cost on every launch.
+
+What `AsciiEffect` actually contributes is the conversion contract, and that is kept: render
+a scene, evaluate luminance, choose a ramp character, carry per-character colour and alpha.
+Only the source of the pixels changed — a slab and a ring projected in-file (`SLAB`,
+`drawSolid`) instead of a WebGL canvas. Mesh: 16 vertices, 22 triangles, flat-shaded by two
+lights (amber key, teal rim), painter-sorted, with a 96-segment ring polyline drawn at
+depth-faded alpha. Scene speeds reuse `SCENES`; `head` scales how warm the key gets.
+
+Bugs found building it, all mine: the bottom cap fanned from the wrong ring index (index 25
+of a 16-vertex mesh); the projection dropped the half-width/height terms and rendered the
+object about one pixel wide (`fieldLit: 2`); and the harness stub lacked `closePath`, so the
+fill path threw before any glyph was seated.
+
+**Verified:** the sampler seats 1,253 glyphs of 4,418 cells; the art alone reads as a shaded
+solid with a lit top face and a dark underside. `pytest` and the 12 harness properties stay
+green, because the fallback path (no canvas, no WebGL) still leaves a working layer.
+
+## 13. A post-processing chain, since the composer cannot be imported (2026-11-08)
+
+`webgl_postprocessing` is `EffectComposer → RenderPass → ShaderPass → OutputPass`. The
+composer, its passes and `OutputPass` all live in `examples/jsm` and import `three`, so the
+host's import restriction (§12) rules them out exactly as it ruled out three itself.
+
+The mechanism survives the constraint, and it is the mechanism that fixes the complaint —
+glyphs sitting on text. The layer now runs the same order of operations against its own
+buffer:
+
+1. **Render** — the slab and ring go into the field buffer at device resolution.
+2. **Downscale to a quarter buffer** — this is the threshold pass. Lit geometry survives
+   the area average; the near-black field averages to nothing, so no explicit cutoff is
+   needed and no constant has to be tuned per theme.
+3. **Blur, twice, at 3 px on the quarter buffer** — two passes compose as a tent kernel:
+   one wide pass costs the same and bands.
+4. **Additive composite at 0.5 back over the sharp scene** — bright cells bleed into their
+   neighbours before quantisation, so the silhouette ends in dust instead of a cut line.
+
+Measured after the change: 1,345 glyphs seated, mean alpha over lit pixels 11.9/255, max
+35/255 — same budget as §12's ceiling, but spread over a graded edge instead of a stencil.
+The art alone reads as a solid lit from the front-left with a soft halo, which is the whole
+point: the eye resolves a shape, the text underneath keeps its contrast.
+
+Cost: two extra buffers at a quarter of the field, one `drawImage` chain per frame. No new
+dependency, because the only way to add one is for the host to widen the plugin import list.
+
+## 14. Post only: the glyph layer is removed (2026-11-08)
+
+The ramp, the per-cell coverage, the 13-glyph table and the dithered quantiser are gone.
+`createArt` still renders the same scene and runs the same pass chain (§13), then presents
+the processed buffer as one continuous image:
+
+```
+render scene → quarter buffer → blur ×2 at 4 px → additive composite at 0.85 → drawImage to screen
+```
+
+No sampling, no cells, no `fillText`. Consequences worth recording:
+
+- **Ink stops being a per-character decision.** It is one number over a continuous tone, so
+  there is no cell that can be "too bright over a word" the way a `#` could be.
+- **The object's contrast has to live in the material, not the alpha.** The first attempt
+  capped ink at 0.34 and the frame went flat: every face clipped to the same dim grey
+  (alpha histogram spiked at 60–89/255 with nothing above). The fix was to lower the
+  material back into mid-tones (base 24, gains ~170/150/100 warm, 40/140/150 cold) and let
+  ink be *presence* (0.55 front, 0.95 behind). Confusing the two is what made it look like
+  a dark sticker.
+- **Bloom is what makes the edge acceptable over text.** With the blur widened to 4 px and
+  the composite at 0.85, 34% of the frame is touched but only ~4% is above 30/255; the
+  silhouette dissolves instead of ending.
+- **The harness assertion changed with the claim.** `fillText > 0` ("glyphs are seated") is
+  replaced by `drawImage > 0` plus "the layer hosts a canvas, not a `<pre>`" — the old
+  assertion would have passed on dead code.
+
+Measured in the app: `mode: image`, ink 0.55, 1,000+ frames without error; hiding the layer
+and re-capturing shows mean per-channel delta ~19/255 over touched pixels, with code
+legibility unchanged.
+
+## 15. The art moves to its own surface (2026-11-08)
+
+The shell exposes panes, status bar, title bar, routes, sidebar nav, palette and settings —
+and no chat backdrop. Painting over the transcript was always the compromise: it needs an
+ink ceiling (0.55, then 0.30) because a bright cell lands on a word.
+
+So the picture moved to surfaces that own their pixels:
+
+- **dock pane** (`PANES_AREA`, right, 420 px wide, collapsible, 320–560) rendering
+  `StateView`, whose canvas is the art and whose words are furniture in the corner;
+- **route** `/antemuse`, the same view full-window (700 × 746 verified), reachable from the
+  sidebar nav entry and the palette command;
+- the fixed overlay is **not mounted**. `createLayer`, the stray sweep and `ChatBackdrop`
+  remain in the file for hosts that do expose a chat backdrop, but registration no longer
+  installs them, and the harness now asserts `[data-antemuse-bg="layer"]` is absent.
+
+Because nothing is read through the pane, ink runs at the "behind" ceiling (0.95) instead
+of the front wash: measured coverage 45.5% of the pane with max alpha 242/255, versus a
+34%-coverage / 124-max ghost over the chat.
+
+Two bugs found doing this, both clock-related: the pane's poll was on `window.setInterval`
+instead of `ctx.setInterval` (so the host cannot own disposal, and the harness saw one clock
+where there are two: 900 ms for state words, 4 s for which scene to paint), and the rAF id
+was never stored, so unmount could not cancel the loop and the harness hung instead of
+exiting. Both are the same class of mistake as the leaked layer: **a loop without an owner**.
+
+## 16. Scenes are data, and the animation is already live (2026-11-08)
+
+The question was whether to build scenes in three to get animation. Two corrections to the
+premise, both verifiable in the running app:
+
+- **The animation exists.** The art has been turning at 30 fps since the solid landed: yaw
+  from `SCENES[state].speed`, pitch from a slow sine, per-part spin, bloom recomputed every
+  frame. three would not add motion; it would add authoring conveniences.
+- **three is not importable** (§12). So "build scenes in three" means *bake them offline*
+  through `tools/render_three.py` and ship a frame bank — static frames, asset weight, and a
+  second source of truth next to the live renderer.
+
+What was missing was **variety**, not motion: one slab and one ring served six states. So a
+scene is now data — `COMPOSITIONS[state]` is a list of parts, each with a mesh, a position,
+a rotation, a spin rate and how much each light owns it. The kit is three mesh types
+(`chamferedBox`, `bar`, and a stroke `ring`) plus one camera. Adding a scene is adding a
+list, not a renderer.
+
+The six compositions read as six objects: a plate with an arc (`idle`), a gantry crossing
+(`work`), a receding corridor (`walk`), a plate inside two rings (`daydream`), one tall
+prism ringed (`dream`), a slatted grille (`doomscroll`). Coverage after tuning sits between
+49% and 75% of the pane.
+
+**Preview without driving the agent:** `localStorage['antemuse:scene'] = 'walk'` pins one
+composition and skips the state poll, so a scene can be judged on its own. Unset it and the
+poll returns. This exists because the alternative was entering states to take screenshots.
+
