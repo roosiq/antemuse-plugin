@@ -38,7 +38,9 @@ def test_material_names_what_is_missing_instead_of_inventing_it(monkeypatch, tmp
     """Every direction is bound to evidence; the evidence IS the missing thing."""
     repo = _repo(tmp_path / "fresh")
     monkeypatch.chdir(repo)
-    lines = " | ".join(sources.unstuck_text(6))
+    # the ledger and the graph add candidates, so a dose of six is a sample of the evidence
+    # rather than all of it; ask for enough to cover every input this fixture can produce
+    lines = " | ".join(sources.unstuck_text(12))
     assert "no commits" in lines
     assert "no README" in lines
     assert "no spec files yet" in lines

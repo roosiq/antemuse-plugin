@@ -457,13 +457,13 @@ definitions of 2026-11-08 and are authoritative; full statements — what each i
 the code stands, what must change — are in [`docs/goals.md`](goals.md), with the re-alignment
 tracked in `specs/changes/state-goals/`.
 
-| state | goal (Ryan, 2026-11-08) | measure that fits | measured 2026-11-08 |
-|---|---|---|---|
-| walk | distant **and connected** concepts for the current task | distance from the task's concepts, and a resolvable chain back | mean path similarity 0.05 for a far jump vs 0.34 adjacent; chain back **not built** |
-| daydream | synthesize, introduce new thoughts and possibilities | possibilities per dose, new relative to both memories | join rate 6 % → 100 % (recall only); **no synthesis step yet** |
-| doomscroll | distraction via social-media stupidity and comedy | distinct lines across sessions, and comedic share | distinct 48/22/11 % → 90/83/83 %; comedic share **not measured** |
-| dream | process the day, connect tasks across projects | connections per dream, both sides named | cross-frame invention 100 % distinct pairs — **superseded goal** |
-| unstuck | recommend one new thing from history + the concept graph | one recommendation, with history citation and graph path | one direction at dose 1; graph unused |
+| state | goal (Ryan, 2026-11-08) | what the state now does | measure that fits | measured |
+|---|---|---|---|---|
+| walk | distant **and connected** concepts for the current task | every step names the seed it started from and the hops back (`↩ N hops from <anchor>: a → …`), and says when the ledger has been there before | path distance, a resolvable chain back, and the cross-session repeat rate | far jump similarity **0.05** vs adjacent **0.34**; chain back built and tested; repeat rate **not yet measured** |
+| daydream | synthesize, introduce new thoughts and possibilities | every pair carries one possibility built from its own distinctive terms, hypothesis-phrased; a pair that does not join yields one from the gap | join rate on distinctive terms, and one possibility per item | join **6 % → 100 %**, median **3.5** shared distinctive terms; possibility present on every item |
+| doomscroll | distraction via social-media stupidity and comedy | satire lanes only, with work-looking items excluded and counted (`[13 skipped as work]`) | distinct lines across sessions, and comedic share | distinct **48/22/11 % → 80/72/70 %** at dose 1/3/6; comedic share **not measured** |
+| dream | process the day, connect tasks across projects | connects the day's commit subjects across repos, plus concepts **circling across sessions** the commits cannot see; invention is the labelled fallback | connections per dream, both sides named, and distinct frame pairs when it invents | cross-frame invention **100 % distinct pairs, overlap 0.0000**; circling connection built; connection hit-rate **not yet measured** |
+| unstuck | recommend one new thing from history + the concept graph | one direction resting on last commit subject, one graph edge, memory, and the ledger's circling/unused concepts; missing inputs named together | exactly one recommendation, with history citation and graph path | one direction at dose 1; graph and history paths built and tested; specificity **not yet re-measured** |
 
 ### 8.3 Policy and cursors
 

@@ -62,3 +62,18 @@ needing an explicit decision, and it is not needed to find cross-project connect
 
 `docs/spec.md` §18's protected set, the six settings keys, `complete`/`returned`/`expired`
 endings, the journal cap of 60, the residue cap of 3, and the recommend-never-enter rule.
+
+## Amendment 2026-11-08 — session history is now read, for concepts only
+
+The paragraph above stood when it was written: dream's cross-project input was the day's own
+commit subjects, and Hermes session history was deliberately out of scope. Ryan then asked for
+the ledger directly — *"also need to be able to identify concepts from past sessions"* — which
+is the explicit decision that paragraph said would be needed. `concept-history` reads the
+`messages` table of Hermes' own `state.db`, read-only and with a cursor, and `session-scan`
+fills it once per session.
+
+What stays true, and is what the paragraph was protecting: **dream itself still reads commit
+subjects**, and no state reads a transcript. The ledger stores identity — a term, its kind, a
+stable key, the move, the session, the time — and never a message body. No provider and no
+`MEMORY.md` is written. Dream now additionally connects concepts that circle across sessions,
+which is a second input drawn from the ledger, not a transcript read.
