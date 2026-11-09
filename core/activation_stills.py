@@ -168,19 +168,47 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     edges = _edges(labels, vectors)
 
     stamp = int(now)
-    paths = []
+    base = dest / "base"
+    base.mkdir(parents=True, exist_ok=True)
+    drawn = []
     for i, frame in enumerate(frames):
-        path = dest / f"f{i}-{stamp}.jpg"
+        path = base / f"f{i}-{stamp}.jpg"
         frame_image(pos, edges, frame["activations"], *size).save(path, quality=86)
-        paths.append(path)
+        drawn.append(path)
+
+    # The look, not the information: three.js post-processes the same stills at bake time.
+    posted = _postprocess(drawn)
+    if len(posted) == len(drawn):
+        paths = []
+        for path in posted:
+            final = dest / path.name
+            path.replace(final)
+            paths.append(final)
+    else:
+        paths = drawn
+
     # older stills are replaced, not accumulated: a live picture, not an album
-    for old in dest.glob("f*.jpg"):
-        if old not in paths:
-            try:
-                old.unlink()
-            except OSError:
-                pass
+    for folder, keep in ((base, drawn), (dest, paths)):
+        for old in folder.glob("f*.jpg"):
+            if old not in keep:
+                try:
+                    old.unlink()
+                except OSError:
+                    pass
     return paths
+
+
+def _postprocess(drawn: List[Path]) -> List[Path]:
+    """Run the three.js composer over these stills, or return nothing if it cannot run."""
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "antemuse_postprocess", Path(__file__).resolve().parents[1] / "tools" / "postprocess_activation.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.apply(drawn)
+    except Exception:
+        return []
 
 
 def fresh(move: str = "", session: str = "", dest: Optional[Path] = None) -> List[Path]:

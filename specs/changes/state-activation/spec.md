@@ -39,6 +39,13 @@ decays, so a picture can show what is live *now* rather than what has ever happe
 - **no ASCII** — an earlier glyph path was built and removed on instruction: the pane shows a
   picture.
 
+**The look is three.js, at bake time.** `tools/activation_post.html` puts a still through the
+official `EffectComposer` — bloom, chromatic separation, grain, vignette, `OutputPass` — and
+`tools/postprocess_activation.py` drives it in headless Chromium via `tools/shoot.mjs`. Three is
+vendored under `vendor/three-bake/` (r180) and the plugin itself imports none of it: bake time
+only, as the architecture requires. A still that fails to render keeps its plain version, named on
+stderr, because a missing effect is not a reason to lose the picture.
+
 **`tools/activation_render.py`** — the picture: the semantic map dimmed, active concepts lit with
 a blurred glow, radius and brightness by weight, and **no text anywhere**. `--move` restricts to
 one state, `--gif` animates, and a one-row strip is always written.

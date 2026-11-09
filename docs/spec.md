@@ -658,6 +658,18 @@ the plugin itself wrote — the name and filename are matched, never joined from
 
 No ASCII. The pane is a picture surface, and the map is drawn as one.
 
+**The look is three.js, at bake time.** Each still goes through the official `EffectComposer` in
+headless Chromium: `UnrealBloomPass`, a chromatic-separation `ShaderPass`, film grain and a
+vignette, finished by `OutputPass`. Three.js is vendored under `vendor/three-bake/` (r180 core +
+the passes it needs) and runs only in `tools/activation_post.html` — the plugin imports no three
+and ships no shader to a surface. The passes change how the picture looks, never what it says, and
+nothing is drawn on top of it.
+
+`tools/postprocess_activation.py` drives that page through `tools/shoot.mjs`, one browser for the
+whole batch and one server for the batch, waited on before the first request — three launches back
+to back was where it was flaky. If no browser or three build is present, the stills keep their
+plain render and the reason is named; a missing effect never costs the picture.
+
 **Status: PARTIAL.** The path is wired end to end (stills written, served, painted, with a
 fall-through to the baked scene when nothing is firing), but it has not been seen in the running
 desktop app: verification so far is the backend route, the harness mount and the stills
@@ -735,7 +747,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 896 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 902 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.

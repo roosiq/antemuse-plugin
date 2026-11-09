@@ -9,3 +9,5 @@ __pycache__/
 tools/desktop_harness/node_modules/
 tools/desktop_harness/.work/
 data/meshy/
+tools/.post-staging/
+tools/_base_test.jpg
