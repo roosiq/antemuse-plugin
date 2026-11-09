@@ -40,6 +40,23 @@ def test_orbit_alternates_near_and_far(tmp_path):
     assert far, lines
 
 
+def test_composite_walk_uses_every_navigation_in_one_walk(tmp_path):
+    # twelve steps, because a stub synset can still degrade one arc even after the retry;
+    # the assertion is about the policy rotation, not about one unlucky node
+    lines = _walk("composite", tmp_path).step(12)
+    joined = " | ".join(lines)
+    assert " ran " in joined, lines          # run:3
+    assert "far edge" in joined, lines       # far / orbit
+    assert "vaulted past" in joined, lines   # vault
+    assert any("took its" in l for l in lines), lines   # a plain adjacent step
+
+
+def test_composite_reports_which_navigation_each_step_took(tmp_path):
+    w = _walk("composite", tmp_path)
+    assert len(w.rotation) >= 4
+    assert w.rotation[0] == "run:3" and "vault" in w.rotation
+
+
 def test_outer_can_look_wider_than_the_default_sample(tmp_path):
     w = _walk("outer", tmp_path)
     assert w.samples == 32            # declared by the walk, not hard-coded in the graph

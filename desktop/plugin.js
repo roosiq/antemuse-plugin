@@ -198,6 +198,37 @@ function ArtSurface({ ctx }) {
     // Full ink: nothing is read through this surface, so the ceiling that
     // exists for the chat overlay does not apply here.
     const art = createArt(canvas, { dark: true, strength: LAYER.defaultStrength * 2.8, front: false })
+
+    // A baked scene is an <img> loop over preloaded JPEGs; the canvas underneath
+    // keeps painting the live kit for every state without a bake, so the pane is
+    // never empty and switching cost is one image swap.
+    const img = doc.createElement('img')
+    img.setAttribute('data-antemuse-bake', 'frame')
+    img.setAttribute('aria-hidden', 'true')
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 500ms ease;display:block'
+    el.appendChild(img)
+    let bake = null
+    let cache = []
+
+    const loadBake = (name) => {
+      const base = bakedBase(name)
+      const frames = []
+      for (let i = 0; i < BAKED_FRAMES; i++) {
+        const im = new Image()
+        im.src = base + 'f' + String(i).padStart(2, '0') + '.jpg'
+        frames.push(im)
+      }
+      return frames
+    }
+
+    const applyScene = (key) => {
+      const name = BAKED[key]
+      if (!name) { bake = null; cache = []; img.style.opacity = '0'; return }
+      if (bake === name) return
+      bake = name
+      cache = loadBake(name)
+      if (win.__antemuse) win.__antemuse.bake = name
+    }
     const win = doc.defaultView || window
     const hasRaf = typeof win.requestAnimationFrame === 'function'
     const raf = hasRaf
@@ -223,9 +254,19 @@ function ArtSurface({ ctx }) {
     }
     fit()
 
+    let frameIdx = -1
     const tick = (ts) => {
       if (stopped || budget-- <= 0) return
       rafId = raf(tick)
+      if (bake) {
+        const i = Math.floor((ts / (1000 / BAKED_FPS)) % BAKED_FRAMES)
+        if (i !== frameIdx) {
+          frameIdx = i
+          const f = cache[i]
+          if (f && f.complete) { img.src = f.src; img.style.opacity = '1' }
+        }
+        return
+      }
       if (!last) last = ts
       if (ts - lastPaint < MIN_MS) return
       const dt = Math.min(0.12, (ts - last) / 1000)
@@ -242,15 +283,15 @@ function ArtSurface({ ctx }) {
       const session = host.state.focusedSessionId.get()
       const q = '/state?cols=48&rows=24&fit=cover&busy=' + busy + (session ? '&session=' + encodeURIComponent(session) : '')
       Promise.resolve(ctx.rest(q)).then((p) => {
-        const key = p && p.active && p.active.key
-        if (!stopped) art.setScene(key || (busy ? 'work' : 'idle'))
+        const key = (p && p.active && p.active.key) || (busy ? 'work' : 'idle')
+        if (!stopped) { art.setScene(key); applyScene(key) }
       }, () => { /* keep painting the idle scene */ })
     }
     // Preview aid: `localStorage['antemuse:scene'] = 'walk'` pins one scene, so a
     // composition can be looked at without driving the agent into that state.
     let preview = null
     try { preview = win.localStorage.getItem('antemuse:scene') } catch (e) { /* no storage */ }
-    if (preview) art.setScene(preview)
+    if (preview) { art.setScene(preview); applyScene(preview) }
 
     if (!preview) say()
     // Host-managed timer where the SDK provides one, so disposal is the host's
@@ -343,6 +384,21 @@ function StateChip({ ctx }) {
 // statusBar, titleBar, routes, sidebar nav and palette, and the shell's own
 // backdrop is a boolean that toggles one fixed statue image. So the layer is
 // ours — created, positioned, styled and removed by this file alone.
+
+// Baked scenes: rendered by a real renderer offline, shipped as frame loops,
+// because a runtime plugin cannot import three. Only the states that earn it get
+// a bake; the rest fall through to the live kit.
+const BAKED = { walk: 'spline', dream: 'nurbs', doomscroll: 'wireframe' }
+const BAKED_FRAMES = 24
+const BAKED_FPS = 12
+
+function bakedBase(name) {
+  try {
+    return new URL('./art/' + name + '/', import.meta.url).href
+  } catch (e) {
+    return 'file:///home/ryan/.hermes/plugins/antemuse/desktop/art/' + name + '/'
+  }
+}
 
 const LAYER = {
   attr: 'data-antemuse-bg',

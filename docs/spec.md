@@ -426,6 +426,14 @@ Adding a graph means one class with `resolve`, `random_node`, and `edges`.
 | `vault` | wordnet | all | vault (two far jumps) | continue | no |
 | `run3` | wordnet | all | run:3 (three edges per arc) | continue | yes |
 | `orbit` | wordnet | all | orbit (near, far, near, far) | continue | yes |
+| `composite` | wordnet | all | all five, in rotation | continue | yes |
+
+`composite` is not a sixth policy: it runs `run:3 → far → near → vault → orbit` in a fixed
+rotation, so one walk covers ground by running, stepping, jumping and vaulting, and every
+line says which navigation produced it. Measured at 40 trials/cell it delivers 95–98 % novel
+concepts and 100 % distinct lines at doses 3/6/12, with freshness 87/94/91 % — slightly below
+`outer`'s ~100 % because an arc deliberately revisits its own neighbourhood inside one step.
+It is a coverage and legibility choice, not a novelty winner.
 
 `vault` widens the far search to 64 samples and jumps twice per step, reporting the
 concept it jumped *past*; `run3` reports three adjacent edges as one arc; `orbit`
@@ -670,7 +678,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 805 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 807 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -967,7 +975,7 @@ All paths relative to `specs/changes/`.
 | `normal-baseline` | **implemented (partial)** | measurement | records the ordinary condition — tool calls and failures per turn, and the minutes between states — in `normal.json` (200 turns / 50 stretches, counts only). Below 20 turns nothing is claimed. `long stretch` now uses the measured 75th percentile of this person's stretches (clamped 60–180) instead of the constant 90, and the line says which it used. Loop, wall and saturation keep fixed thresholds until the failure-rate distribution can support a calibration. `core/normal.py`, 8 tests. |
 | `plugin-settings` | **implemented** | configuration | six bounded keys declared in the manifest's `config_schema` (`recommend_enabled`, `recommend_cooling_minutes`, `long_stretch_minutes`, `picture_enabled`, `picture_narrow`, `journal_cap`), rendered as a form by the **desktop app's** Settings ▸ Plugins and written to `plugins.entries.antemuse.settings.*`; read through `ctx.get_config`, clamped and logged, never raising. The plugin's own settings page was removed so the host form is the only one. Nothing that defines a state is settable. `core/settings.py`, 11 tests. |
 | `semantic-states` | **implemented** | lifecycle | a state ends when its **dose** is delivered — 6 turns worked (walk), 2 memory pairs (daydream), 3 feed items (doomscroll), 2 recombinations (dream), 1 direction (unstuck) — or when the agent declares it done (`state(action="complete")`). Delivery is per turn, not per second, so the same dose costs a fast model fewer seconds and a slow one more; minutes are now a ceiling, and an expiry reports the shortfall (`expired before its dose: 2 of 3`). Turns- and seconds-to-dose are recorded per state in `normal.json` for later model comparison. 7 tests. |
-| `state-settings-experiment` | **proposed** | evaluation | the test that would justify each state's dose: four arms per state (half · default · double · **control, no state entered**), assigned per state entry in pre-registered 8-entry blocks, outcomes that a script can check without a model's opinion (carry, landing, adoption, kept recombination, adopted direction), 160 entries per arm from a stated power calculation, equivalence margin 0.10, and a written decision rule **including the row where the state produces nothing**. Preregistration before session 1; pilot at 60/arm is not a result. No cron, no unattended spend, no live tuning. Nothing has been run. |
+| `state-settings-experiment` | **partial** | evaluation | the deterministic lane is measured: `tools/experiment_deterministic.py` runs each state's own provider and counts novel (against this repository's ~6,050-word vocabulary), fresh within a dose, and distinct lines across trials — 150 trials/cell, seconds, zero model calls. It found walk's freshness falling 87→78 % from dose 3 to 12, doomscroll's variety collapsing to 11 % distinct lines on a frozen feed, dream at 100 % distinct but 5–8 % novel (a template), and unstuck serving five identical lines at every dose. Rules frozen before the deciding run: a dose may not exceed the smallest k where fresh < 0.85; distinct < 0.30 is a source defect; novel < 0.20 with distinct = 1.00 is a generator defect. The model lane (`tools/experiment_run.py`) stays as the cost-and-plausibility check — one 6-turn entry measured ~4.0 M input tokens — and is exploratory, its three entries excluded. No dose has been changed from these numbers. |
 
 Supporting evidence files:
 

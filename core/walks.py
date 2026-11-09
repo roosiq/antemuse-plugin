@@ -77,6 +77,15 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
         "seed": {"mode": "continue"},
         "avoid_backtrack": False,
     },
+    "composite": {
+        "title": "Composite — every navigation in one walk: run, far, vault, orbit, near",
+        "graph": "wordnet",
+        "relations": ALL_RELATIONS,
+        "jump": "composite",
+        "samples": 48,
+        "seed": {"mode": "continue"},
+        "avoid_backtrack": True,
+    },
     "vault": {
         "title": "Vault — two far jumps per step: the graph it lands in is not the one it left",
         "graph": "wordnet",
@@ -287,6 +296,10 @@ class GraphWalk:
         # how wide a far search looks. Wider is further out: 32 samples is a jump to the
         # edge of the neighbourhood, 64 is a jump out of it.
         self.samples = int(spec.get("samples") or 32)
+        # A composite walk is not a fifth policy: it is every policy, in a fixed rotation,
+        # so one walk covers ground by running, by stepping, by jumping and by vaulting.
+        self.rotation = tuple(spec.get("rotation") or
+                              ("run:3", "far", "near", "vault", "orbit"))
 
     # -- cursor, per walk name, so two walks never fight over one place
     def _cursors(self) -> Dict[str, Dict[str, Any]]:
@@ -374,9 +387,15 @@ class GraphWalk:
                     f"({b['pos'] or 'thing'}) · {how}"
                     + (f" · “{gloss}”" if gloss else ""))
 
+        def mode_at(n):
+            if self.jump != "composite":
+                return self.jump
+            return self.rotation[n % len(self.rotation)]
+
         for n in range(steps):
+            mode = mode_at(n)
             # --- navigation policies that leave the neighbourhood -----------------
-            if self.jump == "vault":
+            if mode == "vault":
                 near = far(node, avoid=[prev_id])
                 beyond = far(near, avoid=[node["id"], prev_id]) if near else None
                 if near is not None and beyond is not None:
@@ -386,30 +405,40 @@ class GraphWalk:
                                + (f" · “{gloss}”" if gloss else ""))
                     prev_id, node = near["id"], beyond
                     continue
-            elif self.jump == "orbit" and n % 2 == 0:
+            elif mode == "orbit":
                 skip = far(node, avoid=[prev_id])
                 if skip is not None:
                     out.append(line(node, skip, "took its far edge"))
                     prev_id, node = node["id"], skip
                     continue
-            elif isinstance(self.jump, str) and self.jump.startswith("run:"):
-                length = max(2, int(self.jump.split(":", 1)[1]))
-                start, chain, rels, walked = node, [node], [], prev_id
-                for _ in range(length):
-                    opts = [(r, c) for r, c in self.graph.edges(chain[-1])
-                            if r in self.relations and c["id"] != walked]
-                    if not opts:
+            elif isinstance(mode, str) and mode.startswith("run:"):
+                length = max(2, int(mode.split(":", 1)[1]))
+                chain, rels, walked = [node], [], prev_id
+                # a stub of a synset cannot host an arc, so try one fresh start before
+                # settling for a single edge — otherwise "run" silently becomes "step"
+                for attempt in range(2):
+                    if attempt:
+                        restart = self.graph.random_node(self.relations)
+                        if restart is None:
+                            break
+                        chain, rels, walked = [restart], [], ""
+                    for _ in range(length):
+                        opts = [(r, c) for r, c in self.graph.edges(chain[-1])
+                                if r in self.relations and c["id"] != walked]
+                        if not opts:
+                            break
+                        rel, nxt = RNG.choice(opts)
+                        rels.append(rel)
+                        walked, chain = chain[-1]["id"], chain + [nxt]
+                    if len(chain) > 2:
                         break
-                    rel, nxt = RNG.choice(opts)
-                    rels.append(rel)
-                    walked, chain = chain[-1]["id"], chain + [nxt]
                 if len(chain) > 2:
                     names = " → ".join(c["label"] for c in chain)
                     out.append(f"{names} · ran {len(chain) - 1} edges "
                                f"({', '.join(sorted(set(rels)))})")
                     prev_id, node = chain[-2]["id"], chain[-1]
                     continue
-            elif self.jump == "far":
+            elif mode == "far":
                 skip = far(node, avoid=[prev_id])
                 if skip is not None:
                     out.append(line(node, skip, "took its far edge"))

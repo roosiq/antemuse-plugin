@@ -1,65 +1,146 @@
 [
   {
-    "state": "unstuck",
-    "dose": 0,
-    "trials": 30,
-    "served_per_trial": 0.0,
-    "novel_rate": null,
-    "fresh_rate": null,
-    "by_position": {},
-    "mean_distance": null,
-    "diversity": null,
-    "empty_trials": 30
-  },
-  {
-    "state": "unstuck",
-    "dose": 1,
-    "trials": 30,
-    "served_per_trial": 2.0,
-    "novel_rate": 0.0,
-    "fresh_rate": 1.0,
+    "state": "walk",
+    "dose": 3,
+    "trials": 40,
+    "served_per_trial": 3.0,
+    "novel_rate": 0.975,
+    "fresh_rate": 0.8666666666666667,
     "by_position": {
       "1": {
-        "novel": 0.0,
+        "novel": 0.925,
         "fresh": 1.0,
-        "n": 30
+        "n": 40
       },
       "2": {
-        "novel": 0.0,
+        "novel": 1.0,
         "fresh": 1.0,
-        "n": 30
+        "n": 40
+      },
+      "3": {
+        "novel": 1.0,
+        "fresh": 0.6,
+        "n": 40
       }
     },
-    "mean_distance": 0.07019230769230769,
-    "diversity": 0.23333333333333334,
+    "mean_distance": 0.3264858022128139,
+    "diversity": 1.0,
     "empty_trials": 0
   },
   {
-    "state": "unstuck",
-    "dose": 2,
-    "trials": 30,
-    "served_per_trial": 3.0,
-    "novel_rate": 0.0,
-    "fresh_rate": 1.0,
+    "state": "walk",
+    "dose": 6,
+    "trials": 40,
+    "served_per_trial": 6.0,
+    "novel_rate": 0.9458333333333333,
+    "fresh_rate": 0.9416666666666667,
     "by_position": {
       "1": {
-        "novel": 0.0,
+        "novel": 0.85,
         "fresh": 1.0,
-        "n": 30
+        "n": 40
       },
       "2": {
-        "novel": 0.0,
-        "fresh": 1.0,
-        "n": 30
+        "novel": 0.975,
+        "fresh": 0.975,
+        "n": 40
       },
       "3": {
-        "novel": 0.0,
-        "fresh": 1.0,
-        "n": 30
+        "novel": 0.975,
+        "fresh": 0.75,
+        "n": 40
+      },
+      "4": {
+        "novel": 0.925,
+        "fresh": 0.975,
+        "n": 40
+      },
+      "5": {
+        "novel": 0.975,
+        "fresh": 0.975,
+        "n": 40
+      },
+      "6": {
+        "novel": 0.975,
+        "fresh": 0.975,
+        "n": 40
       }
     },
-    "mean_distance": 0.06971153846153846,
-    "diversity": 0.28888888888888886,
+    "mean_distance": 0.19819600572654994,
+    "diversity": 1.0,
+    "empty_trials": 0
+  },
+  {
+    "state": "walk",
+    "dose": 12,
+    "trials": 40,
+    "served_per_trial": 12.0,
+    "novel_rate": 0.9604166666666667,
+    "fresh_rate": 0.9145833333333333,
+    "by_position": {
+      "1": {
+        "novel": 1.0,
+        "fresh": 1.0,
+        "n": 40
+      },
+      "2": {
+        "novel": 1.0,
+        "fresh": 1.0,
+        "n": 40
+      },
+      "3": {
+        "novel": 0.975,
+        "fresh": 0.5,
+        "n": 40
+      },
+      "4": {
+        "novel": 0.825,
+        "fresh": 0.975,
+        "n": 40
+      },
+      "5": {
+        "novel": 1.0,
+        "fresh": 1.0,
+        "n": 40
+      },
+      "6": {
+        "novel": 1.0,
+        "fresh": 0.925,
+        "n": 40
+      },
+      "7": {
+        "novel": 0.975,
+        "fresh": 1.0,
+        "n": 40
+      },
+      "8": {
+        "novel": 1.0,
+        "fresh": 0.725,
+        "n": 40
+      },
+      "9": {
+        "novel": 0.825,
+        "fresh": 1.0,
+        "n": 40
+      },
+      "10": {
+        "novel": 1.0,
+        "fresh": 1.0,
+        "n": 40
+      },
+      "11": {
+        "novel": 0.95,
+        "fresh": 0.85,
+        "n": 40
+      },
+      "12": {
+        "novel": 0.975,
+        "fresh": 1.0,
+        "n": 40
+      }
+    },
+    "mean_distance": 0.2290650925866076,
+    "diversity": 1.0,
     "empty_trials": 0
   }
 ]

@@ -1,9 +1,9 @@
 # State settings experiment — what dose of a state actually produces results
 
-Status: **PROPOSED** 2026-11-08. Owner: Ryan Cook. Nothing runs until this is approved:
-no sessions are started, no settings are changed, and no number in this document is a
-result. This is the test design, including the rules that decide what it is allowed to
-conclude.
+Status: **PARTIAL** 2026-11-08. Owner: Ryan Cook. The deterministic lane has been measured
+(`tools/experiment_deterministic.py`: 150 trials/cell, zero model calls). The model lane is
+exploratory and its three entries are excluded. **No dose has been changed from these
+numbers**, and no number here is a claim that any state improved anyone's work.
 
 ## The question
 
