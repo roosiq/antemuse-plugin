@@ -2,7 +2,7 @@
   {
     "state": "dream",
     "dose": 1,
-    "trials": 40,
+    "trials": 8,
     "served_per_trial": 1.0,
     "novel_rate": 0.0,
     "fresh_rate": 1.0,
@@ -10,67 +10,47 @@
       "1": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 40
+        "n": 8
       }
     },
-    "mean_distance": 0.14825396825396825,
-    "diversity": 1.0,
+    "mean_distance": 0.1,
+    "diversity": 0.125,
     "empty_trials": 0
   },
   {
     "state": "dream",
     "dose": 2,
-    "trials": 40,
-    "served_per_trial": 2.0,
+    "trials": 8,
+    "served_per_trial": 1.0,
     "novel_rate": 0.0,
-    "fresh_rate": 0.8875,
+    "fresh_rate": 1.0,
     "by_position": {
       "1": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 40
-      },
-      "2": {
-        "novel": 0.0,
-        "fresh": 0.775,
-        "n": 40
+        "n": 8
       }
     },
-    "mean_distance": 0.14261904761904762,
-    "diversity": 1.0,
+    "mean_distance": 0.1,
+    "diversity": 0.125,
     "empty_trials": 0
   },
   {
     "state": "dream",
     "dose": 4,
-    "trials": 40,
-    "served_per_trial": 4.0,
+    "trials": 8,
+    "served_per_trial": 1.0,
     "novel_rate": 0.0,
-    "fresh_rate": 0.76875,
+    "fresh_rate": 1.0,
     "by_position": {
       "1": {
         "novel": 0.0,
         "fresh": 1.0,
-        "n": 40
-      },
-      "2": {
-        "novel": 0.0,
-        "fresh": 0.875,
-        "n": 40
-      },
-      "3": {
-        "novel": 0.0,
-        "fresh": 0.725,
-        "n": 40
-      },
-      "4": {
-        "novel": 0.0,
-        "fresh": 0.475,
-        "n": 40
+        "n": 8
       }
     },
-    "mean_distance": 0.14646825396825397,
-    "diversity": 1.0,
+    "mean_distance": 0.1,
+    "diversity": 0.125,
     "empty_trials": 0
   },
   {

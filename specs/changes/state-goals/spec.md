@@ -1,6 +1,6 @@
 # Change: make the states do the moves they are defined as
 
-Status: **PROPOSED** · opened 2026-11-08
+Status: **LIVE** · opened 2026-11-08 · built 2026-11-08
 
 ## Intent
 
@@ -40,11 +40,23 @@ memories or feed items, and stop before the cognitive move the state exists for.
 6. Each state's own measure is computed by `tools/experiment_deterministic.py` or a successor
    with no model call, and recorded before and after.
 
-## Open decision (blocking #4)
+## How #4 was resolved without a privacy change
 
-Dream needs cross-project evidence. Candidates: Hermes session history, hindsight memory, or a
-repo-activity source. Reading other projects' transcripts from a plugin is a privacy and scope
-change and needs Ryan's explicit approval.
+Dream reads each project's **own commit subjects** (`git log --since=24h`) for the configured
+repos — local, already the kind of material this plugin reads, and no transcripts. Hermes
+session history and hindsight are deliberately **not** read: that would be a scope change
+needing an explicit decision, and it is not needed to find cross-project connections.
+
+## Verification (2026-11-08)
+
+- `tests/test_state_moves.py` — 11 tests, one per acceptance criterion, including "a
+  possibility is a hypothesis not an instruction", "the scroll pool is comedy not news",
+  "a dream connection names a task on each side across projects", and "a thin day says so".
+- End-to-end through the engine with a temp `ANTEMUSE_STATES_HOME`: each state entered and
+  delivered, every item carrying its move.
+- Deterministic lane re-measured on the new pools: doomscroll distinct 80/72/70 % at dose
+  1/3/6 (was 90/83/83 % across 14 general feeds, which no longer qualify).
+- Suite: 826 passed, 1 skipped; `spec_audit` 0 drift.
 
 ## Must not change
 

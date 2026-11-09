@@ -27,38 +27,44 @@ UA = "antemuse/0.9 (+https://antemuse.com)"
 TIMEOUT = 8
 
 #: Every feed is one draw from a pool that is shuffled per fetch, so a scroll does not
-#: keep returning the same timeline because it was the first one that answered.
-BLUESKY_FEEDS = [
-    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot",
-    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/thevids",
-    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/with-friends",
-    "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/science",
+#: Distraction, not information. Every lane here is satire or comedy; a business or industry
+#: feed is the *opposite* of this state.
+#: Satire and comedy lanes that actually serve text. Reddit rate-limits this machine
+#: (HTTP 429 on every /r/ path) and Bluesky's search API answers 403 without a token, so
+#: neither is in the pool: a lane that cannot answer is a lane that silently empties the
+#: state. Every URL here returned a text feed on 2026-11-08.
+COMEDY_FEEDS = [
+    "https://www.theonion.com/rss",
+    "https://babylonbee.com/feed",
+    "https://www.reductress.com/feed",
+    "https://www.pointandclickbait.com/feed",
+    "https://www.thedailymash.co.uk/feed",
+    "https://xkcd.com/rss.xml",
+    "https://www.smbc-comics.com/comic/rss",
 ]
 
-MASTODON_INSTANCES = [
-    "https://fosstodon.org", "https://mastodon.social", "https://hachyderm.io",
-    "https://mstdn.social", "https://techhub.social",
-]
+#: A cheap, deterministic "is this work?" test. Not a classifier and not a judgement about
+#: quality: a line carrying any of these is professional material, which is not distraction.
+WORK_WORDS = set("""
+earnings revenue quarter investor investors market markets shares stock stocks ceo
+funding valuation startup startups regulation compliance policy government senate
+congress election campaign launch roadmap enterprise b2b saas infrastructure outage
+breach cyberattack vulnerability layoffs hiring recruitment merger acquisition ipo
+""".split())
 
-SOURCES = {
-    "bluesky": "https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed?feed={feed}&limit=40",
-    "mastodon": "{instance}/api/v1/timelines/public?limit=30",
-    "hn": "https://hn.algolia.com/api/v1/search?tags=front_page",
-    "rss": None,
-}
 
-FEEDS = [
-    "https://feeds.arstechnica.com/arstechnica/index",
-    "https://www.theverge.com/rss/index.xml",
-    "https://feeds.bbci.co.uk/news/technology/rss.xml",
-    "https://www.theguardian.com/world/rss",
-    "https://lwn.net/headlines/rss",
-    "https://www.quantamagazine.org/feed/",
-    "https://phys.org/rss-feed/",
-    "https://news.ycombinator.com/rss",
-    "https://www.sciencedaily.com/rss/top/science.xml",
-    "https://www.eff.org/rss/updates.xml",
-]
+def is_work(text: str) -> bool:
+    words = {w for w in re.findall(r"[a-z]{3,}", (text or "").lower())}
+    return bool(words & WORK_WORDS)
+
+
+#: Satire and comedy lanes that actually serve text. Reddit rate-limits this machine
+#: (HTTP 429 on every /r/ path) and Bluesky's search API answers 403 without a token, so
+#: neither is in the pool: a lane that cannot answer is a lane that silently empties the
+#: state. Every URL here returned a text feed on 2026-11-08.
+#: The RSS lanes are comedy lanes now. They were general news when the state was defined as
+#: "random material"; the goal is distraction, and a technology feed delivers the work back.
+FEEDS = list(COMEDY_FEEDS)
 
 
 def _get(url: str) -> Any:
@@ -78,63 +84,10 @@ def _clean(text: str, limit: int = 220) -> str:
 
 
 def _rotate() -> Dict[str, Any]:
-    """Which feeds this fetch will try, shuffled — the pool is not sampled twice the same."""
-    return {
-        "bluesky": RNG.sample(BLUESKY_FEEDS, min(2, len(BLUESKY_FEEDS))),
-        "mastodon": RNG.sample(MASTODON_INSTANCES, min(2, len(MASTODON_INSTANCES))),
-        "rss": RNG.sample(FEEDS, min(4, len(FEEDS))),
-    }
-
-
-def _bluesky(feeds: List[str] | None = None) -> List[Dict[str, str]]:
-    feeds = feeds or _rotate()["bluesky"]
-    data: Dict[str, Any] = {"feed": []}
-    for feed in feeds:
-        try:
-            got = _get(SOURCES["bluesky"].format(feed=feed))
-        except Exception:
-            continue
-        data["feed"].extend((got or {}).get("feed", []) if isinstance(got, dict) else [])
-    out = []
-    for item in data.get("feed", []):
-        post = item.get("post") or {}
-        author = (post.get("author") or {}).get("handle", "someone")
-        text = _clean((post.get("record") or {}).get("text", ""))
-        if text:
-            out.append({"source": "bluesky", "author": author, "text": text,
-                        "url": f"https://bsky.app/profile/{author}"})
-    return out
-
-
-def _mastodon(instances: List[str] | None = None) -> List[Dict[str, str]]:
-    instances = instances or _rotate()["mastodon"]
-    merged: List[Any] = []
-    for host in instances:
-        try:
-            got = _get(SOURCES["mastodon"].format(instance=host))
-        except Exception:
-            continue
-        if isinstance(got, list):
-            merged.extend(got)
-    data = merged
-    out = []
-    for st in data if isinstance(data, list) else []:
-        text = _clean(re.sub(r"<[^>]+>", " ", st.get("content", "")))
-        if text:
-            out.append({"source": "mastodon", "author": (st.get("account") or {}).get("acct", "someone"),
-                        "text": text, "url": st.get("url", "")})
-    return out
-
-
-def _hn() -> List[Dict[str, str]]:
-    data = _get(SOURCES["hn"])
-    out = []
-    for hit in (data.get("hits") or [])[:30]:
-        text = _clean(hit.get("title") or hit.get("story_text") or "")
-        if text:
-            out.append({"source": "hn", "author": hit.get("author", "someone"), "text": text,
-                        "url": hit.get("url") or f"https://news.ycombinator.com/item?id={hit.get('objectID')}"})
-    return out
+    """Which lanes this fetch will try, shuffled — the pool is not sampled twice the same."""
+    # five of seven: a dose of six needs enough lanes to fill, and drawing all seven every
+    # time makes every scroll the same scroll
+    return {"rss": RNG.sample(FEEDS, min(5, len(FEEDS)))}
 
 
 def _rss(feeds: List[str] | None = None) -> List[Dict[str, str]]:
@@ -146,13 +99,21 @@ def _rss(feeds: List[str] | None = None) -> List[Dict[str, str]]:
             continue
         for block in re.findall(r"<item[^>]*>(.*?)</item>", body, re.S)[:12]:
             t = re.search(r"<title[^>]*>(.*?)</title>", block, re.S)
-            if t:
-                out.append({"source": url.split("/")[2], "author": "feed",
-                            "text": _clean(t.group(1), 140), "url": ""})
+            if not t:
+                continue
+            text = _clean(t.group(1), 140)
+            # the seen-set is keyed on url: an empty url made every item "unseen" forever,
+            # so a second scroll could serve the same headline as new
+            link = re.search(r"<link[^>]*>\s*(?:<!\[CDATA\[)?\s*(https?://[^\s<\]]+)", block, re.S)
+            key = link.group(1) if link else f"{url}#{abs(hash(text))}"
+            out.append({"source": url.split("/")[2], "author": "feed",
+                        "text": text, "url": key})
     return out
 
 
-FETCHERS = {"bluesky": _bluesky, "mastodon": _mastodon, "hn": _hn, "rss": _rss}
+#: One fetcher, one kind of material. Social timelines and HN were removed with the goal
+#: change: news and industry chatter is the opposite of distraction.
+FETCHERS = {"satire": _rss}
 
 
 def fetch_all() -> Dict[str, Any]:
@@ -185,6 +146,7 @@ def cache(refresh: bool = False, ttl: int = TTL) -> Dict[str, Any]:
 
 
 def pick(steps: int = 1) -> List[str]:
+    """Comedy first, work excluded, and the exclusion is stated rather than silent."""
     """Sample across sources, without repeating what this cache already served.
 
     Stratifying by source (rather than sampling items) stops one loud feed taking the
@@ -202,6 +164,12 @@ def pick(steps: int = 1) -> List[str]:
             data = cache(refresh=True)
             continue
         pool = fresh or items
+        # an image-only post has no text to read, so it is not an item this state can
+        # deliver; the same is true of a work item, which is the wrong kind of material
+        kept = [i for i in pool
+                if (i.get("text") or "").strip() and not is_work(i.get("text", ""))]
+        skipped = len(pool) - len(kept)
+        pool = kept or pool
         by_source: Dict[str, List[Dict[str, str]]] = {}
         for item in pool:
             by_source.setdefault(item["source"], []).append(item)
@@ -214,7 +182,8 @@ def pick(steps: int = 1) -> List[str]:
                     sources_order.remove(name)
                     continue
                 item = bucket.pop(RNG.randrange(len(bucket)))
-                out.append(f"{item['source']} · @{item['author']} · {item['text']}")
+                out.append(f"{item['source']} · @{item['author']} · {item['text']}"
+                           + (f" · [{skipped} skipped as work]" if skipped else ""))
                 seen.add(item.get("url"))
                 if len(out) >= steps:
                     break

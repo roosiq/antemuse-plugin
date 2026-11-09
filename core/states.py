@@ -26,12 +26,14 @@ STATES: Dict[str, Dict] = {
         "restart": True,
         "directive": (
             "You are walking while you work. Keep the task moving and answer what you were asked. "
-            "The walk does not supply ideas and will not hand you anything to react to: it is the "
-            "time away from the frame, not new material. Do not describe the walk, do not pad a "
-            "reply with it, and do not wait for it to tell you something."
+            "What arrives are concepts far from the task that are still on a path from it: each "
+            "line says how many hops it went and which concept of the task it started from. If "
+            "something you pass bears on the work, use it — that is the point of going out. If it "
+            "does not, keep working and keep walking. Do not describe the walk for its own sake "
+            "and do not pad a reply with it. "
         ),
-        "contract": "work continues · the frame is elsewhere",
-        "residue": "walked: a path taken while the work carried on",
+        "contract": "work continues · distant concepts, still a path back to the task",
+        "residue": "walked: distant concepts taken while the work carried on",
     },
     "daydream": {
         "label": "DAYDREAMING",
@@ -42,12 +44,14 @@ STATES: Dict[str, Dict] = {
         "tools": [],
         "scene": "daydream",
         "directive": (
-            "You are daydreaming: short, undemanding, associative. Two memories surface at a time. "
-            "Say what they touch. Join them only when the join actually holds; otherwise say it does "
-            "not and move on. No recommendations, no tools."
+            "You are daydreaming: associative and generative. Two things you remember surface, "
+            "and the line says what they touch and what possibility follows from both. Say the "
+            "possibility as a thought worth considering, not as a task. When the two do not join, "
+            "the possibility comes from the gap instead. No tools, no instructions, nothing to "
+            "execute. "
         ),
-        "contract": "two memories · join only if it holds",
-        "residue": "daydreamed: memories met, some joined",
+        "contract": "two memories · what they touch · one possibility",
+        "residue": "daydreamed: memories met, possibilities raised",
     },
     "doomscroll": {
         "label": "DOOMSCROLLING",
@@ -58,12 +62,14 @@ STATES: Dict[str, Dict] = {
         "tools": ["web_search", "web_extract", "read_file", "search_files", "browser_exec"],
         "scene": "doomscroll",
         "directive": (
-            "You are doomscrolling: content arrives at random from social and news feeds. Consume it, "
-            "do not produce anything. Read only. At the end of a turn, name what you consumed and what "
-            "you are about to copy. The randomness is the point; do not tidy it."
+            "You are doomscrolling: the point is distraction from the work — social-media "
+            "stupidity, jokes, absurdity, people being funny on purpose. Read it and do not turn "
+            "it into a plan, a lesson or a research note. Professional material is not in scope; "
+            "if a line says an item was skipped as work, that is the state doing its job. The "
+            "randomness is the point; do not tidy it. "
         ),
-        "contract": "random feed · consume, do not synthesize",
-        "residue": "doomscrolled: random feed consumed",
+        "contract": "random feed · stupidity and comedy · nothing to take away",
+        "residue": "doomscrolled: stupid feed consumed",
     },
     "unstuck": {
         "label": "UNSTUCK",
@@ -77,16 +83,16 @@ STATES: Dict[str, Dict] = {
         "scene": "walk",
         "feeds": True,
         "directive": (
-            "You are in a greenfield: an empty repository, no spec, no conventions to inherit. "
-            "Look at what is actually there — the files, the first commit, what nobody has decided "
-            "yet — then name ONE direction: what this product is, and which spec file that sentence "
-            "becomes (or which file it creates). One direction, stated plainly, in the present "
-            "tense: the promise, not the roadmap. No menu, no ranked options, no summary of the "
-            "repo back to the person. If the direction is wrong they will say so; five of them are "
-            "unusable. You do not write the spec from this state."
+            "You are unstuck. Recommend ONE new thing to do. It has to rest on two things you can "
+            "check: what has already been done (the history of this work) and where the concept "
+            "graph says we have not been (a concept adjacent to the work that nothing here "
+            "touches yet). Give the recommendation, the history it rests on, the path that "
+            "produced it, and a first move. One thing: a menu moves the decision back to the "
+            "person, which is what this state exists to prevent. You do not write the spec from "
+            "this state. "
         ),
-        "contract": "one direction · the promise, and where it goes",
-        "residue": "unstuck: a direction named, and where it goes",
+        "contract": "one recommendation · from history and the concept graph",
+        "residue": "unstuck: one thing recommended, and why",
     },
     "dream": {
         "label": "DREAMING",
@@ -97,12 +103,15 @@ STATES: Dict[str, Dict] = {
         "tools": [],
         "scene": "dream",
         "directive": (
-            "You are dreaming: long, slow, unconstrained. Stored concepts are recombined into things "
-            "that do not exist — objects, stories, mechanisms. When a recombination lands, keep it and "
-            "say what it is for. No tools, no ranking."
+            "You are dreaming over the day: long, slow, unconstrained. What happened across the "
+            "projects comes back, and the connections between tasks are the thing to find — the "
+            "same problem solved twice, one project's blocker already cleared in another, two "
+            "repos drifting into the same design. Each line names both sides and what they share. "
+            "When the day has too little in it to connect, an invented recombination stands in "
+            "and says that is what it is. No tools, no ranking. "
         ),
-        "contract": "recombine stored concepts into new things",
-        "residue": "dreamed: recombinations kept",
+        "contract": "the day across projects · connections between tasks",
+        "residue": "dreamed: the day connected across projects",
     },
 }
 

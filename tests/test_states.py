@@ -57,7 +57,7 @@ def test_doomscroll_is_read_only_and_random():
     assert engine.policy("terminal")["action"] == "block"
     directive = engine.inject()
     assert "random" in directive.lower()
-    assert "do not produce anything" in directive
+    assert "distraction" in directive.lower()
 
 
 def test_an_entry_may_narrow_the_set_without_editing_the_state():

@@ -375,17 +375,28 @@ class GraphWalk:
             return [f"walk unavailable · graph '{self.graph_name}' has no starting node"]
         prev_id = self._read_cursor().get("prev", "")
         prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
+        # The goal is distant *and connected*: distance without a path back is noise. The
+        # anchor is the concept the walk set out from — the task's own, when a task seed
+        # was available — and every line says how far it went and how it gets back.
+        anchor = node["label"]
+        hops = 0
+        trail: List[str] = [anchor]
+
+        def back(jumped: bool = False) -> str:
+            path = " → ".join(trail[-4:])
+            how = "jumped" if jumped else f"{hops} hop{'s' if hops != 1 else ''}"
+            return f" · ↩ {how} from {anchor}: {path}"
         out: List[str] = []
         def far(node_, avoid=None):
             if not hasattr(self.graph, "far_from"):
                 return None
             return self.graph.far_from(node_, samples=self.samples, avoid=avoid)
 
-        def line(a, b, how):
+        def line(a, b, how, jumped: bool = False):
             gloss = (b.get("gloss") or "").split(";")[0][:90]
             return (f"{a['label']} ({a['pos'] or 'thing'}) → {b['label']} "
                     f"({b['pos'] or 'thing'}) · {how}"
-                    + (f" · “{gloss}”" if gloss else ""))
+                    + (f" · “{gloss}”" if gloss else "") + back(jumped))
 
         def mode_at(n):
             if self.jump != "composite":
@@ -400,15 +411,21 @@ class GraphWalk:
                 beyond = far(near, avoid=[node["id"], prev_id]) if near else None
                 if near is not None and beyond is not None:
                     gloss = (beyond.get("gloss") or "").split(";")[0][:90]
+                    hops += 2
+                    if beyond["label"] not in trail:
+                        trail.append(beyond["label"])
                     out.append(f"{node['label']} → {beyond['label']} "
                                f"({beyond['pos'] or 'thing'}) · vaulted past {near['label']}"
-                               + (f" · “{gloss}”" if gloss else ""))
+                               + (f" · “{gloss}”" if gloss else "") + back(jumped=True))
                     prev_id, node = near["id"], beyond
                     continue
             elif mode == "orbit":
                 skip = far(node, avoid=[prev_id])
                 if skip is not None:
-                    out.append(line(node, skip, "took its far edge"))
+                    hops += 1
+                    if skip["label"] not in trail:
+                        trail.append(skip["label"])
+                    out.append(line(node, skip, "took its far edge", jumped=True))
                     prev_id, node = node["id"], skip
                     continue
             elif isinstance(mode, str) and mode.startswith("run:"):
@@ -441,7 +458,10 @@ class GraphWalk:
             elif mode == "far":
                 skip = far(node, avoid=[prev_id])
                 if skip is not None:
-                    out.append(line(node, skip, "took its far edge"))
+                    hops += 1
+                    if skip["label"] not in trail:
+                        trail.append(skip["label"])
+                    out.append(line(node, skip, "took its far edge", jumped=True))
                     prev_id, node = node["id"], skip
                     continue
             options = [(rel, n) for rel, n in self.graph.edges(node) if rel in self.relations]
@@ -464,8 +484,11 @@ class GraphWalk:
                     continue
             rel, nxt = RNG.choice(forward or options)
             gloss = (nxt.get("gloss") or "").split(";")[0][:90]
+            hops += 1
+            if nxt["label"] not in trail:
+                trail.append(nxt["label"])
             out.append(f"{node['label']} ({node['pos'] or 'thing'}) → {nxt['label']} ({nxt['pos'] or 'thing'})"
-                       f" · took its {rel}" + (f" · “{gloss}”" if gloss else ""))
+                       f" · took its {rel}" + (f" · “{gloss}”" if gloss else "") + back())
             prev_id, node = node["id"], nxt
         if out and prefix:
             out[0] = prefix + out[0]

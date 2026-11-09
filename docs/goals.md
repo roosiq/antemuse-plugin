@@ -25,14 +25,12 @@ work — it is a stride out and back that brings something the work did not have
 from the thing you are working on, via …". Without the link, distant is just random, and the
 agent cannot judge whether it touches the task.
 
-**Where the code stands.** Distance works: mean WordNet path similarity **0.05** for a far
-jump vs **0.34** for an adjacent hop. **Connection is broken**: the directive still says
-"does not supply ideas… it is the time away from the frame", and the delivered lines name the
-concept without the path that anchors it to the current task. The stated goal and the built
-state currently contradict each other.
-
-**Must change.** Re-anchor the walk to the current task: start from the task's own concepts
-and jump out, then report the hop count and the chain back. Rewrite the directive.
+**Where the code stands (built 2026-11-08).** Every step starts from a concept seeded by the
+current project or conversation, and every line ends with the return path: `↩ 6 hops from
+agent: agent → … → <concept>`, or `↩ jumped from <anchor>: …` when it left the path entirely.
+The directive now says the concepts are distant *and* on a path from the task, and that using
+one that bears on the work is the point. Mean path similarity stays 0.05 for a far jump vs
+0.34 for an adjacent hop — distance was never the broken half.
 
 **Measure.** Distance **and** connection: mean hop distance from the current task's concepts
 (far), plus a resolvable chain back to it. Then, separately, whether the material was used —
@@ -54,13 +52,11 @@ The output is a new thought, not a report that two notes share a word.
 from the two. A pair that does not join can still produce a possibility — the join was the
 entry, never the point.
 
-**Where the code stands.** It joins memories and stops there. Join rate went 6 % → 100 % on a
-dense pool, which is a recall metric for a state whose job is ideation. **Nothing in the
-built state ideates.**
-
-**Must change.** Add the synthesis step: memory pair → what they suggest → one possibility,
-phrased as something the agent could try or consider. Keep the distinctive-term rule for the
-join; stop treating "adjacent" as the end of the item.
+**Where the code stands (built 2026-11-08).** Every item now ends with a possibility —
+`possibility · if <shared> behaves the same way in both, … could be tried against …` — built
+from the pair's own distinctive terms and phrased as a hypothesis, never as an instruction.
+The join still has to hold on distinctive terms to be called `JOINED`; when it does not, the
+item is `adjacent` and still yields a possibility.
 
 **Measure.** Possibilities per dose (each item yields one), and whether they are new relative
 to both memories — not new relative to the corpus, which was the old, wrong number.
@@ -78,13 +74,12 @@ state, and so is anything the agent might mistake for research.
 **Interface.** Sources are comedy and shitpost lanes (joke and meme accounts, absurdity
 feeds), and material that reads as professional content is refused as distraction.
 
-**Where the code stands.** Randomised across 4 Bluesky feeds, 5 Mastodon instances and 10
-RSS feeds with a seen-set: distinct lines **48/22/11 % → 90/83/83 %** at dose 1/3/6. But the
-feeds are general-purpose, so the state delivers news and commentary as readily as comedy —
-right mechanism, wrong pool.
-
-**Must change.** Replace the feed list with comedy/shitpost sources and add a cheap "is this
-work?" exclusion, so a business article cannot arrive as distraction.
+**Where the code stands (built 2026-11-08).** The pool is seven satire/comedy lanes verified
+to serve text (The Onion, Babylon Bee, Reductress, Point & Clickbait, Daily Mash, xkcd, SMBC);
+the general timelines and HN are gone, because they delivered the work back. A deterministic
+`is_work()` exclusion drops professional items and says so (`[3 skipped as work]`), and
+image-only posts are not items. Measured on the comedy pool: novel 64–70 %, fresh 100 %,
+distinct lines **80 / 72 / 70 %** at dose 1/3/6.
 
 **Measure.** Distinct lines across sessions (already measured), plus the share of items that
 are comedic rather than professional — a number that has to be looked at, not inferred.
@@ -103,14 +98,15 @@ project that another already unblocked, two repos drifting into the same design.
 **Interface.** Each connection names both sides, the shared thing, and what it means for one
 of them.
 
-**Where the code stands.** It just became a cross-frame *inventor* (100 % distinct frame
-pairs, 0.0000 overlap) — the previous goal, now superseded. And it has no input covering "the
-day's happenings": the plugin sees only this conversation's recall ring (24 turns) and its own
-journal (60 entries). Cross-project evidence is not reachable from inside the plugin today.
+**Where the code stands (built 2026-11-08).** The act is consolidation: it reads the day's
+commit subjects from each configured project (local git only — no transcripts), pairs subjects
+from *different* projects, and reports the shared distinctive words. On a day with no
+cross-project overlap it says `no connection today · … and saying so is the finding`; on a
+thin day it says the day is thin and invents instead, labelled as a fallback. Cross-frame
+invention is retained only as that fallback.
 
-**Must change.** A consolidation interface (connections between tasks, both sides named) and
-an input that spans projects. The invention code is not wasted — it becomes the fallback when
-the day's material is thin, but it is no longer the act.
+WordNet bridging between subjects was tried and removed: it fired on unrelated tasks
+("through: artifact") which is worse than reporting nothing.
 
 **Measure.** Connections per dream, and how many name a task on each side with shared
 evidence; the share a person judges worth acting on is the only number that matters and
@@ -135,13 +131,10 @@ untried. A recommendation needs a reason a person can check and an action that c
 and the first move. One thing. More than one is a menu, and a menu moves the decision back to
 the person, which is what this state exists to avoid.
 
-**Where the code stands.** It names one direction with evidence and a first move and is
-dose-responsive (0/1/2) — but the evidence is thin repo facts ("no README / 3 entries") and
-the concept graph is never consulted for the recommendation; the graph only supplies walk
-material.
-
-**Must change.** Wire the concept graph into the recommendation, and take "what we have done"
-from history rather than from the current repo's file list.
+**Where the code stands (built 2026-11-08).** Three inputs feed it: history (the last commit's
+own subject), the concept graph (one edge out of a word this repo already uses, to a neighbour
+the repo does not), and memory. Every candidate still carries its evidence and a first move,
+and dose 1 still returns exactly one.
 
 **Measure.** One recommendation, with a history citation and a graph path; the count must
 be 1.
@@ -158,14 +151,15 @@ that is indistinguishable from `work` on its own measure has done nothing.
 
 ## Where the code stands, in one table
 
-| state | Ryan's goal | built today | delta |
+| state | Ryan's goal | what it does now | open |
 |---|---|---|---|
-| walk | distant **and connected** concepts for the current task | distant, unanchored; directive says "no ideas" | re-anchor + rewrite directive |
-| daydream | synthesize and introduce new possibilities | recalls and joins memories, stops | add the synthesis step |
-| doomscroll | social-media stupidity and comedy | randomised general feeds | comedy-only pool + work exclusion |
-| dream | process the day, connect tasks across projects | invents cross-frame objects | new interface + a cross-project input |
-| unstuck | recommend one new thing from history + concept graph | one direction from thin repo facts | graph + history input |
+| walk | distant **and connected** concepts for the current task | anchored + return path on every step | "may improve output" is still a hypothesis |
+| daydream | synthesize and introduce new possibilities | every item yields a possibility | 100 % join rate on a dense pool |
+| doomscroll | social-media stupidity and comedy | satire pool, work exclusion | comedic share needs a human eye |
+| dream | process the day, connect tasks across projects | cross-project connections from the day's commits | terse subjects give few signals |
+| unstuck | recommend one new thing from history + concept graph | history + one-edge graph path + memory | graph neighbours can be thin |
 
-The pattern in the deltas is the one that produced the bad experiment: the states were built
-as *material generators* and are defined as *cognitive moves*. Material is necessary and not
-sufficient — three of the five stop before the move.
+The pattern in the deltas was the one that produced the bad experiment: the states were
+built as *material generators* and are defined as *cognitive moves*. Material is necessary
+and not sufficient. As of `state-goals`, all five make the move; what remains open is
+evidence about the effect, not the shape of the act.

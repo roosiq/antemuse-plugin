@@ -112,9 +112,10 @@ def test_when_the_pool_runs_dry_it_refetches_rather_than_repeating(monkeypatch):
 
 
 def test_sources_are_a_pool_not_a_fixed_pair():
-    assert len(social.BLUESKY_FEEDS) >= 3
-    assert len(social.MASTODON_INSTANCES) >= 3
-    assert len(social.FEEDS) >= 8
+    # the goal is distraction via comedy, so the pool is satire lanes and nothing else
+    assert len(social.FEEDS) >= 5
+    assert list(social.FETCHERS) == ["satire"], social.FETCHERS
+    assert len(set(social.FEEDS)) == len(social.FEEDS), "no lane listed twice"
 
 
 # ----------------------------------------------------------------- unstuck
@@ -145,7 +146,10 @@ def test_zero_dose_offers_no_direction(tmp_path, monkeypatch):
 def test_memory_is_an_input_and_its_absence_is_named(tmp_path, monkeypatch):
     monkeypatch.setattr(sources.storage, "project_root", lambda: tmp_path)
     monkeypatch.setattr(sources, "memory_pool", lambda: [])
-    assert any("missing input · memory" in l for l in sources.unstuck_text(2))
+    # the missing inputs are listed together now (history, graph, memory), so the
+    # assertion is about memory being named, not about it being first
+    assert any(l.startswith("missing input") and "memory" in l
+               for l in sources.unstuck_text(2))
 
     monkeypatch.setattr(sources, "memory_pool", lambda: ["the tile renderer kept stalling"])
     lines = sources.unstuck_text(6)

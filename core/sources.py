@@ -13,6 +13,7 @@ import json
 import os
 import random
 import re
+import subprocess
 import time
 import urllib.request
 from pathlib import Path
@@ -389,6 +390,31 @@ def memory_pool() -> List[str]:
     return pool
 
 
+POSSIBILITY_FORMS = [
+    "possibility · if {shared} behaves the same way in both, {a} could be tried against {b}",
+    "possibility · the gap between {a} and {b} is where {shared} is doing unexplained work",
+    "possibility · what if {shared} is the actual subject and {a} and {b} are two views of it",
+    "possibility · {a}, run the way {b} does it, would fail differently — worth one attempt",
+]
+
+
+def _short(text: str, words: int = 6) -> str:
+    return " ".join(re.findall(r"[A-Za-z0-9'\-]+", text)[:words]) or text[:40]
+
+
+def possibility(a: str, b: str, shared: set) -> str:
+    """What the two memories suggest, not what they are.
+
+    Daydream's act is ideation: the pair is the input, and the state has not done its job
+    until it puts forward something that was in neither memory. Deterministic on purpose —
+    the words come from the pair, the form from a fixed list, and nothing is asserted as
+    true. It is a thought to consider and it says so by starting with "possibility".
+    """
+    term = ", ".join(sorted(shared)[:2]) or "the thing they share"
+    return RNG.choice(POSSIBILITY_FORMS).format(
+        shared=term, a=_short(a, 5), b=_short(b, 5))
+
+
 def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
     """Bring two memories back and say whether the connection is worth joining.
 
@@ -435,13 +461,112 @@ def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
             break
         shared, a, b, common = pick
         used.update((a, b))
-        if shared >= join_threshold:
-            out.append(f"JOINED · {a[:70]}… ↔ {b[:70]}… · shared: {', '.join(sorted(common)[:4])}")
-        else:
-            out.append(f"adjacent · {a[:70]}… ↔ {b[:70]}… · only {shared} shared distinct "
-                       f"terms (best of {len(best)} pairs, needs {join_threshold})")
+        mark = "JOINED" if shared >= join_threshold else "adjacent"
+        support = (f"shared: {', '.join(sorted(common)[:4])}" if shared
+                   else f"nothing shared (best of {len(best)} pairs, needs {join_threshold})")
+        out.append(f"{mark} · {a[:70]}… ↔ {b[:70]}… · {support} "
+                   f"· {possibility(a, b, common)}")
     return out
 
+
+
+# ------------------------------------------------------------------ the day, across projects
+
+#: The projects a dream is allowed to see. Names, not transcripts: this reads each repo's own
+#: commit subjects, which the plugin already treats as material (unstuck reads the repo too).
+REPOS = ["concept.cooking", "antemuse", "antemuse-plugin", "toslop", "toslop-model",
+         "ryancook.name", "slopslingers-infra", "brand-agents"]
+
+
+def _git_log(root: Path, since: str) -> List[str]:
+    try:
+        run = subprocess.run(["git", "-C", str(root), "log", f"--since={since}",
+                              "--pretty=%s"], capture_output=True, text=True, timeout=8)
+    except Exception:
+        return []
+    if run.returncode != 0:
+        return []
+    return [line.strip() for line in run.stdout.splitlines() if line.strip()]
+
+
+def day_work(hours: int = 24) -> List[tuple]:
+    """What was actually done today, per project: (project, subject)."""
+    out: List[tuple] = []
+    for name in REPOS:
+        root = Path.home() / name
+        if not (root / ".git").exists():
+            continue
+        for subject in _git_log(root, f"{hours} hours ago")[:12]:
+            out.append((name, subject))
+    return out
+
+
+CONNECTION_FORMS = [
+    "may be the same move in two places — worth checking whether {a} can stop doing it twice",
+    "may be blocked on what {b} already solved — worth reading the other repo before retrying",
+    "may be drifting toward the same design — worth deciding which one wins before they disagree",
+    "may already be answered by the other side — worth one look before the next step",
+]
+
+#: Words that bridge everything and therefore say nothing.
+GENERIC_BRIDGES = set("""
+move earlier later update change add remove fix docs doc chore test tests spec specs
+state states work working thing things more less first second next last make made
+what written only also into over when where still from with this that these those
+""".split())
+
+
+def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
+    """Connections between the day's tasks, across projects.
+
+    The act is consolidation: what happened, and what connects that nobody wrote down. The
+    material is each project's own commit subjects for the day — local, and already the kind
+    of thing this plugin reads. When the day has too little in it, the state says so and
+    invents instead, which is a fallback and is labelled as one.
+    """
+    work = day_work(hours)
+    if len(work) < 3:
+        invented = dream_recombine(steps)
+        note = f"the day is thin ({len(work)} commits in {hours}h) · inventing instead"
+        return [f"note · {note}"] + invented[:max(1, steps - 1)]
+
+    words = {item: _words(item[1]) for item in work}
+    df: Dict[str, int] = {}
+    for ws in words.values():
+        for w in ws:
+            df[w] = df.get(w, 0) + 1
+    # a day is a small corpus: a quarter of fifteen subjects is three, which is almost
+    # boilerplate. Half is the honest bar for "this word says something here".
+    common = max(2, len(work) // 2)
+    distinctive = {w for w, n in df.items() if n <= common and w not in GENERIC_BRIDGES}
+
+    pairs = []
+    for i, a in enumerate(work):
+        for b in work[i + 1:]:
+            if a[0] == b[0]:
+                continue                      # cross project, or it is not a connection
+            shared = (words[a] & words[b]) & distinctive
+            if shared:
+                pairs.append((float(len(shared)), a, b, sorted(shared)[:3]))
+    pairs.sort(key=lambda row: row[0], reverse=True)
+
+    out: List[str] = []
+    for n in range(steps):
+        if not pairs:
+            if n == 0:
+                out.append("no connection today · the day's commits share nothing distinctive "
+                           "across projects, and saying so is the finding")
+                continue
+            # the dose still has to be served: the directive says invention stands in when
+            # the day has too little in it, and the line says that is what it is
+            invented = dream_recombine(1)
+            out.append("inventing instead · " + (invented[0] if invented else "nothing to invent"))
+            continue
+        score, a, b, bridged = pairs.pop(0)
+        form = RNG.choice(CONNECTION_FORMS)
+        out.append(f"connection · {a[0]}: {a[1][:60]} ↔ {b[0]}: {b[1][:60]} · "
+                   f"shared: {', '.join(bridged)} · {form.format(a=a[0], b=b[0])}")
+    return out
 
 # ---------------------------------------------------------------------- feed
 
@@ -559,6 +684,45 @@ def _spec_files(root: Path) -> List[str]:
     return found[:8]
 
 
+def _graph_path(root: Path, hints: List[str]) -> str:
+    """A concept *adjacent* to this work that nothing here touches yet.
+
+    The goal says adjacent, not exotic: a recommendation resting on "electroconvulsive
+    therapy" because it is far from "surface" is a random noun with a citation. One edge
+    out of a word this repo already uses, where the neighbour does not appear in the repo's
+    own vocabulary, is the thing worth recommending.
+    """
+    try:
+        from . import walks
+        graph = walks.GRAPHS["wordnet"]()
+        terms = [w for w in _words(" ".join(hints)) if len(w) > 3 and w not in GENERIC_BRIDGES]
+        if not terms:
+            return ""
+        # WordNet resolves lemmas, not inflected forms: try a few candidates and their
+        # singulars before giving up, and say so when none resolve.
+        node, anchor = None, ""
+        for term in RNG.sample(terms, min(8, len(terms))):
+            for cand in (term, term[:-1] if term.endswith("s") else term):
+                node = graph.resolve(cand)
+                if node is not None:
+                    anchor = cand
+                    break
+            if node is not None:
+                break
+        if node is None:
+            return ""
+        used = set(terms)
+        neighbours = [n for rel, n in graph.edges(node)
+                      if str(n.get("label", "")).lower() not in used]
+        if not neighbours:
+            return ""
+        step = RNG.choice(neighbours)
+        return (f"graph · {node['label']} → {step['label']} "
+                f"({step['pos'] or 'thing'}, one edge out, untouched here)")
+    except Exception:
+        return ""
+
+
 def unstuck_text(steps: int = 1) -> List[str]:
     """Directions, one per step, each bound to the evidence that produced it.
 
@@ -608,6 +772,25 @@ def unstuck_text(steps: int = 1) -> List[str]:
                       f"{len(specs)} spec file(s) and {git['commits']} commit(s) already exist",
                       "open the newest spec, find a check with no test, write that test first"))
 
+    # history as an input: what was actually done, in its own words
+    history = _git_log(root, "7 days ago")[:5]
+    if history:
+        found.append((f"continue '{history[0][:50]}'",
+                      f"history · last commit: {history[0][:70]}",
+                      "open the file that commit touched and write the next call in the same shape"))
+    else:
+        missing.append("history (no commits in the last 7 days)")
+
+    # the concept graph as an input: adjacent, and not yet touched here
+    graph_line = _graph_path(root, specs + [p.stem for p in root.glob("*.md")] + entries)
+    if graph_line:
+        concept = graph_line.split("→")[1].split("(")[0].strip()
+        found.append((f"try the concept '{concept}'",
+                      graph_line,
+                      f"write one sentence joining '{concept}' to this work, and drop it if it does not hold"))
+    else:
+        missing.append("concept graph (no readable WordNet node for this repo's words)")
+
     # memory as an input: what the person said or stored is the subject matter
     pool = memory_pool()
     if pool:
@@ -645,7 +828,7 @@ def unstuck_text(steps: int = 1) -> List[str]:
 PROVIDERS = {
     "walk": walk_text,
     "daydream": memory_pairs,
-    "dream": dream_recombine,
+    "dream": day_connections,
     "doomscroll": scroll_text,
     "unstuck": unstuck_text,
 }
