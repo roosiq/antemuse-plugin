@@ -1,138 +1,171 @@
 # What each state is for
 
-A state is a bounded change to what the agent attends to. This file says what each one is
-*for* — the goal, what success looks like when it happens, what failure looks like, the
-measure that actually fits that goal, and what the state must not do.
+A state is a bounded change to what the agent attends to. These goals are **Ryan's own
+definitions** (2026-11-08) and they are authoritative: where the code disagrees with this
+file, the code is wrong.
 
-Written because the first experiment measured all five states with one number (novelty of
-concepts) and that was wrong for four of them. A state can hit 98 % on someone else's metric
-and still not do its job.
-
-The goals below are transcribed from each state's own directive in `core/states.py`; where a
-goal needed judgement, the judgement is marked **open** and listed at the end.
+Each state below states the goal, what it implies for the material and the interface, where
+the code stands today, and the measure that fits *that* goal. The measures are not shared
+between states: the first experiment measured all five with novelty of concepts and that was
+wrong for four of them.
 
 ---
 
 ## walk
 
-**Goal.** Work continues while the frame is elsewhere. The walk is the time away from the
-frame, not new material for it.
+> "Find distant but still connected concepts that may improve an LLM's output on their
+> current task."
 
-**Success.** The task still moves at its normal quality. The concepts served are far from
-the project's own vocabulary — the walk is genuinely somewhere else. Nothing about the walk
-appears in the agent's reply as content.
+**Implies.** Two requirements at once, and they pull against each other: the concepts must
+be **distant** (not the task's own vocabulary) and **still connected** (reached by a path
+from the task, so the walk is relevant rather than random). It is not a holiday from the
+work — it is a stride out and back that brings something the work did not have.
 
-**Failure.** The agent narrates the walk, uses it as a source of ideas, or lets it become
-the topic. Also failure: a walk that stays in the neighbourhood, so "away" is a fiction.
+**Interface.** A concept arrives with the link that makes it connected: "this is six hops
+from the thing you are working on, via …". Without the link, distant is just random, and the
+agent cannot judge whether it touches the task.
 
-**Measure.** Frame distance, not novelty: mean WordNet path similarity **0.05 for a far
-jump vs 0.34 for an adjacent hop** (`outer`/`vault` vs `wander`). Interference — whether the
-frame leaks into replies — is **measured nowhere yet**.
+**Where the code stands.** Distance works: mean WordNet path similarity **0.05** for a far
+jump vs **0.34** for an adjacent hop. **Connection is broken**: the directive still says
+"does not supply ideas… it is the time away from the frame", and the delivered lines name the
+concept without the path that anchors it to the current task. The stated goal and the built
+state currently contradict each other.
 
-**Non-goals.** Supplying ideas. Being entertaining text for the human. Any claim that a walk
-makes the work better.
+**Must change.** Re-anchor the walk to the current task: start from the task's own concepts
+and jump out, then report the hop count and the chain back. Rewrite the directive.
+
+**Measure.** Distance **and** connection: mean hop distance from the current task's concepts
+(far), plus a resolvable chain back to it. Then, separately, whether the material was used —
+that is the "may improve output" clause, and it is only answerable with real shipping work,
+not in a scratch repo.
 
 ---
 
 ## daydream
 
-**Goal.** Associative recall with restraint: two memories surface at a time, the state says
-what they touch, and joins them only when the join actually holds.
+> "Same as when a person daydreams — process thoughts, synthesize, introduce new thoughts,
+> ideate and introduce new possibilities."
 
-**Success.** A join rests on words distinctive to those two memories, not on the project's
-own boilerplate. When nothing holds, the state says `adjacent` and moves on — that is a
-correct outcome, not a miss. No recommendations, no tools.
+**Implies.** Daydream is **generative**, not a memory viewer. Recalling two memories is the
+input; the act is to synthesize from them and put forward possibilities that were in neither.
+The output is a new thought, not a report that two notes share a word.
 
-**Failure.** Forced joins (any two notes that both say "plugin"), a stream of
-recommendations, or tool use inside an undemanding state.
+**Interface.** Each item: what came back, what it suggests, and one possibility that follows
+from the two. A pair that does not join can still produce a possibility — the join was the
+entry, never the point.
 
-**Measure.** Join rate **on distinctive terms** (terms that appear in at most a quarter of
-the pool), plus the honesty of the adjacent branch. Before the fix: **6 %** join rate,
-because each item drew one random pair from a 25-memory pool. After: **100 %** on that dense
-pool with a median of 3.5 distinctive shared terms — and the question of whether 100 % means
-the pool is dense or the bar is low is **open**.
+**Where the code stands.** It joins memories and stops there. Join rate went 6 % → 100 % on a
+dense pool, which is a recall metric for a state whose job is ideation. **Nothing in the
+built state ideates.**
 
-**Non-goals.** Brainstorming. Producing actions the agent should take. Ranking memories.
+**Must change.** Add the synthesis step: memory pair → what they suggest → one possibility,
+phrased as something the agent could try or consider. Keep the distinctive-term rule for the
+join; stop treating "adjacent" as the end of the item.
+
+**Measure.** Possibilities per dose (each item yields one), and whether they are new relative
+to both memories — not new relative to the corpus, which was the old, wrong number.
 
 ---
 
 ## doomscroll
 
-**Goal.** Consume unfiltered external material, without synthesizing. The randomness is the
-point; the agent reads and does not tidy.
+> "Complete distraction from the current work using social media stupidity and comedy."
 
-**Success.** Material is random across sources, does not repeat itself across sessions, and
-is read rather than turned into output. At the end of a turn the agent can name what it
-consumed.
+**Implies.** The target is specifically **stupid and funny** — shitposts, jokes, absurd
+threads — and specifically **not** work. A feed of industry news is the opposite of this
+state, and so is anything the agent might mistake for research.
 
-**Failure.** The same six items every session because one feed was first to answer; filtering
-for relevance; summarizing the feed back as if that were the act.
+**Interface.** Sources are comedy and shitpost lanes (joke and meme accounts, absurdity
+feeds), and material that reads as professional content is refused as distraction.
 
-**Measure.** Distinct lines across sessions — **48 / 22 / 11 %** at dose 1/3/6 on the frozen
-feed, **90 / 83 / 83 %** after drawing from a wider pool and refusing repeats.
+**Where the code stands.** Randomised across 4 Bluesky feeds, 5 Mastodon instances and 10
+RSS feeds with a seen-set: distinct lines **48/22/11 % → 90/83/83 %** at dose 1/3/6. But the
+feeds are general-purpose, so the state delivers news and commentary as readily as comedy —
+right mechanism, wrong pool.
 
-**Non-goals.** Curation. Relevance. Coverage of "what matters today".
+**Must change.** Replace the feed list with comedy/shitpost sources and add a cheap "is this
+work?" exclusion, so a business article cannot arrive as distraction.
+
+**Measure.** Distinct lines across sessions (already measured), plus the share of items that
+are comedic rather than professional — a number that has to be looked at, not inferred.
 
 ---
 
 ## dream
 
-**Goal.** Recombine stored concepts into things that do not exist — objects, stories,
-mechanisms — and keep the ones that land.
+> "Process the day's happenings, find connections between tasks (cross project, etc)."
 
-**Success.** The recombination crosses two worlds that share no vocabulary, uses real words
-from those worlds, and the agent keeps at least one and says what it is for. Pairs differ
-from run to run.
+**Implies.** Dream is **consolidation over what actually happened**, not invention. The
+material is the day's recorded activity across projects; the act is to find the connections
+between tasks that nobody wrote down — the same problem solved twice, a lane blocked in one
+project that another already unblocked, two repos drifting into the same design.
 
-**Failure.** A template sentence inside one frame with its roles shuffled — structurally
-distinct, lexically boilerplate. Role-name soup. A long dream where nothing is kept.
+**Interface.** Each connection names both sides, the shared thing, and what it means for one
+of them.
 
-**Measure.** Frame-pair distance and pair distinctness, because novelty of words is not the
-goal here — the invention *is* the pair. Measured: **100 % distinct pairs, mean frame
-overlap 0.0000, 100 % disjoint pairs** over 40 recombinations. Keep rate is **unmeasured**.
+**Where the code stands.** It just became a cross-frame *inventor* (100 % distinct frame
+pairs, 0.0000 overlap) — the previous goal, now superseded. And it has no input covering "the
+day's happenings": the plugin sees only this conversation's recall ring (24 turns) and its own
+journal (60 entries). Cross-project evidence is not reachable from inside the plugin today.
 
-**Non-goals.** Usefulness on demand. Ranking candidates. Tool use. Any promise that a
-recombination is good rather than new.
+**Must change.** A consolidation interface (connections between tasks, both sides named) and
+an input that spans projects. The invention code is not wasted — it becomes the fallback when
+the day's material is thin, but it is no longer the act.
+
+**Measure.** Connections per dream, and how many name a task on each side with shared
+evidence; the share a person judges worth acting on is the only number that matters and
+cannot be computed.
+
+**Blocker.** The cross-project input is a decision, not a build: session history and
+hindsight memory both exist on this machine, but reading other projects' transcripts from a
+plugin is a privacy and scope change that needs an explicit yes.
 
 ---
 
 ## unstuck
 
-**Goal.** On a greenfield, name ONE direction: what the product is, and which spec file that
-sentence becomes. The promise, not the roadmap.
+> "Recommend a new thing to do, in the context of what we have done in the past and with
+> recommendations from our concept graph."
 
-**Success.** Exactly one direction, in the present tense, bound to the evidence that
-produced it and carrying a first move that can be started in one turn. The human can accept
-it or reject it; three more would be unusable.
+**Implies.** Not a greenfield pitch and not a menu: **one recommended next thing**, justified
+by (a) what has been done before and (b) what the concept graph suggests is adjacent but
+untried. A recommendation needs a reason a person can check and an action that can start now.
 
-**Failure.** A menu, a ranked list, a summary of the repo handed back, or a spec written from
-inside this state. Also failure: a direction with no evidence behind it.
+**Interface.** The recommendation, the history it rests on, the graph path that produced it,
+and the first move. One thing. More than one is a menu, and a menu moves the decision back to
+the person, which is what this state exists to avoid.
 
-**Measure.** Count (must be 1 at dose 1), groundedness (every direction names its evidence
-and its first move), and dose responsiveness — 0 directions at 0, 1 at 1, 2 at 2. Before the
-rewrite the state served five identical lines at every dose and **1 %** distinct lines across
-trials; now **29 %**.
+**Where the code stands.** It names one direction with evidence and a first move and is
+dose-responsive (0/1/2) — but the evidence is thin repo facts ("no README / 3 entries") and
+the concept graph is never consulted for the recommendation; the graph only supplies walk
+material.
 
-**Non-goals.** Writing the spec. Estimating effort. Offering options.
+**Must change.** Wire the concept graph into the recommendation, and take "what we have done"
+from history rather than from the current repo's file list.
 
----
-
-## idle and work — the baseline, not states
-
-They are not in `STATES` and never enter. `work` is the ordinary condition and `idle` is
-nothing happening; both exist so a comparison has a floor. A state that cannot be told apart
-from `work` on its own measure has not done anything.
+**Measure.** One recommendation, with a history citation and a graph path; the count must
+be 1.
 
 ---
 
-## Open questions
+## idle and work — the floor, not states
 
-1. **walk** — may the agent ever mention the walk? The directive says no; the return report
-   is written by the runtime, not the agent, which is the only reason the two do not
-   contradict each other.
-2. **daydream** — is a 100 % join rate the goal, or evidence the bar is too low for a dense
-   pool? A pool-aware threshold (3 distinctive terms when the pool is large) would keep the
-   restraint honest.
-3. **dream** — is nonsense acceptable as invention, or must every recombination be usable —
-   a name, a purpose, a first test? Today the only gate is "keep it and say what it is for".
-4. **doomscroll** — should source rotation happen per session or per item?
+Neither is in `STATES` and neither is enterable. `work` is the ordinary condition, `idle` is
+nothing happening. They exist so a state can be compared against no state at all: a state
+that is indistinguishable from `work` on its own measure has done nothing.
+
+---
+
+## Where the code stands, in one table
+
+| state | Ryan's goal | built today | delta |
+|---|---|---|---|
+| walk | distant **and connected** concepts for the current task | distant, unanchored; directive says "no ideas" | re-anchor + rewrite directive |
+| daydream | synthesize and introduce new possibilities | recalls and joins memories, stops | add the synthesis step |
+| doomscroll | social-media stupidity and comedy | randomised general feeds | comedy-only pool + work exclusion |
+| dream | process the day, connect tasks across projects | invents cross-frame objects | new interface + a cross-project input |
+| unstuck | recommend one new thing from history + concept graph | one direction from thin repo facts | graph + history input |
+
+The pattern in the deltas is the one that produced the bad experiment: the states were built
+as *material generators* and are defined as *cognitive moves*. Material is necessary and not
+sufficient — three of the five stop before the move.

@@ -452,18 +452,18 @@ hop (README), approximately seven times farther.
 
 ### 8.2a What each state is for, and the measure that fits it
 
-The states do not share one goal, so they do not share one number. Full statements of each
-goal — success, failure, measure, non-goals, and the open questions — are in
-[`docs/goals.md`](goals.md). The summary table stays here because it is the one place the
-numbers live.
+The states do not share one goal, so they do not share one number. The goals are Ryan's
+definitions of 2026-11-08 and are authoritative; full statements — what each implies, where
+the code stands, what must change — are in [`docs/goals.md`](goals.md), with the re-alignment
+tracked in `specs/changes/state-goals/`.
 
-| state | goal (from its directive) | the measure that fits | measured 2026-11-08 |
+| state | goal (Ryan, 2026-11-08) | measure that fits | measured 2026-11-08 |
 |---|---|---|---|
-| walk | work continues, the frame is elsewhere | frame distance and non-interference — **not** novelty | mean path similarity 0.05 for a far jump vs 0.34 for an adjacent hop |
-| daydream | two memories, join only if it holds | join rate on distinctive terms | 6 % when one random pair was drawn per item; 100 % on a 25-memory pool once the state searched for a pair that holds |
-| doomscroll | random feed, consume without synthesizing | distinct lines across sessions | 48/22/11 % → 90/83/83 % at dose 1/3/6 after randomizing sources and refusing repeats |
-| dream | recombine stored concepts into new things | frame-pair distance and pair distinctness | 100 % distinct pairs, mean frame overlap 0.0000, 100 % disjoint |
-| unstuck | name ONE direction | exactly one, grounded, actionable | one at dose 1, memory-fed, with evidence and a first move |
+| walk | distant **and connected** concepts for the current task | distance from the task's concepts, and a resolvable chain back | mean path similarity 0.05 for a far jump vs 0.34 adjacent; chain back **not built** |
+| daydream | synthesize, introduce new thoughts and possibilities | possibilities per dose, new relative to both memories | join rate 6 % → 100 % (recall only); **no synthesis step yet** |
+| doomscroll | distraction via social-media stupidity and comedy | distinct lines across sessions, and comedic share | distinct 48/22/11 % → 90/83/83 %; comedic share **not measured** |
+| dream | process the day, connect tasks across projects | connections per dream, both sides named | cross-frame invention 100 % distinct pairs — **superseded goal** |
+| unstuck | recommend one new thing from history + the concept graph | one recommendation, with history citation and graph path | one direction at dose 1; graph unused |
 
 ### 8.3 Policy and cursors
 
@@ -990,6 +990,7 @@ All paths relative to `specs/changes/`.
 | `normal-baseline` | **implemented (partial)** | measurement | records the ordinary condition — tool calls and failures per turn, and the minutes between states — in `normal.json` (200 turns / 50 stretches, counts only). Below 20 turns nothing is claimed. `long stretch` now uses the measured 75th percentile of this person's stretches (clamped 60–180) instead of the constant 90, and the line says which it used. Loop, wall and saturation keep fixed thresholds until the failure-rate distribution can support a calibration. `core/normal.py`, 8 tests. |
 | `plugin-settings` | **implemented** | configuration | six bounded keys declared in the manifest's `config_schema` (`recommend_enabled`, `recommend_cooling_minutes`, `long_stretch_minutes`, `picture_enabled`, `picture_narrow`, `journal_cap`), rendered as a form by the **desktop app's** Settings ▸ Plugins and written to `plugins.entries.antemuse.settings.*`; read through `ctx.get_config`, clamped and logged, never raising. The plugin's own settings page was removed so the host form is the only one. Nothing that defines a state is settable. `core/settings.py`, 11 tests. |
 | `semantic-states` | **implemented** | lifecycle | a state ends when its **dose** is delivered — 6 turns worked (walk), 2 memory pairs (daydream), 3 feed items (doomscroll), 2 recombinations (dream), 1 direction (unstuck) — or when the agent declares it done (`state(action="complete")`). Delivery is per turn, not per second, so the same dose costs a fast model fewer seconds and a slow one more; minutes are now a ceiling, and an expiry reports the shortfall (`expired before its dose: 2 of 3`). Turns- and seconds-to-dose are recorded per state in `normal.json` for later model comparison. 7 tests. |
+| `state-goals` | **proposed** | product | the five states were built as material generators; Ryan's definitions of 2026-11-08 make them cognitive moves. walk must anchor to the task and report the chain back; daydream must synthesize a possibility from each pair, not stop at the join; doomscroll's pool must be comedy and shitpost sources with a work exclusion; dream must consolidate the day's activity across projects instead of inventing objects; unstuck must recommend one thing from history plus the concept graph. Deliberately not started: dream's cross-project input is a privacy decision first. |
 | `state-settings-experiment` | **partial** | evaluation | the deterministic lane is measured: `tools/experiment_deterministic.py` runs each state's own provider and counts novel (against this repository's ~6,050-word vocabulary), fresh within a dose, and distinct lines across trials — 150 trials/cell, seconds, zero model calls. It found walk's freshness falling 87→78 % from dose 3 to 12, doomscroll's variety collapsing to 11 % distinct lines on a frozen feed, dream at 100 % distinct but 5–8 % novel (a template), and unstuck serving five identical lines at every dose. Rules frozen before the deciding run: a dose may not exceed the smallest k where fresh < 0.85; distinct < 0.30 is a source defect; novel < 0.20 with distinct = 1.00 is a generator defect. The model lane (`tools/experiment_run.py`) stays as the cost-and-plausibility check — one 6-turn entry measured ~4.0 M input tokens — and is exploratory, its three entries excluded. No dose has been changed from these numbers. |
 
 Supporting evidence files:
