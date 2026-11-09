@@ -253,11 +253,17 @@ def test_a_live_state_serves_stills_and_the_route_serves_them(monkeypatch, tmp_p
 
 
 def test_the_art_route_refuses_anything_it_did_not_write(monkeypatch, tmp_path):
+    """A refusal is a 404, not a 200 with a body about it."""
+    from fastapi import HTTPException
     api = _walk_api(monkeypatch, tmp_path)
     for name, filename in (("walk", "../../state.json"), ("walk", "notes.txt"),
                            ("../..", "state.json"), ("walk", "missing.jpg")):
-        result = api.art(name, filename)
-        assert isinstance(result, dict) and result["error"] == "not found", (name, filename)
+        try:
+            api.art(name, filename)
+        except HTTPException as exc:
+            assert exc.status_code == 404, (name, filename)
+        else:
+            raise AssertionError(f"{name}/{filename} was not refused")
 
 
 def test_no_state_means_no_stills(monkeypatch, tmp_path):

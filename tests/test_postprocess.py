@@ -100,3 +100,27 @@ def test_the_stills_path_prefers_the_processed_picture(tmp_path, monkeypatch):
 
     again = activation_stills.fresh(move="walk", session="s1", dest=tmp_path / "stills")
     assert [p.name for p in again] == [p.name for p in paths], "cached, not re-rendered"
+
+
+def test_a_state_with_no_servings_of_its_own_draws_the_session(tmp_path, monkeypatch):
+    """A walk entered a minute ago has no `walk` servings yet; the session's firings are still
+    what is on the map, and an empty field would be a lie about the picture."""
+    from core import activation_stills, history
+    module = _module()
+    if module.available():
+        import pytest
+        pytest.skip("post-processing unavailable: " + str(module.available()))
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    now = 1_760_000_000.0
+    labels = ["gateway", "plugin", "ledger", "shipper"]
+    for i, label in enumerate(labels):
+        history.notice(label, move="session", session="s1", at=now - i, ref=str(i))
+    import json, random
+    rng = random.Random(5)
+    (tmp_path / "antemuse").mkdir(exist_ok=True)
+    (tmp_path / "antemuse" / "embeddings.json").write_text(json.dumps(
+        {"model": "t", "dim": 6, "vectors": {l: [rng.uniform(-1, 1) for _ in range(6)] for l in labels}}))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+
+    paths = activation_stills.stills(move="walk", session="s1", dest=tmp_path / "s", now=now)
+    assert len(paths) == activation_stills.STILL_COUNT, paths

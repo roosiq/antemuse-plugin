@@ -26,7 +26,7 @@ from pathlib import Path
 import time
 from typing import Any, Dict, List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 router = APIRouter()
@@ -165,12 +165,12 @@ def art(name: str, filename: str):
     safe_name = "".join(ch for ch in name if ch.isalnum() or ch in "-_")
     safe_file = "".join(ch for ch in filename if ch.isalnum() or ch in "-_.")
     if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail="not found")
     try:
         from core import storage
         path = storage.data_dir() / "activation" / safe_name / safe_file
     except Exception:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail="not found")
     if not path.is_file():
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail="not found")
     return FileResponse(str(path), media_type="image/jpeg")

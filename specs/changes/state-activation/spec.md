@@ -33,7 +33,10 @@ decays, so a picture can show what is live *now* rather than what has ever happe
 - three JPEG stills (960×600) at three moments of the state's arc, cached 45 s and regenerated
   when stale, because a state's arc is seconds long and three moments are the story;
 - `GET /api/plugins/antemuse/state` returns them as `stills`; `GET /art/{state}/{file}` serves
-  only files the plugin wrote, matching both segments rather than joining user input;
+  only files the plugin wrote, matching both segments rather than joining user input, and refusing
+  with a 404 rather than a 200 that explains itself;
+- a state with no servings of its own in this session draws the session's firings instead of an
+  empty field — a walk entered a minute ago has no `walk` rows yet;
 - the pane paints them through the cross-fading `<img>` layers it already uses for the baked
   scenes, and falls through to the baked art when the list is empty;
 - **no ASCII** — an earlier glyph path was built and removed on instruction: the pane shows a
@@ -109,7 +112,10 @@ Nothing here enters a state, changes a dose, or adds a command or a setting.
 - Real render: 10 frames of the live session, viewed — every frame carries activity and the arc
   fades, after two rejected attempts (all-empty early frames; then a first frame that lit
   everything).
-- Suite: **890 passed, 1 skipped**; `spec_audit` 0 drift.
+- `tools/e2e_activation.py` — the route over **real HTTP** against a copy of the real ledger:
+  three stills served, the first returned as 185,313 bytes of `image/jpeg` with a JPEG signature,
+  both traversal probes refused with 404, and a chat that does not own the state served none.
+- Suite: **903 passed, 1 skipped**; `spec_audit` 0 drift.
 
 ## Must not change
 

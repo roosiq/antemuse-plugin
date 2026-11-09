@@ -152,7 +152,12 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     dest.mkdir(parents=True, exist_ok=True)
 
     now = now if now is not None else time.time()
+    # The state narrows the map when that state has servings of its own in this session. When it
+    # has none — a walk entered a minute ago, a session scanned under another move — the session's
+    # servings are still what is firing, and an empty field would be a lie about the picture.
     frames = activation.sequence(session, move or None, steps=count) if session else []
+    if not frames and session and move:
+        frames = activation.sequence(session, None, steps=count)
     if not frames:
         moments = [now - 300, now - 150, now]
         frames = [{"at": m, "activations": activation.activations(session, move or None, now=m)}

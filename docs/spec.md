@@ -654,7 +654,12 @@ python3 tools/activation_render.py --move walk --frames 8      # one state only
 (960×600) of the map at three moments of the state's arc and caches them for 45 s;
 `GET /api/plugins/antemuse/state` returns them as `stills`, and the pane paints them through the
 same cross-fading `<img>` layers the baked scenes use. `GET /art/{state}/{file}` serves only files
-the plugin itself wrote — the name and filename are matched, never joined from user input.
+the plugin itself wrote — the name and filename are matched, never joined from user input, and a
+refusal is a 404 rather than a 200 carrying a description of the refusal.
+
+The state narrows the map only when that state has servings of its own in this session. A walk
+entered a minute ago has none yet, and the session's firings are still what is on the map: falling
+back to them is honest, and an empty field would be a lie about the picture.
 
 No ASCII. The pane is a picture surface, and the map is drawn as one.
 
@@ -747,7 +752,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 902 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 903 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.

@@ -165,10 +165,12 @@ assert.ok(active.calls.rest[0].startsWith('/state'), 'the page asks the backend 
 // Two clocks, deliberately: 900 ms for the state words, 4 s for which scene to
 // paint. The picture does not need to re-ask a question that changes per turn.
 const every = active.calls.intervals.map((i) => i.ms).sort((a, b) => a - b)
-assert.deepEqual(every, [900, 4000], 'a state poll and a scene poll, not one of each thing')
+assert.deepEqual(every, [900, 4000, 6000],
+  'three clocks: state words, which state, and how long a still holds')
 const before = active.calls.rest.length
 
-await act(async () => { active.calls.intervals[0].fn() })
+const slowest = active.calls.intervals.find((i) => i.ms === 900)
+await act(async () => { slowest.fn() })
 assert.equal(active.calls.rest.length, before + 1, 'a tick re-reads the backend')
 
 await act(async () => { active.node.unmount() })
@@ -183,7 +185,12 @@ assert.ok(artCanvas, 'the pane owns a canvas')
 assert.equal(document.querySelector('[data-antemuse-bg="layer"]'), null,
   'nothing is painted over the transcript any more')
 await act(async () => { await new Promise((r) => setTimeout(r, 80)) })
-assert.ok(STUB.calls.drawImage > 0, 'the processed buffer is presented: ' + STUB.calls.drawImage)
+// The pane plays a baked loop when the state has one; the live canvas is the
+// fallback. Either way the element has to exist and point at real frames.
+const stills = document.querySelectorAll('img[data-antemuse-bake="still"]')
+assert.equal(stills.length, 2, 'two layers, so a dissolve is a cross-fade')
+assert.match(stills[0].getAttribute('style'), /object-fit:\s*cover/)
+assert.match(stills[0].getAttribute('style'), /transition:\s*opacity/, 'the dissolve is a CSS transition')
 assert.match(pane.calls.rest[0], /^\/state\?cols=\d+&rows=\d+&fit=cover&busy=0/,
   'the pane asks the backend for the scene')
 
