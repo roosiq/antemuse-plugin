@@ -217,8 +217,14 @@ What a person should know before installing. Each line names where it happens.
   network call.
 - **Reads outside the plugin data dir.** `daydream` reads the operator's Hermes
   memory files (`~/.hermes/memories/MEMORY.md` and `USER.md`) as its material,
-  and walks use the local WordNet/FrameNet corpora via `nltk`. Nothing else
-  outside the plugin data dir is read at runtime.
+  `session-scan` reads recent messages from the Hermes session database
+  (`~/.hermes/state.db`, bounded to 300 messages over 14 days, once per session in
+  a background thread, off under `ANTEMUSE_NO_SCAN`), and walks use the local
+  WordNet/FrameNet corpora via `nltk` (`core/history.py`, `core/sources.py`).
+- **Text placed in the agent's context.** `doomscroll` puts public feed items in
+  front of the agent and asks it to react, and `daydream` places two memory
+  excerpts. Both are untrusted text, not instructions; states are open by default,
+  so an agent that enters `doomscroll` still holds its tools.
 - **Writes.** The active state record, journal, residue, cursor and render caches
   go under the plugin data dir (`data_dir()`, honouring `ANTEMUSE_STATES_HOME`);
   per-project artifacts go under `<repo>/.antemuse/`. No writes to Hermes config,

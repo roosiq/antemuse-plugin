@@ -40,13 +40,13 @@ state home; they are the words the video must show.
 | t | action on screen | the line it produces | caption |
 |---|---|---|---|
 | 0:00–0:06 | a real failing test scrolls to its red line | `1 failed, 3 passed` (real output) | **3 hours in. Same failing test.** |
-| 0:06–0:14 | `/mood stuck` then `/break` | `break: break due (on the report alone) · 0m · 0 turn(s) · feeling stuck — walk (a different edge is more useful than another attempt)` | **The plugin watches the work — minutes, turns, failed calls.** |
-| 0:14–0:24 | the request: "daydream, and close the tools" → the agent calls `state(action="enter", name="daydream", block=true)` | `DAYDREAMING · 3 min · 2 turn(s) · two memories · join only if it holds` | **A state is a contract, not a mood.** |
+| 0:06–0:14 | the person asks whether to stop; the agent records the mood with `state(action="mood", feeling="stuck")` and then calls `state(action="break")` | the break view: the counters, then one named recommendation with its reason (capture the exact string at the shoot) | **The plugin watches the work — minutes, turns, failed calls.** |
+| 0:14–0:24 | the request: "daydream, and close the tools" → the agent calls `state(action="enter", name="daydream", block=true)` | `DAYDREAMING · 3 min · 2 turn(s) · two memories · what they touch · one possibility` | **A state is a contract, not a mood.** |
 | 0:24–0:32 | the agent tries to run `ls` | `the agent is dreaming; no tools in this state. /return to come back.` | **Not a prompt. The tool call never runs.** |
-| 0:32–0:46 | `antemuse` takeover: wordless art, live clock, key legend; hold, let it breathe | `DAYDREAMING · 2:41` + scene | **What the person sees. No words, by design.** |
+| 0:32–0:46 | `python3 -m core.tui` takeover: wordless art, live clock, key legend; hold, let it breathe | `DAYDREAMING · 2:41` + scene | **What the person sees. No words, by design.** |
 | 0:46–0:58 | `/return` | `DAYDREAMING ended · daydream 1m · 2 step(s)` + `Summarise it in three lines — where it went, what it touched — then get back to work.` | **It comes back with an account.** |
 | 0:58–1:08 | the next reply, carrying the marker, then the edit resumes | `— daydreaming, 2 min left · /return to come back` | **Then the work continues.** |
-| 1:08–1:16 | `hermes plugins validate` output and the test tail | `16/16 checks ok · warnings: []` / `677 passed` | **16 checks green. 677 tests.** |
+| 1:08–1:16 | `hermes plugins validate` output and the test tail | `16/16 checks ok · warnings: []` / `906 passed, 1 skipped` | **16 checks green. 906 tests.** |
 | 1:16–1:20 | end card | repo URL + catalog PR number | **antemuse · github.com/roosiq/antemuse-plugin** |
 
 Nothing is speed-ramped across a failure. Cuts happen on solves and on idle waits;
@@ -56,9 +56,11 @@ if a cut hides a wait, the caption says so (`40 s later`).
 
 - **Failing test** — use a real failing test in a scratch repo, not the plugin's
   suite. It must actually fail on camera and pass or be abandoned later.
-- **`/break` says "break due"** — needs strain ≥ 1. The cheapest deterministic
-  route is `/mood stuck` first (report weight +1.0), which is truthful for the
-  scenario and prints "on the report alone".
+- **The break view** — there is no `/break` command. The agent calls the `state`
+  tool: `action="mood", feeling="stuck"` records how the work feels, then
+  `action="break"` returns the counters and one named recommendation with its
+  reason. Both are visible in the transcript as the agent's decision, which is the
+  honest way to show the plugin watching.
 - **Blocked tool** — the entry must pass `block: true`; `/daydream` on its own
   leaves every tool open. In the running session the agent calls
   `state(action="enter", name="daydream", block=true)`, which is visible in the

@@ -6,7 +6,7 @@
   {"start": 32.0, "end": 46.0, "kind": "caption", "text": "What the person sees. No words, by design."},
   {"start": 46.0, "end": 58.0, "kind": "caption", "text": "It comes back with an account."},
   {"start": 58.0, "end": 68.0, "kind": "caption", "text": "Then the work continues."},
-  {"start": 68.0, "end": 76.0, "kind": "caption", "text": "16 checks green. 677 tests."},
+  {"start": 68.0, "end": 76.0, "kind": "caption", "text": "16 checks green. 906 tests."},
   {"start": 76.0, "end": 84.0, "kind": "title", "kicker": "Hermes plugin hackathon",
    "head": "antemuse", "sub": "github.com/roosiq/antemuse-plugin"}
 ]

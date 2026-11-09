@@ -41,25 +41,31 @@ time.
 ## First run
 
 ```bash
-hermes chat -q '/break'       # what is due, and what would fit
-hermes chat -q '/daydream'    # enter for 3 minutes
-hermes chat -q '/states'      # what is happening now (a picture)
+hermes chat -q '/walk'        # 3 minutes, tools open
+hermes chat -q '/daydream'    # 3 minutes, tools closed
 hermes chat -q '/return'      # end it, keep the account
 ```
 
-In an interactive terminal, `antemuse` (or `/states`) opens the full-screen
-takeover: wordless imagery, a live clock, and keys. `q` quits the takeover. It
-never blocks the agent's work.
+The commands are one per state plus `/return` — `/walk`, `/daydream`,
+`/doomscroll`, `/unstuck`, `/dream`, `/return`. There is no `/break`, `/mood` or
+`/states` command in this build; those are **actions on the `state` tool** the
+agent calls when you ask in words ("is a break due?").
 
 What you should see:
 
-- `/break` prints one line of arithmetic (minutes since the last state, turns,
-  failed tool calls) plus the four states.
-- `/daydream` prints `DAYDREAMING · 3 min · 2 turn(s) · two memories · join only
-  if it holds` and lists the states.
-- `/return` prints an account: state, elapsed, steps, and what arrived.
+- `/walk` → `WALKING · 3 min · 6 turn(s) · work continues · distant concepts, still a path back to the task`
+- `/daydream` → `DAYDREAMING · 3 min · 2 turn(s) · two memories · what they touch · one possibility`
+- `/return` → `DAYDREAMING ended · daydream 1m · 0 step(s) · nothing arrived` and
+  `Summarise it in three lines — where it went, what it touched — then get back to work.`
+- `state(action="break")` → the counters (`0m since the last state · 0 turn(s)`)
+  followed by one named recommendation with its reason, e.g.
+  `this looks like a rut · the last state was walk too · /daydream`.
 - A reply made while a state is active ends with a marker such as
   `— daydreaming, 2 min left · /return to come back`.
+
+The full-screen takeover is `python3 -m core.tui` from the plugin directory and
+needs a real terminal; in this build it is not bound to a slash command. It never
+blocks the agent's work.
 
 States are **open by default** in this build: entering one does not remove tools.
 To close them, ask the agent to enter with `block: true`
