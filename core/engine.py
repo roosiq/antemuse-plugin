@@ -6,6 +6,7 @@ a chat window, and a slash command has no session id to hang it on.
 from __future__ import annotations
 
 import json
+import os
 import re
 import threading
 import time
@@ -94,8 +95,8 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     if active["turns_left"] <= 0 or now >= active["ends_at"]:
         report = _account(data, active)
         spec = states.STATES.get(active.get("key")) or {}
-        dose = int((spec.get("dose") or {}).get("n") or 0)
-        served = int(active.get("served") or 0) if (spec.get("dose") or {}).get("unit") != "turns" \
+        dose, _unit2 = _dose_of(spec, active)
+        served = int(active.get("served") or 0) if _unit2 != "turns" \
             else int(active.get("turns") or 0)
         if dose and served < dose:
             # an expiry is an unfinished act, and it says so
@@ -224,7 +225,7 @@ def settle() -> None:
 
 def enter(key: str, minutes: int | None = None, walk: str | None = None,
           options: Dict[str, Any] | None = None, block: bool = False,
-          allow: List[str] | None = None) -> str:
+          allow: List[str] | None = None, dose: int | None = None) -> str:
     spec_key = states.resolve(key)
     if not spec_key:
         return f"no such state. try: {', '.join(states.STATES)}"
@@ -261,6 +262,10 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
             "turns_left": spec["turns"],
             "minutes": duration,
             "total_seconds": duration * 60,
+            # an experiment arm may run a dose the manifest does not declare; the key is
+            # written only when the runner asked for it, so nothing else can inherit it
+            **({"dose_override": int(dose)}
+               if dose and os.environ.get("ANTEMUSE_EXPERIMENT") == "1" else {}),
         }
         # Recorded, never acted on here: the exploration run that consumes these
         # is a separate wiring step. An entry without options has no key at all,
@@ -408,7 +413,7 @@ def deliver_if_due() -> int:
         if not key:
             return 0
         spec = states.STATES.get(key) or {}
-        dose = int((spec.get("dose") or {}).get("n") or 0)
+        dose, _unit = _dose_of(spec, active)
         served = int(active.get("served") or 0)
         if dose and served >= dose:
             return 0
@@ -443,6 +448,22 @@ def deliver_if_due() -> int:
     return len(lines)
 
 
+def _dose_of(spec: dict, active: dict) -> tuple[int, str]:
+    """The dose this state is running at, and its unit.
+
+    An arm of the settings experiment may run a state at half or double its default dose.
+    That override is honoured only when the runner sets ANTEMUSE_EXPERIMENT=1, so a
+    shipped plugin can never be talked into a dose the manifest does not declare.
+    """
+    dose_spec = spec.get("dose") or {}
+    n = int(dose_spec.get("n") or 0)
+    unit = str(dose_spec.get("unit") or "")
+    override = active.get("dose_override")
+    if override and os.environ.get("ANTEMUSE_EXPERIMENT") == "1":
+        n = int(override)
+    return n, unit
+
+
 def complete_if_dosed() -> bool:
     """End the state when the act is finished — the dose, not the clock.
 
@@ -456,10 +477,9 @@ def complete_if_dosed() -> bool:
         if not key:
             return False
         spec = states.STATES.get(key) or {}
-        dose = int((spec.get("dose") or {}).get("n") or 0)
+        dose, unit = _dose_of(spec, active)
         served = int(active.get("served") or 0)
         worked = int(active.get("turns") or 0)
-        unit = str((spec.get("dose") or {}).get("unit") or "")
         done = (worked >= dose) if unit == "turns" else (served >= dose)
     if not done:
         return False

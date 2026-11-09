@@ -39,6 +39,35 @@ const helpers = await import(WORK.href)
 // The host state atoms live in the SDK, not the plugin bundle: import them from
 // the same stub the plugin resolves its bare imports against.
 const sdk = await import(new URL('./node_modules/@hermes/plugin-sdk/index.js', import.meta.url).href)
+// jsdom ships no canvas. Give it a 2D context that reports a lit strand, so the
+// rasteriser (sample -> level -> glyph) is actually exercised rather than skipped.
+const STUB = { calls: { fillText: 0, fillRect: 0, getImageData: 0 } }
+globalThis.STUB = STUB
+function stubContext(canvas) {
+  const noop = () => {}
+  return {
+    canvas, globalAlpha: 1, fillStyle: '', strokeStyle: '', lineWidth: 1,
+    font: '', textAlign: '', textBaseline: '', lineJoin: '', lineCap: '',
+    setTransform: noop, clearRect: noop, beginPath: noop, moveTo: noop,
+    lineTo: noop, stroke: noop, arc: noop, fill: noop,
+    quadraticCurveTo: noop, bezierCurveTo: noop, drawImage: noop,
+    imageSmoothingEnabled: true, imageSmoothingQuality: 'high',
+    fillRect: () => { STUB.calls.fillRect += 1 },
+    fillText: () => { STUB.calls.fillText += 1 },
+    getImageData: (x, y, w, h) => {
+      STUB.calls.getImageData += 1
+      const data = new Uint8ClampedArray(w * h * 4)
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 126; data[i + 1] = 205; data[i + 2] = 196; data[i + 3] = 190
+      }
+      return { data, width: w, height: h }
+    }
+  }
+}
+document.defaultView.HTMLCanvasElement.prototype.getContext = function () {
+  return stubContext(this)
+}
+
 const host = sdk.host
 const sweepStrays = helpers.sweepStrays
 
@@ -157,14 +186,20 @@ assert.match(css, /pointer-events:\s*none/, 'clicks pass through to the chat')
 assert.match(css, /z-index:\s*-1/, 'a transparent surface gets a layer behind it')
 assert.equal(layer.getAttribute('data-antemuse-bg-placement'), 'behind')
 assert.match(css, /contain:\s*strict/)
-const glyph = layer.querySelector('pre[data-antemuse-bg="glyphs"]')
-assert.ok(glyph, 'one pre holds the glyphs')
-assert.equal(glyph.textContent, PAYLOAD.frame.lines.join('\n'))
-assert.match(glyph.getAttribute('style'), /opacity:\s*0\.18/, 'default strength, capped low')
+const glyph = layer.querySelector('canvas[data-antemuse-bg="glyphs"]')
+assert.ok(glyph, 'one canvas holds the picture')
+assert.match(glyph.getAttribute('style'), /display:\s*block/, 'the canvas fills the layer')
+// Let the frame clock run once: the picture is drawn on rAF (or the timer
+// fallback), not while the effect mounts.
+await act(async () => { await new Promise((r) => setTimeout(r, 80)) })
+// Strength is per cell now, not one opacity on a text block, so the assertion
+// is that the rasteriser ran at all: cells sampled, glyphs seated.
+assert.ok(STUB.calls.fillText > 0, 'glyphs are seated on cells: ' + STUB.calls.fillText)
+assert.ok(STUB.calls.fillRect > 0, 'and each cell gets its soft square: ' + STUB.calls.fillRect)
 
 assert.ok(document.querySelector('style[data-antemuse-bg-style]'), 'one version-stamped style element')
 assert.equal(document.documentElement.getAttribute('data-antemuse-bg'), 'on', 'the root flag marks it disposable')
-assert.match(bg.calls.rest[0], /^\/state\?cols=\d+&rows=\d+&fit=cover&busy=0/, 'grid and busy are asked for')
+assert.match(bg.calls.rest[0], /^\/state\?cols=\d+&rows=\d+&fit=cover&busy=0/, 'the poll asks for the grid and the busy flag')
 
 // it re-reads when the focused conversation changes
 host.state.focusedSessionId.set('sess-42')
@@ -189,11 +224,8 @@ const frontLayer = document.querySelector('div[data-antemuse-bg="layer"]')
 assert.equal(frontLayer.getAttribute('data-antemuse-bg-placement'), 'front', 'opaque surface flips placement')
 assert.match(frontLayer.getAttribute('style'), /z-index:\s*2147483646/)
 assert.match(frontLayer.getAttribute('style'), /pointer-events:\s*none/, 'in front still passes clicks through')
-const frontGlyph = frontLayer.querySelector('pre[data-antemuse-bg="glyphs"]')
-const frontOpacity = Number((frontGlyph.getAttribute('style').match(/opacity:\s*([\d.]+)/) || [])[1])
-assert.ok(frontOpacity < 0.18 && frontOpacity > 0.05, `in front is fainter: ${frontOpacity}`)
-assert.match(frontGlyph.getAttribute('style'), /color:\s*(#cfd6dd|rgb\(207, 214, 221\))/,
-  'dark surface gets the light ink')
+const frontGlyph = frontLayer.querySelector('canvas[data-antemuse-bg="glyphs"]')
+assert.ok(frontGlyph, 'the front layer draws into a canvas too')
 await act(async () => { front.node.unmount() })
 document.body.style.background = ''
 assert.equal(document.querySelector('div[data-antemuse-bg="layer"]'), null, 'the front layer is removed too')

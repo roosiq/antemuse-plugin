@@ -101,5 +101,37 @@ signal", and if taken it is disclosed alongside the result.
 
 ## Amendments
 
-None. Any later amendment is appended here with its date and reason, and is marked
-exploratory if it touches a hypothesis, an outcome definition, or an exclusion.
+### 2026-11-08 — outcome coding fixed before any kept outcome existed (not exploratory)
+
+`carry` first took the longest word of each delivered line, which made "Japanese" the
+subject of a line about a lilac and would have scored a walk as carried only when the
+adjective reappeared. Fixed to take the head word of each arrow-headed segment and to
+ignore a small set of structural words ("system", "list", …). Nine tests pin the
+behaviour.
+
+Three entries were produced while the earlier code was live. None of their outcomes is
+kept: all three are excluded with `outcome-definition-changed`. **The fix happened before
+any kept outcome existed**, which is the only reason it does not void the state.
+
+### 2026-11-08 — state ceilings doubled for every arm (not exploratory)
+
+Measured in the first block: one real `hermes chat` turn costs ~40–70 s, so `walk`'s
+3-minute ceiling truncated a 6-turn dose at 3 turns (`expired before its dose: 3 of 6`).
+The ceiling is a **safety limit, not the treatment**; the treatment is the dose. An entry
+truncated by its ceiling measures the ceiling, not the dose, so the run would have
+collected nothing about the thing it is about.
+
+Amendment: every arm runs with the state's ceiling at **2× its default** for the duration
+of this experiment. The ledger records the ceiling actually used, so no reader has to
+trust this paragraph. Entries collected before the amendment that were truncated by the
+old ceiling are excluded with `dose-not-delivered`.
+
+This does not touch a hypothesis, an outcome definition, or an exclusion, so it is not
+marked exploratory — but it is a change to how an arm runs, and it is written down here
+rather than fixed silently.
+
+### 2026-11-08 — the ceiling finding itself belongs in the product record
+
+`walk`'s 3-minute ceiling cannot contain a 6-turn dose at real turn latency. Either the
+dose falls to ~3 turns or the ceiling becomes ~8 minutes; that decision waits for the
+experiment, and is recorded here because it was found by running, not by reading.

@@ -31,6 +31,7 @@ EXCLUSION_REASONS = {
     "truncated-answer",
     "control-recent-state",
     "platform-failure",
+    "outcome-definition-changed",
 }
 
 STRING_FIELDS = ("session_id", "model", "provider", "state", "arm", "ending_reason")
