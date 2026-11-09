@@ -1,7 +1,14 @@
 # Antemuse
 
-The agent can take a walk, daydream, dream, or doomscroll — and a person can
-watch it happen in the CLI and take the same state beside it.
+The agent can take a walk, daydream, dream, doomscroll, or get unstuck — and a
+person can watch it happen in the CLI and take the same state beside it.
+
+A state is an **act with a dose**, not a duration. A walk is six turns of work with
+the frame elsewhere; a daydream is two memory pairs confronted with whether they
+join; a doomscroll is three feed items; a dream is two recombinations that land; an
+unstuck is one direction named. The state ends when the dose is delivered — so a
+fast model finishes sooner and a slow one is not cut short. Minutes are a ceiling,
+and an expiry says how much of the dose arrived.
 
 A state is a bounded change to behaviour, not a place:
 
@@ -10,8 +17,9 @@ A state is a bounded change to behaviour, not a place:
 - **contract** — the one line the reply is held to
 - **residue** — what it carries back when the state ends
 
-States expire on minutes *and* turns; the clock decides when it ends, the turn
-count decides how much of it the model gets.
+Three endings, recorded separately: `complete` (dose delivered, or the agent calls
+`state(action="complete")`), `returned` (you typed `/return`), and `expired` (the
+ceiling passed first: "expired before its dose: 2 of 3").
 
 Documentation authority:
 
@@ -24,28 +32,28 @@ Documentation authority:
 The BRD governs intent; the operating document must agree with it. The spec and
 implementation/tests govern what actually ships.
 
-## Taking a break
+## What it says without being asked
 
-```
-/break                 what is due, and what would fit
-/break walk            take that one, whatever was suggested
-/mood stuck            say how the work feels (stuck, tired, sharp, flat, saturated)
-```
+There is no `/break` and no strain score. A recommendation is a **measured** claim
+or it is silence: the recommender reads counters the plugin already keeps and names
+the state that fits — a tool failing three times in a row is a walk, a source
+failing twice in four turns is a doomscroll, sixty turns is a dream, a stretch twice
+your own measured median is a daydream, and a repo with no commits and no spec is an
+unstuck. Every line carries the counter that justified it, and arrives at most once
+per cooling window (45 minutes by default).
 
-Strain is arithmetic on things the plugin can see — minutes since the last state,
-turns, failed tool calls — plus the report's weight. Under 1 nothing happens;
-1–2 is *due*; above 2 is *overdue*. When a break is due and nothing is running,
-the next turn carries one `[BREAK …]` line, and the next offer waits 45 minutes.
-Entering any state restarts the counters.
+`core/mood.py` measures and never names; `core/recommend.py` names. One owner, so
+two inferences cannot argue in the same turn.
 
 ## The panel
 
 What you see depends on where you are standing:
 
-- `/states` in a terminal hands the screen to the takeover: wordless full-screen
-  imagery and live keys.
-- `/state` prints one frame of the state as a picture — no words, by design.
-- In chat, `/states` prints a postcard: one image, no caption.
+- `antemuse` (the `bin/antemuse` launcher) hands the screen to the takeover:
+  wordless full-screen imagery and live keys.
+- In chat, entering a state posts its card as its own message — one picture, no
+  caption, by design (BR-5). It posts on entry, not continuously.
+- Where the terminal cannot draw, the text frame carries the record instead.
 
 The text frame still exists for reading state in a place that cannot draw
 (`panel.debug()` in `core/panel.py`): state, clock, contract, closed tools,
@@ -76,20 +84,49 @@ Once the plugin is listed in the catalog, `hermes plugins install antemuse`
 installs the reviewed pin instead. Python dependencies (`pillow`, `nltk`) are
 declared in `plugin.yaml`; Hermes prepares them at install time.
 
+## Settings
+
+Six settings, declared in `plugin.yaml`'s `config_schema`. The Hermes desktop app
+renders them as a form under **Settings ▸ Plugins ▸ Antemuse**; the same values can
+be set from a shell:
+
+```bash
+hermes config set plugins.entries.antemuse.settings.recommend_enabled false
+hermes config get plugins.entries.antemuse.settings
+```
+
+| setting | default | what it changes |
+|---|---|---|
+| `recommend_enabled` | `true` | whether the recommender may speak at all |
+| `recommend_cooling_minutes` | `45` | how long one recommendation holds (10–240) |
+| `long_stretch_minutes` | `0` | `0` keeps the measured threshold; otherwise 30–360 |
+| `picture_enabled` | `true` | post the state's card in chat on entry |
+| `picture_narrow` | `false` | force the narrow card on a wide client |
+| `journal_cap` | `60` | entries kept (reduce only, 20–60) |
+
+A setting changes how loud or how long a state is. None of them changes what a state
+*is*: directives, contracts, residue, `/return`, the tool policy default and the
+no-model rule are not configurable. Out-of-range values are clamped to the nearest
+bound and logged once — silently changing your number is worse than telling you.
+
 ## Layout
 
 ```
-plugin.yaml            manifest: 1 tool, 8 hooks
+plugin.yaml            manifest: 1 tool, 8 hooks, 6 bounded settings
 __init__.py            hooks (pre_llm_call, pre_tool_call, post_tool_call,
-                       transform_llm_output), /walk /daydream /dream /doomscroll
-                       /return /states /note /watch, and the state tool
-core/states.py         the four states: tools, directive, contract, residue
+                       transform_llm_output), the five state commands plus
+                       /return, and the state tool
+core/states.py         the five states: dose, ceiling, tools, directive, contract
 core/engine.py         enter/stop/tick, tool policy, journal, residue
 core/storage.py        the one active record, and the data dir it lives in
 core/walks.py          walks as data: graphs and the rules for moving on them
 core/sources.py        material: WordNet steps, FrameNet frames, memories, feeds
 core/social.py         the live feeds a doomscroll eats
-core/ticker.py         the timer that delivers material while a state runs
+core/ticker.py         frame timer for the takeover (the state path no longer
+                       waits on a clock: delivery is per turn)
+core/recommend.py      the only place a state is named, from counters
+core/normal.py         the measured ordinary condition (turn shape, stretches)
+core/settings.py       the six settings, read through the host and clamped
 core/panel.py          the printed text frame
 core/photographs.py    terminal images: cells, dissolves, drift
 core/walk_map.py       the walk drawn as a side-scrolling place
@@ -120,12 +157,11 @@ library level: `evaluation/`, `core/collider.py`, `core/collision.py`,
 - These modules exist and are controller-verified at the library level. Wave 3
   has begun: the three auxiliary task routes are declared (a routing entry, not
   a call), and the four session-boundary hooks are registered. On a session
-  boundary those hooks release any material bound to that session — and `/spark`
-  is the first thing that binds any.
-- `/spark <goal>` runs one bounded pass: deterministic when the experimental flag
-  is off, the branch path (auxiliary calls through `ctx.llm`) when it is on.
-  `/keep` records a verdict by handle and `/again` re-runs the last goal with the
-  sources that verdict points at.
+  boundary those hooks release any material bound to that session — and the
+  `spark` tool action is the first thing that binds any.
+- The `state(action="spark")` pass is deterministic when the experimental flag is
+  off, and uses the auxiliary routes through `ctx.llm` when it is on;
+  `state(action="keep")` records a verdict by handle.
 - The model receives candidates; the person receives a line of counts. Keep
   those separate; never put candidate text into a human-facing line.
 - `state(action="enter")` accepts optional `method`, `seed`, and `budget`, and
@@ -136,7 +172,7 @@ library level: `evaluation/`, `core/collider.py`, `core/collision.py`,
   improvement evidence; promotion requires protected comparative evaluation.
 - The approved spec, plan, and tasks under
   `specs/changes/creative-state-evidence/` are the authority for this work.
-- The base four-state lifecycle remains deterministic: entry, exit, expiry, tool
+- The base five-state lifecycle remains deterministic: entry, exit, expiry, tool
   restoration, and rendering never require inference.
 
 ## Verify
@@ -145,7 +181,7 @@ library level: `evaluation/`, `core/collider.py`, `core/collision.py`,
 antemuse                     # full-screen view
 hermes plugins doctor antemuse
 env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data   ANTEMUSE_STATES_HOME=$(mktemp -d)   uvx --with pillow --with nltk --quiet pytest tests/ -q
-hermes chat -q '/walk' && hermes chat -q '/states'
+hermes chat -q '/walk' && hermes chat -q '/return'
 ```
 
 A count written here rots the moment the next test is added, and this line had

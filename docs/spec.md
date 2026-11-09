@@ -657,7 +657,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 767 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 777 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -1220,7 +1220,7 @@ Every concrete recommendation in the teardown, checked against the code:
 | `collide` walk as a `ManualGraph` over a domain bank (persona + mechanism + bridging question) | **partly implemented, not as a walk** — `collide` is still absent from `walks.BUILTIN`, but the bank (`core/collider.py`, six CC BY 4.0 artifacts), the deterministic collision (`core/collision.py`), and the branch runner (`core/orchestrator.py`) exist and run | `core/walks.py` if the walk form is still wanted; otherwise the module path is the implementation |
 | Write the bank schema down before implementing | **done, elsewhere** — the bank schema and its licensing enforcement live in `core/collider.py` with the change record in `specs/changes/creative-state-evidence/`; there is no `collide-walk` spec because no collide walk was built | `specs/changes/creative-state-evidence/` |
 | Two residue channels (`carried`, `arrived`) | **not implemented** — residue has only `report`/legacy kinds | `core/engine.py` |
-| Threshold drift as a state-exit rule | **not implemented** — exit is minutes/turns only | `core/states.py`, `engine` |
+| Threshold drift as a state-exit rule | **superseded** — exit is the dose (`semantic-states`), and the ceiling is a safety limit, not a schedule | `core/states.py`, `engine` |
 | ConceptVis design verbs (`critique`, `compare`, `scamper`) as walk moves | **not implemented** | `core/walks.py` relations/policy |
 | Arrow/twig journal shape for inspectable walks | **not implemented** — journal is append-only text | `core/engine.py`, `walk_map.py` |
 | Dashboard tab (`manifest.json` + read-only `plugin_api.py`) | **not implemented** — plugin has no `dashboard/` | new `dashboard/` |
