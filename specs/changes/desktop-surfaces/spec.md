@@ -267,3 +267,46 @@ being loud enough to read as anxiety.
   parameter the pane sets. Today the pane decides; that is a stub, not a contract.
 - Whether `idle` deserves its own entry in the state vocabulary the user can
   choose, or stays purely automatic. Recommendation: automatic only.
+
+## 10. Why the state is in a pane (owner question, 2026-11-08)
+
+**Asked:** why does the state render in a side panel rather than in the background
+of the chat it is effective on?
+
+**Answer, from the shell's own source, not from preference.** The desktop app gives
+plugins these areas (`apps/desktop/src/sdk/areas.ts`): `panes`, `statusBar.left|right`,
+`titleBar.*`, plus routes, sidebar nav, palette commands and a settings page. There is
+no chat-background area. The chat's own backdrop exists — `apps/desktop/src/store/backdrop.ts`
+— but it is a **boolean that toggles a fixed statue image** behind the transcript:
+
+```ts
+/** Whether the faint statue image renders behind the chat transcript. */
+export const $backdrop = atom(storedBoolean(KEY, false))
+```
+
+Not a renderer, not a slot, not reachable from a plugin bundle. (The web dashboard has a
+`backdrop` *slot*; the Electron app does not.) So a pane is not a design choice that beat
+the background — it is the only surface the plugin SDK currently offers that holds a
+picture. We shipped it there because it was the only place it would go.
+
+**The correct surface is the chat's background**, because a state is bound to a
+conversation, not to the application chrome: two chats can be in different states, and one
+such state art behind all of them at once is wrong by construction.
+
+**What it would take (host change, not a plugin change):**
+
+1. Expose a per-conversation background area — e.g. `CHAT_BACKDROP_AREA` or a
+   `chat:backdrop` slot — in `apps/desktop/src/sdk/areas.ts`, mounted inside the chat
+   view behind the transcript at z-0, `pointer-events: none`, `aria-hidden`.
+2. Have it receive the active conversation id so the plugin can ask the backend for the
+   state that governs *that* chat rather than "the profile's state".
+3. Only then retarget `desktop/plugin.js` from `PANES_AREA` to that area. Until then the
+   pane stays, and it is a stub with a known wrong scope — recorded here rather than
+   described as finished.
+
+**Interim rule:** if the pane is what ships, it must never be the only way to see or keep
+the state. It is not: the status chip, the route, the sidebar entry and the CLI all read
+the same state, and closing the pane disables nothing.
+
+**Blocked on:** a Hermes desktop-shell change. Not attempted here: editing the shell to
+add an area is a host change with its own review, and this spec governs the plugin.

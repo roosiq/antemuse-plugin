@@ -120,7 +120,13 @@ def note_turn() -> None:
         work["turns"] = int(work.get("turns") or 0) + 1
         work["tools"] = int(work.get("tools") or 0) + counters["tools"]
         work["fails"] = int(work.get("fails") or 0) + counters["fails"]
+        active = bool(data.get("active"))
         _save(data)
+    # The baseline is the *ordinary* condition: a state's own turns would contaminate
+    # the thing the state is being compared to.
+    if not active:
+        from . import normal
+        normal.observe_turn(counters["tools"], counters["fails"])
 
 
 def note_tool(ok: bool) -> None:
@@ -249,6 +255,11 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
             data["active"]["options"] = dict(options)
         now_break = now
         data.setdefault("breaks", []).append(now_break)
+        if not previous:
+            from . import normal
+            last = float(data["breaks"][-1]) if data.get("breaks") else float(
+                data["work"].get("started_at") or now)
+            normal.observe_stretch((now - last) / 60.0)
         entries = [e for e in (data.get("entries") or []) if isinstance(e, dict)][-7:]
         entries.append({"key": spec_key, "at": now_break})
         data["entries"] = entries

@@ -96,10 +96,22 @@ def _reported(feeling: Optional[str]) -> Optional[Dict[str, str]]:
 
 
 def _long_stretch(minutes: int, turns: int) -> Optional[str]:
-    """Minutes since the last state is a counter; the old strain sum was arithmetic on top."""
-    if minutes >= LONG_MINUTES and turns >= LONG_TURNS:
-        return f"{minutes}m since the last state, {turns} turns"
-    return None
+    """Minutes since the last state, against this person's own measured stretch.
+
+    The threshold used to be the constant 90. It is now the measured 75th percentile of
+    the stretches this person actually takes, clamped 60–180; with too little history it
+    falls back to 90 and the evidence says which one is being used.
+    """
+    from . import normal
+    limit = normal.long_stretch_threshold()
+    threshold = int(limit["minutes"])
+    if minutes < threshold or turns < LONG_TURNS:
+        return None
+    usual = limit.get("usual")
+    if limit["source"] == "measured" and usual:
+        ratio = round(minutes / float(usual), 1)
+        return f"{minutes}m since the last state, {ratio}× your usual {usual}m"
+    return f"{minutes}m since the last state (fixed at {threshold}m, no baseline yet)"
 
 
 def _loop(work: Dict[str, Any]) -> Optional[str]:

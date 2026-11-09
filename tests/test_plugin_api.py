@@ -161,3 +161,56 @@ def test_frames_advance_on_a_clock_per_state():
     assert api.frame_index("walk", frames=0) == 0
     # deterministic: the same clock answers the same frame twice
     assert api.frame_index("dream", now=1234.5) == api.frame_index("dream", now=1234.5)
+
+# --- the pane is never blank -------------------------------------------------
+
+def _idle_api(monkeypatch, active=None):
+    """The backend route, with a watch that has no active state."""
+    api = load("plugin_api")
+    from core import screensaver
+
+    class _Panel:
+        @staticmethod
+        def engine_state():
+            return {"active": active, "residue": [], "journal": []}
+
+    # type() rather than a class body: a class body cannot close over the local
+    # `screensaver`, it just raises NameError.
+    _Core = type("_Core", (), {"panel": _Panel, "screensaver": screensaver})
+    _Plugin = type("_Plugin", (), {"core": _Core})
+
+    monkeypatch.setattr(api, "plugin", lambda: _Plugin())
+    return api
+
+
+def test_idle_pane_paints_an_ambient_scene(monkeypatch):
+    """Outside a state the pane still draws: `no state` is a label, not a blank box."""
+    api = _idle_api(monkeypatch)
+    payload = api.state(cols=40, rows=12)
+    lines = payload["frame"]["lines"]
+    assert len(lines) == 12, "the pane asked for 12 rows"
+    assert all(len(line) == 40 for line in lines), "every row is the width asked for"
+    assert any(ch not in " ." for line in lines for ch in line), "ambient art, not an empty field"
+    assert payload["active"] is None, "an ambient scene is not a state"
+
+
+def test_busy_changes_only_the_scene(monkeypatch):
+    """`?busy=1` picks `work`; it never fabricates an active state or moves a count."""
+    api = _idle_api(monkeypatch)
+    idle = api.state(cols=40, rows=12)
+    work = api.state(cols=40, rows=12, busy=True)
+    assert work["active"] is None
+    assert work["residue"] == idle["residue"]
+    assert work["frame"]["cols"] == idle["frame"]["cols"]
+    assert work["frame"]["lines"] != idle["frame"]["lines"], "work is a different scene"
+
+
+def test_ambient_frame_is_deterministic_and_sized(monkeypatch):
+    """A given moment renders identically at whatever grid a surface asks for."""
+    from core import screensaver
+    a = screensaver.frame("idle", 116, 74, now=1000.0)
+    b = screensaver.frame("idle", 116, 74, now=1000.0)
+    assert a == b
+    assert len(a) == 74 and all(len(row) == 116 for row in a)
+    ink = sum(1 for row in a for ch in row if ch not in " .")
+    assert 0.02 < ink / (74 * 116) < 0.08, "visible, not a smear (measured 3.7%)"
