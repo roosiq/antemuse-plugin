@@ -613,7 +613,8 @@ dissociate knot still present in the generator:
 
 Pipeline: headless Chromium + swiftshader renders PNGs (~0.6 s each), the PNG is
 quantised to upper-half blocks, and the takeover replays cached strings at
-animation speed. Live WebGL at 60 fps in a terminal is not possible; for real
+animation speed. A scene can also be **derived** rather than baked: §10.6 renders the concept
+map from the ledger's own servings, with no Chromium and no model in the loop. Live WebGL at 60 fps in a terminal is not possible; for real
 images rather than blocks, the same PNGs can go through kitty graphics or sixel.
 
 ```bash
@@ -621,7 +622,40 @@ python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-plugin &
 python3 tools/render_three.py          # 5 scenes x 8 frames
 ```
 
-### 10.6 Palette
+### 10.6 Activation — the concept map as a state visual
+
+A state serves concepts turn by turn, and the ledger records every serving with its move, session
+and timestamp. `core/activation.py` turns that record into weights, and
+`tools/activation_render.py` draws them on the concept map: the semantic projection dimmed, the
+concepts that are firing lit, radius and brightness by weight, and **no text anywhere**.
+
+The model, and why each part is there:
+
+| rule | value | why it is that and not something else |
+|---|---|---|
+| decay | `exp(-age / 180 s · ln2)` | a concept served three minutes ago is half as hot as one served now |
+| floor | 0.25 of the hottest on screen | below this a concept is noise, not an activation |
+| freshest wins | `max` per concept, not a sum | summing lets a word repeated all day outrank the one firing right now |
+| only the past | a serving later than the frame's moment is not active | without this every concept in a long session lights up in frame one |
+| frames | at real serving timestamps, evenly sampled | sessions are bursty; evenly spaced clock time spends most frames on the gaps between turns |
+
+The time bound belongs in the SQL, not applied after a `LIMIT`: filtering the newest N rows by
+time made every early frame of a long session empty.
+
+Measured on the session of 2026-11-08 09:18: **263 concepts touched, 66 concurrently lit at the
+peak**, over ten frames — an arc that rises, breathes and fades.
+
+```bash
+python3 tools/activation_render.py --session <id> --frames 10 --gif
+python3 tools/activation_render.py --move walk --frames 8      # one state only
+```
+
+**Status: PARTIAL.** The renderer writes the frames; the pane does not draw them yet. What
+remains is a scene in the desktop pipeline (`desktop/art` → `core/surfaces.py` →
+`desktop/plugin.js`): registration, a frame budget per surface, and the terminal/card encodings
+of the same frames. See §17.2.
+
+### 10.7 Palette
 
 One palette across surfaces:
 
@@ -1121,6 +1155,22 @@ and `productivity` is not a valid category. Ryan must decide whether to accept
 The tags remain `cognitive`, `creativity`, `states`, `imagery`.
 
 ---
+
+### 17.2 Activation in the pane — the remaining work
+
+The renderer exists (§10.6); the surface does not. Registration and budget are the work:
+
+1. register `activation` as a scene in `desktop/plugin.js` and `core/surfaces.py`, mapped to the
+   active state so `?state=walk` selects it without a new setting;
+2. pick a frame budget per surface: the terminal takes quantised frames at ~2 fps like the baked
+   scenes; chat takes a still and, at state edges, the strip; the desktop pane takes the GIF;
+3. encode the same frames for the card path without letting any text in — the no-words rule in
+   §10.1 applies, and `tests/test_activation.py` asserts the renderer draws none;
+4. keep it derivable when the ledger is empty: a state with no servings falls back to the baked
+   scene, named as a fallback rather than a blank.
+
+Not started, and not claimed. `desktop/art` is carrying an unrelated reorganization that the
+owner asked to leave alone, which is where the scene table lives.
 
 ## 18. Must-not-change constraints
 

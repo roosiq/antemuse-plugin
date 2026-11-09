@@ -44,6 +44,29 @@ carries an unrelated art reorganization (80 dirty paths the owner asked to leave
 renderer writes PNG/GIF frames that pipeline can consume; the scene registration and the frame
 budget per surface are the remaining work. Until then this is a tool, not a surface.
 
+### The wiring, specified so it can be picked up cold
+
+Recorded in `docs/spec.md` §17.2 as well, because that is where unwired work lives.
+
+1. **Registration.** `activation` becomes a scene in `core/surfaces.py` and `desktop/plugin.js`,
+   selected by the active state (`?state=walk`), so it needs no setting. A setting may change how
+   loud or how long a state is; it may not change what a state is — and the scene is what a state
+   looks like, not how loud it is.
+2. **Frame budget per surface.** Terminal: quantised frames at ~2 fps, like the baked scenes.
+   Chat: one still on entry, the strip at the edge. Desktop pane: the GIF.
+3. **No text, in every encoding.** The no-words rule (`§10.1`) holds on the card path exactly as
+   it holds on the PNG: `tests/test_activation.py::test_the_picture_carries_no_words` guards the
+   renderer, and the scene must not add a caption to satisfy a legend.
+4. **Empty ledger is a named fallback.** A state with no servings falls back to its baked scene
+   and says so, rather than drawing an empty field.
+5. **Determinism.** Same ledger, same moment, same frame — the coordinates come from the
+   embedding projection and the weights from arithmetic, so a captured frame can be re-derived
+   and compared.
+
+Acceptance for the wiring: entering a state draws the activation scene within one turn; leaving
+it stops the animation; a missing ledger or a session with no servings draws the named fallback;
+and the capture used as evidence is reproducible from the ledger.
+
 Nothing here enters a state, changes a dose, or adds a command or a setting.
 
 ## Acceptance criteria
