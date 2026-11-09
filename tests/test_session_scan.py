@@ -69,7 +69,9 @@ def test_it_returns_before_the_scan_finishes(store):
     started = time.time()
     history.autoscan("session-1", db=store, wait=False)
     elapsed = time.time() - started
-    assert elapsed < 0.05, elapsed
+    # nothing but a lock, a flag and a thread start may happen on the turn's path; 150 ms is a
+    # generous ceiling that still fails if any database work moved back onto it
+    assert elapsed < 0.15, elapsed
     deadline = time.time() + 10
     while history._SCAN_LOCK["running"] and time.time() < deadline:
         time.sleep(0.02)

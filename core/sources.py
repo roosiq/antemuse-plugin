@@ -542,6 +542,12 @@ def project_terms(hours: int = 24) -> Dict[str, Dict[str, object]]:
                     words.add(w)
         if words:
             out[name] = {"subjects": subjects[:12], "files": files[:20], "words": words}
+            try:
+                from . import history as _history
+                for relpath in files[:20]:
+                    _history.notice_artifact(name, relpath)
+            except Exception:
+                pass
     return out
 
 

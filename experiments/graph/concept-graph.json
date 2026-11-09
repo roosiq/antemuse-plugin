@@ -1,0 +1,1772 @@
+{
+  "counts": {
+    "edges": 121,
+    "nodes": 171
+  },
+  "edges": [
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:gateway.n.01",
+      "target": "session:20261108_091834_aa6c8db0",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:hermes.n.01",
+      "target": "session:20261108_091834_aa6c8db0",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:change.n.01",
+      "target": "session:20261108_091834_aa6c8db0",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:answer.n.01",
+      "target": "session:20261108_091834_aa6c8db0",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:inside.n.01",
+      "target": "session:20261108_162120_6202f2d8",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:register.n.01",
+      "target": "session:20261108_162120_6202f2d8",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:land.n.04",
+      "target": "session:20261108_162120_6202f2d8",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:surface.n.01",
+      "target": "session:20261108_162120_6202f2d8",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:lemma:doesnt",
+      "target": "session:20261108_152353_61881418",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:network.n.01",
+      "target": "session:20261108_152353_61881418",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:tax_return.n.01",
+      "target": "session:20261108_152353_61881418",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:failure.n.01",
+      "target": "session:20261108_152353_61881418",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:request.n.01",
+      "target": "session:20261108_122438_91af2c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:request.n.01",
+      "target": "session:20261108_122438_b5747b",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:quality.n.01",
+      "target": "session:20261108_122438_b5747b",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:failure.n.01",
+      "target": "session:20261108_122438_b5747b",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:beginning.n.04",
+      "target": "session:20261108_122438_b5747b",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:state.n.01",
+      "target": "session:20261108_122438_91af2c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:command.n.01",
+      "target": "session:20261108_122438_91af2c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:evidence.n.01",
+      "target": "session:20261108_122438_91af2c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:request.n.01",
+      "target": "session:20261108_105652_c54191",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:request.n.01",
+      "target": "session:20261108_105652_4b2c9c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:change.n.01",
+      "target": "session:20261108_105652_c54191",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:verdict.n.01",
+      "target": "session:20261108_105652_c54191",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:report.n.01",
+      "target": "session:20261108_105652_c54191",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:change.n.01",
+      "target": "session:20261108_105652_4b2c9c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:verdict.n.01",
+      "target": "session:20261108_105652_4b2c9c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:report.n.01",
+      "target": "session:20261108_105652_4b2c9c",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:request.n.01",
+      "target": "session:local-f38e4636d63b287a8b98c606af1d4e69c717fc0693a77c1cae7d46d261ae21b2",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:lemma:itself",
+      "target": "session:local-f38e4636d63b287a8b98c606af1d4e69c717fc0693a77c1cae7d46d261ae21b2",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:failure.n.01",
+      "target": "session:local-f38e4636d63b287a8b98c606af1d4e69c717fc0693a77c1cae7d46d261ae21b2",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:answer.n.01",
+      "target": "session:local-f38e4636d63b287a8b98c606af1d4e69c717fc0693a77c1cae7d46d261ae21b2",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:weight.n.01",
+      "target": "session:20261108_005934_a4da27",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:token.n.01",
+      "target": "session:20261108_005934_a4da27",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:hermes.n.01",
+      "target": "session:20261108_005934_a4da27",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:end_product.n.01",
+      "target": "session:20261108_005934_a4da27",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:end_product.n.01",
+      "target": "session:20261108_002437_7449e5",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:window.n.01",
+      "target": "session:20261108_002437_7449e5",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:attempt.n.01",
+      "target": "session:20261108_002437_7449e5",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:reasoning.n.01",
+      "target": "session:20261108_002437_7449e5",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:lemma:whats",
+      "target": "session:20261107_121920_cb0936",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:lemma:else",
+      "target": "session:20261107_121920_cb0936",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:end_product.n.01",
+      "target": "session:20261107_121920_cb0936",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:token.n.01",
+      "target": "session:20261107_121920_cb0936",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:consequence.n.01",
+      "target": "session:20261107_213753_e94ed7",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:tax_return.n.01",
+      "target": "session:20261107_213753_e94ed7",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:beginning.n.04",
+      "target": "session:20261107_213753_e94ed7",
+      "weight": 1
+    },
+    {
+      "relation": "served_in",
+      "source": "concept:wordnet:session.n.01",
+      "target": "session:20261107_213753_e94ed7",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/docs/spec.md",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:ryancook.name/src/data/agents.json",
+      "target": "project:ryancook.name",
+      "weight": 1
+    },
+    {
+      "relation": "touched",
+      "source": "concept:lemma:json",
+      "target": "file:ryancook.name/src/data/agents.json",
+      "weight": 1
+    },
+    {
+      "relation": "touched",
+      "source": "concept:wordnet:agent.n.01",
+      "target": "file:ryancook.name/src/data/agents.json",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/core/history.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/specs/changes/state-goals/spec.md",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/__init__.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/core/sources.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/core/walks.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/experiments/state-settings/gaps.json",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "touched",
+      "source": "concept:lemma:json",
+      "target": "file:antemuse-plugin/experiments/state-settings/gaps.json",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/specs/changes/gap-closure/spec.md",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/specs/changes/spec-ledger-cleanup/spec.md",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/tests/test_gap_fixes.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/tests/test_spec_audit.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/tests/test_state_moves.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/tests/test_unstuck.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/tools/measure_state_gaps.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse-plugin/tools/spec_audit.py",
+      "target": "project:antemuse-plugin",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/README.md",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/SKILL.md",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/__init__.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/__main__.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/__init__.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/backdrop.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/collider.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "touched",
+      "source": "concept:wordnet:collider.n.01",
+      "target": "file:antemuse/plugin/core/collider.py",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/engine.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/llm.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/mood.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/panel.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/photographs.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/presenter.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/social.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/sources.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/states.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "touched",
+      "source": "concept:wordnet:state.n.01",
+      "target": "file:antemuse/plugin/core/states.py",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/storage.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/surfaces.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "touched",
+      "source": "concept:wordnet:surface.n.01",
+      "target": "file:antemuse/plugin/core/surfaces.py",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/ticker.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "in_project",
+      "source": "file:antemuse/plugin/core/tui.py",
+      "target": "project:antemuse",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:doorstop.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:paperweight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:land.n.04",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:anchor.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:weight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:paperweight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:land.n.04",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:anchor.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:weight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:paperweight.n.01",
+      "target": "concept:wordnet:land.n.04",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:paperweight.n.01",
+      "target": "concept:wordnet:anchor.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:paperweight.n.01",
+      "target": "concept:wordnet:weight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:land.n.04",
+      "target": "concept:wordnet:anchor.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:land.n.04",
+      "target": "concept:wordnet:weight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:anchor.n.01",
+      "target": "concept:wordnet:weight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:bookend.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:single.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:bookend.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:single.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:bookend.n.01",
+      "target": "concept:wordnet:single.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:bookend.n.01",
+      "target": "concept:wordnet:paperweight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:single.n.01",
+      "target": "concept:wordnet:paperweight.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:griddle.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:griddle.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:anchor.n.01",
+      "target": "concept:wordnet:griddle.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:heater.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:garden.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:marker.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:heater.n.01",
+      "target": "concept:wordnet:garden.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:heater.n.01",
+      "target": "concept:wordnet:marker.n.01",
+      "weight": 1
+    },
+    {
+      "relation": "co_served",
+      "source": "concept:wordnet:garden.n.01",
+      "target": "concept:wordnet:marker.n.01",
+      "weight": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "concept:wordnet:doorstop.n.01",
+      "key": "wordnet:doorstop.n.01",
+      "kind": "concept",
+      "label": "doorstop"
+    },
+    {
+      "id": "concept:lemma:plugin",
+      "key": "lemma:plugin",
+      "kind": "concept",
+      "label": "plugin"
+    },
+    {
+      "id": "concept:wordnet:hermes.n.01",
+      "key": "wordnet:hermes.n.01",
+      "kind": "concept",
+      "label": "hermes"
+    },
+    {
+      "id": "concept:wordnet:beginning.n.04",
+      "key": "wordnet:beginning.n.04",
+      "kind": "concept",
+      "label": "source"
+    },
+    {
+      "id": "concept:lemma:antemuse",
+      "key": "lemma:antemuse",
+      "kind": "concept",
+      "label": "antemuse"
+    },
+    {
+      "id": "concept:wordnet:bookend.n.01",
+      "key": "wordnet:bookend.n.01",
+      "kind": "concept",
+      "label": "bookend"
+    },
+    {
+      "id": "concept:wordnet:weight.n.01",
+      "key": "wordnet:weight.n.01",
+      "kind": "concept",
+      "label": "weight"
+    },
+    {
+      "id": "concept:lemma:ryan",
+      "key": "lemma:ryan",
+      "kind": "concept",
+      "label": "ryan"
+    },
+    {
+      "id": "concept:wordnet:paperweight.n.01",
+      "key": "wordnet:paperweight.n.01",
+      "kind": "concept",
+      "label": "paperweight"
+    },
+    {
+      "id": "concept:wordnet:explanation.n.01",
+      "key": "wordnet:explanation.n.01",
+      "kind": "concept",
+      "label": "explanation"
+    },
+    {
+      "id": "concept:wordnet:change.n.01",
+      "key": "wordnet:change.n.01",
+      "kind": "concept",
+      "label": "change"
+    },
+    {
+      "id": "concept:wordnet:thermal.n.01",
+      "key": "wordnet:thermal.n.01",
+      "kind": "concept",
+      "label": "thermal"
+    },
+    {
+      "id": "concept:wordnet:reappraisal.n.01",
+      "key": "wordnet:reappraisal.n.01",
+      "kind": "concept",
+      "label": "reviews"
+    },
+    {
+      "id": "concept:wordnet:hammer.n.01",
+      "key": "wordnet:hammer.n.01",
+      "kind": "concept",
+      "label": "hammer"
+    },
+    {
+      "id": "concept:wordnet:garden.n.01",
+      "key": "wordnet:garden.n.01",
+      "kind": "concept",
+      "label": "garden"
+    },
+    {
+      "id": "concept:lemma:dont",
+      "key": "lemma:dont",
+      "kind": "concept",
+      "label": "dont"
+    },
+    {
+      "id": "concept:wordnet:session.n.01",
+      "key": "wordnet:session.n.01",
+      "kind": "concept",
+      "label": "session"
+    },
+    {
+      "id": "concept:lemma:antemuse-fleet",
+      "key": "lemma:antemuse-fleet",
+      "kind": "concept",
+      "label": "antemuse-fleet"
+    },
+    {
+      "id": "concept:wordnet:collider.n.01",
+      "key": "wordnet:collider.n.01",
+      "kind": "concept",
+      "label": "collider"
+    },
+    {
+      "id": "concept:wordnet:status.n.01",
+      "key": "wordnet:status.n.01",
+      "kind": "concept",
+      "label": "status"
+    },
+    {
+      "id": "concept:wordnet:property.n.01",
+      "key": "wordnet:property.n.01",
+      "kind": "concept",
+      "label": "property"
+    },
+    {
+      "id": "concept:wordnet:mugwump.n.02",
+      "key": "wordnet:mugwump.n.02",
+      "kind": "concept",
+      "label": "independent"
+    },
+    {
+      "id": "concept:lemma:thats",
+      "key": "lemma:thats",
+      "kind": "concept",
+      "label": "thats"
+    },
+    {
+      "id": "concept:wordnet:heater.n.01",
+      "key": "wordnet:heater.n.01",
+      "kind": "concept",
+      "label": "warmer"
+    },
+    {
+      "id": "concept:wordnet:context.n.01",
+      "key": "wordnet:context.n.01",
+      "kind": "concept",
+      "label": "context"
+    },
+    {
+      "id": "concept:wordnet:evaluation.n.01",
+      "key": "wordnet:evaluation.n.01",
+      "kind": "concept",
+      "label": "evaluation"
+    },
+    {
+      "id": "concept:wordnet:answer.n.01",
+      "key": "wordnet:answer.n.01",
+      "kind": "concept",
+      "label": "answer"
+    },
+    {
+      "id": "concept:wordnet:surface.n.01",
+      "key": "wordnet:surface.n.01",
+      "kind": "concept",
+      "label": "surfaces"
+    },
+    {
+      "id": "concept:wordnet:consequence.n.01",
+      "key": "wordnet:consequence.n.01",
+      "kind": "concept",
+      "label": "effect"
+    },
+    {
+      "id": "concept:lemma:json",
+      "key": "lemma:json",
+      "kind": "concept",
+      "label": "json"
+    },
+    {
+      "id": "concept:wordnet:contract.n.01",
+      "key": "wordnet:contract.n.01",
+      "kind": "concept",
+      "label": "contract"
+    },
+    {
+      "id": "concept:wordnet:command.n.01",
+      "key": "wordnet:command.n.01",
+      "kind": "concept",
+      "label": "commands"
+    },
+    {
+      "id": "concept:wordnet:approach.n.01",
+      "key": "wordnet:approach.n.01",
+      "kind": "concept",
+      "label": "approach"
+    },
+    {
+      "id": "concept:wordnet:current.n.01",
+      "key": "wordnet:current.n.01",
+      "kind": "concept",
+      "label": "current"
+    },
+    {
+      "id": "concept:wordnet:reading.n.01",
+      "key": "wordnet:reading.n.01",
+      "kind": "concept",
+      "label": "reading"
+    },
+    {
+      "id": "concept:lemma:read-only",
+      "key": "lemma:read-only",
+      "kind": "concept",
+      "label": "read-only"
+    },
+    {
+      "id": "concept:wordnet:prompt.n.01",
+      "key": "wordnet:prompt.n.01",
+      "kind": "concept",
+      "label": "prompt"
+    },
+    {
+      "id": "concept:wordnet:branch.n.01",
+      "key": "wordnet:branch.n.01",
+      "kind": "concept",
+      "label": "branch"
+    },
+    {
+      "id": "concept:wordnet:weapon.n.01",
+      "key": "wordnet:weapon.n.01",
+      "kind": "concept",
+      "label": "weapon"
+    },
+    {
+      "id": "concept:wordnet:message.n.01",
+      "key": "wordnet:message.n.01",
+      "kind": "concept",
+      "label": "message"
+    },
+    {
+      "id": "concept:wordnet:artifact.n.01",
+      "key": "wordnet:artifact.n.01",
+      "kind": "concept",
+      "label": "artifacts"
+    },
+    {
+      "id": "concept:wordnet:question.n.01",
+      "key": "wordnet:question.n.01",
+      "kind": "concept",
+      "label": "question"
+    },
+    {
+      "id": "concept:wordnet:request.n.01",
+      "key": "wordnet:request.n.01",
+      "kind": "concept",
+      "label": "request"
+    },
+    {
+      "id": "concept:wordnet:record.n.01",
+      "key": "wordnet:record.n.01",
+      "kind": "concept",
+      "label": "records"
+    },
+    {
+      "id": "concept:wordnet:master.n.06",
+      "key": "wordnet:master.n.06",
+      "kind": "concept",
+      "label": "original"
+    },
+    {
+      "id": "concept:wordnet:object.n.01",
+      "key": "wordnet:object.n.01",
+      "kind": "concept",
+      "label": "objects"
+    },
+    {
+      "id": "concept:wordnet:reviewer.n.01",
+      "key": "wordnet:reviewer.n.01",
+      "kind": "concept",
+      "label": "reviewer"
+    },
+    {
+      "id": "concept:wordnet:evidence.n.01",
+      "key": "wordnet:evidence.n.01",
+      "kind": "concept",
+      "label": "evidence"
+    },
+    {
+      "id": "concept:wordnet:state.n.01",
+      "key": "wordnet:state.n.01",
+      "kind": "concept",
+      "label": "states"
+    },
+    {
+      "id": "concept:lemma:runtime",
+      "key": "lemma:runtime",
+      "kind": "concept",
+      "label": "runtime"
+    },
+    {
+      "id": "concept:wordnet:doubles.n.01",
+      "key": "wordnet:doubles.n.01",
+      "kind": "concept",
+      "label": "doubles"
+    },
+    {
+      "id": "concept:wordnet:brick.n.01",
+      "key": "wordnet:brick.n.01",
+      "kind": "concept",
+      "label": "bricks"
+    },
+    {
+      "id": "concept:lemma:itself",
+      "key": "lemma:itself",
+      "kind": "concept",
+      "label": "itself"
+    },
+    {
+      "id": "concept:wordnet:tax_return.n.01",
+      "key": "wordnet:tax_return.n.01",
+      "kind": "concept",
+      "label": "return"
+    },
+    {
+      "id": "concept:wordnet:requirement.n.01",
+      "key": "wordnet:requirement.n.01",
+      "kind": "concept",
+      "label": "requirements"
+    },
+    {
+      "id": "concept:wordnet:end_product.n.01",
+      "key": "wordnet:end_product.n.01",
+      "kind": "concept",
+      "label": "output"
+    },
+    {
+      "id": "concept:wordnet:execution.n.06",
+      "key": "wordnet:execution.n.06",
+      "kind": "concept",
+      "label": "implementation"
+    },
+    {
+      "id": "concept:wordnet:marker.n.01",
+      "key": "wordnet:marker.n.01",
+      "kind": "concept",
+      "label": "marker"
+    },
+    {
+      "id": "concept:wordnet:porosity.n.01",
+      "key": "wordnet:porosity.n.01",
+      "kind": "concept",
+      "label": "porosity"
+    },
+    {
+      "id": "concept:wordnet:handoff.n.01",
+      "key": "wordnet:handoff.n.01",
+      "kind": "concept",
+      "label": "handoffs"
+    },
+    {
+      "id": "concept:wordnet:verdict.n.01",
+      "key": "wordnet:verdict.n.01",
+      "kind": "concept",
+      "label": "verdicts"
+    },
+    {
+      "id": "concept:wordnet:reverie.n.01",
+      "key": "wordnet:reverie.n.01",
+      "kind": "concept",
+      "label": "daydream"
+    },
+    {
+      "id": "concept:wordnet:window.n.01",
+      "key": "wordnet:window.n.01",
+      "kind": "concept",
+      "label": "window"
+    },
+    {
+      "id": "concept:wordnet:instruction_manual.n.01",
+      "key": "wordnet:instruction_manual.n.01",
+      "kind": "concept",
+      "label": "instructions"
+    },
+    {
+      "id": "concept:lemma:else",
+      "key": "lemma:else",
+      "kind": "concept",
+      "label": "else"
+    },
+    {
+      "id": "concept:wordnet:produce.n.01",
+      "key": "wordnet:produce.n.01",
+      "kind": "concept",
+      "label": "produce"
+    },
+    {
+      "id": "concept:wordnet:report.n.01",
+      "key": "wordnet:report.n.01",
+      "kind": "concept",
+      "label": "report"
+    },
+    {
+      "id": "concept:wordnet:counterweight.n.01",
+      "key": "wordnet:counterweight.n.01",
+      "kind": "concept",
+      "label": "counterweight"
+    },
+    {
+      "id": "concept:wordnet:active_agent.n.01",
+      "key": "wordnet:active_agent.n.01",
+      "kind": "concept",
+      "label": "active"
+    },
+    {
+      "id": "concept:wordnet:failure.n.01",
+      "key": "wordnet:failure.n.01",
+      "kind": "concept",
+      "label": "failure"
+    },
+    {
+      "id": "concept:wordnet:campaigner.n.01",
+      "key": "wordnet:campaigner.n.01",
+      "kind": "concept",
+      "label": "candidate"
+    },
+    {
+      "id": "concept:wordnet:specification.n.01",
+      "key": "wordnet:specification.n.01",
+      "kind": "concept",
+      "label": "specification"
+    },
+    {
+      "id": "concept:wordnet:anchor.n.01",
+      "key": "wordnet:anchor.n.01",
+      "kind": "concept",
+      "label": "anchor"
+    },
+    {
+      "id": "concept:wordnet:default.n.01",
+      "key": "wordnet:default.n.01",
+      "kind": "concept",
+      "label": "default"
+    },
+    {
+      "id": "concept:wordnet:run.n.05",
+      "key": "wordnet:run.n.05",
+      "kind": "concept",
+      "label": "running"
+    },
+    {
+      "id": "concept:wordnet:mention.n.01",
+      "key": "wordnet:mention.n.01",
+      "kind": "concept",
+      "label": "references"
+    },
+    {
+      "id": "concept:wordnet:inside.n.01",
+      "key": "wordnet:inside.n.01",
+      "kind": "concept",
+      "label": "inside"
+    },
+    {
+      "id": "concept:wordnet:summary.n.01",
+      "key": "wordnet:summary.n.01",
+      "kind": "concept",
+      "label": "summary"
+    },
+    {
+      "id": "concept:wordnet:repair.n.01",
+      "key": "wordnet:repair.n.01",
+      "kind": "concept",
+      "label": "fixing"
+    },
+    {
+      "id": "concept:wordnet:material.n.01",
+      "key": "wordnet:material.n.01",
+      "kind": "concept",
+      "label": "material"
+    },
+    {
+      "id": "concept:wordnet:overlap.n.01",
+      "key": "wordnet:overlap.n.01",
+      "kind": "concept",
+      "label": "overlap"
+    },
+    {
+      "id": "concept:wordnet:gateway.n.01",
+      "key": "wordnet:gateway.n.01",
+      "kind": "concept",
+      "label": "gateway"
+    },
+    {
+      "id": "concept:wordnet:single.n.01",
+      "key": "wordnet:single.n.01",
+      "kind": "concept",
+      "label": "single"
+    },
+    {
+      "id": "concept:wordnet:network.n.01",
+      "key": "wordnet:network.n.01",
+      "kind": "concept",
+      "label": "network"
+    },
+    {
+      "id": "concept:wordnet:mechanism.n.01",
+      "key": "wordnet:mechanism.n.01",
+      "kind": "concept",
+      "label": "mechanism"
+    },
+    {
+      "id": "concept:wordnet:quality.n.01",
+      "key": "wordnet:quality.n.01",
+      "kind": "concept",
+      "label": "quality"
+    },
+    {
+      "id": "concept:wordnet:writing.n.01",
+      "key": "wordnet:writing.n.01",
+      "kind": "concept",
+      "label": "writing"
+    },
+    {
+      "id": "concept:wordnet:confirmation.n.01",
+      "key": "wordnet:confirmation.n.01",
+      "kind": "concept",
+      "label": "verification"
+    },
+    {
+      "id": "concept:wordnet:budget.n.01",
+      "key": "wordnet:budget.n.01",
+      "kind": "concept",
+      "label": "budget"
+    },
+    {
+      "id": "concept:wordnet:package.n.01",
+      "key": "wordnet:package.n.01",
+      "kind": "concept",
+      "label": "package"
+    },
+    {
+      "id": "concept:wordnet:press.n.09",
+      "key": "wordnet:press.n.09",
+      "kind": "concept",
+      "label": "pressing"
+    },
+    {
+      "id": "concept:wordnet:fields.n.01",
+      "key": "wordnet:fields.n.01",
+      "kind": "concept",
+      "label": "fields"
+    },
+    {
+      "id": "concept:wordnet:format.n.01",
+      "key": "wordnet:format.n.01",
+      "kind": "concept",
+      "label": "format"
+    },
+    {
+      "id": "concept:wordnet:import.n.01",
+      "key": "wordnet:import.n.01",
+      "kind": "concept",
+      "label": "import"
+    },
+    {
+      "id": "concept:wordnet:supplier.n.01",
+      "key": "wordnet:supplier.n.01",
+      "kind": "concept",
+      "label": "provider"
+    },
+    {
+      "id": "concept:wordnet:string.n.01",
+      "key": "wordnet:string.n.01",
+      "kind": "concept",
+      "label": "string"
+    },
+    {
+      "id": "concept:wordnet:ballast.n.01",
+      "key": "wordnet:ballast.n.01",
+      "kind": "concept",
+      "label": "ballast"
+    },
+    {
+      "id": "concept:wordnet:griddle.n.01",
+      "key": "wordnet:griddle.n.01",
+      "kind": "concept",
+      "label": "griddle"
+    },
+    {
+      "id": "concept:wordnet:land.n.04",
+      "key": "wordnet:land.n.04",
+      "kind": "concept",
+      "label": "ground"
+    },
+    {
+      "id": "concept:wordnet:version.n.01",
+      "key": "wordnet:version.n.01",
+      "kind": "concept",
+      "label": "version"
+    },
+    {
+      "id": "concept:wordnet:manifest.n.01",
+      "key": "wordnet:manifest.n.01",
+      "kind": "concept",
+      "label": "manifest"
+    },
+    {
+      "id": "concept:lemma:doesnt",
+      "key": "lemma:doesnt",
+      "kind": "concept",
+      "label": "doesnt"
+    },
+    {
+      "id": "concept:wordnet:undertaking.n.01",
+      "key": "wordnet:undertaking.n.01",
+      "kind": "concept",
+      "label": "project"
+    },
+    {
+      "id": "concept:wordnet:token.n.01",
+      "key": "wordnet:token.n.01",
+      "kind": "concept",
+      "label": "tokens"
+    },
+    {
+      "id": "concept:wordnet:acoustic.n.01",
+      "key": "wordnet:acoustic.n.01",
+      "kind": "concept",
+      "label": "acoustic"
+    },
+    {
+      "id": "concept:wordnet:class.n.01",
+      "key": "wordnet:class.n.01",
+      "kind": "concept",
+      "label": "categories"
+    },
+    {
+      "id": "concept:wordnet:snapshot.n.01",
+      "key": "wordnet:snapshot.n.01",
+      "kind": "concept",
+      "label": "snapshot"
+    },
+    {
+      "id": "concept:wordnet:agent.n.01",
+      "key": "wordnet:agent.n.01",
+      "kind": "concept",
+      "label": "agents"
+    },
+    {
+      "id": "concept:lemma:doomscroll",
+      "key": "lemma:doomscroll",
+      "kind": "concept",
+      "label": "doomscroll"
+    },
+    {
+      "id": "concept:wordnet:bottom.n.01",
+      "key": "wordnet:bottom.n.01",
+      "kind": "concept",
+      "label": "bottom"
+    },
+    {
+      "id": "concept:wordnet:section.n.01",
+      "key": "wordnet:section.n.01",
+      "kind": "concept",
+      "label": "section"
+    },
+    {
+      "id": "concept:wordnet:background.n.01",
+      "key": "wordnet:background.n.01",
+      "kind": "concept",
+      "label": "background"
+    },
+    {
+      "id": "concept:wordnet:register.n.01",
+      "key": "wordnet:register.n.01",
+      "kind": "concept",
+      "label": "register"
+    },
+    {
+      "id": "concept:lemma:whats",
+      "key": "lemma:whats",
+      "kind": "concept",
+      "label": "whats"
+    },
+    {
+      "id": "concept:wordnet:desktop.n.01",
+      "key": "wordnet:desktop.n.01",
+      "kind": "concept",
+      "label": "desktop"
+    },
+    {
+      "id": "concept:wordnet:standard.n.01",
+      "key": "wordnet:standard.n.01",
+      "kind": "concept",
+      "label": "standard"
+    },
+    {
+      "id": "concept:wordnet:choice.n.02",
+      "key": "wordnet:choice.n.02",
+      "kind": "concept",
+      "label": "selection"
+    },
+    {
+      "id": "concept:wordnet:baseline.n.01",
+      "key": "wordnet:baseline.n.01",
+      "kind": "concept",
+      "label": "baseline"
+    },
+    {
+      "id": "concept:wordnet:reasoning.n.01",
+      "key": "wordnet:reasoning.n.01",
+      "kind": "concept",
+      "label": "reasoning"
+    },
+    {
+      "id": "concept:wordnet:attempt.n.01",
+      "key": "wordnet:attempt.n.01",
+      "kind": "concept",
+      "label": "effort"
+    },
+    {
+      "id": "session:20261108_091834_aa6c8db0",
+      "key": "20261108_091834_aa6c8db0",
+      "kind": "session",
+      "label": "Nov 8 09:18"
+    },
+    {
+      "id": "session:20261108_162120_6202f2d8",
+      "key": "20261108_162120_6202f2d8",
+      "kind": "session",
+      "label": "Nov 8 16:21"
+    },
+    {
+      "id": "session:20261108_152353_61881418",
+      "key": "20261108_152353_61881418",
+      "kind": "session",
+      "label": "Nov 8 15:23"
+    },
+    {
+      "id": "session:20261108_122438_91af2c",
+      "key": "20261108_122438_91af2c",
+      "kind": "session",
+      "label": "Nov 8 12:24"
+    },
+    {
+      "id": "session:20261108_122438_b5747b",
+      "key": "20261108_122438_b5747b",
+      "kind": "session",
+      "label": "Nov 8 12:24"
+    },
+    {
+      "id": "session:20261108_105652_c54191",
+      "key": "20261108_105652_c54191",
+      "kind": "session",
+      "label": "Nov 8 10:56"
+    },
+    {
+      "id": "session:20261108_105652_4b2c9c",
+      "key": "20261108_105652_4b2c9c",
+      "kind": "session",
+      "label": "Nov 8 10:56"
+    },
+    {
+      "id": "session:local-f38e4636d63b287a8b98c606af1d4e69c717fc0693a77c1cae7d46d261ae21b2",
+      "key": "local-f38e4636d63b287a8b98c606af1d4e69c717fc0693a77c1cae7d46d261ae21b2",
+      "kind": "session",
+      "label": "local-f38e4636"
+    },
+    {
+      "id": "session:20261108_005934_a4da27",
+      "key": "20261108_005934_a4da27",
+      "kind": "session",
+      "label": "Nov 8 00:59"
+    },
+    {
+      "id": "session:20261108_002437_7449e5",
+      "key": "20261108_002437_7449e5",
+      "kind": "session",
+      "label": "Nov 8 00:24"
+    },
+    {
+      "id": "session:20261107_121920_cb0936",
+      "key": "20261107_121920_cb0936",
+      "kind": "session",
+      "label": "Nov 7 12:19"
+    },
+    {
+      "id": "session:20261107_213753_e94ed7",
+      "key": "20261107_213753_e94ed7",
+      "kind": "session",
+      "label": "Nov 7 21:37"
+    },
+    {
+      "id": "file:antemuse-plugin/docs/spec.md",
+      "key": "antemuse-plugin/docs/spec.md",
+      "kind": "file",
+      "label": "spec.md"
+    },
+    {
+      "id": "project:antemuse-plugin",
+      "key": "antemuse-plugin",
+      "kind": "project",
+      "label": "antemuse-plugin"
+    },
+    {
+      "id": "file:ryancook.name/src/data/agents.json",
+      "key": "ryancook.name/src/data/agents.json",
+      "kind": "file",
+      "label": "agents.json"
+    },
+    {
+      "id": "project:ryancook.name",
+      "key": "ryancook.name",
+      "kind": "project",
+      "label": "ryancook.name"
+    },
+    {
+      "id": "file:antemuse-plugin/core/history.py",
+      "key": "antemuse-plugin/core/history.py",
+      "kind": "file",
+      "label": "history.py"
+    },
+    {
+      "id": "file:antemuse-plugin/specs/changes/state-goals/spec.md",
+      "key": "antemuse-plugin/specs/changes/state-goals/spec.md",
+      "kind": "file",
+      "label": "spec.md"
+    },
+    {
+      "id": "file:antemuse-plugin/__init__.py",
+      "key": "antemuse-plugin/__init__.py",
+      "kind": "file",
+      "label": "__init__.py"
+    },
+    {
+      "id": "file:antemuse-plugin/core/sources.py",
+      "key": "antemuse-plugin/core/sources.py",
+      "kind": "file",
+      "label": "sources.py"
+    },
+    {
+      "id": "file:antemuse-plugin/core/walks.py",
+      "key": "antemuse-plugin/core/walks.py",
+      "kind": "file",
+      "label": "walks.py"
+    },
+    {
+      "id": "file:antemuse-plugin/experiments/state-settings/gaps.json",
+      "key": "antemuse-plugin/experiments/state-settings/gaps.json",
+      "kind": "file",
+      "label": "gaps.json"
+    },
+    {
+      "id": "file:antemuse-plugin/specs/changes/gap-closure/spec.md",
+      "key": "antemuse-plugin/specs/changes/gap-closure/spec.md",
+      "kind": "file",
+      "label": "spec.md"
+    },
+    {
+      "id": "file:antemuse-plugin/specs/changes/spec-ledger-cleanup/spec.md",
+      "key": "antemuse-plugin/specs/changes/spec-ledger-cleanup/spec.md",
+      "kind": "file",
+      "label": "spec.md"
+    },
+    {
+      "id": "file:antemuse-plugin/tests/test_gap_fixes.py",
+      "key": "antemuse-plugin/tests/test_gap_fixes.py",
+      "kind": "file",
+      "label": "test_gap_fixes.py"
+    },
+    {
+      "id": "file:antemuse-plugin/tests/test_spec_audit.py",
+      "key": "antemuse-plugin/tests/test_spec_audit.py",
+      "kind": "file",
+      "label": "test_spec_audit.py"
+    },
+    {
+      "id": "file:antemuse-plugin/tests/test_state_moves.py",
+      "key": "antemuse-plugin/tests/test_state_moves.py",
+      "kind": "file",
+      "label": "test_state_moves.py"
+    },
+    {
+      "id": "file:antemuse-plugin/tests/test_unstuck.py",
+      "key": "antemuse-plugin/tests/test_unstuck.py",
+      "kind": "file",
+      "label": "test_unstuck.py"
+    },
+    {
+      "id": "file:antemuse-plugin/tools/measure_state_gaps.py",
+      "key": "antemuse-plugin/tools/measure_state_gaps.py",
+      "kind": "file",
+      "label": "measure_state_gaps.py"
+    },
+    {
+      "id": "file:antemuse-plugin/tools/spec_audit.py",
+      "key": "antemuse-plugin/tools/spec_audit.py",
+      "kind": "file",
+      "label": "spec_audit.py"
+    },
+    {
+      "id": "file:antemuse/plugin/README.md",
+      "key": "antemuse/plugin/README.md",
+      "kind": "file",
+      "label": "README.md"
+    },
+    {
+      "id": "project:antemuse",
+      "key": "antemuse",
+      "kind": "project",
+      "label": "antemuse"
+    },
+    {
+      "id": "file:antemuse/plugin/SKILL.md",
+      "key": "antemuse/plugin/SKILL.md",
+      "kind": "file",
+      "label": "SKILL.md"
+    },
+    {
+      "id": "file:antemuse/plugin/__init__.py",
+      "key": "antemuse/plugin/__init__.py",
+      "kind": "file",
+      "label": "__init__.py"
+    },
+    {
+      "id": "file:antemuse/plugin/__main__.py",
+      "key": "antemuse/plugin/__main__.py",
+      "kind": "file",
+      "label": "__main__.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/__init__.py",
+      "key": "antemuse/plugin/core/__init__.py",
+      "kind": "file",
+      "label": "__init__.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/backdrop.py",
+      "key": "antemuse/plugin/core/backdrop.py",
+      "kind": "file",
+      "label": "backdrop.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/collider.py",
+      "key": "antemuse/plugin/core/collider.py",
+      "kind": "file",
+      "label": "collider.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/engine.py",
+      "key": "antemuse/plugin/core/engine.py",
+      "kind": "file",
+      "label": "engine.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/llm.py",
+      "key": "antemuse/plugin/core/llm.py",
+      "kind": "file",
+      "label": "llm.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/mood.py",
+      "key": "antemuse/plugin/core/mood.py",
+      "kind": "file",
+      "label": "mood.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/panel.py",
+      "key": "antemuse/plugin/core/panel.py",
+      "kind": "file",
+      "label": "panel.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/photographs.py",
+      "key": "antemuse/plugin/core/photographs.py",
+      "kind": "file",
+      "label": "photographs.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/presenter.py",
+      "key": "antemuse/plugin/core/presenter.py",
+      "kind": "file",
+      "label": "presenter.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/social.py",
+      "key": "antemuse/plugin/core/social.py",
+      "kind": "file",
+      "label": "social.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/sources.py",
+      "key": "antemuse/plugin/core/sources.py",
+      "kind": "file",
+      "label": "sources.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/states.py",
+      "key": "antemuse/plugin/core/states.py",
+      "kind": "file",
+      "label": "states.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/storage.py",
+      "key": "antemuse/plugin/core/storage.py",
+      "kind": "file",
+      "label": "storage.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/surfaces.py",
+      "key": "antemuse/plugin/core/surfaces.py",
+      "kind": "file",
+      "label": "surfaces.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/ticker.py",
+      "key": "antemuse/plugin/core/ticker.py",
+      "kind": "file",
+      "label": "ticker.py"
+    },
+    {
+      "id": "file:antemuse/plugin/core/tui.py",
+      "key": "antemuse/plugin/core/tui.py",
+      "kind": "file",
+      "label": "tui.py"
+    }
+  ],
+  "summary": {
+    "edges:co_served": 31,
+    "edges:in_project": 36,
+    "edges:served_in": 48,
+    "edges:touched": 6,
+    "nodes:concept": 120,
+    "nodes:file": 36,
+    "nodes:project": 3,
+    "nodes:session": 12
+  }
+}

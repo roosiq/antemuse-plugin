@@ -232,6 +232,35 @@ def link(a: str, b: str, relation: str = "shared", move: str = "") -> None:
         conn.close()
 
 
+def notice_artifact(project: str, relpath: str, at: Optional[float] = None) -> None:
+    """Record a file a repository's own commit touched: the artifact side of the graph.
+
+    Only the path is stored — never the file's contents. This is what lets a concept be
+    attached to the thing it was about, without the ledger ever holding text.
+    """
+    rel = (relpath or "").strip().lstrip("./")
+    project = (project or "").strip()
+    if not rel or not project or len(rel) > 160:
+        return
+    key = f"{project}/{rel}"[:160]
+    label = rel.rsplit("/", 1)[-1][:MAX_TERM]
+    now = at or time.time()
+    conn = _connect()
+    if conn is None:
+        return
+    try:
+        with conn:
+            conn.execute(
+                """INSERT INTO concepts(kind, key, label, first_seen, last_seen, times)
+                   VALUES('file', ?, ?, ?, ?, 1)
+                   ON CONFLICT(kind, key) DO UPDATE SET
+                     last_seen=excluded.last_seen, times=times+1""", (key, label, now, now))
+    except Exception as exc:
+        _note_failure(f"artifact write failed · {str(exc).splitlines()[0][:70]}")
+    finally:
+        conn.close()
+
+
 def mark_move(state: str, started: float, ended: Optional[float] = None,
               ending: str = "", dose_done: Optional[int] = None) -> None:
     conn = _connect()
@@ -569,9 +598,11 @@ def autoscan(session: str = "", messages: int = AUTO_MESSAGES,
         return {"ok": False, "reason": "skipped"}
 
     _SCAN_LOCK["running"] = True
-    _mark_scanned(session)
 
     def run() -> Dict[str, Any]:
+        # the bookkeeping happens in the thread too: a synchronous sqlite write on the turn's
+        # path is exactly the kind of milliseconds this design exists to avoid
+        _mark_scanned(session)
         try:
             result = scan_sessions(days=14, batch=messages, budget_s=budget_s, db=db)
         except Exception as exc:                      # never escapes a turn
