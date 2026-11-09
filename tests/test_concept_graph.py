@@ -99,3 +99,96 @@ def test_the_picture_is_actually_drawn(tmp_path, monkeypatch):
     assert "<circle" in svg.read_text()
     payload = json.loads(data.read_text())
     assert payload["nodes"] and payload["summary"]["nodes:concept"] >= 1
+
+
+# ------------------------------------------------------- semantic projection
+
+def _embeddings():
+    """A tiny stand-in for the model's output: three obvious directions plus noise."""
+    import random
+    rng = random.Random(11)
+    base = {
+        "gateway": [1.0, 0.0, 0.0], "plugin": [0.95, 0.1, 0.0], "manifest": [0.9, 0.2, 0.05],
+        "evaluation": [0.0, 1.0, 0.0], "verdict": [0.1, 0.95, 0.0], "reviewer": [0.05, 0.9, 0.1],
+        "porosity": [0.0, 0.0, 1.0], "thermal": [0.1, 0.0, 0.95], "material": [0.05, 0.05, 0.9],
+    }
+    vectors = {}
+    for label, vec in base.items():
+        noisy = [v + rng.uniform(-0.02, 0.02) for v in vec]
+        norm = sum(v * v for v in noisy) ** 0.5
+        vectors[label] = [v / norm for v in noisy]
+    return {"model": "test", "dim": 3, "vectors": vectors}
+
+
+def test_the_projection_is_deterministic():
+    emb = _embeddings()
+    labels = sorted(emb["vectors"])
+    import tools.graph_export as ge  # noqa: E402
+    a = ge.pca2(emb["vectors"], labels)
+    b = ge.pca2(emb["vectors"], labels)
+    assert all(abs(a[k][0] - b[k][0]) < 1e-9 and abs(a[k][1] - b[k][1]) < 1e-9 for k in labels)
+
+
+def test_refinement_preserves_meaning_better_than_pca_alone():
+    emb = _embeddings()
+    labels = sorted(emb["vectors"])
+    import tools.graph_export as ge  # noqa: E402
+    raw = ge.pca2(emb["vectors"], labels)
+    refined = ge.refine(raw, emb["vectors"], iters=30)
+    before = ge.projection_quality(raw, emb["vectors"], sample=200)["pearson"]
+    after = ge.projection_quality(refined, emb["vectors"], sample=200)["pearson"]
+    assert after >= before, (before, after)
+
+
+def test_neighbours_in_meaning_land_close_together():
+    emb = _embeddings()
+    labels = sorted(emb["vectors"])
+    import tools.graph_export as ge  # noqa: E402
+    pos = ge.refine(ge.pca2(emb["vectors"], labels), emb["vectors"], iters=60)
+    def d(a, b):
+        return ((pos[a][0] - pos[b][0]) ** 2 + (pos[a][1] - pos[b][1]) ** 2) ** 0.5
+    assert d("gateway", "plugin") < d("gateway", "porosity")
+    assert d("evaluation", "verdict") < d("evaluation", "thermal")
+
+
+def test_semantic_view_draws_concepts_only(tmp_path, monkeypatch):
+    """A session has no semantic position; it must not be placed somewhere false."""
+    _ledger(tmp_path, monkeypatch)
+    import tools.graph_export as ge  # noqa: E402
+    data = graph.snapshot()
+    emb_path = tmp_path / "emb.json"
+    emb_path.write_text(json.dumps({"model": "test", "dim": 3,
+                                    "vectors": {"shipper": [1.0, 0, 0], "ledger": [0.9, 0.1, 0]}}))
+    embeddings = json.loads(emb_path.read_text())
+    nodes, packed = ge.semantic_layout(data, embeddings)
+    assert nodes and all(n["kind"] == "concept" for n in nodes)
+    assert all(e["relation"] == "near_in_meaning" for e in packed["edges"])
+
+
+def test_the_semantic_export_writes_all_three_artefacts(tmp_path, monkeypatch):
+    _ledger(tmp_path, monkeypatch)
+    emb = tmp_path / "emb.json"
+    emb.write_text(json.dumps({"model": "test", "dim": 3,
+                               "vectors": {"shipper": [1.0, 0, 0], "ledger": [0.9, 0.1, 0]}}))
+    out = tmp_path / "graph"
+    result = subprocess.run([sys.executable, str(ROOT / "tools/graph_export.py"),
+                             "--limit", "40", "--semantic", "--embeddings", str(emb),
+                             "--out", str(out)],
+                            capture_output=True, text=True, timeout=120,
+                            env={**os.environ, "ANTEMUSE_STATES_HOME": str(tmp_path)})
+    assert result.returncode == 0, result.stderr[-400:]
+    assert (out / "concept-semantic.png").exists()
+    assert "<circle" in (out / "concept-semantic.svg").read_text()
+    assert json.loads((out / "concept-semantic.json").read_text())["layout"] == "semantic"
+
+
+def test_without_embeddings_the_semantic_view_says_so(tmp_path, monkeypatch):
+    _ledger(tmp_path, monkeypatch)
+    out = tmp_path / "graph"
+    result = subprocess.run([sys.executable, str(ROOT / "tools/graph_export.py"),
+                             "--semantic", "--embeddings", str(tmp_path / "absent.json"),
+                             "--out", str(out)],
+                            capture_output=True, text=True, timeout=120,
+                            env={**os.environ, "ANTEMUSE_STATES_HOME": str(tmp_path)})
+    assert result.returncode == 1
+    assert "graph_embed" in result.stdout
