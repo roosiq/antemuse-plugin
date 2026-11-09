@@ -28,9 +28,11 @@ def test_every_change_is_recorded_and_decided():
     rows, specs = mod.doc_rows(), mod.spec_status()
     assert specs, "no change folders found"
     missing_row = sorted(set(specs) - set(rows))
-    missing_folder = sorted(set(rows) - set(specs))
+    # six rows are older than the change-log discipline and survive on commit history alone;
+    # any *new* orphan is drift, not history
+    orphan = [r for r in sorted(set(rows) - set(specs)) if r not in mod.LEGACY_ROWS]
     assert not missing_row, f"changes with no §15 row: {missing_row}"
-    assert not missing_folder, f"§15 rows with no change folder: {missing_folder}"
+    assert not orphan, f"§15 rows with no change folder: {orphan}"
 
     drift = [name for name, text in specs.items()
              if mod.status_word(text) != mod.status_word(rows[name])]
@@ -40,5 +42,8 @@ def test_every_change_is_recorded_and_decided():
 def test_not_implemented_is_not_implemented():
     mod = audit()
     assert mod.status_word("**proposed** 2026-11-08. Not implemented.") == "proposed"
-    assert mod.status_word("Status: implemented (684 tests)") == "implemented"
+    # four status words only: a spec header may say "implemented", the table says LIVE
+    assert mod.status_word("Status: implemented (684 tests)") == "live"
+    assert mod.status_word("Status: **implemented (partial)**") == "partial"
     assert mod.status_word("**partial — picture done**") == "partial"
+    assert mod.status_word("Status: not built") == "not built"

@@ -24,29 +24,55 @@ ROOT = Path(__file__).resolve().parent.parent
 CHANGES = ROOT / "specs/changes"
 DOC = ROOT / "docs/spec.md"
 
-STATUS_WORDS = ("implemented", "verified", "partial", "proposed", "planning",
-                "draft", "approved", "retired")
+#: Four status words, and nothing else. A fifth synonym is how a table grows six of them
+#: again — "verified", "approved", "planning" and "draft" all resolve to one of these.
+STATUS_ALIASES = {
+    "live": "live", "implemented": "live", "verified": "live", "retired": "live",
+    "partial": "partial",
+    "proposed": "proposed", "planning": "proposed", "draft": "proposed", "approved": "proposed",
+    "not built": "not built", "notbuilt": "not built", "not implemented": "not built",
+}
+CANONICAL = ("live", "partial", "proposed", "not built")
+
+#: §15 rows that survive on commit history alone: they were built before the change-log
+#: discipline, and writing a spec for them now would invent a process that did not happen.
+LEGACY_ROWS = {"origin-and-cleanup", "runtime-wiring", "scene-assets", "truncation-visibility",
+               "wave3-audit", "wave4-shards"}
 
 
 def status_word(text: str) -> str:
-    """The status a human would read, not the first substring that matches."""
-    words = re.findall(r"[a-z]+", text.lower())
-    # "not implemented" is not "implemented"
-    for i, word in enumerate(words):
-        if word in STATUS_WORDS:
-            if i and words[i - 1] == "not":
-                return "not-" + word
-            return word
-    return "unknown"
+    """The status a human would read, in one of the four words.
+
+    A header like "implemented (partial)" means partial, and "proposed — conflicts with the
+    shipped path. Not implemented." means proposed: the first thing said is the status, and
+    "not built" only wins when it is said first.
+    """
+    low = " ".join(text.lower().split())
+    words = re.findall(r"[a-z]+", low)
+    first_alias = next((i for i, w in enumerate(words) if w in STATUS_ALIASES), None)
+    negated = min((i for i, w in enumerate(words[:2]) if w == "not"), default=None)
+    if negated is not None and (first_alias is None or negated < first_alias):
+        return "not built"
+    if "partial" in words:
+        return "partial"
+    if first_alias is None:
+        return "unknown"
+    return STATUS_ALIASES[words[first_alias]]
 
 
 def doc_rows() -> dict[str, str]:
+    """Every §15 row, including the ones with no change folder — those are the orphans this
+    audit has to be able to name."""
     text = DOC.read_text()
-    names = {p.name for p in CHANGES.iterdir() if p.is_dir()}
+    # only §15 — other tables in the doc use backticked names too (walks, states, tools)
+    start = text.find("## 15")
+    end = text.find("## 16", start if start != -1 else 0)
+    section = text[start:end] if start != -1 and end != -1 else text
     rows = {}
-    for m in re.finditer(r"^\| `([a-z0-9\-]+)` \| ([^|]+) \|", text, re.M):
-        if m.group(1) in names:
-            rows[m.group(1)] = m.group(2).strip()
+    # a row may carry a suffix (`desktop-surfaces` §9, `runtime-wiring` (J2)); the change is
+    # still the backticked name, and a suffix must not hide the row from this audit
+    for m in re.finditer(r"^\| `([a-z0-9\-]+)`[^|]*\| ([^|]+) \|", section, re.M):
+        rows.setdefault(m.group(1), m.group(2).strip())
     return rows
 
 
@@ -87,7 +113,8 @@ def actual_count() -> int | None:
 
 
 def main(argv: list[str]) -> int:
-    rows, specs = doc_rows(), spec_status()
+    all_rows, specs = doc_rows(), spec_status()
+    rows = {k: v for k, v in all_rows.items() if k in specs}
     drift = []
     for name in sorted(set(rows) | set(specs)):
         a, b = specs.get(name), rows.get(name)
@@ -101,6 +128,18 @@ def main(argv: list[str]) -> int:
         print(f"{mark} {name:26s} {status_word(a):12s} §15 {status_word(b)}")
         if mark == "!!":
             drift.append(name)
+
+    # the table is allowed four status words; a synonym means it drifted back to six
+    for name, cell in sorted(rows.items()):
+        word = status_word(cell)
+        if word not in CANONICAL:
+            print(f"!! {name:26s} §15 status {cell!r} is not one of {', '.join(CANONICAL)}")
+            drift.append(f"row-status:{name}")
+
+    # a row with no spec artifact is historical (commit history only); say how many
+    orphans = sorted(set(all_rows) - set(specs))
+    if orphans:
+        print(f"\n   {len(orphans)} §15 row(s) with no specs/changes dir: {', '.join(orphans)}")
 
     if "--counts" in argv:
         rec, act = recorded_count(), actual_count()
