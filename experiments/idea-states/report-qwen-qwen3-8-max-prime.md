@@ -1,12 +1,14 @@
 # 50 ideas, straight vs with a state in the middle
 
-Two briefs × 2 seed × 4 conditions, model `qwen/qwen3.8-max-prime`. In the state conditions the model holds the brief, answers a state turn, then returns to write the list.
+Two briefs x 2 seed x 4 conditions, model `qwen/qwen3.8-max-prime`. In the state conditions the model holds the brief, answers a state turn, then returns to write the list.
 
-| condition | ideas / 50 | mean pairwise | distinctiveness | novelty | usefulness | state turn (words) |
-|---|---|---|---|---|---|---|
-| straight | 43.25 | 0.684 | 0.316 | 2.737 | 3.74 | 0.0 |
-| walk | None (4/4 failed) | None | None | None | None | None |
-| daydream | 50.0 (1/4 failed) | 0.651 | 0.334 | 2.81 | 3.763 | 54.0 |
-| doomscroll | 50.0 | 0.639 | 0.328 | 3.112 | 3.655 | 219.5 |
+All columns are deterministic - same text, same number, no judge.
 
-Novelty and usefulness are a blind six-idea sample per cell, two judges that are not the model under test. Truncated cells make the idea count unreliable; the share is reported in the JSON.
+| condition | ideas / 50 | distinctiveness | mean pairwise | perplexity | TTR | MTLD | dist-2 | state turn (words) |
+|---|---|---|---|---|---|---|---|---|
+| straight | 43.25 | 0.316 | 0.6835 | None | None | None | None | 0.0 |
+| walk | None (4/4 failed) | None | None | None | None | None | None | None |
+| daydream | 50.0 (1/4 failed) | 0.3343 | 0.651 | None | None | None | None | 54.0 |
+| doomscroll | 50.0 | 0.3278 | 0.6388 | None | None | None | None | 219.5 |
+
+Perplexity is Qwen3-0.6B over the list, lower = more predictable text. Distinctiveness is distance from the other conditions' ideas on the same brief. Neither measures quality; see math.md for the paired deltas and their intervals.

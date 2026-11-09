@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -36,6 +37,9 @@ def _load(name: str, path: Path):
 
 bo = _load("before_after", PLUGIN / "experiments" / "before-after" / "run.py")
 ib = _load("idea_burst", PLUGIN / "experiments" / "idea-burst" / "run.py")
+
+import effects  # noqa: E402
+import intrinsic  # noqa: E402
 
 from core.states import STATES  # noqa: E402
 from core import sources  # noqa: E402
@@ -69,10 +73,20 @@ def state_turn(name: str, brief: str, seed: int) -> str:
         items = sources.feed_pick(3)
         if items:
             parts += ["", "The feed gives you:", *[f"- {i}" for i in items]]
-    parts += ["", "Answer only in this state's own form. Do not list ideas yet."]
-    text = bo._chat(bo.NOUS, bo.MODEL["model"], "\n".join(parts),
-                    max_tokens=1200, seed=seed, attempts=2, timeout=180)
-    return text.strip()
+    parts += ["", "Answer only in this state's own form, in under 80 words. "
+                  "Do not list ideas yet."]
+    # reasoning models can spend the whole window thinking and return nothing;
+    # give the state turn room rather than silently recording an empty state
+    for budget in (1200, 3000, 6000):
+        try:
+            text = bo._chat(bo.NOUS, bo.MODEL["model"], "\n".join(parts),
+                            max_tokens=budget, seed=seed, attempts=1, timeout=180)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  state turn {name}: {exc} at {budget}", file=sys.stderr)
+            continue
+        if text.strip():
+            return text.strip()
+    return ""
 
 
 def run(model: str, tasks: list[dict], seeds: list[int]) -> dict:
@@ -86,6 +100,8 @@ def run(model: str, tasks: list[dict], seeds: list[int]) -> dict:
                 try:
                     if cond != "N":
                         state_text = state_turn(cond, task["brief"], seed)
+                        if not state_text:
+                            raise RuntimeError("state turn produced nothing")
                         prompt = RETURN_PROMPT.format(state_text=state_text, n=IDEAS,
                                                       brief=task["brief"])
                     else:
@@ -98,7 +114,7 @@ def run(model: str, tasks: list[dict], seeds: list[int]) -> dict:
                     text, status = "", f"error: {type(exc).__name__}"
                 ideas = ib.parse_ideas(text)
                 truncated = len(ideas) < IDEAS or not text.rstrip().endswith((".", '"', "”"))
-                cells.append({"task": task["id"], "brief": task["brief"], "seed": seed,
+                cells.append({"model": model, "task": task["id"], "brief": task["brief"], "seed": seed,
                               "condition": cond, "state_text": state_text, "text": text,
                               "ideas": ideas, "status": status, "truncated": truncated})
                 print(f"  {task['id']}#{seed} {cond}: {len(ideas)} ideas ({status})",
@@ -107,6 +123,11 @@ def run(model: str, tasks: list[dict], seeds: list[int]) -> dict:
 
 
 def analyse(payload: dict) -> dict:
+    """Deterministic measures only: counts, embedding geometry, text statistics.
+
+    No model judges anything here. Every number is a function of the text and a
+    fixed embedding or language model, so it reproduces exactly.
+    """
     cells = payload["cells"]
     for cell in cells:
         ideas = cell["ideas"]
@@ -120,78 +141,72 @@ def analyse(payload: dict) -> dict:
         cell["distinctiveness"] = ib.distinctiveness(ideas, reference)
         cell["mean_words"] = round(sum(len(i.split()) for i in ideas) / len(ideas), 1) if ideas else None
         cell["state_words"] = len(cell["state_text"].split())
-
-    jobs = []
-    for cell in cells:
-        if len(cell["ideas"]) < 5:
-            cell["novelty"] = cell["usefulness"] = None
-            continue
-        sample = ib.sample_ideas(cell["ideas"], cell["seed"])
-        for j in ib.JUDGES:
-            if j["model"] != payload["model"]:
-                jobs.append((cell, j, sample))
-
-    from concurrent.futures import ThreadPoolExecutor
-
-    def work(job):
-        cell, j, sample = job
-        key = f"states|{j['name']}|{payload['model']}|{cell['task']}|{cell['seed']}|{cell['condition']}"
-        cache = bo._load_judge_cache()
-        verdict = cache.get(key)
-        if verdict is None:
-            try:
-                verdict = ib.judge_sample(j["model"], cell["brief"], sample, cell["seed"])
-            except Exception as exc:  # noqa: BLE001
-                print(f"  judge {j['name']} failed: {exc}", file=sys.stderr)
-                verdict = {"ok": False, "novelty": None, "usefulness": None}
-            cache = bo._load_judge_cache()
-            cache[key] = verdict
-            bo._save_judge_cache(cache)
-        return {"task": cell["task"], "seed": cell["seed"], "condition": cell["condition"],
-                "judge": j["name"], **verdict}
-
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        judged = list(pool.map(work, jobs))
-    for c in cells:
-        rows = [r for r in judged if r["task"] == c["task"] and r["seed"] == c["seed"]
-                and r["condition"] == c["condition"] and r["ok"]]
-        c["novelty"] = round(sum(r["novelty"] for r in rows) / len(rows), 2) if rows else None
-        c["usefulness"] = round(sum(r["usefulness"] for r in rows) / len(rows), 2) if rows else None
+        cell.pop("novelty", None)
+        cell.pop("usefulness", None)
 
     agg = {}
+    keys = ("n_parsed", "mean_pairwise", "distinctiveness", "state_words", "mean_words",
+            "in_ppl", "in_surprisal", "in_ttr", "in_mtld", "in_distinct2", "in_hapax",
+            "in_compression", "in_self_overlap", "self_nll")
     for cond in CONDITIONS:
         cc = [c for c in cells if c["condition"] == cond]
-
         live = [c for c in cc if c["n_parsed"] > 0]
 
-        def avg(k):
+        def avg(k, live=live):
             v = [c[k] for c in live if c.get(k) is not None]
-            return round(sum(v) / len(v), 3) if v else None
-        agg[cond] = {"cells": len(cc), "ideas": avg("n_parsed"), "mean_pairwise": avg("mean_pairwise"),
-                     "distinctiveness": avg("distinctiveness"), "novelty": avg("novelty"),
-                     "usefulness": avg("usefulness"), "truncated": avg("truncated"),
-                     "state_words": avg("state_words"), "mean_words": avg("mean_words"),
+            return round(sum(v) / len(v), 4) if v else None
+        agg[cond] = {"cells": len(cc), **{k: avg(k) for k in keys},
                      "failed": sum(1 for c in cc if c["n_parsed"] == 0)}
-    return {"cells": cells, "aggregate": agg, "judged": judged}
+    return {"cells": cells, "aggregate": agg}
 
 
 def render(payload: dict, stats: dict) -> str:
     a = stats["aggregate"]
     lines = ["# 50 ideas, straight vs with a state in the middle", "",
-             f"Two briefs × {len(payload['seeds'])} seed × {len(CONDITIONS)} conditions, model "
+             f"Two briefs x {len(payload['seeds'])} seed x {len(CONDITIONS)} conditions, model "
              f"`{payload['model']}`. In the state conditions the model holds the brief, answers a "
              "state turn, then returns to write the list.", "",
-             "| condition | ideas / 50 | mean pairwise | distinctiveness | novelty | usefulness | state turn (words) |",
-             "|---|---|---|---|---|---|---|"]
+             "All columns are deterministic - same text, same number, no judge.", "",
+             "| condition | ideas / 50 | distinctiveness | mean pairwise | perplexity | TTR | MTLD | dist-2 | state turn (words) |",
+             "|---|---|---|---|---|---|---|---|---|"]
     for cond in CONDITIONS:
         e = a[cond]
-        cells = "" if not e["failed"] else f" ({e['failed']}/{e['cells']} failed)"
-        lines.append(f"| {LABEL[cond]} | {e['ideas']}{cells} | {e['mean_pairwise']} | "
-                     f"{e['distinctiveness']} | {e['novelty']} | {e['usefulness']} | {e['state_words']} |")
-    lines += ["", "Novelty and usefulness are a blind six-idea sample per cell, two judges that are "
-                  "not the model under test. Truncated cells make the idea count unreliable; the "
-                  "share is reported in the JSON.", ""]
+        fail = "" if not e["failed"] else f" ({e['failed']}/{e['cells']} failed)"
+        lines.append(f"| {LABEL[cond]} | {e['n_parsed']}{fail} | {e['distinctiveness']} | "
+                     f"{e['mean_pairwise']} | {e['in_ppl']} | {e['in_ttr']} | {e['in_mtld']} | "
+                     f"{e['in_distinct2']} | {e['state_words']} |")
+    lines += ["", "Perplexity is Qwen3-0.6B over the list, lower = more predictable text. "
+                  "Distinctiveness is distance from the other conditions' ideas on the same brief. "
+                  "Neither measures quality; see math.md for the paired deltas and their intervals.", ""]
     return "\n".join(lines)
+
+
+def _read_results(path: Path) -> dict:
+    """Read stored cells, tolerating a file that has an earlier document glued on."""
+    text = path.read_text()
+    decoder = json.JSONDecoder()
+    best, i = None, 0
+    while i < len(text):
+        while i < len(text) and text[i].isspace():
+            i += 1
+        if i >= len(text):
+            break
+        try:
+            obj, i = decoder.raw_decode(text, i)
+        except json.JSONDecodeError:
+            break
+        if isinstance(obj, dict) and "cells" in obj:
+            if best is None or len(obj["cells"]) >= len(best["cells"]):
+                best = obj
+    if best is None:
+        raise SystemExit(f"{path} holds no readable result document")
+    return best
+
+
+def _write_results(path: Path, payload: dict) -> None:
+    tmp = path.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(payload, indent=1))
+    os.replace(tmp, path)
 
 
 def main() -> int:
@@ -199,19 +214,34 @@ def main() -> int:
     ap.add_argument("--model", required=True)
     ap.add_argument("--seeds", type=int, nargs="+", default=[11])
     ap.add_argument("--tasks", nargs="*", default=[t["id"] for t in TASKS])
-    ap.add_argument("--rejudge", action="store_true",
-                    help="re-run only the judged sample on stored cells")
+    ap.add_argument("--fresh", action="store_true",
+                    help="discard stored cells instead of merging the new seeds into them")
+    ap.add_argument("--intrinsic", action="store_true",
+                    help="add deterministic text measures (perplexity, lexical diversity)")
+    ap.add_argument("--reuse", action="store_true",
+                    help="recompute measures on stored cells, no new generations")
     args = ap.parse_args()
     slug = re.sub(r"[^a-z0-9]+", "-", args.model.lower()).strip("-")
     tasks = [t for t in TASKS if t["id"] in args.tasks]
-    if args.rejudge:
-        payload = json.loads((HERE / f"results-{slug}.json").read_text())
+    path = HERE / f"results-{slug}.json"
+    if args.reuse:
+        payload = _read_results(path)
     else:
         payload = run(args.model, tasks, args.seeds)
+        if path.exists() and not args.fresh:
+            old = _read_results(path)
+            seen = {(c["task"], c["seed"], c["condition"]) for c in payload["cells"]}
+            payload["cells"] += [c for c in old["cells"]
+                                 if (c["task"], c["seed"], c["condition"]) not in seen]
+            payload["seeds"] = sorted({c["seed"] for c in payload["cells"]})
     stats = analyse(payload)
     payload["stats"] = stats
-    (HERE / f"results-{slug}.json").write_text(json.dumps(payload, indent=1))
+    if args.intrinsic:
+        intrinsic.annotate(payload["stats"]["cells"])
+    payload["stats"] = stats
+    _write_results(path, payload)
     (HERE / f"report-{slug}.md").write_text(render(payload, stats))
+    (HERE / f"math-{slug}.md").write_text(effects.render(payload))
     print(f"wrote {HERE / f'report-{slug}.md'}")
     return 0
 

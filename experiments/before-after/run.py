@@ -24,6 +24,7 @@ import json
 import os
 import re
 import sys
+import threading
 import urllib.request
 from pathlib import Path
 
@@ -174,13 +175,36 @@ def _choice(raw: str) -> str | None:
 
 
 def _load_judge_cache() -> dict:
-    if JUDGE_CACHE.exists():
-        return json.loads(JUDGE_CACHE.read_text())
-    return {}
+    """Tolerant read: a half-written or doubled file must not kill a run."""
+    if not JUDGE_CACHE.exists():
+        return {}
+    text = JUDGE_CACHE.read_text()
+    decoder = json.JSONDecoder()
+    best: dict = {}
+    i = 0
+    while i < len(text):
+        while i < len(text) and text[i].isspace():
+            i += 1
+        if i >= len(text):
+            break
+        try:
+            obj, i = decoder.raw_decode(text, i)
+        except json.JSONDecodeError:
+            break
+        if isinstance(obj, dict) and len(obj) > len(best):
+            best = obj
+    return best
 
 
 def _save_judge_cache(cache: dict) -> None:
-    JUDGE_CACHE.write_text(json.dumps(cache, indent=0))
+    # unique temp name: two threads saving at once must not fight over one path
+    tmp = JUDGE_CACHE.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
+    try:
+        tmp.write_text(json.dumps(cache))
+        os.replace(tmp, JUDGE_CACHE)
+    finally:
+        if tmp.exists():
+            tmp.unlink(missing_ok=True)
 
 
 def judge_both_orders(model: str, brief: str, a: str, b: str) -> dict:

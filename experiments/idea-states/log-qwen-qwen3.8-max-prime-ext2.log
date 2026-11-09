@@ -1,0 +1,43 @@
+  food-waste-city#13 N: 50 ideas (ok)
+  food-waste-city#13 walk: 50 ideas (ok)
+  food-waste-city#13 daydream: 50 ideas (ok)
+  food-waste-city#13 doomscroll: 50 ideas (ok)
+  one-room-short-film#13 N: 50 ideas (ok)
+  state turn walk: empty content (reasoning only) at 1200
+  one-room-short-film#13 walk: 50 ideas (ok)
+  one-room-short-film#13 daydream: 50 ideas (ok)
+  one-room-short-film#13 doomscroll: 50 ideas (ok)
+Could not reach the Hub (Cannot reach https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2: offline mode is enabled. To disable it, please unset the `HF_HUB_OFFLINE` environment variable.). Using cached commit hash for 'sentence-transformers/all-MiniLM-L6-v2'.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 4332.78it/s]
+Traceback (most recent call last):
+  File "/home/ryan/antemuse-plugin/experiments/idea-states/run.py", line 273, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/ryan/antemuse-plugin/experiments/idea-states/run.py", line 263, in main
+    stats = analyse(payload)
+  File "/home/ryan/antemuse-plugin/experiments/idea-states/run.py", line 169, in analyse
+    judged = list(pool.map(work, jobs))
+  File "/home/ryan/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/ryan/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "/home/ryan/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/home/ryan/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/ryan/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/home/ryan/antemuse-plugin/experiments/idea-states/run.py", line 162, in work
+    cache = bo._load_judge_cache()
+  File "/home/ryan/antemuse-plugin/experiments/before-after/run.py", line 178, in _load_judge_cache
+    if not JUDGE_CACHE.exists():
+               ^^^^^^^^^^^^^^^^^
+  File "/home/ryan/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/json/__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/home/ryan/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/json/decoder.py", line 348, in decode
+    raise JSONDecodeError("Extra data", s, end)
+json.decoder.JSONDecodeError: Extra data: line 2393 column 2 (char 62420)

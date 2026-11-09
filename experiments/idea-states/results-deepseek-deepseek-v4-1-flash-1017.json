@@ -72,8 +72,16 @@
    "distinctiveness": 0.209,
    "mean_words": 10.9,
    "state_words": 0,
-   "novelty": 2.42,
-   "usefulness": 3.92
+   "in_ttr": 0.543,
+   "in_mtld": 158.0,
+   "in_distinct2": 0.924,
+   "in_hapax": 0.729,
+   "in_compression": 0.452,
+   "in_self_overlap": 0.0023,
+   "in_words": 591,
+   "in_surprisal": 6.537,
+   "in_ppl": 690.4,
+   "in_ppl_median": 659.5
   },
   {
    "task": "food-waste-city",
@@ -142,8 +150,16 @@
    "distinctiveness": 0.215,
    "mean_words": 9.5,
    "state_words": 19,
-   "novelty": 2.5,
-   "usefulness": 3.83
+   "in_ttr": 0.511,
+   "in_mtld": 128.8,
+   "in_distinct2": 0.911,
+   "in_hapax": 0.731,
+   "in_compression": 0.436,
+   "in_self_overlap": 0.0044,
+   "in_words": 509,
+   "in_surprisal": 6.85,
+   "in_ppl": 943.5,
+   "in_ppl_median": 1126.7
   },
   {
    "task": "food-waste-city",
@@ -212,8 +228,16 @@
    "distinctiveness": 0.441,
    "mean_words": 13.2,
    "state_words": 57,
-   "novelty": 3.4,
-   "usefulness": 3.6
+   "in_ttr": 0.47,
+   "in_mtld": 152.3,
+   "in_distinct2": 0.905,
+   "in_hapax": 0.68,
+   "in_compression": 0.434,
+   "in_self_overlap": 0.005,
+   "in_words": 685,
+   "in_surprisal": 7.339,
+   "in_ppl": 1539.7,
+   "in_ppl_median": 1429.8
   },
   {
    "task": "food-waste-city",
@@ -282,8 +306,16 @@
    "distinctiveness": 0.222,
    "mean_words": 13.0,
    "state_words": 27,
-   "novelty": 2.75,
-   "usefulness": 4.08
+   "in_ttr": 0.526,
+   "in_mtld": 157.2,
+   "in_distinct2": 0.908,
+   "in_hapax": 0.754,
+   "in_compression": 0.434,
+   "in_self_overlap": 0.005,
+   "in_words": 704,
+   "in_surprisal": 6.037,
+   "in_ppl": 418.7,
+   "in_ppl_median": 422.4
   },
   {
    "task": "food-waste-city",
@@ -352,8 +384,16 @@
    "distinctiveness": 0.218,
    "mean_words": 11.3,
    "state_words": 0,
-   "novelty": 2.42,
-   "usefulness": 4.0
+   "in_ttr": 0.54,
+   "in_mtld": 134.0,
+   "in_distinct2": 0.907,
+   "in_hapax": 0.728,
+   "in_compression": 0.439,
+   "in_self_overlap": 0.0041,
+   "in_words": 605,
+   "in_surprisal": 6.115,
+   "in_ppl": 452.6,
+   "in_ppl_median": 531.0
   },
   {
    "task": "food-waste-city",
@@ -422,8 +462,16 @@
    "distinctiveness": 0.231,
    "mean_words": 11.9,
    "state_words": 16,
-   "novelty": 2.62,
-   "usefulness": 3.83
+   "in_ttr": 0.553,
+   "in_mtld": 211.0,
+   "in_distinct2": 0.948,
+   "in_hapax": 0.711,
+   "in_compression": 0.463,
+   "in_self_overlap": 0.002,
+   "in_words": 633,
+   "in_surprisal": 6.309,
+   "in_ppl": 549.6,
+   "in_ppl_median": 539.4
   },
   {
    "task": "food-waste-city",
@@ -492,8 +540,16 @@
    "distinctiveness": 0.35,
    "mean_words": 15.5,
    "state_words": 66,
-   "novelty": 2.87,
-   "usefulness": 3.73
+   "in_ttr": 0.443,
+   "in_mtld": 126.8,
+   "in_distinct2": 0.876,
+   "in_hapax": 0.717,
+   "in_compression": 0.411,
+   "in_self_overlap": 0.0071,
+   "in_words": 806,
+   "in_surprisal": 6.382,
+   "in_ppl": 590.9,
+   "in_ppl_median": 567.1
   },
   {
    "task": "food-waste-city",
@@ -615,8 +671,16 @@
    "distinctiveness": 0.498,
    "mean_words": 10.7,
    "state_words": 45,
-   "novelty": 2.63,
-   "usefulness": 2.44
+   "in_ttr": 0.493,
+   "in_mtld": 129.5,
+   "in_distinct2": 0.905,
+   "in_hapax": 0.714,
+   "in_compression": 0.413,
+   "in_self_overlap": 0.0029,
+   "in_words": 1206,
+   "in_surprisal": 6.405,
+   "in_ppl": 604.9,
+   "in_ppl_median": 637.2
   },
   {
    "task": "one-room-short-film",
@@ -685,8 +749,16 @@
    "distinctiveness": 0.351,
    "mean_words": 14.9,
    "state_words": 0,
-   "novelty": 3.75,
-   "usefulness": 3.98
+   "in_ttr": 0.483,
+   "in_mtld": 120.8,
+   "in_distinct2": 0.892,
+   "in_hapax": 0.717,
+   "in_compression": 0.455,
+   "in_self_overlap": 0.0037,
+   "in_words": 753,
+   "in_surprisal": 4.831,
+   "in_ppl": 125.4,
+   "in_ppl_median": 113.9
   },
   {
    "task": "one-room-short-film",
@@ -755,8 +827,16 @@
    "distinctiveness": 0.379,
    "mean_words": 16.3,
    "state_words": 9,
-   "novelty": 4.0,
-   "usefulness": 3.4
+   "in_ttr": 0.497,
+   "in_mtld": 117.0,
+   "in_distinct2": 0.921,
+   "in_hapax": 0.751,
+   "in_compression": 0.467,
+   "in_self_overlap": 0.0023,
+   "in_words": 839,
+   "in_surprisal": 5.177,
+   "in_ppl": 177.1,
+   "in_ppl_median": 193.5
   },
   {
    "task": "one-room-short-film",
@@ -825,8 +905,16 @@
    "distinctiveness": 0.368,
    "mean_words": 17.5,
    "state_words": 51,
-   "novelty": 3.25,
-   "usefulness": 3.55
+   "in_ttr": 0.443,
+   "in_mtld": 95.7,
+   "in_distinct2": 0.871,
+   "in_hapax": 0.715,
+   "in_compression": 0.442,
+   "in_self_overlap": 0.0056,
+   "in_words": 887,
+   "in_surprisal": 5.249,
+   "in_ppl": 190.4,
+   "in_ppl_median": 200.3
   },
   {
    "task": "one-room-short-film",
@@ -895,8 +983,16 @@
    "distinctiveness": 0.429,
    "mean_words": 17.6,
    "state_words": 29,
-   "novelty": 3.27,
-   "usefulness": 3.56
+   "in_ttr": 0.448,
+   "in_mtld": 98.5,
+   "in_distinct2": 0.87,
+   "in_hapax": 0.712,
+   "in_compression": 0.441,
+   "in_self_overlap": 0.0065,
+   "in_words": 899,
+   "in_surprisal": 5.188,
+   "in_ppl": 179.0,
+   "in_ppl_median": 186.3
   },
   {
    "task": "one-room-short-film",
@@ -965,8 +1061,16 @@
    "distinctiveness": 0.357,
    "mean_words": 15.6,
    "state_words": 0,
-   "novelty": 2.9,
-   "usefulness": 3.98
+   "in_ttr": 0.474,
+   "in_mtld": 135.8,
+   "in_distinct2": 0.873,
+   "in_hapax": 0.722,
+   "in_compression": 0.446,
+   "in_self_overlap": 0.0051,
+   "in_words": 797,
+   "in_surprisal": 5.185,
+   "in_ppl": 178.5,
+   "in_ppl_median": 179.2
   },
   {
    "task": "one-room-short-film",
@@ -1035,8 +1139,16 @@
    "distinctiveness": 0.339,
    "mean_words": 16.9,
    "state_words": 23,
-   "novelty": 3.73,
-   "usefulness": 3.73
+   "in_ttr": 0.482,
+   "in_mtld": 125.0,
+   "in_distinct2": 0.902,
+   "in_hapax": 0.735,
+   "in_compression": 0.456,
+   "in_self_overlap": 0.0054,
+   "in_words": 855,
+   "in_surprisal": 5.369,
+   "in_ppl": 214.7,
+   "in_ppl_median": 258.6
   },
   {
    "task": "one-room-short-film",
@@ -1105,8 +1217,16 @@
    "distinctiveness": 0.406,
    "mean_words": 21.6,
    "state_words": 49,
-   "novelty": 3.0,
-   "usefulness": 3.06
+   "in_ttr": 0.321,
+   "in_mtld": 70.3,
+   "in_distinct2": 0.719,
+   "in_hapax": 0.641,
+   "in_compression": 0.39,
+   "in_self_overlap": 0.0225,
+   "in_words": 1094,
+   "in_surprisal": 5.427,
+   "in_ppl": 227.4,
+   "in_ppl_median": 239.7
   },
   {
    "task": "one-room-short-film",
@@ -1175,8 +1295,16 @@
    "distinctiveness": 0.38,
    "mean_words": 17.3,
    "state_words": 35,
-   "novelty": 3.19,
-   "usefulness": 3.56
+   "in_ttr": 0.445,
+   "in_mtld": 114.3,
+   "in_distinct2": 0.888,
+   "in_hapax": 0.674,
+   "in_compression": 0.45,
+   "in_self_overlap": 0.0035,
+   "in_words": 884,
+   "in_surprisal": 5.114,
+   "in_ppl": 166.3,
+   "in_ppl_median": 175.0
   }
  ],
  "stats": {
@@ -1248,8 +1376,16 @@
     "distinctiveness": 0.209,
     "mean_words": 10.9,
     "state_words": 0,
-    "novelty": 2.42,
-    "usefulness": 3.92
+    "in_ttr": 0.543,
+    "in_mtld": 158.0,
+    "in_distinct2": 0.924,
+    "in_hapax": 0.729,
+    "in_compression": 0.452,
+    "in_self_overlap": 0.0023,
+    "in_words": 591,
+    "in_surprisal": 6.537,
+    "in_ppl": 690.4,
+    "in_ppl_median": 659.5
    },
    {
     "task": "food-waste-city",
@@ -1318,8 +1454,16 @@
     "distinctiveness": 0.215,
     "mean_words": 9.5,
     "state_words": 19,
-    "novelty": 2.5,
-    "usefulness": 3.83
+    "in_ttr": 0.511,
+    "in_mtld": 128.8,
+    "in_distinct2": 0.911,
+    "in_hapax": 0.731,
+    "in_compression": 0.436,
+    "in_self_overlap": 0.0044,
+    "in_words": 509,
+    "in_surprisal": 6.85,
+    "in_ppl": 943.5,
+    "in_ppl_median": 1126.7
    },
    {
     "task": "food-waste-city",
@@ -1388,8 +1532,16 @@
     "distinctiveness": 0.441,
     "mean_words": 13.2,
     "state_words": 57,
-    "novelty": 3.4,
-    "usefulness": 3.6
+    "in_ttr": 0.47,
+    "in_mtld": 152.3,
+    "in_distinct2": 0.905,
+    "in_hapax": 0.68,
+    "in_compression": 0.434,
+    "in_self_overlap": 0.005,
+    "in_words": 685,
+    "in_surprisal": 7.339,
+    "in_ppl": 1539.7,
+    "in_ppl_median": 1429.8
    },
    {
     "task": "food-waste-city",
@@ -1458,8 +1610,16 @@
     "distinctiveness": 0.222,
     "mean_words": 13.0,
     "state_words": 27,
-    "novelty": 2.75,
-    "usefulness": 4.08
+    "in_ttr": 0.526,
+    "in_mtld": 157.2,
+    "in_distinct2": 0.908,
+    "in_hapax": 0.754,
+    "in_compression": 0.434,
+    "in_self_overlap": 0.005,
+    "in_words": 704,
+    "in_surprisal": 6.037,
+    "in_ppl": 418.7,
+    "in_ppl_median": 422.4
    },
    {
     "task": "food-waste-city",
@@ -1528,8 +1688,16 @@
     "distinctiveness": 0.218,
     "mean_words": 11.3,
     "state_words": 0,
-    "novelty": 2.42,
-    "usefulness": 4.0
+    "in_ttr": 0.54,
+    "in_mtld": 134.0,
+    "in_distinct2": 0.907,
+    "in_hapax": 0.728,
+    "in_compression": 0.439,
+    "in_self_overlap": 0.0041,
+    "in_words": 605,
+    "in_surprisal": 6.115,
+    "in_ppl": 452.6,
+    "in_ppl_median": 531.0
    },
    {
     "task": "food-waste-city",
@@ -1598,8 +1766,16 @@
     "distinctiveness": 0.231,
     "mean_words": 11.9,
     "state_words": 16,
-    "novelty": 2.62,
-    "usefulness": 3.83
+    "in_ttr": 0.553,
+    "in_mtld": 211.0,
+    "in_distinct2": 0.948,
+    "in_hapax": 0.711,
+    "in_compression": 0.463,
+    "in_self_overlap": 0.002,
+    "in_words": 633,
+    "in_surprisal": 6.309,
+    "in_ppl": 549.6,
+    "in_ppl_median": 539.4
    },
    {
     "task": "food-waste-city",
@@ -1668,8 +1844,16 @@
     "distinctiveness": 0.35,
     "mean_words": 15.5,
     "state_words": 66,
-    "novelty": 2.87,
-    "usefulness": 3.73
+    "in_ttr": 0.443,
+    "in_mtld": 126.8,
+    "in_distinct2": 0.876,
+    "in_hapax": 0.717,
+    "in_compression": 0.411,
+    "in_self_overlap": 0.0071,
+    "in_words": 806,
+    "in_surprisal": 6.382,
+    "in_ppl": 590.9,
+    "in_ppl_median": 567.1
    },
    {
     "task": "food-waste-city",
@@ -1791,8 +1975,16 @@
     "distinctiveness": 0.498,
     "mean_words": 10.7,
     "state_words": 45,
-    "novelty": 2.63,
-    "usefulness": 2.44
+    "in_ttr": 0.493,
+    "in_mtld": 129.5,
+    "in_distinct2": 0.905,
+    "in_hapax": 0.714,
+    "in_compression": 0.413,
+    "in_self_overlap": 0.0029,
+    "in_words": 1206,
+    "in_surprisal": 6.405,
+    "in_ppl": 604.9,
+    "in_ppl_median": 637.2
    },
    {
     "task": "one-room-short-film",
@@ -1861,8 +2053,16 @@
     "distinctiveness": 0.351,
     "mean_words": 14.9,
     "state_words": 0,
-    "novelty": 3.75,
-    "usefulness": 3.98
+    "in_ttr": 0.483,
+    "in_mtld": 120.8,
+    "in_distinct2": 0.892,
+    "in_hapax": 0.717,
+    "in_compression": 0.455,
+    "in_self_overlap": 0.0037,
+    "in_words": 753,
+    "in_surprisal": 4.831,
+    "in_ppl": 125.4,
+    "in_ppl_median": 113.9
    },
    {
     "task": "one-room-short-film",
@@ -1931,8 +2131,16 @@
     "distinctiveness": 0.379,
     "mean_words": 16.3,
     "state_words": 9,
-    "novelty": 4.0,
-    "usefulness": 3.4
+    "in_ttr": 0.497,
+    "in_mtld": 117.0,
+    "in_distinct2": 0.921,
+    "in_hapax": 0.751,
+    "in_compression": 0.467,
+    "in_self_overlap": 0.0023,
+    "in_words": 839,
+    "in_surprisal": 5.177,
+    "in_ppl": 177.1,
+    "in_ppl_median": 193.5
    },
    {
     "task": "one-room-short-film",
@@ -2001,8 +2209,16 @@
     "distinctiveness": 0.368,
     "mean_words": 17.5,
     "state_words": 51,
-    "novelty": 3.25,
-    "usefulness": 3.55
+    "in_ttr": 0.443,
+    "in_mtld": 95.7,
+    "in_distinct2": 0.871,
+    "in_hapax": 0.715,
+    "in_compression": 0.442,
+    "in_self_overlap": 0.0056,
+    "in_words": 887,
+    "in_surprisal": 5.249,
+    "in_ppl": 190.4,
+    "in_ppl_median": 200.3
    },
    {
     "task": "one-room-short-film",
@@ -2071,8 +2287,16 @@
     "distinctiveness": 0.429,
     "mean_words": 17.6,
     "state_words": 29,
-    "novelty": 3.27,
-    "usefulness": 3.56
+    "in_ttr": 0.448,
+    "in_mtld": 98.5,
+    "in_distinct2": 0.87,
+    "in_hapax": 0.712,
+    "in_compression": 0.441,
+    "in_self_overlap": 0.0065,
+    "in_words": 899,
+    "in_surprisal": 5.188,
+    "in_ppl": 179.0,
+    "in_ppl_median": 186.3
    },
    {
     "task": "one-room-short-film",
@@ -2141,8 +2365,16 @@
     "distinctiveness": 0.357,
     "mean_words": 15.6,
     "state_words": 0,
-    "novelty": 2.9,
-    "usefulness": 3.98
+    "in_ttr": 0.474,
+    "in_mtld": 135.8,
+    "in_distinct2": 0.873,
+    "in_hapax": 0.722,
+    "in_compression": 0.446,
+    "in_self_overlap": 0.0051,
+    "in_words": 797,
+    "in_surprisal": 5.185,
+    "in_ppl": 178.5,
+    "in_ppl_median": 179.2
    },
    {
     "task": "one-room-short-film",
@@ -2211,8 +2443,16 @@
     "distinctiveness": 0.339,
     "mean_words": 16.9,
     "state_words": 23,
-    "novelty": 3.73,
-    "usefulness": 3.73
+    "in_ttr": 0.482,
+    "in_mtld": 125.0,
+    "in_distinct2": 0.902,
+    "in_hapax": 0.735,
+    "in_compression": 0.456,
+    "in_self_overlap": 0.0054,
+    "in_words": 855,
+    "in_surprisal": 5.369,
+    "in_ppl": 214.7,
+    "in_ppl_median": 258.6
    },
    {
     "task": "one-room-short-film",
@@ -2281,8 +2521,16 @@
     "distinctiveness": 0.406,
     "mean_words": 21.6,
     "state_words": 49,
-    "novelty": 3.0,
-    "usefulness": 3.06
+    "in_ttr": 0.321,
+    "in_mtld": 70.3,
+    "in_distinct2": 0.719,
+    "in_hapax": 0.641,
+    "in_compression": 0.39,
+    "in_self_overlap": 0.0225,
+    "in_words": 1094,
+    "in_surprisal": 5.427,
+    "in_ppl": 227.4,
+    "in_ppl_median": 239.7
    },
    {
     "task": "one-room-short-film",
@@ -2351,380 +2599,91 @@
     "distinctiveness": 0.38,
     "mean_words": 17.3,
     "state_words": 35,
-    "novelty": 3.19,
-    "usefulness": 3.56
+    "in_ttr": 0.445,
+    "in_mtld": 114.3,
+    "in_distinct2": 0.888,
+    "in_hapax": 0.674,
+    "in_compression": 0.45,
+    "in_self_overlap": 0.0035,
+    "in_words": 884,
+    "in_surprisal": 5.114,
+    "in_ppl": 166.3,
+    "in_ppl_median": 175.0
    }
   ],
   "aggregate": {
    "N": {
     "cells": 4,
-    "ideas": 50.0,
-    "mean_pairwise": 0.708,
-    "distinctiveness": 0.284,
-    "novelty": 2.873,
-    "usefulness": 3.97,
-    "truncated": 0.0,
+    "n_parsed": 50.0,
+    "mean_pairwise": 0.7083,
+    "distinctiveness": 0.2838,
     "state_words": 0.0,
     "mean_words": 13.175,
+    "in_ppl": 361.725,
+    "in_surprisal": 5.667,
+    "in_ttr": 0.51,
+    "in_mtld": 137.15,
+    "in_distinct2": 0.899,
+    "in_hapax": 0.724,
+    "in_compression": 0.448,
+    "in_self_overlap": 0.0038,
+    "self_nll": null,
     "failed": 0
    },
    "walk": {
     "cells": 4,
-    "ideas": 50.0,
-    "mean_pairwise": 0.715,
+    "n_parsed": 50.0,
+    "mean_pairwise": 0.7152,
     "distinctiveness": 0.291,
-    "novelty": 3.212,
-    "usefulness": 3.697,
-    "truncated": 0.0,
     "state_words": 16.75,
     "mean_words": 13.65,
+    "in_ppl": 471.225,
+    "in_surprisal": 5.9262,
+    "in_ttr": 0.5108,
+    "in_mtld": 145.45,
+    "in_distinct2": 0.9205,
+    "in_hapax": 0.732,
+    "in_compression": 0.4555,
+    "in_self_overlap": 0.0035,
+    "self_nll": null,
     "failed": 0
    },
    "daydream": {
     "cells": 4,
-    "ideas": 50.0,
-    "mean_pairwise": 0.632,
-    "distinctiveness": 0.391,
-    "novelty": 3.13,
-    "usefulness": 3.485,
-    "truncated": 0.0,
+    "n_parsed": 50.0,
+    "mean_pairwise": 0.6318,
+    "distinctiveness": 0.3912,
     "state_words": 55.75,
     "mean_words": 16.95,
+    "in_ppl": 637.1,
+    "in_surprisal": 6.0992,
+    "in_ttr": 0.4193,
+    "in_mtld": 111.275,
+    "in_distinct2": 0.8427,
+    "in_hapax": 0.6883,
+    "in_compression": 0.4193,
+    "in_self_overlap": 0.01,
+    "self_nll": null,
     "failed": 0
    },
    "doomscroll": {
     "cells": 4,
-    "ideas": 63.25,
-    "mean_pairwise": 0.755,
-    "distinctiveness": 0.382,
-    "novelty": 2.96,
-    "usefulness": 3.41,
-    "truncated": 0.0,
+    "n_parsed": 63.25,
+    "mean_pairwise": 0.7553,
+    "distinctiveness": 0.3822,
     "state_words": 34.0,
     "mean_words": 14.65,
+    "in_ppl": 342.225,
+    "in_surprisal": 5.686,
+    "in_ttr": 0.478,
+    "in_mtld": 124.875,
+    "in_distinct2": 0.8928,
+    "in_hapax": 0.7135,
+    "in_compression": 0.4345,
+    "in_self_overlap": 0.0045,
+    "self_nll": null,
     "failed": 0
    }
-  },
-  "judged": [
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "N",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 2.67,
-    "usefulness": 3.67,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "N",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.17,
-    "usefulness": 4.17,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "walk",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 2.17,
-    "usefulness": 3.67,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "walk",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.83,
-    "usefulness": 4.0,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "daydream",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 4.4,
-    "usefulness": 3.2,
-    "scored": 5
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "daydream",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.4,
-    "usefulness": 4.0,
-    "scored": 5
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "doomscroll",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.17,
-    "usefulness": 4.0,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 11,
-    "condition": "doomscroll",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.33,
-    "usefulness": 4.17,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "N",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 2.67,
-    "usefulness": 4.0,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "N",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.17,
-    "usefulness": 4.0,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "walk",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 2.83,
-    "usefulness": 3.67,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "walk",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.4,
-    "usefulness": 4.0,
-    "scored": 5
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "daydream",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.33,
-    "usefulness": 3.67,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "daydream",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.4,
-    "usefulness": 3.8,
-    "scored": 5
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "doomscroll",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.67,
-    "usefulness": 2.67,
-    "scored": 6
-   },
-   {
-    "task": "food-waste-city",
-    "seed": 12,
-    "condition": "doomscroll",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 1.6,
-    "usefulness": 2.2,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "N",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.5,
-    "usefulness": 4.17,
-    "scored": 6
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "N",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 4.0,
-    "usefulness": 3.8,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "walk",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 4.0,
-    "usefulness": 3.4,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "walk",
-    "judge": "solar-mini4",
-    "ok": false,
-    "novelty": null,
-    "usefulness": null
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "daydream",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.5,
-    "usefulness": 3.5,
-    "scored": 6
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "daydream",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 3.0,
-    "usefulness": 3.6,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "doomscroll",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.33,
-    "usefulness": 3.33,
-    "scored": 6
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 11,
-    "condition": "doomscroll",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 3.2,
-    "usefulness": 3.8,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "N",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.0,
-    "usefulness": 4.17,
-    "scored": 6
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "N",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 2.8,
-    "usefulness": 3.8,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "walk",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.67,
-    "usefulness": 3.67,
-    "scored": 6
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "walk",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 3.8,
-    "usefulness": 3.8,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "daydream",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.0,
-    "usefulness": 2.33,
-    "scored": 6
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "daydream",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 3.0,
-    "usefulness": 3.8,
-    "scored": 5
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "doomscroll",
-    "judge": "longcat-2.5",
-    "ok": true,
-    "novelty": 3.17,
-    "usefulness": 3.33,
-    "scored": 6
-   },
-   {
-    "task": "one-room-short-film",
-    "seed": 12,
-    "condition": "doomscroll",
-    "judge": "solar-mini4",
-    "ok": true,
-    "novelty": 3.2,
-    "usefulness": 3.8,
-    "scored": 5
-   }
-  ]
+  }
  }
 }
