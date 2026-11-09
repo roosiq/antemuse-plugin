@@ -208,12 +208,12 @@ DREAM_FORMS = [
 #: warning, and an article that disagrees makes the recombination read as a broken template
 #: rather than as an invented thing.
 DREAM_FORMS_CROSS = [
-    "an object that {a}s the way {b} does, and cannot be switched off",
-    "{a}, kept inside {b}, and it keeps working there",
-    "a device that {a}s whatever is {b} nearby, and records the order it happened in",
-    "{a} that only works while {b} is happening",
-    "a mechanism that replaces {a} with {b} and charges for the difference",
-    "{b} with {a} built into it, so both fail at once",
+    "a mechanism built out of {a} and {b}, which works once and then needs a new name",
+    "a workshop where {a} is used to build {b}, and the result is against the rules",
+    "an object that sits between {a} and {b} and belongs to neither",
+    "a place that keeps {a} and {b} in the same room, and forbids them to touch",
+    "a machine that charges for the distance between {a} and {b}",
+    "a document that records {a} and {b} happening at once, in the order it was told",
 ]
 
 
@@ -327,7 +327,7 @@ def dream_recombine(steps: int = 1) -> List[str]:
         out.append("invented · " + RNG.choice(DREAM_FORMS_CROSS).format(
             frame=frame.name.replace("_", " ").lower(),
             frame_b=other.name.replace("_", " ").lower(),
-            a=words_a[0], b=words_b[0],
+            a=words_a[0], b=words_b[1],
             lu=words_a[0], lu_b=words_b[1]) + f" · [{frame.name.lower()} × {other.name.lower()}]")
     if out and seed_line:
         out[0] = f"[{seed_line}] " + out[0]
