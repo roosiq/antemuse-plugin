@@ -19,15 +19,18 @@ by itself.
 ## Install
 
 ```bash
-# 1. unpack or clone somewhere permanent
+# 1. unpack somewhere permanent (the tarball has one top-level directory)
+mkdir -p ~/antemuse-plugin
 tar -xzf antemuse-plugin.tar.gz -C ~/antemuse-plugin --strip-components=1
-#    (or: git clone <bundle> ~/antemuse-plugin)
+#    preferred, if you want history and `git pull` later:
+#    git clone antemuse-plugin.bundle ~/antemuse-plugin
 
 # 2. link it into Hermes and enable it
 ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
 hermes plugins enable antemuse
 
-# 3. check the host can load it
+# 3. restart the gateway, then check the host can load it
+hermes gateway restart
 hermes plugins doctor antemuse      # expect: 1 tool, 8 hooks, OK
 ```
 
@@ -72,7 +75,9 @@ tools/test.sh --with-renderers   # npm ci first, so renderer tests run too
 hermes plugins validate . --install-deps --json   # what catalog CI runs
 ```
 
-At this build: **906 passed, 1 skipped**, 16/16 validation checks, no warnings.
+At this build: **906 passed, 1 skipped** with `--with-renderers`; **900 passed,
+7 skipped** on a fresh clone before `npm ci` (those seven are the renderer tests).
+Validation is 16/16 checks, no warnings.
 
 ## Where it writes
 
