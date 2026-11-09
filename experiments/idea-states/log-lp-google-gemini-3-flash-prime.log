@@ -1,0 +1,35 @@
+  food-waste-city#11 N: HTTP Error 404: Not Found
+  food-waste-city#11 N: 0 ideas, nll None
+  state turn walk: HTTPError: HTTP Error 404: Not Found at 1200
+  state turn walk: HTTPError: HTTP Error 404: Not Found at 3000
+  state turn walk: HTTPError: HTTP Error 404: Not Found at 6000
+  food-waste-city#11 walk: HTTP Error 404: Not Found
+  food-waste-city#11 walk: 0 ideas, nll None
+  state turn daydream: HTTPError: HTTP Error 404: Not Found at 1200
+  state turn daydream: HTTPError: HTTP Error 404: Not Found at 3000
+  state turn daydream: HTTPError: HTTP Error 404: Not Found at 6000
+  food-waste-city#11 daydream: HTTP Error 404: Not Found
+  food-waste-city#11 daydream: 0 ideas, nll None
+  state turn doomscroll: HTTPError: HTTP Error 404: Not Found at 1200
+  state turn doomscroll: HTTPError: HTTP Error 404: Not Found at 3000
+  state turn doomscroll: HTTPError: HTTP Error 404: Not Found at 6000
+  food-waste-city#11 doomscroll: HTTP Error 404: Not Found
+  food-waste-city#11 doomscroll: 0 ideas, nll None
+  one-room-short-film#11 N: HTTP Error 404: Not Found
+  one-room-short-film#11 N: 0 ideas, nll None
+  state turn walk: HTTPError: HTTP Error 404: Not Found at 1200
+  state turn walk: HTTPError: HTTP Error 404: Not Found at 3000
+  state turn walk: HTTPError: HTTP Error 404: Not Found at 6000
+  one-room-short-film#11 walk: HTTP Error 404: Not Found
+  one-room-short-film#11 walk: 0 ideas, nll None
+  state turn daydream: HTTPError: HTTP Error 404: Not Found at 1200
+  state turn daydream: HTTPError: HTTP Error 404: Not Found at 3000
+  state turn daydream: HTTPError: HTTP Error 404: Not Found at 6000
+  one-room-short-film#11 daydream: HTTP Error 404: Not Found
+  one-room-short-film#11 daydream: 0 ideas, nll None
+  state turn doomscroll: HTTPError: HTTP Error 404: Not Found at 1200
+  state turn doomscroll: HTTPError: HTTP Error 404: Not Found at 3000
+  state turn doomscroll: HTTPError: HTTP Error 404: Not Found at 6000
+  one-room-short-film#11 doomscroll: HTTP Error 404: Not Found
+  one-room-short-film#11 doomscroll: 0 ideas, nll None
+wrote /home/ryan/antemuse-plugin/experiments/idea-states/report-lp-google-gemini-3-flash-prime.md

@@ -18,6 +18,14 @@ Each number is the median change against the same model's straight answer for th
 | daydream | +0.7% | +8.578% | +49% | -2.476% | -22% | — |
 | doomscroll | +27.0% | +4.491% | +38% | -3.684% | -16% | — |
 
+## gpt-6.1-terra
+
+| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
+|---|---|---|---|---|---|
+| walk | +0.0% | +5.027% | +7% | -3.335% | -20% | — |
+| daydream | +0.0% | +13.984% | +9% | -1.824% | +14% | — |
+| doomscroll | +0.0% | +6.857% | +36% | -1.365% | +12% | — |
+
 ## qwen3.8-max
 
 | after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
