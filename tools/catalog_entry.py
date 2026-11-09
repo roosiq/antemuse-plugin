@@ -80,7 +80,11 @@ def render(pin: str | None = None) -> str:
             "The exploration library (spark, keep, collider, selection) is present but runtime-gated "
             "behind experimental.enabled and makes no quality claim.",
         ],
-        "screenshots": [],
+        "image": f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/banner.png",
+        "screenshots": [
+            f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/{n}"
+            for n in ("takeover.png", "chat-card.png", "return-account.png", "blocked-tool.png")
+        ],
     }
     text = yaml.safe_dump(entry, sort_keys=False, allow_unicode=True, width=100)
     # The catalog loader requires `version` to be a quoted string; safe_dump emits
