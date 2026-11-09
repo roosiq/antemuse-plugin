@@ -37,6 +37,11 @@ decays, so a picture can show what is live *now* rather than what has ever happe
   with a 404 rather than a 200 that explains itself;
 - a state with no servings of its own in this session draws the session's firings instead of an
   empty field — a walk entered a minute ago has no `walk` rows yet;
+- the pane reads the stills as local files (`plugin-data/antemuse/activation/<state>/f0..2.jpg`),
+  because a `file://` surface cannot fetch the REST route and `ctx.rest` does not carry images;
+  `stills` and `files` remain in the payload for clients that can use either;
+- each still is written twice, stamped for evidence and stable (`f0.jpg`) for the pane to name,
+  since a `file://` page cannot list a directory;
 - the pane paints them through the cross-fading `<img>` layers it already uses for the baked
   scenes, and falls through to the baked art when the list is empty;
 - **no ASCII** — an earlier glyph path was built and removed on instruction: the pane shows a
@@ -115,7 +120,12 @@ Nothing here enters a state, changes a dose, or adds a command or a setting.
 - `tools/e2e_activation.py` — the route over **real HTTP** against a copy of the real ledger:
   three stills served, the first returned as 185,313 bytes of `image/jpeg` with a JPEG signature,
   both traversal probes refused with 404, and a chat that does not own the state served none.
-- Suite: **903 passed, 1 skipped**; `spec_audit` 0 drift.
+- Seen in the running Hermes Desktop (`#/antemuse` pane, Xvfb `:99`, CDP capture): the pane painted
+  `plugin-data/antemuse/activation/walk/f1.jpg` and `f2.jpg` across two captures seven seconds
+  apart, with a live walk. The running gateway had loaded the plugin backend before this change, so
+  that instance proved the **pane** path only; the HTTP path is what `tools/e2e_activation.py`
+  proves.
+- Suite: **905 passed, 1 skipped**; `spec_audit` 0 drift.
 
 ## Must not change
 

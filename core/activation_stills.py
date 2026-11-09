@@ -192,8 +192,20 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     else:
         paths = drawn
 
+    # Stable names as well as stamped ones: the desktop pane is a file:// page and can only ask
+    # for a path it can predict, not a listing.
+    stable_paths = []
+    for i, path in enumerate(paths):
+        try:
+            stable = dest / f"f{i}.jpg"
+            if path != stable:
+                stable.write_bytes(path.read_bytes())
+            stable_paths.append(stable)
+        except OSError:
+            pass
+
     # older stills are replaced, not accumulated: a live picture, not an album
-    for folder, keep in ((base, drawn), (dest, paths)):
+    for folder, keep in ((base, drawn), (dest, paths + stable_paths)):
         for old in folder.glob("f*.jpg"):
             if old not in keep:
                 try:
@@ -226,7 +238,9 @@ def fresh(move: str = "", session: str = "", dest: Optional[Path] = None) -> Lis
         except Exception:
             return []
     if dest.is_dir():
-        existing = sorted(dest.glob("f*.jpg"))
+        # The stamped stills only: f0.jpg..f2.jpg are the aliases the desktop pane asks for, and
+        # returning both would serve every frame twice.
+        existing = sorted(p for p in dest.glob("f*.jpg") if "-" in p.stem)
         if existing:
             age = time.time() - max(p.stat().st_mtime for p in existing)
             if age < STILL_TTL_S:

@@ -145,6 +145,15 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
     # activation stills and let the surface paint those instead of the baked art. An empty list
     # means "nothing is firing" and the surface keeps its baked scene.
     payload["stills"] = []
+    payload["files"] = []
+    payload["still_note"] = ""
+    # Which build of this file answered: the pane and the app can disagree about that, and the
+    # field is how you tell instead of guessing.
+    payload["server"] = f"{Path(__file__).stat().st_mtime_ns}"
+    if active and not belongs_here:
+        # Named, not silent: a pane asking about another chat's state gets its ambient scene, and
+        # whoever wonders why can find out.
+        payload["still_note"] = "state belongs to another chat"
     if active and belongs_here:
         key = str(active.get("key") or "")
         if key:
@@ -153,6 +162,12 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
                 own = (active.get("origin") or {}).get("session_id") or session or ""
                 paths = activation_stills.fresh(move=key, session=str(own))
                 payload["stills"] = [f"/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
+                # The desktop pane is a file:// page: it cannot fetch these without the gateway's
+                # token, but it can load a local file directly, which is how the baked scenes
+                # already reach it. Both are offered; the pane takes the file.
+                payload["files"] = [p.as_uri() for p in paths]
+                if not paths:
+                    payload["still_note"] = f"nothing firing in {key}"
             except Exception:  # health: BLE001 -- a missing picture is not a broken state
                 payload["stills"] = []
     return payload

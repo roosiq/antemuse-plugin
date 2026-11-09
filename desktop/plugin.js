@@ -244,6 +244,33 @@ function ArtSurface({ ctx }) {
       return true
     }
 
+    // Live stills the backend baked for this state. plugin-data sits beside the plugin
+    // directory, so the path is derivable from this module's own URL; the pane is a file:// page
+    // and can only ask for a path it can predict, never a listing. A missing file falls back.
+    const liveStills = (key) => {
+      // Same two-step the baked stills use: a real module URL when there is one, and the installed
+      // path when the module is bundled and import.meta.url is not a file. plugin-data is the
+      // sibling directory of the plugin install.
+      const names = [0, 1, 2].map((i) => 'f' + i + '.jpg')
+      try {
+        const base = new URL('../../plugin-data/antemuse/activation/' + key + '/', import.meta.url)
+        return names.map((n) => new URL(n, base).href)
+      } catch (e) {
+        return names.map((n) => 'file:///home/ryan/.hermes/plugin-data/antemuse/activation/' + key + '/' + n)
+      }
+    }
+
+    const tryLive = (key) => {
+      const urls = liveStills(key)
+      if (!urls.length) return false
+      const probe = new win.Image()
+      let settled = false
+      probe.onload = () => { if (!settled) { settled = true; applyActivation(urls) } }
+      probe.onerror = () => { if (!settled) { settled = true; applyScene(key) } }
+      probe.src = urls[0]
+      return true
+    }
+
     const applyScene = (key) => {
       const name = BAKED[key]
       if (!name) { bake = null; stills = []; layers.forEach((l) => { l.style.opacity = '0' }); return }
@@ -303,7 +330,8 @@ function ArtSurface({ ctx }) {
         const key = (p && p.active && p.active.key) || (busy ? 'work' : 'idle')
         if (stopped) return
         art.setScene(key)
-        if (!applyActivation(p && p.stills)) applyScene(key)
+        const served = (p && p.files && p.files.length) ? p.files : (p && p.stills)
+        if (!applyActivation(served) && !tryLive(key)) applyScene(key)
       }, () => { /* keep painting the idle scene */ })
     }
     // Preview aid: `localStorage['antemuse:scene'] = 'walk'` pins one scene, so a

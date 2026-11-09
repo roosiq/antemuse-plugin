@@ -1,0 +1,439 @@
+// Antemuse — the state a turn is governed by, as glyphs and counts.
+//
+// Loaded from ~/.hermes/plugins/antemuse/desktop/plugin.js (the unified agent
+// plugin's desktop half) or copies of it under desktop-plugins/. Everything it
+// shows comes from `GET /api/plugins/antemuse/state`, served by this plugin's
+// own Python backend, which renders the same luminance-ramp art the CLI draws.
+// This file samples nothing and invents nothing: if the backend is not mounted,
+// it says so instead of drawing an empty box.
+//
+// The state is drawn *behind the chat it governs*, as a layer this plugin owns:
+// a fixed, click-through <div> holding one <pre> of glyphs, appended to the body
+// from a title-bar mount point. The shell has no plugin-facing chat background
+// (its own backdrop is a boolean toggling one statue image), and atlas-style
+// plugins solve this the same way — own the layer, own its cleanup.
+//
+// The layer is scoped to the focused conversation, not the profile: it reads
+// host.state.focusedSessionId and host.state.busy, so two chats can differ and a
+// chat with no state still paints `idle`.
+
+import {
+  PANES_AREA,
+  TITLEBAR_AREAS,
+  ROUTES_AREA,
+  SIDEBAR_NAV_AREA,
+  STATUSBAR_AREAS,
+  PALETTE_AREA,
+  pluginSettingsHref,
+  host
+} from '@hermes/plugin-sdk'
+import { useEffect, useRef, useState } from 'react'
+import { jsx, jsxs } from 'react/jsx-runtime'
+
+const ID = 'antemuse'
+// Fast enough that a baked frame is not stale when it lands: the slowest state,
+// dream, holds a frame four seconds, so polling under a second never skips one.
+const POLL_MS = 900
+
+// A monospace glyph cell is about 0.6 advances wide by one line tall. Both the
+// requested grid and the font that fills it come from these two numbers, so the
+// art ends up exactly the size of the box instead of a thumbnail inside it.
+const CELL_W = 0.6
+const CELL_H = 1.0
+const PROBE_FONT = 10
+
+const copy = {
+  pane: 'State',
+  idle: 'no state',
+  unavailable: 'backend unavailable',
+  unreachable: 'the plugin backend is not mounted',
+  watch: 'show antemuse state'
+}
+
+// ---------------------------------------------------------------- pure helpers
+
+/** Seconds as a short clock: 179 -> "2:59". Never negative. */
+export function clock(seconds) {
+  const s = Math.max(0, Math.floor(Number(seconds) || 0))
+  const m = Math.floor(s / 60)
+  const rest = String(s % 60).padStart(2, '0')
+  return `${m}:${rest}`
+}
+
+/** One line of counts under the frame — no prose, no adjectives. */
+export function counts(payload) {
+  const active = payload && payload.active
+  if (!active) return ''
+  const bits = [
+    `${clock(active.seconds_left)} left`,
+    `${active.turns_left} turn${active.turns_left === 1 ? '' : 's'}`
+  ]
+  const tools = active.tools || {}
+  if (tools.mode === 'none') bits.push('no tools')
+  else if (tools.mode === 'some') bits.push(`${tools.allowed.length} tool${tools.allowed.length === 1 ? '' : 's'}`)
+  else bits.push('all tools')
+  if (payload.residue && payload.residue.count) bits.push(`${payload.residue.count} carried`)
+  return bits.join(' · ')
+}
+
+/** What the pane is looking at, in one of four honest states. */
+export function situation(payload, error) {
+  if (error) return 'unavailable'
+  if (!payload) return 'loading'
+  return payload.active ? 'active' : 'idle'
+}
+
+/** Everything the surface shows, derived once from one payload. */
+export function viewModel(payload, error) {
+  const active = (payload && payload.active) || null
+  const frame = (payload && payload.frame) || {}
+  return {
+    situation: situation(payload, error),
+    label: error ? copy.unavailable : active ? String(active.label || '') : copy.idle,
+    note: error ? copy.unreachable : '',
+    clock: active ? clock(active.seconds_left) : '',
+    counts: counts(payload),
+    contract: active ? String(active.contract || '') : '',
+    lines: Array.isArray(frame.lines) ? frame.lines : [],
+    residue: (payload && payload.residue && payload.residue.count) || 0
+  }
+}
+
+// ---------------------------------------------------------------- the surface
+
+function useStatePayload(ctx, cells) {
+  const [payload, setPayload] = useState(null)
+  const [error, setError] = useState(null)
+  // The grid is part of the request, so a resize must re-ask rather than stretch
+  // an old frame: the server renders at the size it is told.
+  const query = cells ? `?cols=${cells.cols}&rows=${cells.rows}&fit=cover` : ''
+  useEffect(() => {
+    let alive = true
+    const read = () => {
+      ctx.rest('/state' + query).then(
+        (data) => { if (alive) { setPayload(data); setError(null) } },
+        (err) => { if (alive) setError(String((err && err.message) || err || 'unreachable')) }
+      )
+    }
+    read()
+    ctx.setInterval(read, POLL_MS)
+    return () => { alive = false }
+  }, [ctx, query])
+  return { payload, error }
+}
+
+/** The largest box this pane actually has, measured rather than assumed. */
+function useCells() {
+  const ref = useRef(null)
+  const [cells, setCells] = useState(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const fit = () => {
+      const w = el.clientWidth || 0
+      const h = el.clientHeight || 0
+      if (!w || !h) return
+      const cols = Math.max(1, Math.floor(w / (PROBE_FONT * CELL_W)))
+      const rows = Math.max(1, Math.floor(h / (PROBE_FONT * CELL_H)))
+      setCells((prev) => (prev && prev.cols === cols && prev.rows === rows ? prev : { w, h, cols, rows }))
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return { ref, cells }
+}
+
+function Frame({ lines, cells }) {
+  if (!lines.length) return null
+  // Fill the box: the grid was requested from it, so the type is derived from the
+  // grid that came back, not from a font size chosen in advance.
+  // Fill the measured box with the art that actually came back: a frame narrower
+  // than the grid is centred at its own width rather than stretched into it.
+  const cols = Math.max(1, ...lines.map((l) => l.length))
+  const rows = lines.length
+  const fontSize = cells
+    ? Math.max(2, Math.min(cells.w / (cols * CELL_W), cells.h / (rows * CELL_H)))
+    : PROBE_FONT
+  return jsx('pre', {
+    'aria-hidden': 'true',
+    'data-antemuse-frame': `${cols}x${rows}`,
+    style: {
+      margin: 0,
+      padding: 0,
+      lineHeight: 1,
+      fontSize: `${fontSize.toFixed(2)}px`,
+      letterSpacing: 0,
+      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+      color: '#cfd6dd',
+      opacity: 0.96,
+      textShadow: '0 0 6px rgba(120,200,255,0.18)',
+      overflow: 'hidden',
+      whiteSpace: 'pre'
+    },
+    children: lines.join('\n')
+  })
+}
+
+
+/**
+ * The picture, filling whatever box it is given — a dock pane or a route page.
+ * This is where the art belongs: its own surface, no transcript underneath, so
+ * ink can run at full strength instead of the wash a fixed overlay needed.
+ */
+function ArtSurface({ ctx }) {
+  const box = useRef(null)
+
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const doc = el.ownerDocument
+    const canvas = doc.createElement('canvas')
+    canvas.setAttribute('data-antemuse-art', 'pane')
+    canvas.setAttribute('aria-hidden', 'true')
+    canvas.style.cssText = 'display:block;width:100%;height:100%'
+    el.appendChild(canvas)
+
+    // Full ink: nothing is read through this surface, so the ceiling that
+    // exists for the chat overlay does not apply here.
+    const art = createArt(canvas, { dark: true, strength: LAYER.defaultStrength * 2.8, front: false })
+
+    // A still is an <img>; advancing is a dissolve between two stacked layers,
+    // so there is never a flash of an unloaded frame and a state change reads as
+    // one picture becoming another rather than a cut.
+    const mkImg = () => {
+      const im = doc.createElement('img')
+      im.setAttribute('data-antemuse-bake', 'still')
+      im.setAttribute('aria-hidden', 'true')
+      im.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity ' + FADE_MS + 'ms ease;display:block'
+      el.appendChild(im)
+      return im
+    }
+    const layers = [mkImg(), mkImg()]
+    let front = 0
+    let stills = []
+    let stillIdx = 0
+    let bake = null
+
+    const stillUrl = (name, i) => {
+      try { return new URL('./art/' + name + '/s' + i + '.jpg', import.meta.url).href }
+      catch (e) { return 'file:///home/ryan/.hermes/plugins/antemuse/desktop/art/' + name + '/s' + i + '.jpg' }
+    }
+
+    const show = (url) => {
+      const back = layers[1 - front]
+      back.src = url
+      back.style.opacity = '1'
+      layers[front].style.opacity = '0'
+      front = 1 - front
+    }
+
+    const applyScene = (key) => {
+      const name = BAKED[key]
+      if (!name) { bake = null; stills = []; return }
+      if (bake === name) return
+      bake = name
+      stills = Array.from({ length: STILLS }, (_, i) => stillUrl(name, i))
+      stillIdx = 0
+      show(stills[0])
+    }
+
+    const art = createArt(canvas, { dark: handle.dark, strength: handle.strength, front: handle.placement === 'front' })
+    let scene3d = null
+    let art3dError = null
+    // Bounded diagnostics for the app's own devtools. Nothing here grows.
+    const probe = (window.__antemuse = { frames: 0, glyphs: 0, errors: [], scene: null, mode: 'strands' })
+
+    // rAF is the right clock, but not every document has one (a headless mount
+    // does not). Fall back to a timer rather than throwing inside the effect.
+    const raf =
+      typeof win.requestAnimationFrame === 'function'
+        ? (cb) => win.requestAnimationFrame(cb)
+        : (cb) => win.setTimeout(() => cb(Date.now()), 16)
+    const cancels =
+      typeof win.cancelAnimationFrame === 'function' ? (id) => win.cancelAnimationFrame(id) : (id) => win.clearTimeout(id)
+
+    let stopped = false
+    let rafId = 0
+    let lastTs = 0
+    let lastPaint = 0
+    const MIN_MS = 1000 / 30
+
+    const fit = () => {
+      const w = handle.layer.clientWidth || win.innerWidth || 0
+      const h = handle.layer.clientHeight || win.innerHeight || 0
+      if (w && h) art.resize(w, h, win.devicePixelRatio || 1)
+    }
+    fit()
+
+    const tick = (ts) => {
+      if (stopped) return
+      rafId = raf(tick)
+      if (!lastTs) lastTs = ts
+      if (ts - lastPaint < MIN_MS) return
+      const dt = Math.min(0.12, (ts - lastTs) / 1000)
+      lastTs = ts
+      lastPaint = ts
+      if (scene3d) {
+        scene3d.render(dt, ts / 1000)
+        probe.frames += 1
+        const s3 = scene3d.stats()
+        probe.threeFrames = s3.frames
+        return
+      }
+      art.render(dt)
+      const st = art.stats()
+      probe.frames = st.frames
+      probe.glyphs = st.glyphs
+      probe.size = st
+    }
+
+    // The state is slow (it changes when a turn starts, not every frame), so the
+    // poll only chooses the scene. The picture itself never waits on HTTP.
+    const poll = () => {
+      if (stopped) return
+      const st = art.stats()
+      const session = host && host.state && host.state.focusedSessionId
+        ? host.state.focusedSessionId.get() : null
+      const busy = host && host.state && host.state.busy
+        ? Boolean(host.state.busy.get()) : false
+      const q = `?cols=${st.cols}&rows=${st.rows}&fit=cover&busy=${busy ? 1 : 0}` +
+                (session ? `&session=${encodeURIComponent(session)}` : '')
+      ctx.rest('/state' + q).then(
+        (payload) => {
+          if (stopped) return
+          const active = payload && payload.active
+          const name = (active && active.key) || (busy ? 'work' : 'idle')
+          art.setScene(SCENES[name] ? name : 'idle')
+          probe.scene = art.stats().scene
+          probe.state = { active: Boolean(active), busy }
+        },
+        (err) => {
+          probe.errors = probe.errors.concat(String((err && err.message) || err)).slice(-3)
+        }
+      )
+    }
+
+    // NOTE: a runtime desktop plugin may only import @hermes/plugin-sdk and
+    // react — the host rejects any other specifier ("unsupported import"). three
+    // is therefore not importable here, vendored or not, and the 3D is done in
+    // this file with plain projection maths instead. This block is kept as the
+    // seam where a host-provided three would go.
+    Promise.reject(new Error('3d runs in-file')).then((m) => {
+      if (stopped) return
+      try {
+        scene3d = m.createScene3D({
+          width: handle.layer.clientWidth || win.innerWidth || 960,
+          height: handle.layer.clientHeight || win.innerHeight || 800,
+          dark: handle.dark
+        })
+        handle.art.replaceChildren(scene3d.domElement)
+        scene3d.render(0.016, 0)
+        probe.mode = 'ascii3d'
+      } catch (e) {
+        art3dError = String((e && e.message) || e)
+        probe.mode = 'strands'
+        probe.errors = probe.errors.concat('3d: ' + art3dError).slice(-3)
+      }
+    }, () => { probe.mode = 'solid' })
+
+    if (reducedMotion(win)) {
+      // A still picture, not a frozen timer.
+      art.render(0)
+    } else {
+      rafId = raf(tick)
+    }
+    poll()
+
+    const onResize = () => {
+      fit()
+      if (scene3d) scene3d.resize(handle.layer.clientWidth || win.innerWidth, handle.layer.clientHeight || win.innerHeight)
+      else art.render(0)
+    }
+    const onVisibility = () => {
+      if (doc.hidden) { if (rafId) cancels(rafId); rafId = 0 }
+      else if (!rafId && !reducedMotion(win)) { lastTs = 0; rafId = raf(tick) }
+    }
+    win.addEventListener('resize', onResize)
+    doc.addEventListener('visibilitychange', onVisibility)
+
+    const id = ctx.setInterval ? ctx.setInterval(poll, 4000) : setInterval(poll, 4000)
+    stopRef.current = () => { if (typeof id === 'function') id(); else clearInterval(id) }
+
+    const unsubs = []
+    try {
+      if (host && host.state && host.state.focusedSessionId && host.state.focusedSessionId.listen) {
+        unsubs.push(host.state.focusedSessionId.listen(() => poll()))
+      }
+      if (host && host.state && host.state.busy && host.state.busy.listen) {
+        unsubs.push(host.state.busy.listen(() => poll()))
+      }
+    } catch (e) { /* a host without atoms still gets the timer */ }
+
+    return () => {
+      stopped = true
+      if (rafId) { try { cancels(rafId) } catch (e) { /* gone */ } }
+      win.removeEventListener('resize', onResize)
+      doc.removeEventListener('visibilitychange', onVisibility)
+      for (const off of unsubs) { try { off() } catch (e) { /* already off */ } }
+      if (stopRef.current) stopRef.current()
+      if (scene3d) { try { scene3d.dispose() } catch (e) { /* gone */ } }
+      const h = handleRef.current
+      handleRef.current = null
+      removeLayer(doc, h)
+    }
+  }, [ctx])
+
+  return null
+}
+
+export default {
+  id: ID,
+  name: 'Antemuse',
+  register(ctx) {
+    // The picture is NOT over the chat. A dock pane has its own surface, so the
+    // art stops competing with the transcript for contrast; the fixed-overlay
+    // machinery is kept for hosts that expose a real chat backdrop, but it is
+    // not mounted by default.
+    ctx.register({
+      id: 'pane',
+      area: PANES_AREA,
+      title: copy.pane,
+      data: { placement: 'right', collapsible: true, width: '420px', minWidth: '320px', maxWidth: '560px' },
+      render: () => jsx(StateView, { ctx })
+    })
+    ctx.register({
+      id: 'chip',
+      area: STATUSBAR_AREAS.right,
+      order: 20,
+      render: () => jsx(StateChip, { ctx })
+    })
+    // A dock pane can sit in an inactive tab or a collapsed rail, so the same
+    // view also gets its own route: a page is reachable even when the layout
+    // has no room for the pane.
+    ctx.register({
+      id: 'page',
+      area: ROUTES_AREA,
+      data: { path: `/${ID}` },
+      render: () => jsx(StateView, { ctx })
+    })
+    ctx.register({
+      id: 'nav',
+      area: SIDEBAR_NAV_AREA,
+      order: 60,
+      data: { codicon: 'pulse', label: copy.pane, path: `/${ID}` }
+    })
+    ctx.register({
+      id: 'watch',
+      area: PALETTE_AREA,
+      title: copy.watch,
+      run: () => { if (ctx.navigate) ctx.navigate(`/${ID}`) }
+    })
+    // Settings are NOT a bespoke page: the host renders this plugin's manifest
+    // `config_schema` as a form under Settings ▸ Plugins and saves it to
+    // plugins.entries.antemuse.settings. Registering our own page here would shadow
+    // that form with a second, divergent copy of the same controls.
+
+  }
+}

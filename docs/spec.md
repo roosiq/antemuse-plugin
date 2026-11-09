@@ -675,6 +675,19 @@ whole batch and one server for the batch, waited on before the first request —
 to back was where it was flaky. If no browser or three build is present, the stills keep their
 plain render and the reason is named; a missing effect never costs the picture.
 
+**How the pane reaches them.** The desktop pane is a `file://` page: it cannot fetch
+`/api/plugins/antemuse/art/...` without the gateway's token, and the app's `ctx.rest` goes over IPC
+rather than the page's network stack, so no `<img>` can ride on it. The pane therefore reads the
+stills as local files from `plugin-data/antemuse/activation/<state>/` — the sibling directory of
+the plugins install, resolved from the module URL and, when the module is bundled and
+`import.meta.url` is not a file, from the installed path, exactly as the baked scenes are.
+`/state` still returns `stills` (HTTP) and `files` (`file://`) for clients that can use either.
+
+Because a `file://` page cannot list a directory, each still is written twice: a stamped
+`f0-<stamp>-post.jpg` for evidence, and a stable `f0.jpg`..`f2.jpg` for the pane to ask for by a
+name it can predict. `fresh()` returns only the stamped set. A probe `<img>` decides between the
+live stills and the baked scene, so a state with nothing baked falls back instead of going blank.
+
 **Status: PARTIAL.** The path is wired end to end (stills written, served, painted, with a
 fall-through to the baked scene when nothing is firing), but it has not been seen in the running
 desktop app: verification so far is the backend route, the harness mount and the stills
@@ -752,7 +765,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 903 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 905 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.

@@ -246,6 +246,7 @@ def test_a_live_state_serves_stills_and_the_route_serves_them(monkeypatch, tmp_p
 
     payload = api.state(cols=40, rows=12, session="s-live")
     assert payload["stills"] == ["/api/plugins/antemuse/art/walk/f0-1.jpg"]
+    assert payload["files"] == [still.as_uri()]
 
     response = api.art("walk", "f0-1.jpg")
     assert getattr(response, "media_type", "") == "image/jpeg"
@@ -306,6 +307,15 @@ def test_the_pane_paints_stills_before_baked_art():
     """The wiring, checked at the source: the surface must prefer what the backend served, and
     fall back to the baked scene when there is nothing to show."""
     js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
-    assert "applyActivation(p && p.stills)" in js
-    assert "if (!applyActivation(p && p.stills)) applyScene(key)" in js
+    assert "const served = (p && p.files && p.files.length) ? p.files : (p && p.stills)" in js
+    assert "if (!applyActivation(served) && !tryLive(key)) applyScene(key)" in js
     assert "stills = urls.slice()" in js
+
+
+def test_the_pane_can_reach_stills_without_the_gateway():
+    """The desktop pane is a file:// page: it cannot fetch the REST URL, so it reads the files the
+    backend baked, and falls back to the baked scene when there are none."""
+    js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
+    assert "plugin-data/antemuse/activation/" in js
+    assert "probe.onerror" in js and "applyScene(key)" in js
+    assert "AMDBG" not in js, "no debug hooks left in the pane"
