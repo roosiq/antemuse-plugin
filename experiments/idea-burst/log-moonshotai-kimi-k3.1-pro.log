@@ -1,0 +1,13 @@
+  food-waste-city#11 A: 47 ideas (ok)
+Traceback (most recent call last):
+  File "/home/ryan/antemuse-plugin/experiments/idea-burst/run.py", line 349, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/ryan/antemuse-plugin/experiments/idea-burst/run.py", line 339, in main
+    payload = run(args.model, tasks, args.seeds)
+  File "/home/ryan/antemuse-plugin/experiments/idea-burst/run.py", line 211, in run
+    text = bo._chat(bo.NOUS, model, "\n\n".join(parts), max_tokens=6000,
+                    seed=seed, attempts=2, timeout=300)
+  File "/home/ryan/antemuse-plugin/experiments/before-after/run.py", line 90, in _chat
+    raise RuntimeError(last)
+RuntimeError: empty content (reasoning only)

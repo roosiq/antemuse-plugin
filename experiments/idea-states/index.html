@@ -1,0 +1,82 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>50 ideas, straight vs with a state in the middle</title>
+<style>
+ body { font: 16px/1.55 -apple-system, system-ui, sans-serif; margin: 0; background: #101014; color: #e8e6e3; }
+ main { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+ h1 { font-size: 30px; margin: 0 0 6px; }
+ h2 { font-size: 20px; margin: 40px 0 12px; border-top: 1px solid #2a2a33; padding-top: 24px; }
+ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #9a97ff; margin: 26px 0 8px; }
+ table { width: 100%; border-collapse: collapse; margin: 10px 0 6px; }
+ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #24242c; vertical-align: top; }
+ th { color: #8f8c99; font-weight: 500; font-size: 13px; }
+ .muted { color: #8f8c99; font-size: 13px; }
+ .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+ .col, .note { background: #17171d; border: 1px solid #24242c; border-radius: 10px; padding: 14px 16px 14px 28px; }
+ .col.after { border-color: #3b3559; }
+ .note { margin: 10px 0; padding-left: 16px; }
+ .tag { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9a97ff; margin-bottom: 8px; }
+ .note p { margin: 0; color: #cfccc7; font-size: 14px; }
+ ol { margin: 0; padding-left: 8px; } li { margin: 0 0 6px; }
+ .task { margin: 18px 0 30px; }
+ footer { margin-top: 46px; color: #8f8c99; font-size: 13px; border-top: 1px solid #2a2a33; padding-top: 18px; }
+</style></head><body><main>
+<h1>50 ideas, twice</h1>
+<p class=muted>Two briefs × two seeds × four conditions. The model asks for the same list twice:
+straight, and with a state held in the middle. State directives are read from
+<code>core/states.py</code>; doomscroll's feed from <code>core/sources.feed_pick</code>.</p>
+
+<section>
+  <h2>deepseek/deepseek-v4.1-flash-1017</h2>
+  <table>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>mean pairwise</th><th>distinctiveness</th>
+    <th>novelty</th><th>usefulness</th><th>state turn (words)</th></tr></thead>
+    <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>50.0</td><td>0.708</td><td>0.284</td><td>2.873</td><td>3.97</td><td>0.0</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>50.0</td><td>0.715</td><td>0.291</td><td>3.212</td><td>3.697</td><td>16.75</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.0</td><td>0.632</td><td>0.391</td><td>3.13</td><td>3.485</td><td>55.75</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>63.25</td><td>0.755</td><td>0.382</td><td>2.96</td><td>3.41</td><td>34.0</td></tr></tbody>
+  </table>
+  <h3>The middle turn</h3>
+  <div class=note><div class=tag>walk in the middle</div><p>Brief held: 50 distinct numbered one-sentence ideas for reducing food waste in a mid-size city. No ideas listed yet.</p></div><div class=note><div class=tag>daydream in the middle</div><p>I remember a bruised-peach crate outside a corner store and a church-hall kitchen with its lights still on; what they touch is the unremarkable short walk nobody has a reason to make, and the possibility that follows is that a mid-size city might reduce food waste less by inventing new bins than by making that walk ordinary.</p></div><div class=note><div class=tag>doomscroll in the middle</div><p>hnrss.org — skipped as work, scroll.
+www.theverge.com — headline-shaped dopamine, no click.
+hnrss.org — skipped as work, scroll.
+brief still in other tab. no ideas yet. good.</p></div>
+  <h3>What the list looks like</h3>
+  <div class=task><div class=muted>food-waste-city · seed 11 · first eight ideas</div>
+  <div class=pair><div class=col><div class=tag>straight</div><ol><li>Launch a citywide food-waste audit and publish an annual dashboard of waste by sector</li><li>Pilot curbside organics collection in several neighborhoods before citywide expansion</li><li>Create a network of public compost drop-off sites at libraries, parks, and transfer stations</li><li>Fund a food-rescue hotline or app that matches surplus food donors with nearby pantries</li><li>Publish plain-language guidance on food-donation liability and safety for businesses and nonprofits</li><li>Offer local tax or fee incentives for grocery stores and restaurants that donate edible surplus</li><li>Establish school cafeteria share tables for unopened and untouched food</li><li>Train school nutrition staff to track and adjust meal production using daily waste data</li></ol></div><div class=col after><div class=tag>daydream in the middle</div><ol><li>Create a published “surplus walk” map linking corner stores, church halls, and community kitchens along short, safe pedestrian routes</li><li>Set a standing daily pickup time when corner stores place bruised produce in a returnable crate for a nearby kitchen</li><li>Make church-hall kitchens open on fixed evenings as neighborhood surplus-processing hubs</li><li>Train corner-store clerks in a one-minute handoff protocol for surplus food</li><li>Add surplus collection to existing school walking-bus routes so children and escorts deliver to school kitchens</li><li>Organize fifteen-minute volunteer “closing walks” that collect surplus from shops just after closing</li><li>Establish block-level porch drops for gardeners to leave excess produce on a scheduled walk</li><li>Publish a weekly neighborhood surplus calendar so residents know when and where to walk</li></ol></div></div></div>
+</section>
+<section>
+  <h2>minimax/minimax-m3.1-flash</h2>
+  <table>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>mean pairwise</th><th>distinctiveness</th>
+    <th>novelty</th><th>usefulness</th><th>state turn (words)</th></tr></thead>
+    <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>50.0</td><td>0.704</td><td>0.36</td><td>2.963</td><td>3.737</td><td>0.0</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>46.25</td><td>0.7</td><td>0.366</td><td>2.95</td><td>3.552</td><td>34.75</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.333</td><td>0.697</td><td>0.362</td><td>2.953</td><td>3.707</td><td>94.667</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>63.5</td><td>0.73</td><td>0.402</td><td>3.143</td><td>3.502</td><td>355.5</td></tr></tbody>
+  </table>
+  <h3>The middle turn</h3>
+  <div class=note><div class=tag>walk in the middle</div><p>Brief received: 50 distinct ideas for reducing food waste in a mid-size city, numbered 1–50, one sentence each.</p></div><div class=note><div class=tag>daydream in the middle</div><p>A vendor brushing wilted greens from a market stall and a food bank queue before sunrise touch at the same quiet mismatch, suggesting that a city could shorten the distance between abundance and hunger before abundance becomes waste.</p></div><div class=note><div class=tag>doomscroll in the middle</div><p>feeds.arstechnica.com · Claude Code is out here leaking secrets into GitHub like a raccoon that found the admin console
+
+feeds.arstechnica.com · the Golden Dome is about to become the Golden Cupcake Dome, democracy permitting
+
+hnrss.org · a blank bullet, the most honest thing in the feed
+
+feeds.arstechnica.com · fifty perfectly good food-waste ideas have been skipped as work while I watch secrets fall out of a code assistant
+
+feeds.arstechnica.com · apparently “accidentally exposing secrets” is just Claude Code&#x27;s brand now
+
+feeds.arstechnica.com · the New Democratic Congress is stripping the g</p></div>
+  <h3>What the list looks like</h3>
+  <div class=task><div class=muted>food-waste-city · seed 11 · first eight ideas</div>
+  <div class=pair><div class=col><div class=tag>straight</div><ol><li>Require grocery stores to donate safe unsold food to food banks and community groups through scheduled daily pickups</li><li>Adopt a citywide &quot;use-by, not best-by&quot; labeling standard to reduce confusion-driven disposal of safe food</li><li>Offer curbside collection of organic waste from households and businesses, with materials sent to composting or anaerobic digestion facilities</li><li>Run a public education campaign showing households that small purchasing changes can save hundreds of dollars annually on wasted groceries</li><li>Provide small food businesses with inventory-tracking templates and training so they can forecast demand more accurately and order less</li><li>Build a shared commercial kitchen where restaurants, bakeries, and institutions can lawfully transform surplus ingredients into new products</li><li>Encourage restaurants to offer half portions, smaller dish sizes, and à la carte options so customers can order only what they will eat</li><li>Require large venues, festivals, and catering events to donate leftover food rather than send it to disposal</li></ol></div><div class=col after><div class=tag>daydream in the middle</div><ol><li>Require large supermarkets to donate edible surplus to food banks before it reaches the waste stream, with tax relief as the incentive</li><li>Create a citywide surplus-rescue marketplace where stores and kitchens list discounted end-of-day inventory in real time</li><li>Fund &quot;rescue boxes&quot; on every neighborhood collection route so drivers can drop unsold food at community fridges rather than bins</li><li>Build a shared cold-storage network so small grocers and co-ops can hold excess stock cheaply instead of discarding it</li><li>Grant restaurants a legal safe-harbor to donate prepared food without fear of liability, provided it goes to vetted charities</li><li>Introduce a &quot;use it up&quot; label on a shelf-stable goods so consumers see which products are most at risk of being wasted</li><li>Publish a live city food-waste dashboard so residents, businesses, and officials can see where waste concentrates by neighborhood and season</li><li>Standardize a single donation form and pickup protocol across charities so businesses spend minutes, not hours, arranging transfers</li></ol></div></div></div>
+</section>
+<section>
+  <h2>qwen/qwen3.8-max-prime</h2>
+  <table>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>mean pairwise</th><th>distinctiveness</th>
+    <th>novelty</th><th>usefulness</th><th>state turn (words)</th></tr></thead>
+    <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>43.25</td><td>0.684</td><td>0.316</td><td>2.737</td><td>3.74</td><td>0.0</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.0</td><td>0.651</td><td>0.334</td><td>2.81</td><td>3.763</td><td>54.0</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>50.0</td><td>0.639</td><td>0.328</td><td>3.112</td><td>3.655</td><td>219.5</td></tr></tbody>
+  </table>
+  <h3>The middle turn</h3>
+  <div class=note><div class=tag>daydream in the middle</div><p>A breadbox with a loose hinge and a bus route that passes the same bakery at dusk surface together; they touch keeping, movement, and the hour when good food becomes uncertain, and the possibility is that a city might treat small surpluses as things already in transit rather than already lost.</p></div><div class=note><div class=tag>doomscroll in the middle</div><p>hnrss.org · nothing loaded · refresh anyway · feeds.arstechnica.com · F1 in Brazil: You’ve got to keep your tires alive · tires are little round employees · someone comments “undercut? more overnap” · www.theverge.com · headline evaporates before click · a frog ad? · the brief stays folded under an invisible coffee cup · scroll thumb does the only job approved today</p></div>
+  <h3>What the list looks like</h3>
+  <div class=task><div class=muted>food-waste-city · seed 11 · first eight ideas</div>
+  <div class=pair><div class=col><div class=tag>straight</div><ol><li>Create a citywide food waste audit to identify the biggest sources of waste</li><li>Launch a public education campaign on meal planning and proper food storage</li><li>Offer free workshops on cooking with leftovers and imperfect produce</li><li>Establish a municipal composting program for households and businesses</li><li>Partner with grocery stores to discount soon-to-expire foods</li><li>Set up a food rescue network to redistribute surplus food to shelters</li><li>Require large food businesses to report their food waste annually</li><li>Provide tax incentives to restaurants that reduce food waste</li></ol></div><div class=col after><div class=tag>daydream in the middle</div><ol><li>A citywide food-waste audit could identify which neighborhoods, businesses, and institutions generate the most preventable surplus</li><li>Municipal procurement rules could require caterers and city-run cafeterias to report and reduce edible surplus</li><li>A shared cold-storage hub could let small grocers and restaurants hold near-expiry food safely before redistribution</li><li>A standardized “surplus shelf” program could give participating stores clear signage and liability guidance for discounted near-date items</li><li>Local bakeries could partner with evening transit routes to move unsold bread to shelters, community fridges, or discount markets</li><li>A digital surplus exchange could connect restaurants and grocers with volunteers, food banks, and composters in real time</li><li>Neighborhood composting cooperatives could turn unavoidable food scraps into soil amendments for community gardens</li><li>City inspections could reward businesses that track waste, donate surplus, or use small-portion options</li></ol></div></div></div>
+</section>
+<footer>Demonstration, not a preregistered result. Four cells per condition per model, two
+development briefs, judges not human-validated.</footer>
+</main></body></html>

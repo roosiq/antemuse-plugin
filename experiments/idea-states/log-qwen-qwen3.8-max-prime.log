@@ -1,0 +1,24 @@
+  food-waste-city#11 N: 50 ideas (ok)
+  food-waste-city#11 walk: empty content (reasoning only)
+  food-waste-city#11 walk: 0 ideas (error: RuntimeError)
+  food-waste-city#11 daydream: 50 ideas (ok)
+  food-waste-city#11 doomscroll: 50 ideas (ok)
+  food-waste-city#12 N: 50 ideas (ok)
+  food-waste-city#12 walk: empty content (reasoning only)
+  food-waste-city#12 walk: 0 ideas (error: RuntimeError)
+  food-waste-city#12 daydream: 50 ideas (ok)
+  food-waste-city#12 doomscroll: 50 ideas (ok)
+  one-room-short-film#11 N: 50 ideas (ok)
+  one-room-short-film#11 walk: empty content (reasoning only)
+  one-room-short-film#11 walk: 0 ideas (error: RuntimeError)
+  one-room-short-film#11 daydream: empty content (reasoning only)
+  one-room-short-film#11 daydream: 0 ideas (error: RuntimeError)
+  one-room-short-film#11 doomscroll: 50 ideas (ok)
+  one-room-short-film#12 N: 23 ideas (ok)
+  one-room-short-film#12 walk: empty content (reasoning only)
+  one-room-short-film#12 walk: 0 ideas (error: RuntimeError)
+  one-room-short-film#12 daydream: 50 ideas (ok)
+  one-room-short-film#12 doomscroll: 50 ideas (ok)
+Could not reach the Hub (Cannot reach https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2: offline mode is enabled. To disable it, please unset the `HF_HUB_OFFLINE` environment variable.). Using cached commit hash for 'sentence-transformers/all-MiniLM-L6-v2'.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 17525.18it/s]
+wrote /home/ryan/antemuse-plugin/experiments/idea-states/report-qwen-qwen3-8-max-prime.md
