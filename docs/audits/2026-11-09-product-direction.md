@@ -66,6 +66,21 @@ contract forbids the clock and key legend the demo shows; Opus's token-cost
 figure (it is a citation from spec §15, not a measurement I made); both models'
 read that `doomscroll` is a poor remedy — that is a judgement, not a defect.
 
+## Owner decisions and corrections (2026-11-09)
+
+- **No states dropped.** Ryan declined both cut lists; walk, daydream, doomscroll,
+  unstuck and dream all stay for the submission. The audits' recommendation to
+  reduce the menu is a direction question for after the five-user test, not a
+  change to the build.
+- **The evidence claim was weaker than the record said.** Both audits quoted
+  p = 0.17 at n = 8 from spec §16 as "the one positive-direction result". The
+  better-powered run was already on disk and says otherwise: 32 pairs per
+  condition, raw +1.44 categories (p = 0.027), but the walk arm wrote 162 words
+  against 119; length-adjusted +0.15 categories, 95% CI [−0.70, +1.00],
+  p = 0.365 (`specs/changes/break-and-mood/incubation-test.md`). Spec §16 now
+  records the null and marks the n = 8 figure superseded. The surviving effect is
+  ~36% more words, not broader thinking — which is what the submission may claim.
+
 ## What I would do with it
 
 1. **Demo the recovery loop, not the menu.** Loop → the counter that fired →

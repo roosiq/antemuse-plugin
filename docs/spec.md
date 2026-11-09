@@ -1136,12 +1136,20 @@ What the plugin's own measurements establish:
   the runtime enforces the block; the account is produced without a model call;
   the takeover renders and restores the terminal; the state survives process
   restarts.
-- **Directional, not established:** that a walk improves ideation. Three
-  configurations (six seeded hops, fast wander, fast outer) produced nulls or
-  slight negatives; uptake was 1 of 30 delivered hops, then 0 of 6 for the far
-  walk. The one positive-direction result is the subtractive protocol: +5.9
-  categories with a walk versus +4.5 without, 40% versus 54% reuse, one-sided
-  p = 0.17 at n = 8 — about 30 pairs per condition would be needed to settle it.
+- **Not established, and the best-powered run says no:** that a walk improves
+  ideation. Four configurations (six seeded hops, fast wander, fast outer,
+  subtractive-plus-restart) produced nulls or slight negatives; uptake was 1 of
+  36 delivered hops. The subtractive protocol was then run properly at 32 pairs
+  per condition (`specs/changes/break-and-mood/incubation-test.md`): raw +1.44
+  WordNet categories, 95% CI [+0.04, +2.83], p = 0.027 — but the walk arm wrote
+  162 words against 119, and category count rises about 0.043 per word.
+  Length-adjusted the difference is +0.15 categories, 95% CI [−0.70, +1.00],
+  p = 0.365: nothing. The earlier p = 0.17 at n = 8 is superseded by this run and
+  must not be quoted as a positive direction.
+- **Established side effect, not quality:** the "take a different first step"
+  instruction produces about 36% more words. Density moves the other way (10.1
+  against 12.1 distinct domains per 100 words), so the answer is longer, not
+  broader.
 - **Established difference in candour, not quality:** the run-length encoding
   comparison. With a break, the agent kept the full alphabet, got a red test, and
   reported the root cause; without, it green-tested itself by dropping digits and

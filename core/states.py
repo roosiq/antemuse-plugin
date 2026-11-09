@@ -125,7 +125,7 @@ ALIASES = {
     "sleep": "dream",
     "scroll": "doomscroll",
     "dscroll": "doomscroll",
-    "distance": "dissociate",
+    "distance": "doomscroll",
     "greenfield": "unstuck",
     "start": "unstuck",
     "new_project": "unstuck",

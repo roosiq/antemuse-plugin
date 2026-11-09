@@ -135,7 +135,7 @@ not business adoption or creative-quality evidence.
 
 **In scope for 0.9.x**
 
-- four states: walk, daydream, doomscroll, dream;
+- five states: walk, daydream, doomscroll, unstuck, dream;
 - the recommendation line and mood reporting (both now `state` tool actions);
 - walks as user-editable data (WordNet and manual graphs);
 - terminal takeover, chat card, text record, PNG card;
@@ -307,7 +307,7 @@ one green run is not proof of suite stability.
 |---|---|---|---|---|
 | **BR-1 — cognitive gap / discoverability** | **Partial** | `spec.md` §§2, 17 | `plugin.yaml`; install instructions in `README.md` | `hermes plugins doctor` verifies installation; `tests/test_manifest.py` verifies identity. Public catalog discovery is **not implemented**: no public listing, licence, or decided category. Demand remains unmeasured. |
 | **BR-2 — imagery for the person, text for the model** | Implemented | `spec.md` §§6, 10 | `core/engine.py::inject`; `core/tui.py::imagery_frame`; `core/surfaces.py::card`, `record` | `tests/test_tui.py::test_the_stream_is_not_on_screen_but_reaches_the_agent`; `tests/test_surfaces.py::test_card_is_only_a_picture`, `test_record_is_dense_and_plain`. |
-| **BR-3 — temporary states, not containers** | Implemented | `spec.md` §§1, 4, 5 | `core/states.py::STATES`; `core/engine.py::enter`, `tick`, `stop` | `tests/test_states.py` covers four states, turn/clock expiry, tool policy, and return. |
+| **BR-3 — temporary states, not containers** | Implemented | `spec.md` §§1, 4, 5 | `core/states.py::STATES`; `core/engine.py::enter`, `tick`, `stop` | `tests/test_states.py` covers five states, turn/clock expiry, tool policy, and return. |
 | **BR-4 — real corpus material** | Implemented | `spec.md` §§8, 9 | `core/walks.py`; `core/sources.py`; `core/social.py` | `tests/test_walks.py`, `tests/test_sources.py`; historical corpus counts are recorded in `spec.md` §13. The stochastic outer/wander comparison is tracked separately as FLAKE-1. |
 | **BR-5 — pictures and nothing else** | **Partial** | `spec.md` §§10.1–10.4, 14 | `core/tui.py`; `core/photographs.py`; `core/surfaces.py` | Wordless visual tests exist in `tests/test_tui.py`, `test_panel.py`, `test_photographs.py`, and `test_surfaces.py`. **Gap:** note/join entry currently displays a temporary text prompt and typed words in the takeover; owner decision recorded in `spec.md` §14. |
 | **BR-6 — full-terminal artistic imagery and transitions** | Mechanics implemented; aesthetic success unmeasured | `spec.md` §§10.2–10.6, 13 | `core/tui.py`; `core/photographs.py`; `core/backdrop.py`; `tools/scene.html` | `tests/test_photographs.py::test_frames_are_full_size_and_wordless`, `test_changing_state_starts_a_dissolve`; `tests/test_tui.py::test_frame_fills_the_screen_without_overflowing`; recorded pty evidence in `spec.md` §13. No subjective quality measure is claimed. |

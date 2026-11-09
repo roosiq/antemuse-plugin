@@ -360,8 +360,8 @@ def run() -> str:
                 engine.enter("walk")
             elif ch in ("d", "D"):
                 engine.enter("daydream")
-            elif ch in ("i", "I"):
-                engine.enter("dissociate")
+            elif ch in ("u", "U"):
+                engine.enter("unstuck")
             elif ch in ("m", "M"):
                 engine.enter("dream")
             elif ch in ("k", "K"):

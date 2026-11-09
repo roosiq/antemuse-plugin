@@ -13,7 +13,7 @@ rather than papered over.
 | Mechanism | Host interface (evidence) | What the plugin does | Verdict |
 |---|---|---|---|
 | Tool | `PluginContext.register_tool(schema=…, handler=…)` — `hermes_cli/plugins.py:462` | one `state` tool, 14 actions, JSON schema, `check_fn`-free | **correct** |
-| Commands | `register_command(name=…, handler=…, description=…)` — `:657` | five: the four states and `/return` | **correct** |
+| Commands | `register_command(name=…, handler=…, description=…)` — `:657` | five states and `/return` | **correct** |
 | Hooks | `VALID_HOOKS` — `hermes_cli/plugins.py:108` | `pre_llm_call`, `pre_tool_call`, `post_tool_call`, `transform_llm_output`, `on_session_end/finalize/reset/delete` — all in the set | **correct** |
 | Per-turn injection | `pre_llm_call` return string → appended to the *user message*, never the system prompt — `agent/turn_context.py:799` | returns the state block; system prompt stays byte-stable for caching | **correct by construction** |
 | Model calls | `ctx.llm` → `agent.plugin_llm.PluginLlm` — `:376`; `acomplete_structured(instructions=, input=, json_schema=, max_tokens=, timeout=, purpose=, task=)` — `agent/plugin_llm.py:486` | every branch call goes through it; no SDK, no HTTP, no key of our own | **correct** (fixed: `task=` must be a key we registered — see below) |

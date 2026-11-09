@@ -43,7 +43,8 @@ def test_both_columns_carry_their_own_words_debug():
 def test_empty_person_column_teaches_the_note_command_debug():
     engine.enter("walk")
     out = panel.debug(engine.watch_state(), w=88, color=False)
-    assert "/note" in out
+    assert "n note" in out
+    assert "/return" in out
 
 
 def test_panel_respects_a_narrow_terminal():

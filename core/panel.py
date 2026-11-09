@@ -103,7 +103,7 @@ def debug(state: Dict[str, Any], w: int | None = None, color: bool | None = None
         out.append(" " + _paint(bar(pct, inner - 2), AMBER, on))
         out.append(" " + _paint(active["contract"], DIM, on))
     else:
-        out.append(" " + _paint("nothing is running. /walk /daydream /dissociate /dream /doomscroll", DIM, on))
+        out.append(" " + _paint("nothing is running. /walk /daydream /doomscroll /unstuck /dream", DIM, on))
 
     out.append("")
 
@@ -137,7 +137,7 @@ def debug(state: Dict[str, Any], w: int | None = None, color: bool | None = None
     residue = [r.get("text", "") if isinstance(r, dict) else str(r) for r in (state.get("residue") or [])]
     if residue:
         out.append(" " + _paint("residue ", FAINT, on) + _paint(" · ".join(residue), DIM, on))
-    out.append(" " + _paint("/note <text>  /return  /states", FAINT, on))
+    out.append(" " + _paint("/return   ·   n note   ·   q quit", FAINT, on))
     return "\n".join(out)
 
 

@@ -57,15 +57,15 @@ Hermes runtime
   │  on_session_* ────────► release prepared material, log named failures
   ▼
 core/engine.py  ── the one owner of state
-  ├── core/states.py        four state definitions: minutes, turns, cadence, tools,
+  ├── core/states.py        five state definitions: minutes, turns, cadence, tools,
   │                         directive, contract, feeds, restart
   ├── core/options.py       block / allow parsing, refusal of allow without block
   ├── core/walks.py         WordNet steps: wander, outer, vault, run3, orbit
   ├── core/social.py        doomscroll feed, cached, no model calls
   ├── core/photographs.py   stored memories for daydream/dream
-  ├── core/mood.py          /mood, reported never inferred
+  ├── core/mood.py          recorded moods and break arithmetic (tool actions)
   ├── core/storage.py       one state file per profile, atomic writes
-  └── core/runtime.py       /spark candidate binding (session-scoped, counts only)
+  └── core/runtime.py       exploration binding (spark/keep tool actions, gated)
          │
          ▼
 core/surfaces.py  ── the only renderer
@@ -91,14 +91,14 @@ art pipeline (bake time only; three.js never runs in the client)
 |---|---|---|---|
 | `__init__.py` | manifest surface: the `state` tool (12 actions), 8 hooks, commands | **LIVE** | `plugin.yaml`, `hermes plugins doctor antemuse` |
 | `core/engine.py` | state lifecycle, ticks, policy, journal, residue, origin | **LIVE** | `tests/test_states.py`, `test_plugin_api.py`; live in this session |
-| `core/states.py` | the four definitions | **LIVE** | durations, turns, cadences pinned by tests |
+| `core/states.py` | the five definitions | **LIVE** | durations, turns, cadences pinned by tests |
 | `core/options.py` | `block` / `allow`, refusal of `allow` without `block` | **LIVE** | `enter(..., block=True)` verified against the engine |
 | `core/walks.py` | WordNet 117,659 synsets; `wander`, `outer`, `vault`, `run3`, `orbit`, named edges | **LIVE** | `tests/test_walks.py` (FLAKE-1 narrowed, see §10) |
 | `core/social.py` | doomscroll feed | **LIVE** | exercised through `tests/test_sources.py` |
 | `core/photographs.py` | stored memories for daydream/dream | **LIVE** | `tests/test_photographs.py` |
-| `core/mood.py` | `/mood`, strain arithmetic | **LIVE** | `tests/test_mood.py` |
+| `core/mood.py` | recorded moods, break arithmetic | **LIVE** (tool action, not a command) | `tests/test_mood.py` |
 | `core/storage.py` | atomic state file, caches | **LIVE** | `tests/test_manifest.py` |
-| `core/runtime.py` | `/spark` candidate binding; person gets counts, never candidates | **LIVE** | `tests/test_runtime.py` |
+| `core/runtime.py` | exploration binding for the `spark`/`keep` tool actions; person gets counts, never candidates | **LIVE, gated** `experimental.enabled` | `tests/test_runtime.py` |
 | `core/collider.py`, `collision.py` | concept collision + collision boundary | **LIVE** | `tests/test_collider.py`, `test_collision.py` |
 | `core/selection.py` | candidate selection scores | **LIVE (records only)** | no quality claim anywhere |
 | `core/surfaces.py` | card, art, takeover, PNG | **LIVE** | `tests/test_surfaces.py` |
@@ -127,7 +127,7 @@ art pipeline (bake time only; three.js never runs in the client)
    (walk 9 s, daydream 10 s, doomscroll 6 s, dream 40 s).
 4. **Material** — `feeds: False` for walk (it supplies nothing); daydream/doomscroll/
    dream feed bounded material.
-5. **End** — expiry, turn exhaustion, `/return`, or `/break` into another state.
+5. **End** — expiry, turn exhaustion, `/return`, or another entry.
 6. **Account** — `state-return-report` builds three lines from the journal window and
    injects `[YOU JUST CAME BACK …]`; residue keeps 3, journal keeps 60.
 7. **Restart** — after a walk the next step is forced to differ (`restart: True`).
@@ -240,7 +240,7 @@ fixed and recorded.
 | `scene3d-renderer` (Python z-buffer instead of Chromium) | **PROPOSED and conflicting** — the bake pipeline is what ships; one of the two must yield |
 | FLAKE-1 `test_outer_hops_are_farther_than_wander_hops` | narrowed, not eliminated (samples n=64) |
 | `/spark` is not gated by state | accepts, unresolved |
-| Command surface | **LIVE** — 14 commands → 5, then 6 with `/unstuck`: the five states and `/return`; `/note`, `/break`, `/mood`, `/state`, `/watch`, `/spark`, `/keep`, `/again` became automation or tool actions |
+| Command surface | **LIVE** — 14 commands → 6: the five states (`/walk`, `/daydream`, `/doomscroll`, `/unstuck`, `/dream`) and `/return`; `/note`, `/break`, `/mood`, `/state`, `/watch`, `/spark`, `/keep`, `/again` became automation or `state` tool actions |
 | Trailhead | **PARTIAL** — `unstuck` (5 min, 3 turns, read-only) reads what an empty repository actually contains and exits with **one direction** and the spec file it becomes; recommended while a repo has <3 commits and no spec. **Its own art is not built**: it renders with the `walk` scene until a unstuck pack is generated |
 | State settings experiment | **PROPOSED** — `specs/changes/state-settings-experiment`: the test design that would justify each dose (half · default · double · no-state control, pre-registered blocks, script-checkable outcomes, 160/arm). Written before any data, with the "no measurable result" decision row included. Nothing run |
 | Plugin settings | **LIVE** — `plugin.yaml` `config_schema` (6 keys) is rendered as a form by the desktop app's Settings ▸ Plugins and saved to `plugins.entries.antemuse.settings.*`; read via `ctx.get_config` and clamped in `core/settings.py`. The plugin's bespoke settings page was deleted so there is one surface, not two |

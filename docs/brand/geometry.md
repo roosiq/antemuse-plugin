@@ -131,7 +131,7 @@ is everything the *state* draws.
 ## Seen the way the product sees it
 
 A plate is not only an icon. Run it through the plugin's own cell model and it
-becomes what `/states` draws: `▀` glyphs, foreground the top pixel, background
+becomes what the takeover draws: `▀` glyphs, foreground the top pixel, background
 the bottom one, truecolor.
 
 ```bash
