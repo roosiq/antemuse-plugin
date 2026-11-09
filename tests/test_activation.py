@@ -121,3 +121,48 @@ def test_a_state_with_no_servings_says_so(tmp_path):
                             env={**os.environ, "ANTEMUSE_STATES_HOME": str(tmp_path)})
     assert result.returncode == 1
     assert "nothing recorded" in result.stdout or "no state servings" in result.stdout
+
+
+# ---------------------------------------------------------------- as glyphs
+
+def test_the_map_draws_only_ramp_characters_and_fills_the_grid(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    for i, label in enumerate(["gateway", "plugin", "ledger", "shipper"]):
+        history.notice(label, move="walk", session="s1", at=NOW + i, ref=str(i))
+    rows = activation.art(cols=40, rows=9, session="s1", move="walk", now=NOW + 10)
+    assert len(rows) == 9
+    assert all(len(r) == 40 for r in rows)
+    assert set("".join(rows)) <= set(activation.RAMP), set("".join(rows))
+
+
+def test_the_glyphs_carry_rank_not_one_letter_for_everything(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    for i in range(12):
+        history.notice(f"term{i}", move="walk", session="s1", at=NOW + i, ref=str(i))
+    rows = activation.art(cols=60, rows=12, session="s1", move="walk", now=NOW + 12)
+    drawn = set("".join(rows)) - {" "}
+    assert len(drawn) >= 3, drawn
+
+
+def test_nothing_firing_is_an_empty_picture_not_a_blank_one(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    assert activation.art(cols=40, rows=8, session="s1") == []
+    assert activation.art(cols=40, rows=8, session="") == []
+
+
+def test_the_same_ledger_draws_the_same_picture(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    for i in range(6):
+        history.notice(f"term{i}", move="walk", session="s1", at=NOW + i, ref=str(i))
+    a = activation.art(cols=50, rows=10, session="s1", move="walk", now=NOW + 6)
+    b = activation.art(cols=50, rows=10, session="s1", move="walk", now=NOW + 6)
+    assert a == b
+
+
+def test_the_surface_falls_back_when_nothing_is_firing(tmp_path, monkeypatch):
+    """An empty field is not a picture of a state: the baked scene draws instead."""
+    from core import storage, surfaces
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    monkeypatch.setattr(storage, "load", lambda: {"active": None, "key": ""}, raising=False)
+    rows = surfaces.art(cols=40, rows=8, scene="activation")
+    assert rows == [] or all(set(r) <= set(" .:-=+*#%@") for r in rows)

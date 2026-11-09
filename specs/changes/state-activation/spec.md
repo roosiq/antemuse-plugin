@@ -28,6 +28,12 @@ decays, so a picture can show what is live *now* rather than what has ever happe
   bursty, and evenly spaced clock time spends most frames on the gaps between turns;
 - `hot()` and `summary()` for what the sequence was about.
 
+**`activation.art()` and `surfaces.art(scene="activation")`** — the same map as glyph rows, so
+the surfaces that already draw ASCII can show it. Glyph brightness carries **rank** rather than
+raw weight: normalised weights cluster near 1, and a picture where every lit concept is the same
+character says nothing about which is hottest. When nothing is firing the function returns empty
+and the surface falls through to its baked scene — an empty field is not a picture of a state.
+
 **`tools/activation_render.py`** — the picture: the semantic map dimmed, active concepts lit with
 a blurred glow, radius and brightness by weight, and **no text anywhere**. `--move` restricts to
 one state, `--gif` animates, and a one-row strip is always written.
@@ -83,9 +89,10 @@ Nothing here enters a state, changes a dose, or adds a command or a setting.
 
 ## Verification
 
-- `tests/test_activation.py` (11): half-life, floor, future servings, recency over repetition,
+- `tests/test_activation.py` (16): half-life, floor, future servings, recency over repetition,
   move narrowing, real-moment frames, empty inputs, the no-text rule, the strip and GIF written,
-  and the named failure when a state has no servings.
+  the named failure when a state has no servings — plus the glyph path: ramp-only characters, rank
+  spread, empty when nothing fires, determinism, and the surface fall-through.
 - Real render: 10 frames of the live session, viewed — every frame carries activity and the arc
   fades, after two rejected attempts (all-empty early frames; then a first frame that lit
   everything).

@@ -650,10 +650,15 @@ python3 tools/activation_render.py --session <id> --frames 10 --gif
 python3 tools/activation_render.py --move walk --frames 8      # one state only
 ```
 
-**Status: PARTIAL.** The renderer writes the frames; the pane does not draw them yet. What
-remains is a scene in the desktop pipeline (`desktop/art` → `core/surfaces.py` →
-`desktop/plugin.js`): registration, a frame budget per surface, and the terminal/card encodings
-of the same frames. See §17.2.
+The same picture is available as **glyphs**: `activation.art(cols, rows, session, move)` returns
+ramp characters, and `surfaces.art(scene="activation")` serves it, falling through to the baked
+frames when nothing is firing. Glyph brightness carries **rank**, not raw weight — normalised
+weights cluster near 1, and a picture where every lit concept is the same character says nothing
+about which is hottest.
+
+**Status: PARTIAL.** The glyph path is wired (`core/surfaces.py` serves `scene="activation"`), so
+any surface that already draws `surfaces.art` can show it. What remains is the desktop scene table
+and a frame budget per surface — `desktop/art` is mid-reorganization. See §17.2.
 
 ### 10.7 Palette
 
@@ -727,7 +732,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 890 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 895 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -1160,8 +1165,9 @@ The tags remain `cognitive`, `creativity`, `states`, `imagery`.
 
 The renderer exists (§10.6); the surface does not. Registration and budget are the work:
 
-1. register `activation` as a scene in `desktop/plugin.js` and `core/surfaces.py`, mapped to the
-   active state so `?state=walk` selects it without a new setting;
+1. ~~register `activation` in `core/surfaces.py`~~ — **done**, served with a fall-through to the
+   baked frames. Still to do: the `desktop/plugin.js` scene table entry, mapped to the active
+   state so `?state=walk` selects it without a new setting;
 2. pick a frame budget per surface: the terminal takes quantised frames at ~2 fps like the baked
    scenes; chat takes a still and, at state edges, the strip; the desktop pane takes the GIF;
 3. encode the same frames for the card path without letting any text in — the no-words rule in
