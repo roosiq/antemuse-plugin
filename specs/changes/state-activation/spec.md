@@ -1,0 +1,74 @@
+# Change: the concept map as the state visual — activations while a state fires
+
+Status: **PARTIAL** · opened 2026-11-08 · computation and renderer built 2026-11-08
+
+## Intent
+
+Ryan asked: *"could we use this as our state visualization, where we show activations of the
+concepts when they're firing in the states?"*
+
+The answer is yes, and the pieces already exist to do it honestly: every state serving is in the
+ledger with its move, session and timestamp, and the concept map already has deterministic
+semantic coordinates. What was missing is the middle layer — turning servings into a weight that
+decays, so a picture can show what is live *now* rather than what has ever happened.
+
+## What is built
+
+**`core/activation.py`** — activation as arithmetic, no model:
+
+- `activations(session, move, now)` → concept → weight in 0..1, `exp(-age/half_life·ln2)` with a
+  180 s half-life and a 0.25 floor;
+- the **freshest sighting wins** rather than summing: a word repeated all day must not outrank one
+  firing right now;
+- a serving **later than `now` is not active** — without that bound every concept lights up in the
+  first frame of a long session;
+- the time bound lives in the SQL, not after the `LIMIT` (filtering the newest 600 rows by time
+  made every early frame empty);
+- `sequence()` takes frames at the **real serving timestamps**, evenly sampled: sessions are
+  bursty, and evenly spaced clock time spends most frames on the gaps between turns;
+- `hot()` and `summary()` for what the sequence was about.
+
+**`tools/activation_render.py`** — the picture: the semantic map dimmed, active concepts lit with
+a blurred glow, radius and brightness by weight, and **no text anywhere**. `--move` restricts to
+one state, `--gif` animates, and a one-row strip is always written.
+
+Measured on the real ledger: the session of 2026-11-08 09:18 renders as a 10-frame arc with
+**263 concepts touched and 66 concurrently lit at the peak** — it rises, breathes and fades,
+which is what a state looks like from outside.
+
+## What is not built
+
+**The pane does not draw this yet.** Wiring it means a new scene in the desktop pipeline
+(`desktop/art` frames → `core/surfaces.py` → `desktop/plugin.js`), and that directory currently
+carries an unrelated art reorganization (80 dirty paths the owner asked to leave alone). The
+renderer writes PNG/GIF frames that pipeline can consume; the scene registration and the frame
+budget per surface are the remaining work. Until then this is a tool, not a surface.
+
+Nothing here enters a state, changes a dose, or adds a command or a setting.
+
+## Acceptance criteria
+
+1. Weight halves over one half-life and falls below the floor when cold.
+2. A serving in the future is not active.
+3. Repetition does not outrank recency.
+4. `--move` narrows the map to that state; without it, every serving counts.
+5. `sequence()` produces a frame at real moments and every frame of a spread-out session has
+   activity.
+6. The renderer draws no text — asserted against the source, because the human card is a picture.
+7. Missing ledger, unknown session or no vectors: a named message, never a traceback.
+8. Frames are deterministic for the same ledger and moment.
+
+## Verification
+
+- `tests/test_activation.py` (11): half-life, floor, future servings, recency over repetition,
+  move narrowing, real-moment frames, empty inputs, the no-text rule, the strip and GIF written,
+  and the named failure when a state has no servings.
+- Real render: 10 frames of the live session, viewed — every frame carries activity and the arc
+  fades, after two rejected attempts (all-empty early frames; then a first frame that lit
+  everything).
+- Suite: **890 passed, 1 skipped**; `spec_audit` 0 drift.
+
+## Must not change
+
+The wordless card, the dose-based endings, the rule that no state depends on this module, and the
+fact that an activation is derived — never written back.
