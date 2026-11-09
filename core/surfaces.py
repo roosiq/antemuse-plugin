@@ -118,21 +118,6 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
     ``fit="contain"`` letterboxes instead, which is what a chat card wants when the
     frame is wider than the message.
     """
-    # A scene can be derived rather than baked. `activation` draws the concept map from the
-    # ledger's own servings, and falls through to the baked frames when nothing is firing —
-    # an empty field is not a picture of a state.
-    if scene == "activation":
-        try:
-            from . import activation as _activation
-            state = storage.load() or {}
-            derived = _activation.art(cols=cols, rows=rows,
-                                      session=str(state.get("session_id") or ""),
-                                      move=str(state.get("key") or state.get("active") or "") or None)
-            if derived:
-                return derived
-        except Exception:
-            pass
-
     base = _frames_dir(pane=pane)
     sub = base / scene if scene else None
     pngs = sorted(sub.glob("*.png")) if sub is not None and sub.is_dir() else []

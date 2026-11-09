@@ -199,36 +199,62 @@ function ArtSurface({ ctx }) {
     // exists for the chat overlay does not apply here.
     const art = createArt(canvas, { dark: true, strength: LAYER.defaultStrength * 2.8, front: false })
 
-    // A baked scene is an <img> loop over preloaded JPEGs; the canvas underneath
-    // keeps painting the live kit for every state without a bake, so the pane is
-    // never empty and switching cost is one image swap.
-    const img = doc.createElement('img')
-    img.setAttribute('data-antemuse-bake', 'frame')
-    img.setAttribute('aria-hidden', 'true')
-    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 500ms ease;display:block'
-    el.appendChild(img)
+    // Stills, not a loop: three frames of a state, held and dissolved into the
+    // next. Two stacked <img> layers make the dissolve a cross-fade, so a state
+    // change (or the next still) is never a cut and never flashes an unloaded
+    // frame. The canvas underneath keeps painting the live kit as a fallback.
+    const mkStill = () => {
+      const im = doc.createElement('img')
+      im.setAttribute('data-antemuse-bake', 'still')
+      im.setAttribute('aria-hidden', 'true')
+      im.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity ' + FADE_MS + 'ms ease;display:block'
+      el.appendChild(im)
+      return im
+    }
+    const layers = [mkStill(), mkStill()]
+    let front = 0
+    let stills = []
+    let stillIdx = 0
     let bake = null
-    let cache = []
 
-    const loadBake = (name) => {
-      const base = bakedBase(name)
-      const frames = []
-      for (let i = 0; i < BAKED_FRAMES; i++) {
-        const im = new Image()
-        im.src = base + 'f' + String(i).padStart(2, '0') + '.jpg'
-        frames.push(im)
-      }
-      return frames
+    const stillUrl = (name, i) => {
+      try { return new URL('./art/' + name + '/s' + i + '.jpg', import.meta.url).href }
+      catch (e) { return 'file:///home/ryan/.hermes/plugins/antemuse/desktop/art/' + name + '/s' + i + '.jpg' }
+    }
+
+    const show = (url) => {
+      const back = layers[1 - front]
+      back.src = url
+      back.style.opacity = '1'
+      layers[front].style.opacity = '0'
+      front = 1 - front
+    }
+
+    // Activation stills, when the backend sends them: the live concept map for the state that
+    // is running. Absent or empty means nothing is firing, and the baked scene draws instead.
+    const applyActivation = (urls) => {
+      if (!urls || !urls.length) return false
+      const sig = 'activation:' + urls.join('|')
+      if (bake === sig) return true
+      bake = sig
+      stills = urls.slice()
+      stillIdx = 0
+      show(stills[0])
+      if (win.__antemuse) win.__antemuse.bake = 'activation'
+      return true
     }
 
     const applyScene = (key) => {
       const name = BAKED[key]
-      if (!name) { bake = null; cache = []; img.style.opacity = '0'; return }
+      if (!name) { bake = null; stills = []; layers.forEach((l) => { l.style.opacity = '0' }); return }
       if (bake === name) return
       bake = name
-      cache = loadBake(name)
+      stills = Array.from({ length: STILLS }, (_, i) => stillUrl(name, i))
+      stillIdx = 0
+      show(stills[0])
       if (win.__antemuse) win.__antemuse.bake = name
     }
+
     const win = doc.defaultView || window
     const hasRaf = typeof win.requestAnimationFrame === 'function'
     const raf = hasRaf
@@ -254,19 +280,10 @@ function ArtSurface({ ctx }) {
     }
     fit()
 
-    let frameIdx = -1
     const tick = (ts) => {
       if (stopped || budget-- <= 0) return
       rafId = raf(tick)
-      if (bake) {
-        const i = Math.floor((ts / (1000 / BAKED_FPS)) % BAKED_FRAMES)
-        if (i !== frameIdx) {
-          frameIdx = i
-          const f = cache[i]
-          if (f && f.complete) { img.src = f.src; img.style.opacity = '1' }
-        }
-        return
-      }
+      if (bake) return   // stills are advanced by the hold timer, not the frame clock
       if (!last) last = ts
       if (ts - lastPaint < MIN_MS) return
       const dt = Math.min(0.12, (ts - last) / 1000)
@@ -284,7 +301,9 @@ function ArtSurface({ ctx }) {
       const q = '/state?cols=48&rows=24&fit=cover&busy=' + busy + (session ? '&session=' + encodeURIComponent(session) : '')
       Promise.resolve(ctx.rest(q)).then((p) => {
         const key = (p && p.active && p.active.key) || (busy ? 'work' : 'idle')
-        if (!stopped) { art.setScene(key); applyScene(key) }
+        if (stopped) return
+        art.setScene(key)
+        if (!applyActivation(p && p.stills)) applyScene(key)
       }, () => { /* keep painting the idle scene */ })
     }
     // Preview aid: `localStorage['antemuse:scene'] = 'walk'` pins one scene, so a
@@ -296,6 +315,17 @@ function ArtSurface({ ctx }) {
     if (!preview) say()
     // Host-managed timer where the SDK provides one, so disposal is the host's
     // job too and a pane close cannot leave a poll running.
+    // The stills hold on their own clock, so the picture breathes even when the
+    // state has not changed; the 4 s poll only decides which state's stills.
+    const advance = () => {
+      if (bake && stills.length) {
+        stillIdx = (stillIdx + 1) % stills.length
+        show(stills[stillIdx])
+      }
+    }
+    const hold = typeof ctx.setInterval === 'function'
+      ? ctx.setInterval(advance, HOLD_MS)
+      : win.setInterval(advance, HOLD_MS)
     const poll = preview ? () => {} : (typeof ctx.setInterval === 'function'
       ? ctx.setInterval(say, 4000)
       : win.setInterval(say, 4000))
@@ -308,6 +338,8 @@ function ArtSurface({ ctx }) {
       stopped = true
       if (typeof poll === 'function') poll()
       else win.clearInterval(poll)
+      if (typeof hold === 'function') hold()
+      else win.clearInterval(hold)
       if (ro) ro.dispose ? ro.dispose() : ro.disconnect()
       else win.removeEventListener('resize', fit)
       cancel(rafId)
@@ -388,17 +420,15 @@ function StateChip({ ctx }) {
 // Baked scenes: rendered by a real renderer offline, shipped as frame loops,
 // because a runtime plugin cannot import three. Only the states that earn it get
 // a bake; the rest fall through to the live kit.
-const BAKED = { walk: 'spline', dream: 'nurbs', doomscroll: 'wireframe' }
-const BAKED_FRAMES = 24
-const BAKED_FPS = 12
-
-function bakedBase(name) {
-  try {
-    return new URL('./art/' + name + '/', import.meta.url).href
-  } catch (e) {
-    return 'file:///home/ryan/.hermes/plugins/antemuse/desktop/art/' + name + '/'
-  }
+const BAKED = {
+  idle: 'idle', work: 'work', walk: 'walk',
+  daydream: 'daydream', dream: 'dream', doomscroll: 'doomscroll'
 }
+// Three stills per state, held six seconds, dissolved over FADE_MS. A loop
+// needs 24 files per state and shows a beat you can count; stills don't.
+const STILLS = 3
+const HOLD_MS = 6000
+const FADE_MS = 900
 
 const LAYER = {
   attr: 'data-antemuse-bg',

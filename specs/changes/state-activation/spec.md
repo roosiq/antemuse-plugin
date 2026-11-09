@@ -28,11 +28,16 @@ decays, so a picture can show what is live *now* rather than what has ever happe
   bursty, and evenly spaced clock time spends most frames on the gaps between turns;
 - `hot()` and `summary()` for what the sequence was about.
 
-**`activation.art()` and `surfaces.art(scene="activation")`** — the same map as glyph rows, so
-the surfaces that already draw ASCII can show it. Glyph brightness carries **rank** rather than
-raw weight: normalised weights cluster near 1, and a picture where every lit concept is the same
-character says nothing about which is hottest. When nothing is firing the function returns empty
-and the surface falls through to its baked scene — an empty field is not a picture of a state.
+**`core/activation_stills.py`** — the map for the desktop pane, which is a picture surface:
+
+- three JPEG stills (960×600) at three moments of the state's arc, cached 45 s and regenerated
+  when stale, because a state's arc is seconds long and three moments are the story;
+- `GET /api/plugins/antemuse/state` returns them as `stills`; `GET /art/{state}/{file}` serves
+  only files the plugin wrote, matching both segments rather than joining user input;
+- the pane paints them through the cross-fading `<img>` layers it already uses for the baked
+  scenes, and falls through to the baked art when the list is empty;
+- **no ASCII** — an earlier glyph path was built and removed on instruction: the pane shows a
+  picture.
 
 **`tools/activation_render.py`** — the picture: the semantic map dimmed, active concepts lit with
 a blurred glow, radius and brightness by weight, and **no text anywhere**. `--move` restricts to
@@ -89,10 +94,11 @@ Nothing here enters a state, changes a dose, or adds a command or a setting.
 
 ## Verification
 
-- `tests/test_activation.py` (16): half-life, floor, future servings, recency over repetition,
-  move narrowing, real-moment frames, empty inputs, the no-text rule, the strip and GIF written,
-  the named failure when a state has no servings — plus the glyph path: ramp-only characters, rank
-  spread, empty when nothing fires, determinism, and the surface fall-through.
+- `tests/test_activation.py` (11) and `tests/test_plugin_api.py` (+5): decay, floor, future
+  servings, recency over repetition, move narrowing, real-moment frames, empty inputs, the no-text
+  rule, the strip and GIF, the named failure — and on the desktop path: stills served and served
+  back as JPEG, the route refusing anything it did not write, no stills without a state, stills
+  written for a state with servings, and none when nothing is firing.
 - Real render: 10 frames of the live session, viewed — every frame carries activity and the arc
   fades, after two rejected attempts (all-empty early frames; then a first frame that lit
   everything).

@@ -27,6 +27,7 @@ import time
 from typing import Any, Dict, List
 
 from fastapi import APIRouter
+from fastapi.responses import FileResponse
 
 router = APIRouter()
 
@@ -138,4 +139,38 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
             lines = plugin().core.screensaver.frame(scene_name, width, height)
         except Exception:  # health: BLE001 -- art is never worth a 500
             lines = []
-    return proj.project(watch, lines, cols=width, rows=height)
+    payload = proj.project(watch, lines, cols=width, rows=height)
+
+    # The pane draws images. When a state is live and the ledger has servings for it, serve the
+    # activation stills and let the surface paint those instead of the baked art. An empty list
+    # means "nothing is firing" and the surface keeps its baked scene.
+    payload["stills"] = []
+    if active and belongs_here:
+        key = str(active.get("key") or "")
+        if key:
+            try:
+                from core import activation_stills
+                own = (active.get("origin") or {}).get("session_id") or session or ""
+                paths = activation_stills.fresh(move=key, session=str(own))
+                payload["stills"] = [f"/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
+            except Exception:  # health: BLE001 -- a missing picture is not a broken state
+                payload["stills"] = []
+    return payload
+
+
+@router.get("/art/{name}/{filename}")
+def art(name: str, filename: str):
+    """Serve one activation still. Only files this plugin wrote are reachable: the name and the
+    filename are matched against the state directory, never joined from user input."""
+    safe_name = "".join(ch for ch in name if ch.isalnum() or ch in "-_")
+    safe_file = "".join(ch for ch in filename if ch.isalnum() or ch in "-_.")
+    if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
+        return {"error": "not found"}
+    try:
+        from core import storage
+        path = storage.data_dir() / "activation" / safe_name / safe_file
+    except Exception:
+        return {"error": "not found"}
+    if not path.is_file():
+        return {"error": "not found"}
+    return FileResponse(str(path), media_type="image/jpeg")

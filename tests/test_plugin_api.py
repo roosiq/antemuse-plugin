@@ -214,3 +214,92 @@ def test_ambient_frame_is_deterministic_and_sized(monkeypatch):
     assert len(a) == 74 and all(len(row) == 116 for row in a)
     ink = sum(1 for row in a for ch in row if ch not in " .")
     assert 0.02 < ink / (74 * 116) < 0.08, "visible, not a smear (measured 3.7%)"
+
+
+# --- the pane shows the activation map ---------------------------------------
+
+def _walk_api(monkeypatch, tmp_path):
+    """The backend route with a live walk, its ledger, and stills on disk."""
+    api = load("plugin_api")
+    from core import screensaver, storage
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    monkeypatch.setattr(storage, "data_dir", lambda: tmp_path)
+
+    active = {"active": {"key": "walk", "origin": {"session_id": "s-live"}}, "residue": [], "journal": []}
+
+    class _Panel:
+        @staticmethod
+        def engine_state():
+            return active
+
+    _Core = type("_Core", (), {"panel": _Panel, "screensaver": screensaver})
+    _Plugin = type("_Plugin", (), {"core": _Core})
+    monkeypatch.setattr(api, "plugin", lambda: _Plugin())
+    return api
+
+
+def test_a_live_state_serves_stills_and_the_route_serves_them(monkeypatch, tmp_path):
+    api = _walk_api(monkeypatch, tmp_path)
+    still = tmp_path / "activation" / "walk" / "f0-1.jpg"
+    still.parent.mkdir(parents=True)
+    still.write_bytes(b"\xff\xd8\xff\xd9")
+
+    payload = api.state(cols=40, rows=12, session="s-live")
+    assert payload["stills"] == ["/api/plugins/antemuse/art/walk/f0-1.jpg"]
+
+    response = api.art("walk", "f0-1.jpg")
+    assert getattr(response, "media_type", "") == "image/jpeg"
+    assert getattr(response, "path", "") == str(still)
+
+
+def test_the_art_route_refuses_anything_it_did_not_write(monkeypatch, tmp_path):
+    api = _walk_api(monkeypatch, tmp_path)
+    for name, filename in (("walk", "../../state.json"), ("walk", "notes.txt"),
+                           ("../..", "state.json"), ("walk", "missing.jpg")):
+        result = api.art(name, filename)
+        assert isinstance(result, dict) and result["error"] == "not found", (name, filename)
+
+
+def test_no_state_means_no_stills(monkeypatch, tmp_path):
+    api = _walk_api(monkeypatch, tmp_path)
+    monkeypatch.setattr(api, "plugin", lambda: type("P", (), {"core": type("C", (), {
+        "panel": type("Pan", (), {"engine_state": staticmethod(lambda: {"active": None})}),
+        "screensaver": __import__("core.screensaver", fromlist=["x"])})()})())
+    assert api.state(cols=40, rows=12)["stills"] == []
+
+
+def test_stills_are_written_for_a_state_with_servings(monkeypatch, tmp_path):
+    from core import activation_stills, history
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    now = 1_760_000_000.0
+    for i, label in enumerate(["gateway", "plugin", "ledger", "shipper", "walk"]):
+        history.notice(label, move="walk", session="s1", at=now - i, ref=str(i))
+    emb = tmp_path / "emb.json"
+    import json, random
+    rng = random.Random(2)
+    emb.write_text(json.dumps({"model": "t", "dim": 6, "vectors": {
+        label: [rng.uniform(-1, 1) for _ in range(6)]
+        for label in ["gateway", "plugin", "ledger", "shipper", "walk"]}}))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    (tmp_path / "antemuse").mkdir(exist_ok=True)
+    (tmp_path / "antemuse" / "embeddings.json").write_text(emb.read_text())
+
+    paths = activation_stills.stills(move="walk", session="s1", dest=tmp_path / "stills", now=now)
+    assert len(paths) == activation_stills.STILL_COUNT
+    assert all(p.exists() and p.stat().st_size > 1000 for p in paths)
+    assert all(p.suffix == ".jpg" for p in paths)
+
+
+def test_stills_stop_when_nothing_is_firing(monkeypatch, tmp_path):
+    from core import activation_stills
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    assert activation_stills.stills(move="walk", session="nobody", dest=tmp_path / "x") == []
+
+
+def test_the_pane_paints_stills_before_baked_art():
+    """The wiring, checked at the source: the surface must prefer what the backend served, and
+    fall back to the baked scene when there is nothing to show."""
+    js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
+    assert "applyActivation(p && p.stills)" in js
+    assert "if (!applyActivation(p && p.stills)) applyScene(key)" in js
+    assert "stills = urls.slice()" in js
