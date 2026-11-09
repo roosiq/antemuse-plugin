@@ -204,6 +204,80 @@ DREAM_FORMS = [
 ]
 
 
+#: No "a"/"an" before a slot: FrameNet role names are singular, plural and mass without
+#: warning, and an article that disagrees makes the recombination read as a broken template
+#: rather than as an invented thing.
+DREAM_FORMS_CROSS = [
+    "an object that {a}s the way {b} does, and cannot be switched off",
+    "{a}, kept inside {b}, and it keeps working there",
+    "a device that {a}s whatever is {b} nearby, and records the order it happened in",
+    "{a} that only works while {b} is happening",
+    "a mechanism that replaces {a} with {b} and charges for the difference",
+    "{b} with {a} built into it, so both fail at once",
+]
+
+
+def _frame_words(frame) -> List[str]:
+    """The frame's lexical units as plain words: `abandon.v` -> `abandon`.
+
+    NLTK's Frame object raises KeyError (not AttributeError) for `lexical_units`, so the
+    old `getattr(frame, "lexical_units", [])` looked like an empty list and every path that
+    needed a lexical unit silently fell back to a placeholder — including the memory seed
+    that dream is supposed to start from.
+    """
+    try:
+        units = list((frame.get("lexUnit") or {}).keys())
+    except Exception:
+        units = []
+    return [str(u).rsplit(".", 1)[0].replace("_", " ").lower() for u in units if u]
+
+
+def _lu_pair(frame) -> List[str]:
+    """Two real words from a frame, not its role names.
+
+    Role names ("entity", "time", "circumstance") are structural: recombining them gives a
+    sentence about grammar. Lexical units are the words the frame is about — "dying",
+    "surrounding", "sawhorse" — and those are what make a recombination read as a thing.
+    """
+    units = _frame_words(frame)[:40]
+    singles = [u for u in units if u and " " not in u]
+    if not singles:
+        # multi-word units ("have as translation equivalent") read as grammar: take the
+        # last word, which is the noun or verb the frame is really about
+        singles = [u.split()[-1] for u in units if u]
+    units = [u for u in singles if len(u) > 2]
+    if not units:
+        return ["thing", "thing"]
+    RNG.shuffle(units)
+    return (units + units)[:2]
+
+
+def _frame_lus(frame) -> set:
+    return {u for u in _frame_words(frame)[:60] if u}
+
+
+def _far_frame(frames: List[Any], base: Any, samples: int = 64) -> Any:
+    """The frame furthest from `base` by lexical-unit overlap — a jump, not a neighbour.
+
+    Two frames that share no lexical units describe worlds that were never asked to
+    touch. That is the raw material a recombination needs: the single-frame version could
+    only shuffle roles inside one world, which is why its output read as template.
+    """
+    base_lus = _frame_lus(base)
+    pool = RNG.sample(frames, min(samples, len(frames))) if len(frames) > samples else list(frames)
+    scored = []
+    for cand in pool:
+        if cand.name == base.name:
+            continue
+        lus = _frame_lus(cand)
+        overlap = len(base_lus & lus) / max(1, len(base_lus | lus))
+        scored.append((overlap, cand))
+    if not scored:
+        return None
+    scored.sort(key=lambda row: row[0])
+    return scored[0][1]
+
+
 def dream_recombine(steps: int = 1) -> List[str]:
     """FrameNet gives the roles; the recombination is the part that never existed."""
     try:
@@ -221,7 +295,7 @@ def dream_recombine(steps: int = 1) -> List[str]:
             term = seed["term"].lower()
             for candidate in frames:
                 words = {w.lower() for w in re.findall(r"[A-Za-z]+", candidate.name)}
-                lus = {str(u).lower() for u in getattr(candidate, "lexical_units", [])[:40]}
+                lus = set(_frame_words(candidate)[:40])
                 if term in words or term in lus:
                     chosen = candidate
                     seed_line = seeding.marker(seed)
@@ -231,15 +305,30 @@ def dream_recombine(steps: int = 1) -> List[str]:
     except Exception:
         seed_line = ""
     out = []
+    seen_pairs: set = set()
     for _ in range(steps):
         frame = chosen or RNG.choice(frames)
         chosen = None
-        roles = _roles(frame, 2) + ["thing", "thing"]
-        out.append("invented · " + RNG.choice(DREAM_FORMS).format(
+        other = _far_frame(frames, frame)
+        if other is None:
+            roles = _roles(frame, 2) + ["thing", "thing"]
+            out.append("invented · " + RNG.choice(DREAM_FORMS).format(
+                frame=frame.name.replace("_", " ").lower(),
+                a=roles[0].replace("_", " ").lower(),
+                b=roles[1].replace("_", " ").lower(),
+                lu=_lu(frame)))
+            continue
+        pair = tuple(sorted((frame.name, other.name)))
+        if pair in seen_pairs:
+            other = RNG.choice([f for f in frames if f.name not in pair] or [other])
+            pair = tuple(sorted((frame.name, other.name)))
+        seen_pairs.add(pair)
+        words_a, words_b = _lu_pair(frame), _lu_pair(other)
+        out.append("invented · " + RNG.choice(DREAM_FORMS_CROSS).format(
             frame=frame.name.replace("_", " ").lower(),
-            a=roles[0].replace("_", " ").lower(),
-            b=roles[1].replace("_", " ").lower(),
-            lu=_lu(frame)))
+            frame_b=other.name.replace("_", " ").lower(),
+            a=words_a[0], b=words_b[0],
+            lu=words_a[0], lu_b=words_b[1]) + f" · [{frame.name.lower()} × {other.name.lower()}]")
     if out and seed_line:
         out[0] = f"[{seed_line}] " + out[0]
     return out
@@ -285,7 +374,9 @@ def memory_pool() -> List[str]:
     memory provider; the built-in files are enrichment that only exists when the host
     is running the built-in provider.
     """
-    said = recall.recent(6)
+    # the whole ring, not the last six: a join needs a pool with enough
+    # different things in it that two of them can actually share a term
+    said = recall.recent(recall.CAP)
     seen = set()
     pool: List[str] = []
     for text in said + memories():
@@ -299,7 +390,15 @@ def memory_pool() -> List[str]:
 
 
 def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
-    """Bring two memories back; say whether the connection is worth joining."""
+    """Bring two memories back and say whether the connection is worth joining.
+
+    The act is to join *only when the join holds*, so one random pair per item is the
+    wrong sampling: with a small pool almost every draw misses, and the state spends its
+    dose reporting that nothing joins. Each item therefore looks across the pool for the
+    best-supported pair and reports the strongest one it found — saying plainly how many
+    pairs it looked at when nothing cleared the bar. The threshold is untouched: this is a
+    search for a join that holds, not a lower bar.
+    """
     pool = memory_pool()
     if len(pool) < 2:
         provider = memory_provider()
@@ -307,18 +406,40 @@ def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
             return ["only one thing to remember so far · a join needs two"]
         if provider in ("unknown", "builtin"):
             return ["no memories yet · nothing said in this conversation, and no built-in MEMORY.md"]
-        # Named, with the reason: an external bank is not on disk, so an empty read
-        # is not "this person has no memories" — it is "this plugin cannot see them".
         return [f"no memories yet · nothing said in this conversation · memory provider is "
                 f"'{provider}', which this state cannot read (built-in MEMORY.md only)"]
-    out = []
+
+    words = {text: _words(text) for text in pool}
+    # a shared "state" or "plugin" is not a connection: it is the same project talking.
+    # A term counts toward a join only if it is rare *within the pool* — rare enough that
+    # two memories carrying it are saying something more than "we are both about this repo".
+    df: Dict[str, int] = {}
+    for ws in words.values():
+        for w in ws:
+            df[w] = df.get(w, 0) + 1
+    common = max(2, len(pool) // 4)
+    distinctive = {w for w, n in df.items() if n <= common}
+    words = {text: ws & distinctive for text, ws in words.items()}
+    best: List[tuple[int, str, str, set]] = []
+    for i, a in enumerate(pool):
+        for b in pool[i + 1:]:
+            shared = words[a] & words[b]
+            best.append((len(shared), a, b, shared))
+    best.sort(key=lambda row: row[0], reverse=True)
+
+    out: List[str] = []
+    used: set = set()
     for _ in range(steps):
-        a, b = RNG.sample(pool, 2)
-        shared = _words(a) & _words(b)
-        if len(shared) >= join_threshold:
-            out.append(f"JOINED · {a[:70]}… ↔ {b[:70]}… · shared: {', '.join(sorted(shared)[:4])}")
+        pick = next((row for row in best if row[1] not in used and row[2] not in used), None)
+        if pick is None:
+            break
+        shared, a, b, common = pick
+        used.update((a, b))
+        if shared >= join_threshold:
+            out.append(f"JOINED · {a[:70]}… ↔ {b[:70]}… · shared: {', '.join(sorted(common)[:4])}")
         else:
-            out.append(f"adjacent · {a[:70]}… ↔ {b[:70]}… · only {len(shared)} shared terms")
+            out.append(f"adjacent · {a[:70]}… ↔ {b[:70]}… · only {shared} shared distinct "
+                       f"terms (best of {len(best)} pairs, needs {join_threshold})")
     return out
 
 

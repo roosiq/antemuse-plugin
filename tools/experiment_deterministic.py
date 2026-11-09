@@ -162,6 +162,38 @@ def summarise(state: str, dose: int, trials: int, vocab: set[str]) -> dict:
     }
 
 
+PAIR = re.compile(r"\[([a-z_\-]+) × ([a-z_\-]+)\]")
+
+
+def dream_structure(trials: int) -> dict:
+    """Dream's goal is recombination, so its measure is which frames got crossed.
+
+    Novelty of words says nothing here: the invention is the *pair*, and the question is
+    whether the pairs are far apart (two worlds never asked to touch) and whether the state
+    keeps producing new ones.
+    """
+    pairs: list[tuple[str, str]] = []
+    for _ in range(trials):
+        for line in sources.dream_recombine(2):
+            found = PAIR.search(line or "")
+            if found:
+                pairs.append(tuple(sorted(found.groups())))
+    if not pairs:
+        return {"pairs": 0}
+    frames = {f.name.lower(): f for f in sources._frames()}
+    overlaps = []
+    for a, b in pairs:
+        fa, fb = frames.get(a), frames.get(b)
+        if fa is None or fb is None:
+            continue
+        la, lb = sources._frame_lus(fa), sources._frame_lus(fb)
+        overlaps.append(len(la & lb) / max(1, len(la | lb)))
+    return {"pairs": len(pairs), "distinct_pairs": len(set(pairs)),
+            "distinct_share": len(set(pairs)) / len(pairs),
+            "mean_overlap": (sum(overlaps) / len(overlaps)) if overlaps else None,
+            "zero_overlap_share": (sum(1 for o in overlaps if o == 0) / len(overlaps)) if overlaps else None}
+
+
 def wilson(hits: int, n: int) -> tuple[float, float, float]:
     if n == 0:
         return (0.0, 0.0, 0.0)
@@ -204,6 +236,16 @@ def main() -> int:
                   f"novel {got['novel_rate']:>5.0%} · fresh {got['fresh_rate']:>5.0%} · "
                   f"by position [{trail}] · "
                   f"distinct lines {got['diversity']:.0%}" if got["diversity"] is not None else "")
+
+    if "dream" in chosen:
+        st = dream_structure(max(20, args.trials // 2))
+        if st.get("pairs"):
+            overlap = st["mean_overlap"]
+            print(f"\ndream · structure: {st['pairs']} recombinations · "
+                  f"{st['distinct_pairs']} distinct pairs ({st['distinct_share']:.0%}) · "
+                  f"mean frame overlap {'n/a' if overlap is None else f'{overlap:.4f}'} · "
+                  f"disjoint pairs {st['zero_overlap_share']:.0%}")
+            results.append({"state": "dream", "structure": st})
 
     path = Path(args.json)
     path.parent.mkdir(parents=True, exist_ok=True)

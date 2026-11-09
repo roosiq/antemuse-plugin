@@ -450,6 +450,19 @@ WordNet path similarity, so it jumps rather than steps. Measured over twenty hop
 from `hand`: mean path similarity 0.34 for a wander hop versus 0.05 for an outer
 hop (README), approximately seven times farther.
 
+### 8.2a What each state is for, and the measure that fits it
+
+The states do not share one goal, so they do not share one number. Written down because
+the first experiment measured all five with novelty and that was wrong for four of them.
+
+| state | goal (from its directive) | the measure that fits | measured 2026-11-08 |
+|---|---|---|---|
+| walk | work continues, the frame is elsewhere | frame distance and non-interference — **not** novelty | mean path similarity 0.05 for a far jump vs 0.34 for an adjacent hop |
+| daydream | two memories, join only if it holds | join rate on distinctive terms | 6 % when one random pair was drawn per item; 100 % on a 25-memory pool once the state searched for a pair that holds |
+| doomscroll | random feed, consume without synthesizing | distinct lines across sessions | 48/22/11 % → 90/83/83 % at dose 1/3/6 after randomizing sources and refusing repeats |
+| dream | recombine stored concepts into new things | frame-pair distance and pair distinctness | 100 % distinct pairs, mean frame overlap 0.0000, 100 % disjoint |
+| unstuck | name ONE direction | exactly one, grounded, actionable | one at dose 1, memory-fed, with evidence and a first move |
+
 ### 8.3 Policy and cursors
 
 `GraphWalk` owns: which relations count, the seed mode (`continue`, `random`,
@@ -678,7 +691,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 807 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 816 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.

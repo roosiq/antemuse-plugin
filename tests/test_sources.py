@@ -49,7 +49,8 @@ def test_dream_recombines_frames():
         pytest.skip("framenet corpus not installed")
     lines = sources.dream_recombine(3)
     assert len(lines) == 3
-    assert all(l.startswith("invented · ") for l in lines)
+    # a memory seed may prefix the first line now that the seed path reads lexical units
+    assert all("invented · " in l for l in lines), lines
     assert len({l for l in lines}) >= 2
 
 
