@@ -1,0 +1,57 @@
+  A dev-lighthouse-door seed=11: 33 words
+  B dev-lighthouse-door seed=11: 139 words
+  D dev-lighthouse-door seed=11: 39 words
+  A dev-lighthouse-door seed=12: 139 words
+  B dev-lighthouse-door seed=12: 135 words
+  D dev-lighthouse-door seed=12: 138 words
+  A dev-lighthouse-door seed=13: 137 words
+  B dev-lighthouse-door seed=13: 141 words
+  D dev-lighthouse-door seed=13: 168 words
+  A dev-late-bus-ticket seed=11: 139 words
+  B dev-late-bus-ticket seed=11: 142 words
+  D dev-late-bus-ticket seed=11: 122 words
+  A dev-late-bus-ticket seed=12: 142 words
+  B dev-late-bus-ticket seed=12: 136 words
+  D dev-late-bus-ticket seed=12: 165 words
+  A dev-late-bus-ticket seed=13: 128 words
+  B dev-late-bus-ticket seed=13: 139 words
+  D dev-late-bus-ticket seed=13: 223 words
+Could not reach the Hub (Cannot reach https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2: offline mode is enabled. To disable it, please unset the `HF_HUB_OFFLINE` environment variable.). Using cached commit hash for 'sentence-transformers/all-MiniLM-L6-v2'.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 24869.80it/s]
+  judge AvD dev-lighthouse-door#11 reflection/beam-1.0-501b: None
+  judge AvD dev-lighthouse-door#11 deepseek-v4.1-flash: None
+  judge AvD dev-lighthouse-door#11 upstage/solar-mini4: D
+  judge BvD dev-lighthouse-door#11 reflection/beam-1.0-501b: None
+  judge BvD dev-lighthouse-door#11 deepseek-v4.1-flash: None
+  judge BvD dev-lighthouse-door#11 upstage/solar-mini4: D
+  judge AvD dev-lighthouse-door#12 deepseek-v4.1-flash: D
+  judge AvD dev-lighthouse-door#12 reflection/beam-1.0-501b: D  judge AvD dev-lighthouse-door#12 upstage/solar-mini4: D
+
+  judge BvD dev-lighthouse-door#12 reflection/beam-1.0-501b: D
+  judge BvD dev-lighthouse-door#12 deepseek-v4.1-flash: D
+  judge BvD dev-lighthouse-door#12 upstage/solar-mini4: D
+  judge BvD dev-lighthouse-door#13 upstage/solar-mini4: None
+  judge AvD dev-lighthouse-door#13 deepseek-v4.1-flash: D
+  judge AvD dev-lighthouse-door#13 upstage/solar-mini4: D
+  judge AvD dev-late-bus-ticket#11 upstage/solar-mini4: None
+  judge BvD dev-lighthouse-door#13 deepseek-v4.1-flash: D
+  judge AvD dev-lighthouse-door#13 reflection/beam-1.0-501b: D
+  judge AvD dev-late-bus-ticket#11 reflection/beam-1.0-501b: None
+  judge AvD dev-late-bus-ticket#11 deepseek-v4.1-flash: D
+  judge AvD dev-late-bus-ticket#12 deepseek-v4.1-flash: None
+  judge BvD dev-late-bus-ticket#11 reflection/beam-1.0-501b: None
+  judge BvD dev-late-bus-ticket#11 deepseek-v4.1-flash: D
+  judge BvD dev-late-bus-ticket#12 deepseek-v4.1-flash: D
+  judge AvD dev-late-bus-ticket#12 reflection/beam-1.0-501b: None
+  judge BvD dev-lighthouse-door#13 reflection/beam-1.0-501b: D
+  judge AvD dev-late-bus-ticket#12 upstage/solar-mini4: None
+  judge BvD dev-late-bus-ticket#12 reflection/beam-1.0-501b: None
+  judge BvD dev-late-bus-ticket#11 upstage/solar-mini4: D
+  judge BvD dev-late-bus-ticket#12 upstage/solar-mini4: D
+  judge AvD dev-late-bus-ticket#13 reflection/beam-1.0-501b: A
+  judge AvD dev-late-bus-ticket#13 deepseek-v4.1-flash: None
+  judge AvD dev-late-bus-ticket#13 upstage/solar-mini4: D
+  judge BvD dev-late-bus-ticket#13 reflection/beam-1.0-501b: None
+  judge BvD dev-late-bus-ticket#13 deepseek-v4.1-flash: None
+  judge BvD dev-late-bus-ticket#13 upstage/solar-mini4: D
+wrote /home/ryan/antemuse-plugin/experiments/before-after/report-minimax-minimax-m3-1-flash-w130.md

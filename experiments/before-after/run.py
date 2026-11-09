@@ -44,6 +44,7 @@ LOCAL = {"endpoint": "http://127.0.0.1:8090/v1", "model": "Qwen3.8 Flash Next",
 JUDGES = [
     {"name": "reflection/beam-1.0-501b", "model": "reflection/beam-1.0-501b-a23b:free"},
     {"name": "deepseek-v4.1-flash", "model": "deepseek/deepseek-v4.1-flash-1017"},
+    {"name": "upstage/solar-mini4", "model": "upstage/solar-mini4:free"},
 ]
 NOUS = "https://inference-api.nousresearch.com/v1"
 SEEDS = [11, 12, 13]
@@ -62,7 +63,7 @@ def _token() -> str | None:
 
 def _chat(endpoint: str, model: str, prompt: str, *, max_tokens: int = 900,
           temperature: float = 1.0, seed: int | None = None, extra: dict | None = None,
-          attempts: int = 3) -> str:
+          attempts: int = 3, timeout: int = 240) -> str:
     body = {"model": model, "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature, "max_tokens": max_tokens}
     if seed is not None:
@@ -77,7 +78,7 @@ def _chat(endpoint: str, model: str, prompt: str, *, max_tokens: int = 900,
         req = urllib.request.Request(endpoint.rstrip("/") + "/chat/completions",
                                      data=json.dumps(body).encode(), headers=headers)
         try:
-            out = json.load(urllib.request.urlopen(req, timeout=240))
+            out = json.load(urllib.request.urlopen(req, timeout=timeout))
             msg = out["choices"][0]["message"]
             text = (msg.get("content") or "").strip()
             if text:
@@ -90,6 +91,7 @@ def _chat(endpoint: str, model: str, prompt: str, *, max_tokens: int = 900,
 
 
 MODEL = dict(LOCAL)
+WORD_TARGET: int | None = None
 
 
 def transport(req: dict) -> dict:
@@ -98,6 +100,8 @@ def transport(req: dict) -> dict:
     if req.get("material"):
         parts.append(req["material"])
     parts.append(req["brief"])
+    if WORD_TARGET:
+        parts.append(f"Write the paragraph in {WORD_TARGET - 10}-{WORD_TARGET + 10} words.")
     prompt = "\n\n".join(parts)
     text = _chat(MODEL["endpoint"], MODEL["model"], prompt, seed=req.get("seed"),
                  extra=MODEL.get("extra"))
@@ -181,9 +185,9 @@ def _save_judge_cache(cache: dict) -> None:
 
 def judge_both_orders(model: str, brief: str, a: str, b: str) -> dict:
     first = _choice(_chat(NOUS, model, JUDGE_PROMPT.format(brief=brief, a=a, b=b),
-                          temperature=0.0, max_tokens=400))
+                          temperature=0.0, max_tokens=500, attempts=2, timeout=90))
     second = _choice(_chat(NOUS, model, JUDGE_PROMPT.format(brief=brief, a=b, b=a),
-                           temperature=0.0, max_tokens=400))
+                           temperature=0.0, max_tokens=500, attempts=2, timeout=90))
     flipped = {"A": "B", "B": "A", None: None}
     ok = first is not None and first == flipped[second]
     return {"choice": first if ok else None, "consistent": ok}
@@ -198,7 +202,8 @@ def run(seeds: list[int]) -> dict:
         for seed in seeds:
             for cond in CONDITIONS:
                 rec = harness.run_condition(
-                    cond, task, model=MODEL["model"], prompt_version="before-after-1",
+                    cond, task, model=MODEL["model"],
+                    prompt_version=f"before-after-1{'-w' + str(WORD_TARGET) if WORD_TARGET else ''}",
                     source_version="antemuse-local", seed=seed, transport=transport,
                     cache_path=CACHE)
                 if rec["status"] != "ok":
@@ -231,37 +236,42 @@ def analyse(data: dict) -> dict:
         per_condition[cond]["distance_to_baseline"] = distance_to_pool(texts, a_texts)
 
     # blind pairwise: A vs D and B vs D, both orders, two judges
-    judges = {j["name"]: j["model"] for j in JUDGES}
-    pairs = []
+    # a model never judges its own outputs; keep at least two other families
+    judges = {j["name"]: j["model"] for j in JUDGES if j["model"] != MODEL["model"]}
+    stats_judges = sorted(judges)
+    jobs = []
     for t in tasks:
         for s in seeds:
             for left, right in (("A", "D"), ("B", "D")):
-                a_rec = records[(t["id"], left, s)]
-                b_rec = records[(t["id"], right, s)]
-                a_text = a_rec["candidates"][0]["text"]
-                b_text = b_rec["candidates"][0]["text"]
+                a_text = records[(t["id"], left, s)]["candidates"][0]["text"]
+                b_text = records[(t["id"], right, s)]["candidates"][0]["text"]
                 for jname, jmodel in judges.items():
-                    key = f"{jname}|{MODEL['model']}|{t['id']}|{s}|{left}|{right}"
-                    verdict = _load_judge_cache().get(key)
-                    if verdict is None:
-                        try:
-                            verdict = judge_both_orders(jmodel, t["brief"], a_text, b_text)
-                        except Exception as exc:  # noqa: BLE001
-                            print(f"  judge {jname} failed: {exc}", file=sys.stderr)
-                            verdict = {"choice": None, "consistent": False}
-                        cache = _load_judge_cache()
-                        cache[key] = verdict
-                        _save_judge_cache(cache)
-                    # map back to condition names
-                    winner = None
-                    if verdict["choice"] == "A":
-                        winner = left
-                    elif verdict["choice"] == "B":
-                        winner = right
-                    pairs.append({"task": t["id"], "seed": s, "left": left, "right": right,
-                                  "judge": jname, "winner": winner,
-                                  "consistent": verdict["consistent"]})
-                    print(f"  judge {left}v{right} {t['id']}#{s} {jname}: {winner}", file=sys.stderr)
+                    jobs.append((t["id"], t["brief"], s, left, right, jname, jmodel, a_text, b_text))
+
+    lock = __import__("threading").Lock()
+
+    def work(job):
+        task_id, brief, seed, left, right, jname, jmodel, a_text, b_text = job
+        key = f"{jname}|{MODEL['model']}|{task_id}|{seed}|{left}|{right}"
+        with lock:
+            verdict = _load_judge_cache().get(key)
+        if verdict is None:
+            try:
+                verdict = judge_both_orders(jmodel, brief, a_text, b_text)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  judge {jname} failed on {task_id}#{seed}: {exc}", file=sys.stderr)
+                verdict = {"choice": None, "consistent": False}
+            with lock:
+                cache = _load_judge_cache()
+                cache[key] = verdict
+                _save_judge_cache(cache)
+        winner = left if verdict["choice"] == "A" else (right if verdict["choice"] == "B" else None)
+        print(f"  judge {left}v{right} {task_id}#{seed} {jname}: {winner}", file=sys.stderr)
+        return {"task": task_id, "seed": seed, "left": left, "right": right,
+                "judge": jname, "winner": winner, "consistent": verdict["consistent"]}
+
+    with __import__("concurrent.futures").futures.ThreadPoolExecutor(max_workers=6) as pool:
+        pairs = list(pool.map(work, jobs))
 
     winrates = {}
     for left, right in (("A", "D"), ("B", "D")):
@@ -273,14 +283,15 @@ def analyse(data: dict) -> dict:
     positional = sum(1 for p in pairs if not p["consistent"])
     return {"per_condition": per_condition, "pairs": pairs,
             "winrates": winrates, "positional_pairs": positional, "n_pairs": len(pairs),
-            "seeds": seeds}
+            "seeds": seeds, "judges": stats_judges}
 
 
 def render(data: dict, stats: dict) -> str:
     model = next(iter(data["records"].values()))["model"]
+    target = f" Every condition is asked for {WORD_TARGET - 10}-{WORD_TARGET + 10} words." if WORD_TARGET else ""
     lines = ["# Antemuse — before / after", "",
              f"Two development tasks × 3 seeds × 3 conditions, one model (`{model}`), "
-             "identical token budget.", "",
+             f"identical token budget.{target}", "",
              "| condition | what changes | n | mean words | mean pairwise distance | distance to baseline |",
              "|---|---|---|---|---|---|"]
     for cond in CONDITIONS:
@@ -293,7 +304,8 @@ def render(data: dict, stats: dict) -> str:
         lines.append(f"- **{key}**: {w['wins']}/{w['n']} consistent decisions "
                      f"({w['rate']})")
     lines += [f"- positional (order-inconsistent) decisions: {stats['positional_pairs']}"
-              f"/{stats['n_pairs']}", ""]
+              f"/{stats['n_pairs']}",
+              f"- judges: {', '.join(stats.get('judges', []))} (the model under test never judges itself)", ""]
 
     lines += ["## Example — same task, same seed", ""]
     task = data["tasks"][0]
@@ -319,16 +331,21 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, nargs="+", default=SEEDS)
     ap.add_argument("--report-only", action="store_true")
+    ap.add_argument("--word-target", type=int, default=None,
+                    help="force a length range on every condition so length cannot drive the result")
     ap.add_argument("--model", default="local",
                     help="'local' or a Nous model id (e.g. meituan/longcat-2.5:free)")
     args = ap.parse_args()
+    global WORD_TARGET
+    WORD_TARGET = args.word_target
     if args.model != "local":
         global RESULTS, REPORT
         MODEL.clear()
         MODEL.update({"endpoint": NOUS, "model": args.model})
         slug = re.sub(r"[^a-z0-9]+", "-", args.model.lower()).strip("-")
-        RESULTS = HERE / f"results-{slug}.json"
-        REPORT = HERE / f"report-{slug}.md"
+        suffix = f"-w{WORD_TARGET}" if WORD_TARGET else ""
+        RESULTS = HERE / f"results-{slug}{suffix}.json"
+        REPORT = HERE / f"report-{slug}{suffix}.md"
 
     if args.report_only and RESULTS.exists():
         payload = json.loads(RESULTS.read_text())
@@ -346,6 +363,7 @@ def main() -> int:
         "generated_at": __import__("datetime").datetime.now(
             __import__("datetime").timezone.utc).isoformat(),
         "stats": stats,
+        "word_target": WORD_TARGET,
         "records": {f"{k[0]}|{k[1]}|{k[2]}": rec for k, rec in data["records"].items()},
     }
     RESULTS.write_text(json.dumps(payload, indent=1))

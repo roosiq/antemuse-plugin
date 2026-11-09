@@ -1,0 +1,46 @@
+  A dev-lighthouse-door seed=11: 102 words
+  B dev-lighthouse-door seed=11: 97 words
+  D dev-lighthouse-door seed=11: 124 words
+  A dev-lighthouse-door seed=12: 94 words
+  B dev-lighthouse-door seed=12: 154 words
+  D dev-lighthouse-door seed=12: 196 words
+  A dev-lighthouse-door seed=13: 84 words
+  B dev-lighthouse-door seed=13: 64 words
+  D dev-lighthouse-door seed=13: 118 words
+  A dev-late-bus-ticket seed=11: 61 words
+  B dev-late-bus-ticket seed=11: 49 words
+  D dev-late-bus-ticket seed=11: 143 words
+  A dev-late-bus-ticket seed=12: 90 words
+  B dev-late-bus-ticket seed=12: 83 words
+  D dev-late-bus-ticket seed=12: 125 words
+  A dev-late-bus-ticket seed=13: 102 words
+  B dev-late-bus-ticket seed=13: 88 words
+  D dev-late-bus-ticket seed=13: 143 words
+Could not reach the Hub (Cannot reach https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2: offline mode is enabled. To disable it, please unset the `HF_HUB_OFFLINE` environment variable.). Using cached commit hash for 'sentence-transformers/all-MiniLM-L6-v2'.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 24211.92it/s]
+  judge AvD dev-lighthouse-door#11 reflection/beam-1.0-501b: None
+  judge AvD dev-lighthouse-door#11 upstage/solar-mini4: None
+  judge AvD dev-lighthouse-door#12 reflection/beam-1.0-501b: D
+  judge BvD dev-lighthouse-door#11 upstage/solar-mini4: None
+  judge BvD dev-lighthouse-door#12 reflection/beam-1.0-501b: B
+  judge BvD dev-lighthouse-door#11 reflection/beam-1.0-501b: None
+  judge BvD dev-lighthouse-door#12 upstage/solar-mini4: B
+  judge AvD dev-lighthouse-door#13 reflection/beam-1.0-501b: D
+  judge AvD dev-lighthouse-door#12 upstage/solar-mini4: D
+  judge AvD dev-lighthouse-door#13 upstage/solar-mini4: D
+  judge BvD dev-lighthouse-door#13 reflection/beam-1.0-501b: D
+  judge BvD dev-lighthouse-door#13 upstage/solar-mini4: None
+  judge AvD dev-late-bus-ticket#11 reflection/beam-1.0-501b: A
+  judge AvD dev-late-bus-ticket#11 upstage/solar-mini4: D
+  judge BvD dev-late-bus-ticket#11 reflection/beam-1.0-501b: D
+  judge BvD dev-late-bus-ticket#11 upstage/solar-mini4: D
+  judge AvD dev-late-bus-ticket#13 upstage/solar-mini4: D
+  judge BvD dev-late-bus-ticket#12 upstage/solar-mini4: D
+  judge AvD dev-late-bus-ticket#12 upstage/solar-mini4: D
+  judge BvD dev-late-bus-ticket#13 upstage/solar-mini4: D
+  judge BvD dev-late-bus-ticket#12 reflection/beam-1.0-501b: D
+  judge reflection/beam-1.0-501b failed on dev-late-bus-ticket#13: empty content (reasoning only)
+  judge AvD dev-late-bus-ticket#13 reflection/beam-1.0-501b: None
+  judge AvD dev-late-bus-ticket#12 reflection/beam-1.0-501b: D
+  judge BvD dev-late-bus-ticket#13 reflection/beam-1.0-501b: None
+wrote /home/ryan/antemuse-plugin/experiments/before-after/report-deepseek-deepseek-v4-1-flash-1017.md

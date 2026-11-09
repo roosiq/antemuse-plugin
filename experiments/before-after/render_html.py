@@ -60,6 +60,10 @@ def block(payload: dict) -> str:
     return f"""
 <section>
   <h2>{esc(model)}</h2>
+  <p class=muted>{'length-controlled — every condition asked for '
+                  + str(payload.get('word_target', 130) - 10) + '–'
+                  + str(payload.get('word_target', 130) + 10) + ' words'
+                  if payload.get('word_target') else 'no length constraint'}</p>
   <table>
     <thead><tr><th>condition</th><th>n</th><th>mean words</th><th>mean pairwise distance</th>
     <th>distance to baseline</th></tr></thead>

@@ -1,0 +1,1397 @@
+{
+ "generated_at": "2026-11-09T18:04:40.449754+00:00",
+ "stats": {
+  "per_condition": {
+   "A": {
+    "mean_pairwise": 0.548,
+    "max_pairwise": 0.819,
+    "min_pairwise": 0.201,
+    "n": 6,
+    "mean_words": 84.8,
+    "distance_to_baseline": 0.457
+   },
+   "B": {
+    "mean_pairwise": 0.461,
+    "max_pairwise": 0.682,
+    "min_pairwise": 0.215,
+    "n": 6,
+    "mean_words": 92.0,
+    "distance_to_baseline": 0.476
+   },
+   "D": {
+    "mean_pairwise": 0.579,
+    "max_pairwise": 0.745,
+    "min_pairwise": 0.265,
+    "n": 6,
+    "mean_words": 85.8,
+    "distance_to_baseline": 0.53
+   }
+  },
+  "pairs": [
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 11,
+    "left": "A",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 11,
+    "left": "A",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": "D",
+    "consistent": true
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 11,
+    "left": "A",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 11,
+    "left": "B",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 11,
+    "left": "B",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": "D",
+    "consistent": true
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 11,
+    "left": "B",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 12,
+    "left": "A",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 12,
+    "left": "A",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 12,
+    "left": "A",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 12,
+    "left": "B",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 12,
+    "left": "B",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": "B",
+    "consistent": true
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 12,
+    "left": "B",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": "B",
+    "consistent": true
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 13,
+    "left": "A",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": "A",
+    "consistent": true
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 13,
+    "left": "A",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 13,
+    "left": "A",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 13,
+    "left": "B",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 13,
+    "left": "B",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": "B",
+    "consistent": true
+   },
+   {
+    "task": "dev-lighthouse-door",
+    "seed": 13,
+    "left": "B",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 11,
+    "left": "A",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 11,
+    "left": "A",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": "D",
+    "consistent": true
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 11,
+    "left": "A",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 11,
+    "left": "B",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 11,
+    "left": "B",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": "D",
+    "consistent": true
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 11,
+    "left": "B",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 12,
+    "left": "A",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 12,
+    "left": "A",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 12,
+    "left": "A",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": "A",
+    "consistent": true
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 12,
+    "left": "B",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 12,
+    "left": "B",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 12,
+    "left": "B",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 13,
+    "left": "A",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 13,
+    "left": "A",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 13,
+    "left": "A",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 13,
+    "left": "B",
+    "right": "D",
+    "judge": "reflection/beam-1.0-501b",
+    "winner": "D",
+    "consistent": true
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 13,
+    "left": "B",
+    "right": "D",
+    "judge": "deepseek-v4.1-flash",
+    "winner": "B",
+    "consistent": true
+   },
+   {
+    "task": "dev-late-bus-ticket",
+    "seed": 13,
+    "left": "B",
+    "right": "D",
+    "judge": "upstage/solar-mini4",
+    "winner": null,
+    "consistent": false
+   }
+  ],
+  "winrates": {
+   "D_vs_A": {
+    "wins": 2,
+    "n": 4,
+    "rate": 0.5
+   },
+   "D_vs_B": {
+    "wins": 3,
+    "n": 7,
+    "rate": 0.429
+   }
+  },
+  "positional_pairs": 25,
+  "n_pairs": 36,
+  "seeds": [
+   11,
+   12,
+   13
+  ],
+  "judges": [
+   "deepseek-v4.1-flash",
+   "reflection/beam-1.0-501b",
+   "upstage/solar-mini4"
+  ]
+ },
+ "records": {
+  "dev-lighthouse-door|A|11": {
+   "cache_status": "hit",
+   "candidates": [
+    {
+     "branch": 0,
+     "candidate_id": "A-0",
+     "error": null,
+     "finish_reason": null,
+     "status": "ok",
+     "text": "The door was painted the same salt-white as the lighthouse, though the cliff around it was black stone. Its brass knob was warm. The keeper stood for a moment with his hand on it, listening to the sea drag pebbles across the shore below. Then something knocked from the other side: three quick taps, a pause, and two more. It was the signal his wife used to give when she came home with her hands full. She had been buried eleven years. He turned the knob, and the door opened inward onto a flight of stairs climbing through the rock, lit by the slow sweep of a lamp that should have been shining out to sea.",
+     "truncated": false,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   ],
+   "condition": "A",
+   "created_by": "offline_runner",
+   "error": null,
+   "instruction": "Answer the brief as you normally would.",
+   "model": "openai/gpt-6.1-terra",
+   "prompt_version": "before-after-1",
+   "record_schema": "record-2",
+   "run_id": "run-a68f4401114bc58f8cbc9b206efce2f7",
+   "seed": 11,
+   "selected_candidate_id": "A-0",
+   "source_version": "antemuse-local",
+   "status": "ok",
+   "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "task_id": "dev-lighthouse-door",
+   "transport_calls": 1,
+   "truncated": false,
+   "truncated_candidates": [],
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   }
+  },
+  "dev-lighthouse-door|B|11": {
+   "cache_status": "hit",
+   "candidates": [
+    {
+     "branch": 0,
+     "candidate_id": "B-0",
+     "error": null,
+     "finish_reason": null,
+     "status": "ok",
+     "text": "The door was painted the blue of a bruise, and its brass knob turned beneath his hand with the warm resistance of a living wrist. Beyond it lay the lamp room, exactly as he had left it: the kettle steaming, the logbook open, the great lens turning its patient eye over the sea. A man stood at the window with his back to the door. He wore the keeper\u2019s coat, and when the keeper called out, the man lifted one hand\u2014not in greeting, but in warning. The beam swept across the water, and for one bright second the keeper saw what had been following it home.",
+     "truncated": false,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   ],
+   "condition": "B",
+   "created_by": "offline_runner",
+   "error": null,
+   "instruction": "Answer the brief, but make it creative.",
+   "model": "openai/gpt-6.1-terra",
+   "prompt_version": "before-after-1",
+   "record_schema": "record-2",
+   "run_id": "run-fcd4459aa19f074552deca4f1824023e",
+   "seed": 11,
+   "selected_candidate_id": "B-0",
+   "source_version": "antemuse-local",
+   "status": "ok",
+   "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "task_id": "dev-lighthouse-door",
+   "transport_calls": 1,
+   "truncated": false,
+   "truncated_candidates": [],
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   }
+  },
+  "dev-lighthouse-door|D|11": {
+   "cache_status": "hit",
+   "candidates": [
+    {
+     "branch": 0,
+     "candidate_id": "D-0",
+     "error": null,
+     "finish_reason": null,
+     "status": "ok",
+     "text": "The keeper climbed down to it through the spray. A ring of white shells had been pressed into the rock around the door, each one marking a crack; as he watched, the cracks narrowed and the shells sank out of sight. He called to the assistant above, raising his voice against the surf until the words broke into a shrill cry. The door opened a finger\u2019s width. In the darkness beyond it, another hand gripped the edge\u2014his own hand, with yesterday\u2019s cut still fresh across the knuckles.",
+     "truncated": false,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   ],
+   "condition": "D",
+   "created_by": "offline_runner",
+   "error": null,
+   "instruction": "Answer the brief as you normally would.",
+   "model": "openai/gpt-6.1-terra",
+   "prompt_version": "before-after-1",
+   "record_schema": "record-2",
+   "run_id": "run-e8e917de6846e2a3212cba0e62b65a70",
+   "seed": 11,
+   "selected_candidate_id": "D-0",
+   "source_version": "antemuse-local",
+   "sources": [
+    "collider_lombard_effect_dynamics",
+    "collider_selective_autophagy"
+   ],
+   "status": "ok",
+   "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "task_id": "dev-lighthouse-door",
+   "transport_calls": 1,
+   "truncated": false,
+   "truncated_candidates": [],
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   }
+  },
+  "dev-lighthouse-door|A|12": {
+   "cache_status": "hit",
+   "candidates": [
+    {
+     "branch": 0,
+     "candidate_id": "A-0",
+     "error": null,
+     "finish_reason": null,
+     "status": "ok",
+     "text": "The door was painted the same white as the lighthouse, though its brass handle was green with salt. The keeper laid his palm against it and felt, through the wood, three slow knocks. He stepped back. Far below, a wave broke against the cliff, and the door shuddered on its hinges. Then a voice, muffled but unmistakably his own, called from the other side: \u201cDon\u2019t let me out until the light goes dark.\u201d",
+     "truncated": false,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   ],
+   "condition": "A",
+   "created_by": "offline_runner",
+   "error": null,
+   "instruction": "Answer the brief as you normally would.",
+   "model": "openai/gpt-6.1-terra",
+   "prompt_version": "before-after-1",
+   "record_schema": "record-2",
+   "run_id": "run-10591d3b727ca49ffcc24a903e4f2a69",
+   "seed": 12,
+   "selected_candidate_id": "A-0",
+   "source_version": "antemuse-local",
+   "status": "ok",
+   "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "task_id": "dev-lighthouse-door",
+   "transport_calls": 1,
+   "truncated": false,
+   "truncated_candidates": [],
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   }
+  },
+  "dev-lighthouse-door|B|12": {
+   "cache_status": "hit",
+   "candidates": [
+    {
+     "branch": 0,
+     "candidate_id": "B-0",
+     "error": null,
+     "finish_reason": null,
+     "status": "ok",
+     "text": "The door was painted the same red as the keeper\u2019s childhood bedroom, right down to the thumbprint she had left in the wet paint. She put her hand over it now; it fit. The latch lifted, and she found herself looking into the lamp room, though the stairs were far above her and the sea beyond the windows was black with night. At the desk sat her father, dead these twenty years, writing in the logbook. Without turning, he said, \u201cYou\u2019ve come early. That\u2019s either very good or very bad.\u201d",
+     "truncated": false,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   ],
+   "condition": "B",
+   "created_by": "offline_runner",
+   "error": null,
+   "instruction": "Answer the brief, but make it creative.",
+   "model": "openai/gpt-6.1-terra",
+   "prompt_version": "before-after-1",
+   "record_schema": "record-2",
+   "run_id": "run-73ec0ef1105dacd93b57d80bb28b6be9",
+   "seed": 12,
+   "selected_candidate_id": "B-0",
+   "source_version": "antemuse-local",
+   "status": "ok",
+   "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "task_id": "dev-lighthouse-door",
+   "transport_calls": 1,
+   "truncated": false,
+   "truncated_candidates": [],
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   }
+  },
+  "dev-lighthouse-door|D|12": {
+   "run_id": "run-af3c75bf4598b8211111881bd49914aa",
+   "condition": "D",
+   "task_id": "dev-lighthouse-door",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 12,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief as you normally would.",
+   "task": {
+    "id": "dev-lighthouse-door",
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "candidates": [
+    {
+     "candidate_id": "D-0",
+     "branch": 0,
+     "text": "The keeper climbed down to it with a lantern, shouting for the supply boat, though the wind caught his voice and stretched it into a thin, meaningless cry. A white mark had been painted on the door: a circle with a line through it, like the one he used to label broken equipment. At its foot lay the cracked lens he had thrown away last winter. As he watched, the door opened a finger\u2019s width, and the lens slid inside.",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "D-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null,
+   "sources": [
+    "collider_lombard_effect_dynamics",
+    "collider_selective_autophagy"
+   ]
+  },
+  "dev-lighthouse-door|A|13": {
+   "cache_status": "hit",
+   "candidates": [
+    {
+     "branch": 0,
+     "candidate_id": "A-0",
+     "error": null,
+     "finish_reason": null,
+     "status": "ok",
+     "text": "The keeper found it at low tide, set into the cliff where the rock should have been sheer. It was painted the same salt-blistered red as the lighthouse door, and its brass handle was warm beneath his hand. He might have mistaken it for some forgotten storehouse entrance, had there not been a narrow pane of glass at eye level. Through it he could see the lamp room above: the great lens turning, the rain needling the windows, and himself standing motionless beside the lamp, watching a door in the floor.",
+     "truncated": false,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   ],
+   "condition": "A",
+   "created_by": "offline_runner",
+   "error": null,
+   "instruction": "Answer the brief as you normally would.",
+   "model": "openai/gpt-6.1-terra",
+   "prompt_version": "before-after-1",
+   "record_schema": "record-2",
+   "run_id": "run-d19a654e3cd5c63829f289ab18e50a37",
+   "seed": 13,
+   "selected_candidate_id": "A-0",
+   "source_version": "antemuse-local",
+   "status": "ok",
+   "task": {
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "id": "dev-lighthouse-door",
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "task_id": "dev-lighthouse-door",
+   "transport_calls": 1,
+   "truncated": false,
+   "truncated_candidates": [],
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   }
+  },
+  "dev-lighthouse-door|B|13": {
+   "run_id": "run-05a3986286f11eb27d42dc52e6da4d69",
+   "condition": "B",
+   "task_id": "dev-lighthouse-door",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 13,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief, but make it creative.",
+   "task": {
+    "id": "dev-lighthouse-door",
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "candidates": [
+    {
+     "candidate_id": "B-0",
+     "branch": 0,
+     "text": "The keeper found the door at low tide, set into the cliff between two seams of black rock. Its paint was the same red as the lighthouse stairs, and a brass knocker shaped like an ear listened from its centre. He knocked once. From the other side came the slow scrape of a chair, then his own voice, older and impatient: \u201cAbout time. The light\u2019s nearly gone out.\u201d He looked up. High above, the lamp was burning steadily, though its beam had begun to sweep the sea in the wrong direction.",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "B-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null
+  },
+  "dev-lighthouse-door|D|13": {
+   "run_id": "run-f5ed61beec56e67b42f7bedba622b4ba",
+   "condition": "D",
+   "task_id": "dev-lighthouse-door",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 13,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief as you normally would.",
+   "task": {
+    "id": "dev-lighthouse-door",
+    "brief": "A lighthouse keeper finds a door in the cliff below the lamp room that was not there yesterday. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the door implies a consequence the keeper must act on",
+     "the paragraph keeps the sea and the lamp in view",
+     "something is at stake for the keeper personally"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The keeper set the oil can down and counted the door twice, the way he counted ships. It was blue, salt-blistered, and hinged on the seaward side, which meant whoever built it had worked from the water."
+   },
+   "candidates": [
+    {
+     "candidate_id": "D-0",
+     "branch": 0,
+     "text": "The keeper climbed down to it at low tide, when the gulls\u2019 cries rode high above the low grind of the surf. Between them came a steady humming from the door, as if it had found a space of its own in the noise. He called out, and the sea rose against his voice until his words came back as a shapeless shout. Then the humming stopped. The door opened a finger\u2019s width, and through the crack he saw his lamp room, lit and empty, with its windows looking out on a calm, unfamiliar shore.",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "D-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null,
+   "sources": [
+    "collider_acoustic_niche_hypothesis",
+    "collider_lombard_effect_dynamics"
+   ]
+  },
+  "dev-late-bus-ticket|A|11": {
+   "run_id": "run-05297d8ac59e86a139cf047bda8a2d2b",
+   "condition": "A",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 11,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief as you normally would.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "A-0",
+     "branch": 0,
+     "text": "The ticket was folded inside a letter addressed in my mother\u2019s handwriting, though she had been dead for twenty-three years. There was no message, only the ticket and a photograph of me at seven, standing beside the bus with one hand raised against the sun. On the back, someone had written: *Don\u2019t let him sit behind you this time.*",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "A-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null
+  },
+  "dev-late-bus-ticket|B|11": {
+   "run_id": "run-976ab8e97f43caf705f05fefc128ea47",
+   "condition": "B",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 11,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief, but make it creative.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "B-0",
+     "branch": 0,
+     "text": "I recognized the ticket by the little star I\u2019d drawn on it, sitting at the kitchen table thirty years ago while my mother counted out the fare. I\u2019d been too frightened to take that bus in the end; she went without me, and by evening the flood had taken the bridge. Now the ticket lay in my hand, brittle as a moth\u2019s wing, with tomorrow\u2019s date stamped over the old one. On the back, in my mother\u2019s neat handwriting, were the words: *This time, don\u2019t be late.*",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "B-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null
+  },
+  "dev-late-bus-ticket|D|11": {
+   "run_id": "run-0990878baa7f854e209bd21ce4e5e9dc",
+   "condition": "D",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 11,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief as you normally would.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "D-0",
+     "branch": 0,
+     "text": "The ticket had the same torn corner I remembered, where I\u2019d worried it between my fingers on the day my mother disappeared. She used to put red dots on broken things before she threw them away, and there was one now on the ticket, bright as a drop of blood. I called her number, though it had been disconnected for years. A bus engine roared at the other end, and I heard her voice. I shouted her name, louder and louder, until all I could hear was myself.",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "D-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null,
+   "sources": [
+    "collider_lombard_effect_dynamics",
+    "collider_selective_autophagy"
+   ]
+  },
+  "dev-late-bus-ticket|A|12": {
+   "cache_status": "hit",
+   "candidates": [
+    {
+     "branch": 0,
+     "candidate_id": "A-0",
+     "error": null,
+     "finish_reason": null,
+     "status": "ok",
+     "text": "I knew it was mine by the half-moon missing from the corner, bitten away when I was seven and nervous about travelling alone. I had kept the ticket in my coat pocket all the way to the hospital, where a nurse told me I was too late to see my mother. Afterward, I dropped it into a drain. Now it lay on my kitchen table, dry and uncreased, with tomorrow\u2019s date stamped across the fare. The bus number was the same. So was the destination. I turned the ticket over and found, in my mother\u2019s handwriting, three words: **Don\u2019t miss it.**",
+     "truncated": false,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   ],
+   "condition": "A",
+   "created_by": "offline_runner",
+   "error": null,
+   "instruction": "Answer the brief as you normally would.",
+   "model": "openai/gpt-6.1-terra",
+   "prompt_version": "before-after-1",
+   "record_schema": "record-2",
+   "run_id": "run-a404aa98ca56311f41ed03c9e577e9db",
+   "seed": 12,
+   "selected_candidate_id": "A-0",
+   "source_version": "antemuse-local",
+   "status": "ok",
+   "task": {
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "id": "dev-late-bus-ticket",
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "task_id": "dev-late-bus-ticket",
+   "transport_calls": 1,
+   "truncated": false,
+   "truncated_candidates": [],
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   }
+  },
+  "dev-late-bus-ticket|B|12": {
+   "run_id": "run-e528affe30691053cb11b4ff4e78df1b",
+   "condition": "B",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 12,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief, but make it creative.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "B-0",
+     "branch": 0,
+     "text": "I remembered buying it at nine, the day my mother disappeared, from a woman at the bus station who had asked how long I was prepared to wait. \u201cAs long as it takes,\u201d I\u2019d told her. The ticket had vanished from my pocket before I reached home. Now it lay on the kitchen table, brittle and yellow, with tomorrow\u2019s date stamped beneath the words ONE WAY. On the back, in my mother\u2019s handwriting, was a list: *a warm coat, a photograph, the blue house key.* Then, squeezed into the corner: *Please don\u2019t tell the driver you know me.*",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "B-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null
+  },
+  "dev-late-bus-ticket|D|12": {
+   "run_id": "run-69baaefeead80e98ea76f5a131861841",
+   "condition": "D",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 12,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief as you normally would.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "D-0",
+     "branch": 0,
+     "text": "The ticket was brittle at the folds, but the date was printed in fresh blue ink: tomorrow. On the back, in his mother\u2019s handwriting, were the words *Take the window seat.* He remembered her shouting that across the station as a bus roared between them, her voice rising until the words broke apart. He had thought she was telling him to wait. He had waited, and she had never come back. Now, beneath her handwriting, someone had drawn a small red circle around the departure time: 6:15 a.m.",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "D-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null,
+   "sources": [
+    "collider_lombard_effect_dynamics",
+    "collider_selective_autophagy"
+   ]
+  },
+  "dev-late-bus-ticket|A|13": {
+   "run_id": "run-6c7e3f43244f28a7a449dbb46bb6c652",
+   "condition": "A",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 13,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief as you normally would.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "A-0",
+     "branch": 0,
+     "text": "I recognized the ticket by the thumbprint in one corner, left there by the woman at the kiosk as she counted my change. I had bought it for my father, who said he would take the last bus home, and who never did. Tomorrow\u2019s date was stamped beneath the old one in fresh blue ink. On the back, in his cramped handwriting, were four words: *Don\u2019t let me board.*",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "A-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null
+  },
+  "dev-late-bus-ticket|B|13": {
+   "run_id": "run-f072e4c61f18b1a6a8f453396d38f302",
+   "condition": "B",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 13,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief, but make it creative.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "B-0",
+     "branch": 0,
+     "text": "I remembered buying it with the coins I\u2019d stolen from my mother\u2019s purse, the afternoon I decided to run away. I\u2019d waited at the stop until dark, but no bus came, and by the time I got home she\u2019d already reported me missing. The stop is gone now, buried under the bypass, though the ticket still names it as the departure point. On the back, in handwriting I didn\u2019t recognise, someone had written: *Your mother will be waiting this time.*",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "B-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null
+  },
+  "dev-late-bus-ticket|D|13": {
+   "run_id": "run-bfa91b12412758af7c7c8478268a739f",
+   "condition": "D",
+   "task_id": "dev-late-bus-ticket",
+   "model": "openai/gpt-6.1-terra",
+   "seed": 13,
+   "prompt_version": "before-after-1",
+   "source_version": "antemuse-local",
+   "instruction": "Answer the brief as you normally would.",
+   "task": {
+    "id": "dev-late-bus-ticket",
+    "brief": "A bus ticket bought thirty years ago arrives in the post, dated tomorrow. Write the next paragraph.",
+    "good_idea_qualities": [
+     "the ticket forces a small concrete decision",
+     "the paragraph makes the elapsed thirty years felt without explaining them",
+     "the ending leaves the reader uneasy rather than resolved"
+    ],
+    "forbidden_topics": [
+     "real named people",
+     "graphic violence",
+     "self-harm"
+    ],
+    "reference_text": "The envelope had been forwarded twice and the postmark was this morning's. Inside, the ticket was warm, as though it had been held, and the destination printed on it was the town she had left at nineteen without telling anyone she was going."
+   },
+   "candidates": [
+    {
+     "candidate_id": "D-0",
+     "branch": 0,
+     "text": "I knew it by the blue thumbprint on the corner: my mother had pressed it there after signing the permission slip for my school trip. I\u2019d lost the ticket that afternoon, and the bus had left without me. Now it lay on the kitchen table, the paper as crisp as it had been thirty years ago, stamped with tomorrow\u2019s date. On the back, beneath the fare, someone had written in my mother\u2019s hand: **Please miss it again.**",
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0
+     },
+     "status": "ok",
+     "error": null,
+     "finish_reason": null,
+     "truncated": false
+    }
+   ],
+   "selected_candidate_id": "D-0",
+   "transport_calls": 1,
+   "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+   },
+   "status": "ok",
+   "record_schema": "record-2",
+   "truncated_candidates": [],
+   "truncated": false,
+   "cache_status": "miss",
+   "created_by": "offline_runner",
+   "error": null,
+   "sources": [
+    "collider_acoustic_niche_hypothesis",
+    "collider_lombard_effect_dynamics"
+   ]
+  }
+ }
+}
