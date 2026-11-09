@@ -438,3 +438,40 @@ model gets the content.
   · hand (noun) → extremity (noun) · took its hypernym · "that part of a limb…"
   · bluesky · @someone · the thing nobody says about the feed
 ```
+
+## Compatibility
+
+- Hermes Agent **0.21.6 or newer**; developed and verified against 0.22.5.
+- Python 3.11+ (Hermes's own runtime is enough).
+- Linux and macOS. Windows is untested.
+- `node` and `npm` are optional: with them the terminal shows live scenes; without
+  them the takeover falls back to cached frames and the renderer tests skip.
+- Terminals need truecolor and half-block glyphs for the takeover. Redirected
+  output gets one picture instead of the animation.
+- Surfaces verified in this build: the CLI takeover, the chat card, the text
+  record, and the PNG card. The desktop dock pane is built but not confirmed
+  inside the packaged app.
+
+## Known limitations
+
+- **State is profile-wide**, not per-session: a state started in one chat is
+  visible to every chat in that profile until it ends or expires. That is the
+  design (it is about the agent), but it is a surprise if you expected it to be
+  scoped to a conversation.
+- **No efficacy claim.** The strongest controlled run of the subtractive walk
+  found no ideation effect after length control (32 pairs per condition,
+  p = 0.365); the reproducible effect is a longer answer, not a broader one. The
+  plugin claims a mechanism change, not better thinking.
+- **Unattended runs:** a state can be active under cron or the gateway, and a
+  state entered with `block: true` closes tools for everything in the profile
+  until it ends. Do not block tools in a profile that runs unattended work.
+- **`unstuck` has no art of its own** yet; it renders with the walk scene.
+- **Note and join entry** in the takeover still show a temporary text prompt,
+  which is an unresolved exception to the pictures-only rule (spec §14).
+- **Exploration library** (`spark`, `keep`, collider, selection) is present but
+  runtime-gated behind `experimental.enabled`, and makes no quality claim.
+
+## Licence
+
+MIT. See `LICENSE`. The plugin bundles no third-party binaries; `three` and the
+software renderer arrive through `npm ci` under their own licences.

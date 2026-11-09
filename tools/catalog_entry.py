@@ -42,45 +42,42 @@ def tree_is_clean() -> bool:
 
 
 def render() -> str:
+    """Render the entry in the schema hermes-agent's catalog loader accepts.
+
+    The loader (hermes_cli/plugin_catalog.py) validates a flat mapping:
+    name/repo/sha/description/maintainer/tier/category, plus optional docs_url,
+    version, platforms, requires_hermes, title, known_issues, screenshots and a
+    capabilities block. A nested ``source:`` block — the earlier shape of this
+    file — is silently rejected, so it must not come back.
+    """
     manifest = yaml.safe_load((ROOT / "plugin.yaml").read_text())
     sha = head_sha()
     entry = {
         "name": manifest["name"],
-        "label": manifest["label"],
+        "title": manifest.get("label", "Antemuse"),
+        "repo": "https://github.com/roosiq/antemuse-plugin",
+        "sha": sha,
         "description": manifest["description"].strip(),
-        "version": str(manifest["version"]),
-        "author": manifest.get("author", ""),
-        "homepage": manifest.get("homepage", ""),
-        "category": "general",
+        "maintainer": "roosiq",
         "tier": "community",
+        "category": "general",
+        "docs_url": "https://github.com/roosiq/antemuse-plugin#readme",
+        "version": str(manifest["version"]),
         "requires_hermes": manifest["requires_hermes"],
-        "source": {
-            "type": "github",
-            "repo": "roosiq/antemuse-plugin",
-            "ref": sha,
+        "platforms": ["linux", "macos"],
+        "capabilities": {
+            "provides_tools": list(manifest.get("provides_tools") or []),
+            "provides_hooks": list(manifest.get("provides_hooks") or []),
+            "provides_middleware": [],
+            "requires_env": [],
         },
-        "provides": {
-            "tools": list(manifest.get("provides_tools") or []),
-            "hooks": list(manifest.get("provides_hooks") or []),
-            "commands": ["/walk", "/daydream", "/doomscroll", "/dream", "/unstuck", "/return"],
-        },
-        "settings": sorted((manifest.get("config_schema") or {}).keys()),
-        "disclosures": [
-            "Network reads: doomscroll fetches public RSS/JSON feeds (8 s timeout, urllib, "
-            "no credentials); results cached in the plugin data dir.",
-            "Reads outside the data dir: daydream reads the operator's Hermes memory files; "
-            "walks read local WordNet/FrameNet corpora via nltk.",
-            "Writes: active state record, journal, residue, cursor and render caches under "
-            "the plugin data dir; per-project artifacts under <repo>/.antemuse/.",
-            "Child process: the full-screen takeover may spawn node to rasterise the live "
-            "scene; it inherits no shell and falls back to cached frames when node is absent.",
-            "Dev-only tools: scripts under tools/ make network calls and spawn browsers; "
-            "they are never imported by plugin registration.",
-            "Credentials: none requested, read, stored or refreshed.",
-            "Telemetry and model usage: none. No analytics, no hidden LLM calls on the "
-            "state path.",
-            "Updates: the plugin never updates itself; updates arrive through this pinned "
-            "SHA and 'hermes plugins update'.",
+        "known_issues": [
+            "Desktop dock pane is built but not confirmed rendering inside the packaged app; "
+            "the terminal takeover is the verified surface.",
+            "State is profile-wide, not per-session: a state started in one chat is visible to "
+            "the whole profile until it ends or expires.",
+            "The exploration library (spark, keep, collider, selection) is present but runtime-gated "
+            "behind experimental.enabled and makes no quality claim.",
         ],
         "screenshots": [],
     }
@@ -90,12 +87,15 @@ def render() -> str:
 
 def _fields(text: str) -> dict:
     data = yaml.safe_load(text) or {}
-    data.pop("source", None)
+    data.pop("sha", None)
+    cap = data.get("capabilities")
+    if isinstance(cap, dict):
+        cap.pop("empty", None)
     return data
 
 
 def _ref(text: str) -> str:
-    return str(((yaml.safe_load(text) or {}).get("source") or {}).get("ref") or "")
+    return str((yaml.safe_load(text) or {}).get("sha") or "")
 
 
 def main() -> int:
