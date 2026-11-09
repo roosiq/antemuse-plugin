@@ -375,13 +375,15 @@ function ChatBackdrop({ ctx }) {
     let stopped = false
 
     const paint = () => {
+      // Bounded diagnostics: last grid, last error count, nothing that grows. An
+      // unbounded array here would leak a row every poll for the app's lifetime.
       const probe = (typeof window !== 'undefined')
-        ? (window.__antemuse = window.__antemuse || { paints: 0, grids: [], errors: [], lines: 0 })
+        ? (window.__antemuse = window.__antemuse || { paints: 0, errors: [], lines: 0 })
         : null
       if (probe) probe.paints += 1
       if (stopped || !handleRef.current) return
       const grid = gridFor(handleRef.current)
-      if (probe) probe.grids.push(grid)
+      if (probe) probe.grid = grid
       if (!grid) return
       const session = host && host.state && host.state.focusedSessionId
         ? host.state.focusedSessionId.get() : null
@@ -411,7 +413,9 @@ function ChatBackdrop({ ctx }) {
         (err) => {
           // An empty layer is never a broken app, but a silent one is undebuggable:
           // record the failure where the host console can show it.
-          if (probe) probe.errors.push(String((err && err.message) || err))
+          if (probe) {
+            probe.errors = probe.errors.concat(String((err && err.message) || err)).slice(-3)
+          }
           if (typeof console !== 'undefined' && console.warn) {
             console.warn('[antemuse] /state failed for', q, '-', (err && err.message) || err)
           }
