@@ -310,3 +310,55 @@ the same state, and closing the pane disables nothing.
 
 **Blocked on:** a Hermes desktop-shell change. Not attempted here: editing the shell to
 add an area is a host change with its own review, and this spec governs the plugin.
+
+### 10a. Correction: the host does not need a new area (2026-11-08)
+
+`ascii-worlds` v1.2.0 (MIT, `dudicslevente/hermes-ascii-worlds`) already ships a
+window background on this same shell, and it does **not** use a host backdrop area.
+Verified in its source, not its marketing copy.
+
+It registers a tiny component in `TITLEBAR_AREAS.right` and uses that only as a
+**permanent mount point** — the SDK's own words: title-bar slots "stay mounted across
+chat ↔ page navigation, so `useEffect` setup/cleanup runs once per registration". From
+inside that mount it owns the DOM outright:
+
+```js
+const layer = doc.createElement("div");
+layer.setAttribute("data-ascii-worlds-bg", "layer");
+layer.setAttribute("aria-hidden", "true");
+layer.style.cssText =
+  "position:fixed;inset:0;pointer-events:none;user-select:none;overflow:hidden;contain:strict;"
+  + "z-index:2147483646";                       // or -1 for "behind"
+doc.head.appendChild(style);                    // one version-stamped <style>
+doc.body.appendChild(layer);                    // one canvas inside it
+root().setAttribute("data-ascii-worlds-bg", "on");
+```
+
+Two placements, chosen by z-index:
+
+- **behind** — `z-index: -1`, base colour taken from the app's chat-surface token so
+  light/dark still follows; only visible through transparent regions. Its comment notes
+  clearing chat panel backgrounds keeps the shade the user expects.
+- **in front** — `z-index: 2147483646`, no base colour, glyphs only at a chosen opacity.
+
+Cleanup is explicit and tested by them: toggling off, unmounting, disabling the plugin or
+host disposal removes layer + style + root attribute, and startup sweeps strays from an
+earlier load. Bounds are stated rather than hoped for: 1800×1400 logical, DPR ≤ 2,
+~4M backing pixels, glyph grid ≤ 220×150; offscreen and hidden canvases stop; battery
+saver caps at 12 fps; reduced motion starts static; default strength 28% (range 8–60%).
+
+**Consequence for us:** §10's "blocked on a host change" was wrong. A plugin can own a
+fixed layer today. What we should copy, in order:
+
+1. Mount from `TITLEBAR_AREAS.right`; the contribution is invisible, the layer is the art.
+2. `z-index: -1` behind the transcript, base colour from the chat-surface token, never in
+   front — our glyph art at 116×74 is dense enough to read through text.
+3. Strength ceiling well under theirs: our ramp is bright (`#cfd6dd` at 0.96) where their
+   glyphs are coloured by a theme token. Cap at 0.30, default 0.18.
+4. Same cleanup contract, and same "sweep strays on startup" rule, because a leaked layer
+   is a stuck screensaver over the whole app.
+5. Scope: the layer reads the **active conversation id** and asks the backend for that
+   chat's state, so two chats can differ. If the id is unavailable, paint `idle`.
+
+This also makes the pane optional rather than load-bearing, which is the arrangement the
+brief actually wants: art behind the chat, counts in the chrome.
