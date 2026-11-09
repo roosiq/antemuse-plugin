@@ -141,14 +141,10 @@ def test_the_walk_keeps_its_dose_but_runs_fast():
     assert spec["minutes"] <= 3
 
 
-def test_material_waits_for_the_cadence_and_then_arrives_again():
-    engine.enter("walk", 10)
+def test_material_arrives_once_per_turn_not_once_per_second():
+    engine.enter("dream", 10)
+    engine.note_turn()
     assert engine.deliver_if_due() >= 1, "the first turn of a state gets material"
-    assert engine.deliver_if_due() == 0, "not due again immediately"
-    import json
-    import pathlib
-    path = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
-    data = json.loads(path.read_text())
-    data["journal"][-1]["at"] -= 31          # one cadence later
-    path.write_text(json.dumps(data))
-    assert engine.deliver_if_due() >= 1
+    assert engine.deliver_if_due() == 0, "one item per turn, never two"
+    engine.note_turn()
+    assert engine.deliver_if_due() >= 1, "the next turn gets the next item"

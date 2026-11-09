@@ -48,7 +48,7 @@ STATE_SCHEMA: Dict[str, Any] = {
         "properties": {
             "action": {"type": "string",
                        "enum": ["enter", "exit", "status", "list", "walks", "walk_new",
-                                "walk_del", "break", "mood", "spark", "keep",
+                                "walk_del", "break", "mood", "spark", "keep", "complete",
                                 "watch", "card", "image"]},
             "name": {"type": "string",
                      "description": "State to enter (walk, daydream, dream, doomscroll) or the walk to use."},
@@ -191,6 +191,10 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         if verdict not in ("love", "like", "trash") or not candidate:
             return "usage: keep love|like|trash <#n|id>  (the run account publishes #1–#n)"
         return runtime.keep(engine.current_session(), verdict, candidate)
+    if action == "complete":
+        # the act is done, even if the dose count disagrees: the agent is the one who
+        # can see whether the move was made
+        return engine.complete()
     if action == "exit":
         return engine.stop()
     if action == "list":

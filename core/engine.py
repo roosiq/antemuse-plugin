@@ -93,6 +93,13 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     now = now if now is not None else time.time()
     if active["turns_left"] <= 0 or now >= active["ends_at"]:
         report = _account(data, active)
+        spec = states.STATES.get(active.get("key")) or {}
+        dose = int((spec.get("dose") or {}).get("n") or 0)
+        served = int(active.get("served") or 0) if (spec.get("dose") or {}).get("unit") != "turns" \
+            else int(active.get("turns") or 0)
+        if dose and served < dose:
+            # an expiry is an unfinished act, and it says so
+            report = {**report, "text": f"{report['text']} (expired before its dose: {served} of {dose})"}
         data["residue"].append({**report, "kind": "report", "turns_left": 2})
         data.setdefault("journal", []).append({
             "who": "state", "state": active["key"], "event": "report",
@@ -101,11 +108,9 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
         })
         data["journal"] = data["journal"][-60:]
         data["active"] = None
-        try:
-            from . import ticker
-            ticker.stop()
-        except Exception:
-            pass
+        # the expiry must reach disk: the caller holds a copy, and an unsaved expiry
+        # means the state silently outlives its ceiling
+        _save(data)
         return True
     return False
 
@@ -121,12 +126,16 @@ def note_turn() -> None:
         work["tools"] = int(work.get("tools") or 0) + counters["tools"]
         work["fails"] = int(work.get("fails") or 0) + counters["fails"]
         active = bool(data.get("active"))
+        if data.get("active"):
+            data["active"]["turns"] = int(data["active"].get("turns") or 0) + 1
         _save(data)
     # The baseline is the *ordinary* condition: a state's own turns would contaminate
     # the thing the state is being compared to.
     if not active:
         from . import normal
         normal.observe_turn(counters["tools"], counters["fails"])
+    else:
+        complete_if_dosed()
 
 
 def note_tool(ok: bool) -> None:
@@ -266,8 +275,7 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         data["work"] = {"turns": 0, "tools": 0, "fails": 0, "started_at": now_break}
         data["offered_at"] = 0.0
         _save(data)
-    from . import ticker
-    ticker.start(spec_key)
+    # no ticker: delivery is per turn now, so a wall clock cannot decide the dose
     note = ""
     if previous and previous["key"] != spec_key:
         note = f" (left {previous['key']}; no residue kept)"
@@ -296,7 +304,7 @@ def current_origin() -> Dict[str, str]:
     }
 
 
-def stop(session_id: str = "") -> str:
+def stop(session_id: str = "", reason: str = "returned") -> str:
     with _LOCK:
         data = _load()
         active = data.get("active")
@@ -310,23 +318,37 @@ def stop(session_id: str = "") -> str:
         data["residue"].append({**report, "kind": "report", "turns_left": 2})
         data["journal"].append({
             "who": "state", "state": active["key"], "event": "report",
-            "text": report["text"], "at": time.time(),
+            "text": report["text"], "at": time.time(), "reason": reason,
             "session": data.get("session_id") or "",
         })
         data["journal"] = data["journal"][-60:]
         data["active"] = None
         _save(data)
-    from . import ticker
-    ticker.stop()
+    try:
+        from . import normal
+        # turns-to-dose and seconds-to-dose, per state: the measurement that makes
+        # "which model breaks the state faster" answerable instead of asserted
+        normal.observe_completion(active["key"], int(active.get("turns") or 0),
+                                  time.time() - float(active.get("entered_at") or 0), reason)
+    except Exception:
+        pass
     if elsewhere:
         return (f"{spec['label']} ended in the session that started it; its account stays "
                 f"there. Nothing was rendered here.")
+    if reason == "complete":
+        return (f"{spec['label']} finished · {report['text']}\n"
+                f"The act is done, so the state is over. Carry what it gave you into the work.")
     if spec.get("restart"):
         return (f"{spec['label']} ended · {report['text']}\n"
                 f"The frame you were in is gone. State the goal, name the approach you were stuck "
                 f"in, then take a different first step.")
     return (f"{spec['label']} ended · {report['text']}\n"
             f"Summarise it in three lines — where it went, what it touched — then get back to work.")
+
+
+def complete(reason: str = "complete") -> str:
+    """End the state because the agent says the act is done."""
+    return stop(current_session(), reason=reason)
 
 
 def tick() -> Dict[str, Any] | None:
@@ -361,12 +383,12 @@ def _last_material(key: str, data: Dict[str, Any]) -> float:
 
 
 def deliver_if_due() -> int:
-    """Bring material up to date at the top of a turn.
+    """One item per turn, until the dose is delivered.
 
-    The ticker is a thread in this process, so a conversation driven one turn per
-    process — every CLI invocation — would otherwise walk a minute and receive a
-    single step. On a long-lived gateway the ticker already keeps up and this is
-    a no-op.
+    Delivery used to be paced by a clock: a step every N seconds. That made the dose a
+    function of how fast the model happened to be — a fast model finished the state and
+    sat in it, a slow one was cut off mid-move. Now the dose is counted in items and a
+    turn is the unit: the same act costs the same number of turns for every model.
     """
     from . import sources
     with _LOCK:
@@ -376,13 +398,12 @@ def deliver_if_due() -> int:
         if not key:
             return 0
         spec = states.STATES.get(key) or {}
-        cadence = float(spec.get("cadence", 20))
-        started = active.get("entered_at", 0) or 0
-        last = _last_material(key, data)
-        # the first turn of a state always gets material: an empty first step is
-        # what a walk with nothing to react to looks like
-        if last > started and time.time() - last < cadence:
+        dose = int((spec.get("dose") or {}).get("n") or 0)
+        served = int(active.get("served") or 0)
+        if dose and served >= dose:
             return 0
+        if active.get("served_turn") == int(data["work"].get("turns") or 0):
+            return 0          # already delivered this turn: one item per turn, never two
     provider = sources.PROVIDERS.get(key)
     if provider is None:
         return 0
@@ -400,7 +421,40 @@ def deliver_if_due() -> int:
         return 1
     for line in lines:
         record("state", line, event=key)
+    with _LOCK:
+        data = _load()
+        active = data.get("active") or {}
+        if active.get("key") == key:
+            active["served"] = int(active.get("served") or 0) + len(lines)
+            active["served_turn"] = int(data["work"].get("turns") or 0)
+            data["active"] = active
+            _save(data)
+    complete_if_dosed()
     return len(lines)
+
+
+def complete_if_dosed() -> bool:
+    """End the state when the act is finished — the dose, not the clock.
+
+    The account is built exactly as `/return` builds it; only the reason differs, which
+    matters because "expired before its dose" and "completed" are different facts.
+    """
+    with _LOCK:
+        data = _load()
+        active = data.get("active") or {}
+        key = active.get("key")
+        if not key:
+            return False
+        spec = states.STATES.get(key) or {}
+        dose = int((spec.get("dose") or {}).get("n") or 0)
+        served = int(active.get("served") or 0)
+        worked = int(active.get("turns") or 0)
+        unit = str((spec.get("dose") or {}).get("unit") or "")
+        done = (worked >= dose) if unit == "turns" else (served >= dose)
+    if not done:
+        return False
+    stop(current_session(), reason="complete")
+    return True
 
 
 def inject() -> str | None:

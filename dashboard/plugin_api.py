@@ -88,11 +88,16 @@ def frame_index(key: str, frames: int = 8, now: float | None = None) -> int:
 
 @router.get("/state")
 def state(cols: int | None = None, rows: int | None = None, fit: str = "contain",
-          busy: bool = False) -> Dict[str, Any]:
+          busy: bool = False, session: str | None = None) -> Dict[str, Any]:
     """The current state, as counts and a served frame.
 
     ``?busy=1`` says a turn is in flight, which changes only the ambient scene:
     between states the pane paints ``work`` instead of ``idle``.
+
+    ``?session=`` scopes the *art* to one conversation. A state is entered per
+    profile, so if the active state belongs to another chat the layer must not
+    borrow it: that chat gets its ambient scene instead. The counts stay
+    profile-level — they are what the engine holds, not what one chat owns.
 
     ``?cols=&rows=`` lets a surface ask for the grid its own pixel box can hold.
     The numbers are clamped to the projection's envelope and echoed back in the
@@ -103,7 +108,15 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
     watch = plugin().core.panel.engine_state()
     active = watch.get("active") or {}
     lines: List[str] = []
-    if active:
+    # Whose state is this? A per-profile state entered in one chat must not paint
+    # itself behind a different chat just because both share a profile.
+    belongs_here = True
+    if active and session:
+        origin = active.get("origin") or {}
+        owner = origin.get("session_id") if isinstance(origin, dict) else None
+        belongs_here = owner in (None, "") or owner == session
+
+    if active and belongs_here:
         try:
             lines = plugin().core.surfaces.art(
                 cols=width, rows=height,

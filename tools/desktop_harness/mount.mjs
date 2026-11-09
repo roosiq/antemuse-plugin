@@ -36,6 +36,11 @@ const { act } = await import('react')
 const { createRoot } = await import('react-dom/client')
 const plugin = (await import(WORK.href)).default
 const helpers = await import(WORK.href)
+// The host state atoms live in the SDK, not the plugin bundle: import them from
+// the same stub the plugin resolves its bare imports against.
+const sdk = await import(new URL('./node_modules/@hermes/plugin-sdk/index.js', import.meta.url).href)
+const host = sdk.host
+const sweepStrays = helpers.sweepStrays
 
 const PAYLOAD = {
   generated_at: 100,
@@ -75,11 +80,13 @@ function resetBody() {
   document.body.innerHTML = '<div id="root"></div>'
 }
 
-async function mountWith(state) {
+async function mountWith(state, id = 'page') {
   const wired = makeCtx(state)
   plugin.register(wired.ctx)
+  const contribution = wired.contributions.find((c) => c.id === id)
+  assert.ok(contribution, `no contribution ${id}`)
   const node = createRoot(root())
-  await act(async () => { node.render(wired.contributions[0].render()) })
+  await act(async () => { node.render(contribution.render()) })
   return { ...wired, node }
 }
 
@@ -90,14 +97,16 @@ plugin.register(registered.ctx)
 assert.equal(plugin.id, 'antemuse')
 assert.deepEqual(
   registered.contributions.map((c) => c.area),
-  ['panes', 'statusBar.right', 'routes', 'sidebar.nav', 'palette'],
-  'a pane, a chip, a page, a nav entry and a palette command'
+  ['titleBar.right', 'statusBar.right', 'routes', 'sidebar.nav', 'palette'],
+  'a background mount, a chip, a page, a nav entry and a palette command'
 )
 const byId = Object.fromEntries(registered.contributions.map((c) => [c.id, c]))
 assert.equal(byId.page.data.path, '/antemuse', 'the page route must match what the palette opens')
 assert.equal(byId.nav.data.path, '/antemuse')
-assert.equal(registered.contributions[0].data.placement, 'right')
-assert.equal(registered.contributions[0].data.collapsible, true)
+// The first contribution is no longer a pane: it is the invisible mount that
+// owns the layer behind the chat, so it carries no pane data at all.
+assert.equal(registered.contributions[0].id, 'backdrop')
+assert.equal(registered.contributions[0].data, undefined, 'a mount point has no pane geometry')
 assert.equal(registered.pages.length, 1, 'a settings page is offered when the host supports one')
 
 // ---- pure helpers -----------------------------------------------------------
@@ -121,14 +130,71 @@ assert.ok(pre, 'the frame should render as a pre')
 assert.equal(pre.textContent, PAYLOAD.frame.lines.join('\n'))
 assert.equal(pre.getAttribute('aria-hidden'), 'true', 'art is decoration, not content')
 assert.equal(document.querySelector('[data-antemuse-state]').getAttribute('data-antemuse-state'), 'active')
-assert.deepEqual(active.calls.rest, ['/state'])
+assert.equal(active.calls.rest.length, 1)
+assert.ok(active.calls.rest[0].startsWith('/state'), 'the page asks the backend for a frame')
 assert.equal(active.calls.intervals.length, 1)
-assert.equal(active.calls.intervals[0].ms, 2000)
+assert.equal(active.calls.intervals[0].ms, 900, 'poll faster than the slowest baked frame')
 
 await act(async () => { active.calls.intervals[0].fn() })
 assert.deepEqual(active.calls.rest, ['/state', '/state'], 'a tick re-reads the backend')
 
 await act(async () => { active.node.unmount() })
+
+
+// ---- the layer behind the chat ---------------------------------------------
+
+resetBody()
+const bg = await mountWith({ payload: PAYLOAD }, 'backdrop')
+const layer = document.querySelector('[data-antemuse-bg="layer"]')
+assert.ok(layer, 'the mount point creates the layer')
+assert.equal(layer.getAttribute('aria-hidden'), 'true', 'the layer is decoration')
+const css = layer.getAttribute('style')
+assert.match(css, /position:\s*fixed/)
+assert.match(css, /pointer-events:\s*none/, 'clicks pass through to the chat')
+// jsdom's body has no background, so this mount exercises the "behind" branch.
+assert.match(css, /z-index:\s*-1/, 'a transparent surface gets a layer behind it')
+assert.equal(layer.getAttribute('data-antemuse-bg-placement'), 'behind')
+assert.match(css, /contain:\s*strict/)
+const glyph = layer.querySelector('pre[data-antemuse-bg="glyphs"]')
+assert.ok(glyph, 'one pre holds the glyphs')
+assert.equal(glyph.textContent, PAYLOAD.frame.lines.join('\n'))
+assert.match(glyph.getAttribute('style'), /opacity:\s*0\.18/, 'default strength, capped low')
+
+assert.ok(document.querySelector('style[data-antemuse-bg-style]'), 'one version-stamped style element')
+assert.equal(document.documentElement.getAttribute('data-antemuse-bg'), 'on', 'the root flag marks it disposable')
+assert.match(bg.calls.rest[0], /^\/state\?cols=\d+&rows=\d+&fit=cover&busy=0/, 'grid and busy are asked for')
+
+// it re-reads when the focused conversation changes
+host.state.focusedSessionId.set('sess-42')
+await act(async () => {})
+assert.ok(bg.calls.rest.some((p) => p.includes('session=sess-42')), 'the layer follows the conversation')
+
+await act(async () => { bg.node.unmount() })
+assert.equal(document.querySelector('div[data-antemuse-bg="layer"]'), null, 'unmount removes the layer')
+assert.equal(document.querySelector('style[data-antemuse-bg-style]'), null, 'and its style element')
+assert.equal(document.documentElement.getAttribute('data-antemuse-bg'), null, 'and the root flag')
+
+// stray sweep must not delete the document element (it did, once)
+sweepStrays(document)
+assert.ok(document.documentElement, 'sweeping strays leaves <html> alone')
+
+// The other branch: an opaque shell cannot show a z-index -1 layer (measured in
+// the app — an opaque body hid it completely), so it goes in front, fainter.
+resetBody()
+document.body.style.background = 'rgb(12, 12, 14)'
+const front = await mountWith({ payload: PAYLOAD }, 'backdrop')
+const frontLayer = document.querySelector('div[data-antemuse-bg="layer"]')
+assert.equal(frontLayer.getAttribute('data-antemuse-bg-placement'), 'front', 'opaque surface flips placement')
+assert.match(frontLayer.getAttribute('style'), /z-index:\s*2147483646/)
+assert.match(frontLayer.getAttribute('style'), /pointer-events:\s*none/, 'in front still passes clicks through')
+const frontGlyph = frontLayer.querySelector('pre[data-antemuse-bg="glyphs"]')
+const frontOpacity = Number((frontGlyph.getAttribute('style').match(/opacity:\s*([\d.]+)/) || [])[1])
+assert.ok(frontOpacity < 0.18 && frontOpacity > 0.05, `in front is fainter: ${frontOpacity}`)
+assert.match(frontGlyph.getAttribute('style'), /color:\s*(#cfd6dd|rgb\(207, 214, 221\))/,
+  'dark surface gets the light ink')
+await act(async () => { front.node.unmount() })
+document.body.style.background = ''
+assert.equal(document.querySelector('div[data-antemuse-bg="layer"]'), null, 'the front layer is removed too')
 
 // ---- idle -------------------------------------------------------------------
 
@@ -150,4 +216,4 @@ await act(async () => { broken.node.unmount() })
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
-console.log('harness: 9 properties PASS (registration, settings page, helpers, DOM text, frame, aria, poll tick, idle, unavailable)')
+console.log('harness: 12 properties PASS (registration, settings page, helpers, DOM text, frame, aria, poll tick, idle, unavailable)')

@@ -44,6 +44,7 @@ each defined:
 
 | Action | Purpose | Not this |
 |---|---|---|
+| `complete` | end the current state because the act is done — the one case where the dose count is not the authority | a way to skip the account, or a second `/return` |
 | `enter` | begin a state (`name`, `minutes`, `walk`, options) | not an override of a running state's clock |
 | `exit` | the same path as `/return` | not a cancel |
 | `status` | what is running now | not the picture |
@@ -86,3 +87,11 @@ each defined:
 State definitions, durations, turn budgets, cadences, directives, contracts, residue
 labels, journal cap 60, residue cap 3, two-turn decay, `CONTROL_TOOLS`, `/return` as an
 escape, and the rule that rendering never needs a model call.
+
+## Tool action added 2026-11-08: `complete`
+
+`state(action="complete")` ends the current state because the agent judges the act done —
+the one case where the dose count is not the authority, since only the agent can see
+whether the cognitive move was made. It is recorded as a `complete` ending, not an
+expiry, and it is the only tool action that ends a state without a person typing
+`/return`. See `semantic-states`.

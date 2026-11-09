@@ -75,6 +75,30 @@ def observe_stretch(minutes: float) -> None:
     _save(data)
 
 
+def observe_completion(state: str, turns: int, seconds: float, reason: str) -> None:
+    """Turns-to-dose and seconds-to-dose, per state. The measurement Ryan asked for.
+
+    Recording is not claiming: a distribution is built here, and a comparison across
+    models is a later artefact that reads it.
+    """
+    data = _load()
+    runs = list(data.get("completions") or [])
+    runs.append({"state": state, "turns": int(turns), "seconds": int(seconds),
+                 "reason": reason})
+    data["completions"] = runs[-200:]
+    _save(data)
+
+
+def completion_stats() -> Dict[str, Any]:
+    """Turns-to-dose per state, for whoever wants to compare models later."""
+    runs = [r for r in (_load().get("completions") or []) if isinstance(r, dict)]
+    out: Dict[str, Any] = {}
+    for run in runs:
+        key = str(run.get("state") or "")
+        out.setdefault(key, []).append(int(run.get("turns") or 0))
+    return {k: {"runs": len(v), "median_turns": statistics.median(v)} for k, v in out.items()}
+
+
 def stats() -> Dict[str, Any]:
     """The baseline, or an honest statement that there isn't one yet."""
     data = _load()

@@ -14,6 +14,8 @@ STATES: Dict[str, Dict] = {
         "label": "WALKING",
         "minutes": 3,
         "turns": 6,
+        # the dose is turns worked with the frame elsewhere; the walk supplies nothing
+        "dose": {"unit": "turns", "n": 6},
         "cadence": 9,
         "tools": None,
         "scene": "walk",
@@ -35,6 +37,7 @@ STATES: Dict[str, Dict] = {
         "label": "DAYDREAMING",
         "minutes": 3,
         "turns": 2,
+        "dose": {"unit": "pairs", "n": 2},
         "cadence": 10,
         "tools": [],
         "scene": "daydream",
@@ -50,6 +53,7 @@ STATES: Dict[str, Dict] = {
         "label": "DOOMSCROLLING",
         "minutes": 8,
         "turns": 3,
+        "dose": {"unit": "items", "n": 3},
         "cadence": 6,
         "tools": ["web_search", "web_extract", "read_file", "search_files", "browser_exec"],
         "scene": "doomscroll",
@@ -65,6 +69,7 @@ STATES: Dict[str, Dict] = {
         "label": "UNSTUCK",
         "minutes": 5,
         "turns": 3,
+        "dose": {"unit": "directions", "n": 1},
         "cadence": 20,
         # Read the empty project, change nothing. A trailhead that can edit is a
         # scaffold generator, and that is a different tool.
@@ -87,6 +92,7 @@ STATES: Dict[str, Dict] = {
         "label": "DREAMING",
         "minutes": 30,
         "turns": 2,
+        "dose": {"unit": "recombinations", "n": 2},
         "cadence": 40,
         "tools": [],
         "scene": "dream",
@@ -139,6 +145,7 @@ def palette() -> str:
         lines.append(f"             {s['contract']}")
     lines.append("  /return     end the current state and keep the residue")
     lines.append("")
-    cadences = " · ".join(f"{key} {spec['cadence']}s" for key, spec in STATES.items())
-    lines.append(f"  a step arrives on a timer: {cadences}")
+    doses = " · ".join(f"{key} {spec['dose']['n']} {spec['dose']['unit']}"
+                       for key, spec in STATES.items())
+    lines.append(f"  a state ends when its dose is delivered: {doses}")
     return "\n".join(lines)

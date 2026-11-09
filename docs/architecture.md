@@ -123,7 +123,7 @@ art pipeline (bake time only; three.js never runs in the client)
 2. **Inject** — each turn, `pre_llm_call` returns `[STATE: WALKING · N min left ·
    N turn(s)]`, the directive, and one tool sentence, all read from the *same*
    `_effective_tools()` decision the hook enforces. They cannot drift.
-3. **Tick** — minutes and turns decrement; cadence decides when material is due
+3. **Tick** — turns decrement; one item arrives per turn until the dose is done, and the dose ends the state
    (walk 9 s, daydream 10 s, doomscroll 6 s, dream 40 s).
 4. **Material** — `feeds: False` for walk (it supplies nothing); daydream/doomscroll/
    dream feed bounded material.
@@ -244,6 +244,7 @@ fixed and recorded.
 | Trailhead | **PARTIAL** — `unstuck` (5 min, 3 turns, read-only) reads what an empty repository actually contains and exits with **one direction** and the spec file it becomes; recommended while a repo has <3 commits and no spec. **Its own art is not built**: it renders with the `walk` scene until a unstuck pack is generated |
 | Plugin settings | **PROPOSED** — `specs/changes/plugin-settings`: seven bounded keys in the host's `config_schema`, values at `plugins.entries.antemuse.settings.*`, read via `ctx.get_config`; a setting may change how loud or long a state is, never what it is. Not implemented |
 | Normal baseline | **PARTIAL** — `core/normal.py` measures the ordinary condition (turns, tool calls, failures, minutes between states); the long-stretch threshold is now the measured p75, clamped 60–180, with 90 as the stated fallback. Loop/wall/saturation stay fixed until the distribution supports calibration |
+| Semantic states | **LIVE** — a state ends on its dose (6 walk turns · 2 pairs · 3 items · 2 recombinations · 1 direction) or on `state(action="complete")`; delivery is one item per turn, so duration follows the model rather than the clock; minutes are a ceiling only, and an expiry names the shortfall. Turns-to-dose recorded per state |
 | State entry | **LIVE** — `core/seeding.py` fixes where a state starts and which way it moves: walk takes 5:3:2 project:conversation:random, dream takes 6:2:2 **memory**:project:random (a dream opens on something said or stored), journalled as `seed=<source>:<term>`; doomscroll stays undirected on purpose |
 | Plugin updates | **LIVE** — a recommendation is posted as its own message via `ctx.post_message`, since slash commands are capped (95/100 on this machine) |
 | Daydream material | **LIVE** — `core/recall.py` keeps a bounded ring (24 × 400 chars) of recent turns captured from `pre_llm_call`/`transform_llm_output`, so a daydream has material under any memory provider; the built-in `MEMORY.md`/`USER.md` are enrichment when present |

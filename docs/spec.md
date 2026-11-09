@@ -167,15 +167,16 @@ a command that could not register.
 
 ## 4. State definitions
 
-Implementation: `core/states.py`. Durations and cadences are canonical; the
+Implementation: `core/states.py`. **A state ends on its dose, not on the clock** —
+the minutes column is a ceiling. `specs/changes/semantic-states`; the
 README's prose matches them.
 
-| state | label | minutes | turns | cadence | tools | feeds | restart | contract |
+| state | label | ceiling | turns | dose (the act) | tools | feeds | restart | contract |
 |---|---|---|---|---|---|---|---|---|
-| `walk` | WALKING | 3 | 6 | 9 s | **free** — `block: true` blocks nothing | no | yes | work continues · the frame is elsewhere |
-| `daydream` | DAYDREAMING | 3 | 2 | 10 s | **free** — `block: true` blocks every tool | yes | no | two memories · join only if it holds |
-| `doomscroll` | DOOMSCROLLING | 8 | 3 | 6 s | **free** — `block: true` leaves web_search, web_extract, read_file, search_files, browser_exec | yes | no | random feed · consume, do not synthesize |
-| `dream` | DREAMING | 30 | 2 | 40 s | **free** — `block: true` blocks every tool | yes | no | recombine stored concepts into new things |
+| `walk` | WALKING | 3 min | 6 | 6 turns worked | **free** — `block: true` blocks nothing | no | yes | work continues · the frame is elsewhere |
+| `daydream` | DAYDREAMING | 3 min | 2 | 2 memory pairs | **free** — `block: true` blocks every tool | yes | no | two memories · join only if it holds |
+| `doomscroll` | DOOMSCROLLING | 8 min | 3 | 3 feed items | **free** — `block: true` leaves web_search, web_extract, read_file, search_files, browser_exec | yes | no | random feed · consume, do not synthesize |
+| `dream` | DREAMING | 30 min | 2 | 2 recombinations | **free** — `block: true` blocks every tool | yes | no | recombine stored concepts into new things |
 
 ### 4.1 Walk — subtraction, not addition
 
@@ -282,7 +283,7 @@ otherwise drop a state the person is still inside, and its residue.
 
 The ticker is a thread in one process. A conversation driven one turn per process
 would receive a single step, so `deliver_if_due()` tops material up at the top of
-every turn: if the last material for this state is older than the cadence (or the
+every turn: one item per turn while the dose is unfinished (or the
 state has none yet), generate one. On a long-lived gateway the ticker already
 keeps up and this is a no-op. The first turn of a state always gets material.
 
@@ -656,7 +657,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 749 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 756 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -922,6 +923,7 @@ All paths relative to `specs/changes/`.
 
 | change | status | kind | outcome |
 |---|---|---|---|
+| `semantic-states` | implemented | state lifecycle | a state ends when its act is complete; durations and turn budgets become ceilings rather than definitions. |
 | `desktop-surfaces` §9 | implemented | ambient default | the pane is never blank: `idle` and `work` scenes from `core/screensaver.py`, one renderer for CLI, pane and proofs; `?busy=1` selects work. 737 tests. |
 | `e2e-fixes` | implemented | repair found by real sessions | `/return` exists; state-scoped material; account counts material; clock capped; `settle()` not `clear()`; dependency refused at the door. 80 tests then. |
 | `state-return-report` | implemented | ending behaviour | every ending builds an account from the journal; `[YOU JUST CAME BACK …]`; `nothing arrived` for an empty state. |
@@ -951,6 +953,7 @@ All paths relative to `specs/changes/`.
 | `unstuck-state` | **implemented** | states | a fifth state for a repository that does not exist yet: 5 min, 3 turns, read-only (`read_file`, `search_files`), material is what the project actually contains, and the exit criterion is **one direction** named with the spec file it becomes. Recommended automatically while the project has fewer than 3 commits and no spec, then silent. `core/sources.greenfield_text`, `core/recommend._new_project`; 7 tests. Renamed from `greenfield` (kept as an alias) for a plainer, more current word. |
 | `normal-baseline` | **implemented (partial)** | measurement | records the ordinary condition — tool calls and failures per turn, and the minutes between states — in `normal.json` (200 turns / 50 stretches, counts only). Below 20 turns nothing is claimed. `long stretch` now uses the measured 75th percentile of this person's stretches (clamped 60–180) instead of the constant 90, and the line says which it used. Loop, wall and saturation keep fixed thresholds until the failure-rate distribution can support a calibration. `core/normal.py`, 8 tests. |
 | `plugin-settings` | **proposed** | configuration | the settings a person may change in the host's plugins area, grounded in the real interface: `config_schema` in the manifest, values at `plugins.entries.antemuse.settings.*`, read through `ctx.get_config`. Seven bounded keys (recommendation on/off, cooling, long-stretch override, picture on/off and narrow, journal cap reduce-only), clamped and logged, never raising. Nothing that defines a state is settable. Not implemented. |
+| `semantic-states` | **implemented** | lifecycle | a state ends when its **dose** is delivered — 6 turns worked (walk), 2 memory pairs (daydream), 3 feed items (doomscroll), 2 recombinations (dream), 1 direction (unstuck) — or when the agent declares it done (`state(action="complete")`). Delivery is per turn, not per second, so the same dose costs a fast model fewer seconds and a slow one more; minutes are now a ceiling, and an expiry reports the shortfall (`expired before its dose: 2 of 3`). Turns- and seconds-to-dose are recorded per state in `normal.json` for later model comparison. 7 tests. |
 
 Supporting evidence files:
 
@@ -1080,7 +1083,7 @@ The tags remain `cognitive`, `creativity`, `states`, `imagery`.
 Unless a change spec says otherwise and is approved:
 
 - the `state` tool schema and its action set;
-- the four state definitions: durations, turn budgets, cadences, tool policy,
+- the five state definitions: doses, ceilings, turn budgets, tool policy,
   directives, contracts, residue labels;
 - the hook set and their contracts;
 - `CONTROL_TOOLS` and the `/return` escape hatch;
