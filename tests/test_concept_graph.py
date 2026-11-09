@@ -18,10 +18,10 @@ from core import graph, history  # noqa: E402
 
 def _ledger(tmp_path, monkeypatch):
     monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
-    history.notice("shipper", move="walk", session="20261108_091834_aaaa")
-    history.notice("ledger", move="walk", session="20261108_091834_aaaa")
-    history.notice("shipper", move="dream", session="20261107_120000_bbbb")
-    history.notice_artifact("antemuse-plugin", "core/history.py")
+    history.notice("shipper", move="walk", session="20261108_091834_aaaa", ref="101")
+    history.notice("ledger", move="walk", session="20261108_091834_aaaa", ref="101")
+    history.notice("shipper", move="dream", session="20261107_120000_bbbb", ref="202")
+    history.notice_artifact("antemuse-plugin", "core/history.py", commit="abc1234")
     return tmp_path
 
 
@@ -45,10 +45,21 @@ def test_a_file_is_an_artifact_and_belongs_to_a_project(tmp_path, monkeypatch):
     assert "in_project" in relations
 
 
-def test_two_concepts_served_in_one_move_are_linked(tmp_path, monkeypatch):
+def test_two_concepts_in_the_same_message_are_linked(tmp_path, monkeypatch):
     _ledger(tmp_path, monkeypatch)
     data = graph.snapshot()
-    assert "co_served" in {e["relation"] for e in data["edges"]}
+    linked = [e for e in data["edges"] if e["relation"] == "co_served"]
+    assert linked, {e["relation"] for e in data["edges"]}
+    assert linked[0]["weight"] == 1 and linked[0]["evidence"]["messages"] == 1
+
+
+def test_sharing_only_a_session_is_not_a_link(tmp_path, monkeypatch):
+    """A session is often a hundred messages; two concepts sharing one is the template."""
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    history.notice("shipper", move="walk", session="20261108_091834_aaaa", ref="1")
+    history.notice("ledger", move="walk", session="20261108_091834_aaaa", ref="2")
+    data = graph.snapshot()
+    assert "co_served" not in {e["relation"] for e in data["edges"]}
 
 
 def test_a_session_is_a_hub_with_a_few_spokes_not_eighty(tmp_path, monkeypatch):

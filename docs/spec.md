@@ -693,7 +693,7 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 871 tests** (`pytest -q`, 2026-11-08). This line is the only
+**Current count: 879 tests** (`pytest -q`, 2026-11-08). This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
@@ -996,6 +996,7 @@ All paths relative to `specs/changes/`.
 | `spec-ledger-cleanup` | **LIVE** | spec record | one row per change (two were listed twice), four status words enforced by the audit, six pre-discipline rows named and allowlisted instead of hidden, and the audit scoped to §15 so it can see a suffixed row and name an orphan. |
 | `concept-graph` | **LIVE** | architecture + tool | the ledger as a graph: concepts connected to the sessions they were met in (ids, never transcripts), to the files a repository's own commits touched (paths, never contents) and through those to their projects, plus co-served concept pairs. A session is a hub with at most four spokes; node caps are per kind. `tools/graph_export.py` draws it concentrically — concepts on a phyllotaxis spiral, files and projects on rings, sessions outside, labels pointing outward — and is deterministic: same ledger, same picture; `--semantic` projects the concepts by meaning instead (see `concept-projection`). 8 tests. |
 | `concept-projection` | **LIVE** | tool | concepts placed by meaning: `tools/graph_embed.py` writes bge-small vectors as a data artefact (the plugin imports no torch), and the export projects them with PCA + SMACOF — agreement between 2D and embedding distance **0.34 → 0.57** over 600 pairs, deterministic. Edges are nearest-in-meaning; sessions and projects are absent because they have no semantic position, and session dates are gone from the structural view too. 6 tests. |
+| `concept-evidence` | **LIVE** | architecture + tool | every sighting now records the **message id** or **commit sha** it came from, stamped with the message's own time; two concepts are linked only when they share a message (852 session-level pairs were a hairball, and `served beside` returned `source (1092)`). `tools/graph_inspect.py` prints the evidence — sessions, message ids, commits, files, siblings, nearest in meaning — and `--text` resolves excerpts on demand, never into the ledger. 9 tests. |
 Four status words, and nothing else: **LIVE** (built and verified), **PARTIAL** (built in part), **PROPOSED** (decided or drafted, not built), **NOT BUILT**. Rows without a `specs/changes/` directory predate that discipline and survive on their commit history alone.
 Supporting evidence files:
 

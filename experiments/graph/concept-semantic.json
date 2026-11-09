@@ -1,1133 +1,1619 @@
 {
   "counts": {
-    "edges": 184,
+    "edges": 178,
     "nodes": 120
   },
   "edges": [
     {
+      "evidence": {
+        "cosine": 0.952
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:doorstop.n.01",
-      "target": "concept:wordnet:press.n.09",
+      "source": "concept:lemma:plugin",
+      "target": "concept:lemma:plugins",
       "weight": 1
     },
     {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:doorstop.n.01",
-      "target": "concept:wordnet:window.n.01",
-      "weight": 1
-    },
-    {
+      "evidence": {
+        "cosine": 0.643
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:plugin",
       "target": "concept:wordnet:prompt.n.01",
       "weight": 1
     },
     {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:plugin",
-      "target": "concept:wordnet:instruction_manual.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:hermes.n.01",
-      "target": "concept:wordnet:ballast.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:hermes.n.01",
-      "target": "concept:wordnet:token.n.01",
-      "weight": 1
-    },
-    {
+      "evidence": {
+        "cosine": 0.69
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:beginning.n.04",
       "target": "concept:wordnet:evidence.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.677
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:beginning.n.04",
-      "target": "concept:wordnet:context.n.01",
+      "target": "concept:wordnet:consequence.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.659
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:hermes.n.01",
+      "target": "concept:wordnet:artifact.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.601
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:hermes.n.01",
+      "target": "concept:wordnet:manifest.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.63
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:window.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.607
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:doorstop.n.01",
+      "target": "concept:wordnet:prompt.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.845
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:antemuse",
       "target": "concept:lemma:antemuse-fleet",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.583
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:antemuse",
       "target": "concept:wordnet:hermes.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.732
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:bookend.n.01",
-      "target": "concept:wordnet:reading.n.01",
+      "source": "concept:wordnet:change.n.01",
+      "target": "concept:wordnet:improvement.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.658
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:bookend.n.01",
-      "target": "concept:wordnet:overlap.n.01",
+      "source": "concept:wordnet:change.n.01",
+      "target": "concept:wordnet:latest.n.01",
       "weight": 1
     },
     {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:weight.n.01",
-      "target": "concept:wordnet:counterweight.n.01",
-      "weight": 1
-    },
-    {
+      "evidence": {
+        "cosine": 0.696
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:weight.n.01",
       "target": "concept:wordnet:paperweight.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.677
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:weight.n.01",
+      "target": "concept:wordnet:hammer.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.64
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:bookend.n.01",
+      "target": "concept:wordnet:reading.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.632
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:bookend.n.01",
+      "target": "concept:lemma:readme",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.573
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:ryan",
-      "target": "concept:wordnet:anchor.n.01",
+      "target": "concept:wordnet:current.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.566
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:ryan",
-      "target": "concept:wordnet:current.n.01",
+      "target": "concept:wordnet:status.n.01",
       "weight": 1
     },
     {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:paperweight.n.01",
-      "target": "concept:wordnet:counterweight.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:explanation.n.01",
-      "target": "concept:wordnet:reasoning.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:explanation.n.01",
-      "target": "concept:wordnet:context.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:change.n.01",
-      "target": "concept:wordnet:version.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:change.n.01",
-      "target": "concept:wordnet:consequence.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:thermal.n.01",
-      "target": "concept:wordnet:heater.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:thermal.n.01",
-      "target": "concept:wordnet:end_product.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:reappraisal.n.01",
-      "target": "concept:wordnet:reviewer.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:reappraisal.n.01",
-      "target": "concept:wordnet:evaluation.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:hammer.n.01",
-      "target": "concept:wordnet:weapon.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:hammer.n.01",
-      "target": "concept:wordnet:weight.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:garden.n.01",
-      "target": "concept:wordnet:produce.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:garden.n.01",
-      "target": "concept:wordnet:land.n.04",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:dont",
-      "target": "concept:lemma:doesnt",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:dont",
-      "target": "concept:wordnet:tax_return.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:session.n.01",
-      "target": "concept:wordnet:context.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:session.n.01",
-      "target": "concept:wordnet:prompt.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:antemuse-fleet",
-      "target": "concept:wordnet:handoff.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:collider.n.01",
-      "target": "concept:wordnet:mechanism.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:collider.n.01",
-      "target": "concept:wordnet:ballast.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:status.n.01",
-      "target": "concept:wordnet:current.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:status.n.01",
-      "target": "concept:wordnet:message.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:property.n.01",
-      "target": "concept:wordnet:contract.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:property.n.01",
-      "target": "concept:wordnet:object.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:mugwump.n.02",
-      "target": "concept:lemma:itself",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:mugwump.n.02",
-      "target": "concept:wordnet:default.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:thats",
-      "target": "concept:lemma:whats",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:thats",
-      "target": "concept:lemma:itself",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:heater.n.01",
-      "target": "concept:wordnet:current.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:context.n.01",
-      "target": "concept:wordnet:background.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:evaluation.n.01",
-      "target": "concept:wordnet:reviewer.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:evaluation.n.01",
-      "target": "concept:wordnet:consequence.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:answer.n.01",
-      "target": "concept:wordnet:question.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:answer.n.01",
-      "target": "concept:wordnet:choice.n.02",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:surface.n.01",
-      "target": "concept:wordnet:object.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:surface.n.01",
-      "target": "concept:wordnet:land.n.04",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:json",
-      "target": "concept:wordnet:string.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:json",
-      "target": "concept:wordnet:object.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:contract.n.01",
-      "target": "concept:wordnet:section.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:contract.n.01",
-      "target": "concept:wordnet:session.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:command.n.01",
-      "target": "concept:wordnet:prompt.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:command.n.01",
-      "target": "concept:wordnet:instruction_manual.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:approach.n.01",
-      "target": "concept:wordnet:execution.n.06",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:approach.n.01",
-      "target": "concept:wordnet:attempt.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:current.n.01",
-      "target": "concept:wordnet:report.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:reading.n.01",
-      "target": "concept:lemma:read-only",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:read-only",
-      "target": "concept:wordnet:bookend.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:prompt.n.01",
-      "target": "concept:wordnet:request.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:prompt.n.01",
-      "target": "concept:wordnet:message.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:branch.n.01",
-      "target": "concept:wordnet:section.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:branch.n.01",
-      "target": "concept:wordnet:string.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:weapon.n.01",
-      "target": "concept:wordnet:mechanism.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:message.n.01",
-      "target": "concept:wordnet:request.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:artifact.n.01",
-      "target": "concept:wordnet:hermes.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:artifact.n.01",
-      "target": "concept:wordnet:object.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:question.n.01",
-      "target": "concept:wordnet:request.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:record.n.01",
-      "target": "concept:wordnet:report.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:record.n.01",
-      "target": "concept:wordnet:evidence.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:master.n.06",
-      "target": "concept:wordnet:version.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:master.n.06",
-      "target": "concept:wordnet:change.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:object.n.01",
-      "target": "concept:wordnet:material.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:evidence.n.01",
-      "target": "concept:wordnet:confirmation.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:evidence.n.01",
-      "target": "concept:wordnet:reasoning.n.01",
-      "weight": 1
-    },
-    {
+      "evidence": {
+        "cosine": 0.584
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:state.n.01",
       "target": "concept:wordnet:property.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.579
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:state.n.01",
       "target": "concept:wordnet:record.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.597
+      },
       "relation": "near_in_meaning",
-      "source": "concept:lemma:runtime",
-      "target": "concept:wordnet:run.n.05",
+      "source": "concept:wordnet:paperweight.n.01",
+      "target": "concept:wordnet:failure.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.714
+      },
       "relation": "near_in_meaning",
-      "source": "concept:lemma:runtime",
+      "source": "concept:lemma:thats",
+      "target": "concept:lemma:whats",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.695
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:thats",
+      "target": "concept:lemma:isnt",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.68
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:explanation.n.01",
+      "target": "concept:wordnet:concept.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.671
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:explanation.n.01",
       "target": "concept:wordnet:context.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.705
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:doubles.n.01",
-      "target": "concept:lemma:else",
+      "source": "concept:wordnet:session.n.01",
+      "target": "concept:wordnet:context.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.683
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:doubles.n.01",
-      "target": "concept:wordnet:single.n.01",
+      "source": "concept:wordnet:session.n.01",
+      "target": "concept:wordnet:memory.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.72
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:brick.n.01",
-      "target": "concept:wordnet:press.n.09",
+      "source": "concept:wordnet:message.n.01",
+      "target": "concept:wordnet:request.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.717
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:brick.n.01",
-      "target": "concept:wordnet:hammer.n.01",
+      "source": "concept:wordnet:message.n.01",
+      "target": "concept:wordnet:prompt.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.723
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:surface.n.01",
+      "target": "concept:wordnet:object.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.694
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:surface.n.01",
+      "target": "concept:wordnet:fields.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.723
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:answer.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.701
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:answer.n.01",
+      "target": "concept:wordnet:question.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.845
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:dont",
+      "target": "concept:lemma:doesnt",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.746
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:dont",
+      "target": "concept:lemma:isnt",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.7
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:command.n.01",
+      "target": "concept:wordnet:prompt.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.663
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:command.n.01",
+      "target": "concept:wordnet:directory.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.831
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:reappraisal.n.01",
+      "target": "concept:wordnet:reviewer.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.626
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:reappraisal.n.01",
+      "target": "concept:wordnet:evaluation.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.72
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:status.n.01",
+      "target": "concept:wordnet:current.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.71
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:status.n.01",
+      "target": "concept:wordnet:picture.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.762
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:thermal.n.01",
+      "target": "concept:wordnet:heater.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.64
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:thermal.n.01",
+      "target": "concept:wordnet:engine.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.737
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:hammer.n.01",
+      "target": "concept:wordnet:weapon.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.664
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:contract.n.01",
+      "target": "concept:wordnet:section.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.663
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:contract.n.01",
+      "target": "concept:wordnet:session.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.726
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:itself",
+      "target": "concept:wordnet:mugwump.n.02",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.716
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:itself",
       "target": "concept:lemma:else",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.703
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:tax_return.n.01",
-      "target": "concept:wordnet:end_product.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:tax_return.n.01",
-      "target": "concept:wordnet:request.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:requirement.n.01",
-      "target": "concept:wordnet:specification.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:requirement.n.01",
-      "target": "concept:wordnet:section.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:end_product.n.01",
-      "target": "concept:wordnet:format.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:end_product.n.01",
+      "source": "concept:wordnet:garden.n.01",
       "target": "concept:wordnet:produce.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.647
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:execution.n.06",
-      "target": "concept:wordnet:undertaking.n.01",
+      "source": "concept:wordnet:garden.n.01",
+      "target": "concept:wordnet:picture.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.734
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:marker.n.01",
-      "target": "concept:wordnet:surface.n.01",
+      "source": "concept:wordnet:context.n.01",
+      "target": "concept:wordnet:sentence.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.726
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:marker.n.01",
-      "target": "concept:wordnet:session.n.01",
+      "source": "concept:wordnet:context.n.01",
+      "target": "concept:wordnet:background.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.746
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:porosity.n.01",
-      "target": "concept:wordnet:material.n.01",
+      "source": "concept:wordnet:consequence.n.01",
+      "target": "concept:wordnet:end_product.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.623
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:porosity.n.01",
-      "target": "concept:wordnet:surface.n.01",
+      "source": "concept:wordnet:reverie.n.01",
+      "target": "concept:wordnet:memory.n.01",
       "weight": 1
     },
     {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:handoff.n.01",
-      "target": "concept:wordnet:overlap.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:handoff.n.01",
-      "target": "concept:wordnet:bookend.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:verdict.n.01",
-      "target": "concept:wordnet:evidence.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:verdict.n.01",
-      "target": "concept:wordnet:record.n.01",
-      "weight": 1
-    },
-    {
+      "evidence": {
+        "cosine": 0.596
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:reverie.n.01",
       "target": "concept:wordnet:prompt.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.641
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:reverie.n.01",
-      "target": "concept:wordnet:manifest.n.01",
+      "source": "concept:lemma:whats",
+      "target": "concept:wordnet:object.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.66
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:json",
+      "target": "concept:wordnet:object.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.645
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:json",
+      "target": "concept:wordnet:faculty.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.653
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:property.n.01",
+      "target": "concept:wordnet:contract.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.65
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:property.n.01",
+      "target": "concept:wordnet:object.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.627
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:gateway.n.01",
+      "target": "concept:lemma:plugin",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.623
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:gateway.n.01",
+      "target": "concept:wordnet:desktop.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.798
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:readme",
+      "target": "concept:wordnet:reading.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.723
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:readme",
+      "target": "concept:lemma:read-only",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.676
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:memory.n.01",
+      "target": "concept:wordnet:end_product.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.679
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:run.n.05",
+      "target": "concept:lemma:runtime",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.635
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:run.n.05",
+      "target": "concept:wordnet:action.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.717
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:active_agent.n.01",
+      "target": "concept:wordnet:action.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.674
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:active_agent.n.01",
+      "target": "concept:wordnet:status.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.724
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:reading.n.01",
+      "target": "concept:lemma:read-only",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.579
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:antemuse-fleet",
+      "target": "concept:wordnet:handoff.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.716
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:end_product.n.01",
+      "target": "concept:wordnet:format.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.651
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:mugwump.n.02",
+      "target": "concept:wordnet:direction.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.606
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:collider.n.01",
+      "target": "concept:wordnet:action.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.586
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:collider.n.01",
+      "target": "concept:wordnet:mechanism.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.712
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:render.n.01",
+      "target": "concept:wordnet:end_product.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.685
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:render.n.01",
+      "target": "concept:wordnet:format.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.696
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:concrete.n.01",
+      "target": "concept:wordnet:material.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.695
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:concrete.n.01",
+      "target": "concept:wordnet:brick.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.809
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:request.n.01",
+      "target": "concept:wordnet:prompt.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.692
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:question.n.01",
+      "target": "concept:wordnet:request.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.67
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:directory.n.01",
+      "target": "concept:wordnet:section.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.746
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:current.n.01",
+      "target": "concept:wordnet:latest.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.654
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:heater.n.01",
+      "target": "concept:wordnet:current.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.762
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:window.n.01",
       "target": "concept:wordnet:desktop.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.657
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:window.n.01",
       "target": "concept:wordnet:session.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.716
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:instruction_manual.n.01",
-      "target": "concept:wordnet:register.n.01",
+      "source": "concept:wordnet:object.n.01",
+      "target": "concept:wordnet:material.n.01",
       "weight": 1
     },
     {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:instruction_manual.n.01",
-      "target": "concept:wordnet:prompt.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:else",
-      "target": "concept:wordnet:current.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:report.n.01",
-      "target": "concept:wordnet:end_product.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:active_agent.n.01",
-      "target": "concept:wordnet:status.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:active_agent.n.01",
-      "target": "concept:wordnet:current.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:failure.n.01",
-      "target": "concept:wordnet:repair.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:failure.n.01",
-      "target": "concept:wordnet:report.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:campaigner.n.01",
-      "target": "concept:wordnet:beginning.n.04",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:campaigner.n.01",
-      "target": "concept:wordnet:run.n.05",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:specification.n.01",
-      "target": "concept:wordnet:standard.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:anchor.n.01",
-      "target": "concept:wordnet:mechanism.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:anchor.n.01",
-      "target": "concept:wordnet:land.n.04",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:default.n.01",
-      "target": "concept:wordnet:standard.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:default.n.01",
-      "target": "concept:wordnet:baseline.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:run.n.05",
-      "target": "concept:wordnet:attempt.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:mention.n.01",
-      "target": "concept:wordnet:beginning.n.04",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:mention.n.01",
-      "target": "concept:wordnet:record.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:inside.n.01",
-      "target": "concept:wordnet:window.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:inside.n.01",
-      "target": "concept:wordnet:section.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:summary.n.01",
-      "target": "concept:wordnet:background.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:summary.n.01",
-      "target": "concept:wordnet:context.n.01",
-      "weight": 1
-    },
-    {
+      "evidence": {
+        "cosine": 0.654
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:repair.n.01",
-      "target": "concept:wordnet:change.n.01",
+      "target": "concept:wordnet:improvement.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.648
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:repair.n.01",
-      "target": "concept:wordnet:attempt.n.01",
+      "target": "concept:wordnet:defect.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.707
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:material.n.01",
-      "target": "concept:wordnet:quality.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:overlap.n.01",
-      "target": "concept:wordnet:section.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:overlap.n.01",
-      "target": "concept:wordnet:surface.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:gateway.n.01",
-      "target": "concept:wordnet:network.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:gateway.n.01",
-      "target": "concept:wordnet:ballast.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:single.n.01",
-      "target": "concept:wordnet:status.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:single.n.01",
-      "target": "concept:wordnet:baseline.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:network.n.01",
-      "target": "concept:wordnet:session.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:mechanism.n.01",
-      "target": "concept:wordnet:explanation.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:mechanism.n.01",
-      "target": "concept:lemma:itself",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:quality.n.01",
-      "target": "concept:wordnet:standard.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:quality.n.01",
-      "target": "concept:wordnet:specification.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:writing.n.01",
-      "target": "concept:wordnet:end_product.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:writing.n.01",
-      "target": "concept:wordnet:format.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:confirmation.n.01",
-      "target": "concept:wordnet:requirement.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:budget.n.01",
-      "target": "concept:wordnet:format.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:budget.n.01",
-      "target": "concept:wordnet:package.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:package.n.01",
-      "target": "concept:wordnet:format.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:package.n.01",
-      "target": "concept:wordnet:import.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:press.n.09",
+      "source": "concept:wordnet:instruction_manual.n.01",
       "target": "concept:wordnet:prompt.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.686
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:press.n.09",
-      "target": "concept:wordnet:instruction_manual.n.01",
+      "source": "concept:wordnet:instruction_manual.n.01",
+      "target": "concept:wordnet:setting.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.718
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:fields.n.01",
-      "target": "concept:wordnet:land.n.04",
+      "source": "concept:wordnet:failure.n.01",
+      "target": "concept:wordnet:defect.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.645
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:fields.n.01",
-      "target": "concept:wordnet:surface.n.01",
+      "source": "concept:wordnet:failure.n.01",
+      "target": "concept:wordnet:exception.n.01",
       "weight": 1
     },
     {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:import.n.01",
-      "target": "concept:wordnet:inside.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:supplier.n.01",
-      "target": "concept:wordnet:package.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:supplier.n.01",
-      "target": "concept:wordnet:choice.n.02",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:string.n.01",
-      "target": "concept:wordnet:acoustic.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:string.n.01",
-      "target": "concept:wordnet:end_product.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:griddle.n.01",
-      "target": "concept:wordnet:garden.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:griddle.n.01",
-      "target": "concept:wordnet:surface.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:manifest.n.01",
-      "target": "concept:wordnet:prompt.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:manifest.n.01",
-      "target": "concept:wordnet:token.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:lemma:doesnt",
-      "target": "concept:wordnet:answer.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:undertaking.n.01",
-      "target": "concept:wordnet:report.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:token.n.01",
-      "target": "concept:lemma:whats",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:acoustic.n.01",
-      "target": "concept:wordnet:end_product.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:class.n.01",
-      "target": "concept:wordnet:section.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:class.n.01",
-      "target": "concept:wordnet:object.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:snapshot.n.01",
-      "target": "concept:wordnet:beginning.n.04",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:snapshot.n.01",
-      "target": "concept:wordnet:baseline.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:agent.n.01",
-      "target": "concept:wordnet:contract.n.01",
-      "weight": 1
-    },
-    {
-      "relation": "near_in_meaning",
-      "source": "concept:wordnet:agent.n.01",
-      "target": "concept:wordnet:supplier.n.01",
-      "weight": 1
-    },
-    {
+      "evidence": {
+        "cosine": 0.543
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:doomscroll",
       "target": "concept:wordnet:collider.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.536
+      },
       "relation": "near_in_meaning",
       "source": "concept:lemma:doomscroll",
       "target": "concept:lemma:runtime",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.651
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:bottom.n.01",
-      "target": "concept:wordnet:land.n.04",
+      "source": "concept:wordnet:inside.n.01",
+      "target": "concept:wordnet:window.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.647
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:bottom.n.01",
-      "target": "concept:wordnet:baseline.n.01",
+      "source": "concept:wordnet:inside.n.01",
+      "target": "concept:wordnet:section.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.644
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:sentence.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.713
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:approach.n.01",
+      "target": "concept:wordnet:action.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.704
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:approach.n.01",
+      "target": "concept:wordnet:direction.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.702
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:evaluation.n.01",
+      "target": "concept:wordnet:improvement.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.701
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:evaluation.n.01",
+      "target": "concept:wordnet:reviewer.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.767
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:doesnt",
+      "target": "concept:lemma:isnt",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.683
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:evidence.n.01",
+      "target": "concept:wordnet:record.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.647
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:artifact.n.01",
+      "target": "concept:wordnet:object.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.691
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:picture.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.65
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:single.n.01",
+      "target": "concept:wordnet:status.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.626
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:single.n.01",
+      "target": "concept:wordnet:picture.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.7
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:summary.n.01",
+      "target": "concept:wordnet:background.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.698
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:summary.n.01",
+      "target": "concept:wordnet:context.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.64
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:mention.n.01",
+      "target": "concept:wordnet:beginning.n.04",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.636
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:mention.n.01",
+      "target": "concept:wordnet:record.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.716
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:undertaking.n.01",
+      "target": "concept:wordnet:concept.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.697
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:undertaking.n.01",
+      "target": "concept:wordnet:execution.n.06",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.717
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:record.n.01",
+      "target": "concept:wordnet:report.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.703
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:tax_return.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.634
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:tax_return.n.01",
+      "target": "concept:wordnet:end_product.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.62
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:branch.n.01",
+      "target": "concept:wordnet:section.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.609
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:branch.n.01",
+      "target": "concept:wordnet:garden.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.634
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:fictional_character.n.01",
+      "target": "concept:wordnet:material.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.63
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:fictional_character.n.01",
+      "target": "concept:wordnet:campaigner.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.633
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:handoff.n.01",
+      "target": "concept:wordnet:sketch.n.03",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.605
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:handoff.n.01",
+      "target": "concept:wordnet:bookend.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.676
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:default.n.01",
+      "target": "concept:lemma:itself",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.655
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:default.n.01",
+      "target": "concept:wordnet:setting.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.702
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:report.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.654
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:desktop.n.01",
+      "target": "concept:wordnet:render.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.676
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:look.n.02",
+      "target": "concept:wordnet:reading.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.67
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:look.n.02",
+      "target": "concept:wordnet:picture.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.711
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:section.n.01",
+      "target": "concept:wordnet:document.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.703
+      },
       "relation": "near_in_meaning",
       "source": "concept:wordnet:section.n.01",
       "target": "concept:wordnet:format.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.676
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:register.n.01",
-      "target": "concept:wordnet:confirmation.n.01",
+      "source": "concept:lemma:runtime",
+      "target": "concept:wordnet:context.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.683
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:desktop.n.01",
-      "target": "concept:wordnet:surface.n.01",
+      "source": "concept:wordnet:faculty.n.01",
+      "target": "concept:wordnet:import.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.67
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:choice.n.02",
-      "target": "concept:wordnet:approach.n.01",
+      "source": "concept:wordnet:faculty.n.01",
+      "target": "concept:wordnet:section.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.655
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:baseline.n.01",
-      "target": "concept:wordnet:standard.n.01",
+      "source": "concept:wordnet:weapon.n.01",
+      "target": "concept:wordnet:mechanism.n.01",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.696
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:attempt.n.01",
+      "source": "concept:wordnet:concept.n.01",
       "target": "concept:wordnet:execution.n.06",
       "weight": 1
     },
     {
+      "evidence": {
+        "cosine": 0.634
+      },
       "relation": "near_in_meaning",
-      "source": "concept:wordnet:attempt.n.01",
-      "target": "concept:wordnet:request.n.01",
+      "source": "concept:wordnet:master.n.06",
+      "target": "concept:wordnet:mugwump.n.02",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.619
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:master.n.06",
+      "target": "concept:wordnet:default.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.654
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:else",
+      "target": "concept:wordnet:current.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.716
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:material.n.01",
+      "target": "concept:wordnet:document.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.65
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:verdict.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.643
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:verdict.n.01",
+      "target": "concept:wordnet:answer.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.687
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:requirement.n.01",
+      "target": "concept:wordnet:section.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.648
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:requirement.n.01",
+      "target": "concept:wordnet:undertaking.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.644
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:plugins",
+      "target": "concept:wordnet:command.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.672
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:defect.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.702
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:execution.n.06",
+      "target": "concept:wordnet:approach.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.635
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:doubles.n.01",
+      "target": "concept:wordnet:consequence.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.616
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:doubles.n.01",
+      "target": "concept:lemma:else",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.636
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:brick.n.01",
+      "target": "concept:wordnet:hammer.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.625
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:exception.n.01",
+      "target": "concept:wordnet:report.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.659
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:setting.n.01",
+      "target": "concept:wordnet:direction.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.671
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:direction.n.01",
+      "target": "concept:wordnet:mechanism.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.692
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:produce.n.01",
+      "target": "concept:wordnet:end_product.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.624
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:campaigner.n.01",
+      "target": "concept:wordnet:beginning.n.04",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.628
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:manifest.n.01",
+      "target": "concept:wordnet:prompt.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.62
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:manifest.n.01",
+      "target": "concept:wordnet:action.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.638
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:import.n.01",
+      "target": "concept:wordnet:inside.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.653
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:compaction.n.01",
+      "target": "concept:wordnet:porosity.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.633
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:compaction.n.01",
+      "target": "concept:wordnet:material.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.628
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:snapshot.n.01",
+      "target": "concept:wordnet:beginning.n.04",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.618
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:snapshot.n.01",
+      "target": "concept:wordnet:summary.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.735
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:document.n.01",
+      "target": "concept:wordnet:format.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.724
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:document.n.01",
+      "target": "concept:lemma:docstring",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.66
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:fields.n.01",
+      "target": "concept:wordnet:object.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.688
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:lemma:docstring",
+      "target": "concept:wordnet:format.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.68
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:writing.n.01",
+      "target": "concept:wordnet:end_product.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.664
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:writing.n.01",
+      "target": "concept:wordnet:format.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.635
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:porosity.n.01",
+      "target": "concept:wordnet:material.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.622
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:sketch.n.03",
+      "target": "concept:wordnet:mention.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.703
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:budget.n.01",
+      "target": "concept:wordnet:format.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.669
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:budget.n.01",
+      "target": "concept:wordnet:undertaking.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.615
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:supplier.n.01",
+      "target": "concept:wordnet:directory.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.604
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:supplier.n.01",
+      "target": "concept:wordnet:document.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.644
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:engine.n.01",
+      "target": "concept:wordnet:end_product.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.668
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:mechanism.n.01",
+      "target": "concept:wordnet:explanation.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.672
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:marker.n.01",
+      "target": "concept:wordnet:surface.n.01",
+      "weight": 1
+    },
+    {
+      "evidence": {
+        "cosine": 0.643
+      },
+      "relation": "near_in_meaning",
+      "source": "concept:wordnet:marker.n.01",
+      "target": "concept:wordnet:session.n.01",
       "weight": 1
     }
   ],
   "layout": "semantic",
   "nodes": [
     {
-      "id": "concept:wordnet:doorstop.n.01",
-      "key": "wordnet:doorstop.n.01",
-      "kind": "concept",
-      "label": "doorstop"
-    },
-    {
       "id": "concept:lemma:plugin",
       "key": "lemma:plugin",
       "kind": "concept",
       "label": "plugin"
-    },
-    {
-      "id": "concept:wordnet:hermes.n.01",
-      "key": "wordnet:hermes.n.01",
-      "kind": "concept",
-      "label": "hermes"
     },
     {
       "id": "concept:wordnet:beginning.n.04",
@@ -1136,16 +1622,28 @@
       "label": "source"
     },
     {
+      "id": "concept:wordnet:hermes.n.01",
+      "key": "wordnet:hermes.n.01",
+      "kind": "concept",
+      "label": "hermes"
+    },
+    {
+      "id": "concept:wordnet:doorstop.n.01",
+      "key": "wordnet:doorstop.n.01",
+      "kind": "concept",
+      "label": "doorstop"
+    },
+    {
       "id": "concept:lemma:antemuse",
       "key": "lemma:antemuse",
       "kind": "concept",
       "label": "antemuse"
     },
     {
-      "id": "concept:wordnet:bookend.n.01",
-      "key": "wordnet:bookend.n.01",
+      "id": "concept:wordnet:change.n.01",
+      "key": "wordnet:change.n.01",
       "kind": "concept",
-      "label": "bookend"
+      "label": "changes"
     },
     {
       "id": "concept:wordnet:weight.n.01",
@@ -1154,250 +1652,16 @@
       "label": "weight"
     },
     {
+      "id": "concept:wordnet:bookend.n.01",
+      "key": "wordnet:bookend.n.01",
+      "kind": "concept",
+      "label": "bookend"
+    },
+    {
       "id": "concept:lemma:ryan",
       "key": "lemma:ryan",
       "kind": "concept",
       "label": "ryan"
-    },
-    {
-      "id": "concept:wordnet:paperweight.n.01",
-      "key": "wordnet:paperweight.n.01",
-      "kind": "concept",
-      "label": "paperweight"
-    },
-    {
-      "id": "concept:wordnet:explanation.n.01",
-      "key": "wordnet:explanation.n.01",
-      "kind": "concept",
-      "label": "explanation"
-    },
-    {
-      "id": "concept:wordnet:change.n.01",
-      "key": "wordnet:change.n.01",
-      "kind": "concept",
-      "label": "change"
-    },
-    {
-      "id": "concept:wordnet:thermal.n.01",
-      "key": "wordnet:thermal.n.01",
-      "kind": "concept",
-      "label": "thermal"
-    },
-    {
-      "id": "concept:wordnet:reappraisal.n.01",
-      "key": "wordnet:reappraisal.n.01",
-      "kind": "concept",
-      "label": "reviews"
-    },
-    {
-      "id": "concept:wordnet:hammer.n.01",
-      "key": "wordnet:hammer.n.01",
-      "kind": "concept",
-      "label": "hammer"
-    },
-    {
-      "id": "concept:wordnet:garden.n.01",
-      "key": "wordnet:garden.n.01",
-      "kind": "concept",
-      "label": "garden"
-    },
-    {
-      "id": "concept:lemma:dont",
-      "key": "lemma:dont",
-      "kind": "concept",
-      "label": "dont"
-    },
-    {
-      "id": "concept:wordnet:session.n.01",
-      "key": "wordnet:session.n.01",
-      "kind": "concept",
-      "label": "session"
-    },
-    {
-      "id": "concept:lemma:antemuse-fleet",
-      "key": "lemma:antemuse-fleet",
-      "kind": "concept",
-      "label": "antemuse-fleet"
-    },
-    {
-      "id": "concept:wordnet:collider.n.01",
-      "key": "wordnet:collider.n.01",
-      "kind": "concept",
-      "label": "collider"
-    },
-    {
-      "id": "concept:wordnet:status.n.01",
-      "key": "wordnet:status.n.01",
-      "kind": "concept",
-      "label": "status"
-    },
-    {
-      "id": "concept:wordnet:property.n.01",
-      "key": "wordnet:property.n.01",
-      "kind": "concept",
-      "label": "property"
-    },
-    {
-      "id": "concept:wordnet:mugwump.n.02",
-      "key": "wordnet:mugwump.n.02",
-      "kind": "concept",
-      "label": "independent"
-    },
-    {
-      "id": "concept:lemma:thats",
-      "key": "lemma:thats",
-      "kind": "concept",
-      "label": "thats"
-    },
-    {
-      "id": "concept:wordnet:heater.n.01",
-      "key": "wordnet:heater.n.01",
-      "kind": "concept",
-      "label": "warmer"
-    },
-    {
-      "id": "concept:wordnet:context.n.01",
-      "key": "wordnet:context.n.01",
-      "kind": "concept",
-      "label": "context"
-    },
-    {
-      "id": "concept:wordnet:evaluation.n.01",
-      "key": "wordnet:evaluation.n.01",
-      "kind": "concept",
-      "label": "evaluation"
-    },
-    {
-      "id": "concept:wordnet:answer.n.01",
-      "key": "wordnet:answer.n.01",
-      "kind": "concept",
-      "label": "answer"
-    },
-    {
-      "id": "concept:wordnet:surface.n.01",
-      "key": "wordnet:surface.n.01",
-      "kind": "concept",
-      "label": "surfaces"
-    },
-    {
-      "id": "concept:wordnet:consequence.n.01",
-      "key": "wordnet:consequence.n.01",
-      "kind": "concept",
-      "label": "effect"
-    },
-    {
-      "id": "concept:lemma:json",
-      "key": "lemma:json",
-      "kind": "concept",
-      "label": "json"
-    },
-    {
-      "id": "concept:wordnet:contract.n.01",
-      "key": "wordnet:contract.n.01",
-      "kind": "concept",
-      "label": "contract"
-    },
-    {
-      "id": "concept:wordnet:command.n.01",
-      "key": "wordnet:command.n.01",
-      "kind": "concept",
-      "label": "commands"
-    },
-    {
-      "id": "concept:wordnet:approach.n.01",
-      "key": "wordnet:approach.n.01",
-      "kind": "concept",
-      "label": "approach"
-    },
-    {
-      "id": "concept:wordnet:current.n.01",
-      "key": "wordnet:current.n.01",
-      "kind": "concept",
-      "label": "current"
-    },
-    {
-      "id": "concept:wordnet:reading.n.01",
-      "key": "wordnet:reading.n.01",
-      "kind": "concept",
-      "label": "reading"
-    },
-    {
-      "id": "concept:lemma:read-only",
-      "key": "lemma:read-only",
-      "kind": "concept",
-      "label": "read-only"
-    },
-    {
-      "id": "concept:wordnet:prompt.n.01",
-      "key": "wordnet:prompt.n.01",
-      "kind": "concept",
-      "label": "prompt"
-    },
-    {
-      "id": "concept:wordnet:branch.n.01",
-      "key": "wordnet:branch.n.01",
-      "kind": "concept",
-      "label": "branch"
-    },
-    {
-      "id": "concept:wordnet:weapon.n.01",
-      "key": "wordnet:weapon.n.01",
-      "kind": "concept",
-      "label": "weapon"
-    },
-    {
-      "id": "concept:wordnet:message.n.01",
-      "key": "wordnet:message.n.01",
-      "kind": "concept",
-      "label": "message"
-    },
-    {
-      "id": "concept:wordnet:artifact.n.01",
-      "key": "wordnet:artifact.n.01",
-      "kind": "concept",
-      "label": "artifacts"
-    },
-    {
-      "id": "concept:wordnet:question.n.01",
-      "key": "wordnet:question.n.01",
-      "kind": "concept",
-      "label": "question"
-    },
-    {
-      "id": "concept:wordnet:request.n.01",
-      "key": "wordnet:request.n.01",
-      "kind": "concept",
-      "label": "request"
-    },
-    {
-      "id": "concept:wordnet:record.n.01",
-      "key": "wordnet:record.n.01",
-      "kind": "concept",
-      "label": "records"
-    },
-    {
-      "id": "concept:wordnet:master.n.06",
-      "key": "wordnet:master.n.06",
-      "kind": "concept",
-      "label": "original"
-    },
-    {
-      "id": "concept:wordnet:object.n.01",
-      "key": "wordnet:object.n.01",
-      "kind": "concept",
-      "label": "objects"
-    },
-    {
-      "id": "concept:wordnet:reviewer.n.01",
-      "key": "wordnet:reviewer.n.01",
-      "kind": "concept",
-      "label": "reviewer"
-    },
-    {
-      "id": "concept:wordnet:evidence.n.01",
-      "key": "wordnet:evidence.n.01",
-      "kind": "concept",
-      "label": "evidence"
     },
     {
       "id": "concept:wordnet:state.n.01",
@@ -1406,10 +1670,520 @@
       "label": "states"
     },
     {
+      "id": "concept:wordnet:paperweight.n.01",
+      "key": "wordnet:paperweight.n.01",
+      "kind": "concept",
+      "label": "paperweight"
+    },
+    {
+      "id": "concept:lemma:thats",
+      "key": "lemma:thats",
+      "kind": "concept",
+      "label": "thats"
+    },
+    {
+      "id": "concept:wordnet:explanation.n.01",
+      "key": "wordnet:explanation.n.01",
+      "kind": "concept",
+      "label": "explanation"
+    },
+    {
+      "id": "concept:wordnet:session.n.01",
+      "key": "wordnet:session.n.01",
+      "kind": "concept",
+      "label": "session"
+    },
+    {
+      "id": "concept:wordnet:message.n.01",
+      "key": "wordnet:message.n.01",
+      "kind": "concept",
+      "label": "message"
+    },
+    {
+      "id": "concept:wordnet:surface.n.01",
+      "key": "wordnet:surface.n.01",
+      "kind": "concept",
+      "label": "surfaces"
+    },
+    {
+      "id": "concept:wordnet:answer.n.01",
+      "key": "wordnet:answer.n.01",
+      "kind": "concept",
+      "label": "answers"
+    },
+    {
+      "id": "concept:lemma:dont",
+      "key": "lemma:dont",
+      "kind": "concept",
+      "label": "dont"
+    },
+    {
+      "id": "concept:wordnet:command.n.01",
+      "key": "wordnet:command.n.01",
+      "kind": "concept",
+      "label": "commands"
+    },
+    {
+      "id": "concept:wordnet:reappraisal.n.01",
+      "key": "wordnet:reappraisal.n.01",
+      "kind": "concept",
+      "label": "reviews"
+    },
+    {
+      "id": "concept:wordnet:status.n.01",
+      "key": "wordnet:status.n.01",
+      "kind": "concept",
+      "label": "status"
+    },
+    {
+      "id": "concept:wordnet:thermal.n.01",
+      "key": "wordnet:thermal.n.01",
+      "kind": "concept",
+      "label": "thermal"
+    },
+    {
+      "id": "concept:wordnet:hammer.n.01",
+      "key": "wordnet:hammer.n.01",
+      "kind": "concept",
+      "label": "hammer"
+    },
+    {
+      "id": "concept:wordnet:contract.n.01",
+      "key": "wordnet:contract.n.01",
+      "kind": "concept",
+      "label": "contract"
+    },
+    {
+      "id": "concept:lemma:itself",
+      "key": "lemma:itself",
+      "kind": "concept",
+      "label": "itself"
+    },
+    {
+      "id": "concept:wordnet:garden.n.01",
+      "key": "wordnet:garden.n.01",
+      "kind": "concept",
+      "label": "garden"
+    },
+    {
+      "id": "concept:wordnet:context.n.01",
+      "key": "wordnet:context.n.01",
+      "kind": "concept",
+      "label": "context"
+    },
+    {
+      "id": "concept:wordnet:consequence.n.01",
+      "key": "wordnet:consequence.n.01",
+      "kind": "concept",
+      "label": "result"
+    },
+    {
+      "id": "concept:wordnet:reverie.n.01",
+      "key": "wordnet:reverie.n.01",
+      "kind": "concept",
+      "label": "daydream"
+    },
+    {
+      "id": "concept:lemma:whats",
+      "key": "lemma:whats",
+      "kind": "concept",
+      "label": "whats"
+    },
+    {
+      "id": "concept:lemma:json",
+      "key": "lemma:json",
+      "kind": "concept",
+      "label": "json"
+    },
+    {
+      "id": "concept:wordnet:property.n.01",
+      "key": "wordnet:property.n.01",
+      "kind": "concept",
+      "label": "property"
+    },
+    {
+      "id": "concept:wordnet:gateway.n.01",
+      "key": "wordnet:gateway.n.01",
+      "kind": "concept",
+      "label": "gateway"
+    },
+    {
+      "id": "concept:lemma:readme",
+      "key": "lemma:readme",
+      "kind": "concept",
+      "label": "readme"
+    },
+    {
+      "id": "concept:wordnet:memory.n.01",
+      "key": "wordnet:memory.n.01",
+      "kind": "concept",
+      "label": "memory"
+    },
+    {
+      "id": "concept:wordnet:run.n.05",
+      "key": "wordnet:run.n.05",
+      "kind": "concept",
+      "label": "running"
+    },
+    {
+      "id": "concept:wordnet:active_agent.n.01",
+      "key": "wordnet:active_agent.n.01",
+      "kind": "concept",
+      "label": "active"
+    },
+    {
+      "id": "concept:wordnet:reading.n.01",
+      "key": "wordnet:reading.n.01",
+      "kind": "concept",
+      "label": "reading"
+    },
+    {
+      "id": "concept:lemma:antemuse-fleet",
+      "key": "lemma:antemuse-fleet",
+      "kind": "concept",
+      "label": "antemuse-fleet"
+    },
+    {
+      "id": "concept:wordnet:end_product.n.01",
+      "key": "wordnet:end_product.n.01",
+      "kind": "concept",
+      "label": "output"
+    },
+    {
+      "id": "concept:wordnet:mugwump.n.02",
+      "key": "wordnet:mugwump.n.02",
+      "kind": "concept",
+      "label": "independent"
+    },
+    {
+      "id": "concept:wordnet:collider.n.01",
+      "key": "wordnet:collider.n.01",
+      "kind": "concept",
+      "label": "collider"
+    },
+    {
+      "id": "concept:wordnet:render.n.01",
+      "key": "wordnet:render.n.01",
+      "kind": "concept",
+      "label": "render"
+    },
+    {
+      "id": "concept:wordnet:concrete.n.01",
+      "key": "wordnet:concrete.n.01",
+      "kind": "concept",
+      "label": "concrete"
+    },
+    {
+      "id": "concept:wordnet:request.n.01",
+      "key": "wordnet:request.n.01",
+      "kind": "concept",
+      "label": "request"
+    },
+    {
+      "id": "concept:wordnet:question.n.01",
+      "key": "wordnet:question.n.01",
+      "kind": "concept",
+      "label": "question"
+    },
+    {
+      "id": "concept:wordnet:directory.n.01",
+      "key": "wordnet:directory.n.01",
+      "kind": "concept",
+      "label": "directory"
+    },
+    {
+      "id": "concept:wordnet:current.n.01",
+      "key": "wordnet:current.n.01",
+      "kind": "concept",
+      "label": "current"
+    },
+    {
+      "id": "concept:wordnet:heater.n.01",
+      "key": "wordnet:heater.n.01",
+      "kind": "concept",
+      "label": "warmer"
+    },
+    {
+      "id": "concept:wordnet:window.n.01",
+      "key": "wordnet:window.n.01",
+      "kind": "concept",
+      "label": "window"
+    },
+    {
+      "id": "concept:wordnet:object.n.01",
+      "key": "wordnet:object.n.01",
+      "kind": "concept",
+      "label": "objects"
+    },
+    {
+      "id": "concept:wordnet:repair.n.01",
+      "key": "wordnet:repair.n.01",
+      "kind": "concept",
+      "label": "repairs"
+    },
+    {
+      "id": "concept:wordnet:instruction_manual.n.01",
+      "key": "wordnet:instruction_manual.n.01",
+      "kind": "concept",
+      "label": "instructions"
+    },
+    {
+      "id": "concept:wordnet:failure.n.01",
+      "key": "wordnet:failure.n.01",
+      "kind": "concept",
+      "label": "failure"
+    },
+    {
+      "id": "concept:lemma:doomscroll",
+      "key": "lemma:doomscroll",
+      "kind": "concept",
+      "label": "doomscroll"
+    },
+    {
+      "id": "concept:wordnet:inside.n.01",
+      "key": "wordnet:inside.n.01",
+      "kind": "concept",
+      "label": "inside"
+    },
+    {
+      "id": "concept:wordnet:sentence.n.01",
+      "key": "wordnet:sentence.n.01",
+      "kind": "concept",
+      "label": "sentence"
+    },
+    {
+      "id": "concept:wordnet:approach.n.01",
+      "key": "wordnet:approach.n.01",
+      "kind": "concept",
+      "label": "approach"
+    },
+    {
+      "id": "concept:wordnet:evaluation.n.01",
+      "key": "wordnet:evaluation.n.01",
+      "kind": "concept",
+      "label": "evaluation"
+    },
+    {
+      "id": "concept:lemma:doesnt",
+      "key": "lemma:doesnt",
+      "kind": "concept",
+      "label": "doesnt"
+    },
+    {
+      "id": "concept:wordnet:evidence.n.01",
+      "key": "wordnet:evidence.n.01",
+      "kind": "concept",
+      "label": "evidence"
+    },
+    {
+      "id": "concept:wordnet:artifact.n.01",
+      "key": "wordnet:artifact.n.01",
+      "kind": "concept",
+      "label": "artifacts"
+    },
+    {
+      "id": "concept:wordnet:picture.n.01",
+      "key": "wordnet:picture.n.01",
+      "kind": "concept",
+      "label": "picture"
+    },
+    {
+      "id": "concept:wordnet:single.n.01",
+      "key": "wordnet:single.n.01",
+      "kind": "concept",
+      "label": "single"
+    },
+    {
+      "id": "concept:wordnet:summary.n.01",
+      "key": "wordnet:summary.n.01",
+      "kind": "concept",
+      "label": "summary"
+    },
+    {
+      "id": "concept:wordnet:improvement.n.01",
+      "key": "wordnet:improvement.n.01",
+      "kind": "concept",
+      "label": "improvement"
+    },
+    {
+      "id": "concept:wordnet:mention.n.01",
+      "key": "wordnet:mention.n.01",
+      "kind": "concept",
+      "label": "references"
+    },
+    {
+      "id": "concept:wordnet:undertaking.n.01",
+      "key": "wordnet:undertaking.n.01",
+      "kind": "concept",
+      "label": "project"
+    },
+    {
+      "id": "concept:wordnet:record.n.01",
+      "key": "wordnet:record.n.01",
+      "kind": "concept",
+      "label": "records"
+    },
+    {
+      "id": "concept:wordnet:tax_return.n.01",
+      "key": "wordnet:tax_return.n.01",
+      "kind": "concept",
+      "label": "returns"
+    },
+    {
+      "id": "concept:lemma:read-only",
+      "key": "lemma:read-only",
+      "kind": "concept",
+      "label": "read-only"
+    },
+    {
+      "id": "concept:wordnet:branch.n.01",
+      "key": "wordnet:branch.n.01",
+      "kind": "concept",
+      "label": "branch"
+    },
+    {
+      "id": "concept:wordnet:fictional_character.n.01",
+      "key": "wordnet:fictional_character.n.01",
+      "kind": "concept",
+      "label": "character"
+    },
+    {
+      "id": "concept:wordnet:handoff.n.01",
+      "key": "wordnet:handoff.n.01",
+      "kind": "concept",
+      "label": "handoffs"
+    },
+    {
+      "id": "concept:wordnet:default.n.01",
+      "key": "wordnet:default.n.01",
+      "kind": "concept",
+      "label": "default"
+    },
+    {
+      "id": "concept:wordnet:report.n.01",
+      "key": "wordnet:report.n.01",
+      "kind": "concept",
+      "label": "report"
+    },
+    {
+      "id": "concept:wordnet:prompt.n.01",
+      "key": "wordnet:prompt.n.01",
+      "kind": "concept",
+      "label": "prompt"
+    },
+    {
+      "id": "concept:wordnet:desktop.n.01",
+      "key": "wordnet:desktop.n.01",
+      "kind": "concept",
+      "label": "desktop"
+    },
+    {
+      "id": "concept:wordnet:look.n.02",
+      "key": "wordnet:look.n.02",
+      "kind": "concept",
+      "label": "looking"
+    },
+    {
+      "id": "concept:wordnet:section.n.01",
+      "key": "wordnet:section.n.01",
+      "kind": "concept",
+      "label": "section"
+    },
+    {
       "id": "concept:lemma:runtime",
       "key": "lemma:runtime",
       "kind": "concept",
       "label": "runtime"
+    },
+    {
+      "id": "concept:wordnet:faculty.n.01",
+      "key": "wordnet:faculty.n.01",
+      "kind": "concept",
+      "label": "module"
+    },
+    {
+      "id": "concept:wordnet:weapon.n.01",
+      "key": "wordnet:weapon.n.01",
+      "kind": "concept",
+      "label": "weapon"
+    },
+    {
+      "id": "concept:wordnet:concept.n.01",
+      "key": "wordnet:concept.n.01",
+      "kind": "concept",
+      "label": "concept"
+    },
+    {
+      "id": "concept:wordnet:master.n.06",
+      "key": "wordnet:master.n.06",
+      "kind": "concept",
+      "label": "original"
+    },
+    {
+      "id": "concept:wordnet:action.n.01",
+      "key": "wordnet:action.n.01",
+      "kind": "concept",
+      "label": "action"
+    },
+    {
+      "id": "concept:lemma:else",
+      "key": "lemma:else",
+      "kind": "concept",
+      "label": "else"
+    },
+    {
+      "id": "concept:wordnet:material.n.01",
+      "key": "wordnet:material.n.01",
+      "kind": "concept",
+      "label": "material"
+    },
+    {
+      "id": "concept:wordnet:verdict.n.01",
+      "key": "wordnet:verdict.n.01",
+      "kind": "concept",
+      "label": "verdicts"
+    },
+    {
+      "id": "concept:lemma:isnt",
+      "key": "lemma:isnt",
+      "kind": "concept",
+      "label": "isnt"
+    },
+    {
+      "id": "concept:wordnet:requirement.n.01",
+      "key": "wordnet:requirement.n.01",
+      "kind": "concept",
+      "label": "requirements"
+    },
+    {
+      "id": "concept:wordnet:background.n.01",
+      "key": "wordnet:background.n.01",
+      "kind": "concept",
+      "label": "background"
+    },
+    {
+      "id": "concept:lemma:plugins",
+      "key": "lemma:plugins",
+      "kind": "concept",
+      "label": "plugins"
+    },
+    {
+      "id": "concept:wordnet:defect.n.01",
+      "key": "wordnet:defect.n.01",
+      "kind": "concept",
+      "label": "defect"
+    },
+    {
+      "id": "concept:wordnet:reviewer.n.01",
+      "key": "wordnet:reviewer.n.01",
+      "kind": "concept",
+      "label": "reviewer"
+    },
+    {
+      "id": "concept:wordnet:execution.n.06",
+      "key": "wordnet:execution.n.06",
+      "kind": "concept",
+      "label": "implementation"
     },
     {
       "id": "concept:wordnet:doubles.n.01",
@@ -1424,82 +2198,22 @@
       "label": "bricks"
     },
     {
-      "id": "concept:lemma:itself",
-      "key": "lemma:itself",
+      "id": "concept:wordnet:exception.n.01",
+      "key": "wordnet:exception.n.01",
       "kind": "concept",
-      "label": "itself"
+      "label": "exception"
     },
     {
-      "id": "concept:wordnet:tax_return.n.01",
-      "key": "wordnet:tax_return.n.01",
+      "id": "concept:wordnet:setting.n.01",
+      "key": "wordnet:setting.n.01",
       "kind": "concept",
-      "label": "return"
+      "label": "setting"
     },
     {
-      "id": "concept:wordnet:requirement.n.01",
-      "key": "wordnet:requirement.n.01",
+      "id": "concept:wordnet:direction.n.01",
+      "key": "wordnet:direction.n.01",
       "kind": "concept",
-      "label": "requirements"
-    },
-    {
-      "id": "concept:wordnet:end_product.n.01",
-      "key": "wordnet:end_product.n.01",
-      "kind": "concept",
-      "label": "output"
-    },
-    {
-      "id": "concept:wordnet:execution.n.06",
-      "key": "wordnet:execution.n.06",
-      "kind": "concept",
-      "label": "implementation"
-    },
-    {
-      "id": "concept:wordnet:marker.n.01",
-      "key": "wordnet:marker.n.01",
-      "kind": "concept",
-      "label": "marker"
-    },
-    {
-      "id": "concept:wordnet:porosity.n.01",
-      "key": "wordnet:porosity.n.01",
-      "kind": "concept",
-      "label": "porosity"
-    },
-    {
-      "id": "concept:wordnet:handoff.n.01",
-      "key": "wordnet:handoff.n.01",
-      "kind": "concept",
-      "label": "handoffs"
-    },
-    {
-      "id": "concept:wordnet:verdict.n.01",
-      "key": "wordnet:verdict.n.01",
-      "kind": "concept",
-      "label": "verdicts"
-    },
-    {
-      "id": "concept:wordnet:reverie.n.01",
-      "key": "wordnet:reverie.n.01",
-      "kind": "concept",
-      "label": "daydream"
-    },
-    {
-      "id": "concept:wordnet:window.n.01",
-      "key": "wordnet:window.n.01",
-      "kind": "concept",
-      "label": "window"
-    },
-    {
-      "id": "concept:wordnet:instruction_manual.n.01",
-      "key": "wordnet:instruction_manual.n.01",
-      "kind": "concept",
-      "label": "instructions"
-    },
-    {
-      "id": "concept:lemma:else",
-      "key": "lemma:else",
-      "kind": "concept",
-      "label": "else"
+      "label": "direction"
     },
     {
       "id": "concept:wordnet:produce.n.01",
@@ -1508,208 +2222,10 @@
       "label": "produce"
     },
     {
-      "id": "concept:wordnet:report.n.01",
-      "key": "wordnet:report.n.01",
-      "kind": "concept",
-      "label": "report"
-    },
-    {
-      "id": "concept:wordnet:counterweight.n.01",
-      "key": "wordnet:counterweight.n.01",
-      "kind": "concept",
-      "label": "counterweight"
-    },
-    {
-      "id": "concept:wordnet:active_agent.n.01",
-      "key": "wordnet:active_agent.n.01",
-      "kind": "concept",
-      "label": "active"
-    },
-    {
-      "id": "concept:wordnet:failure.n.01",
-      "key": "wordnet:failure.n.01",
-      "kind": "concept",
-      "label": "failure"
-    },
-    {
       "id": "concept:wordnet:campaigner.n.01",
       "key": "wordnet:campaigner.n.01",
       "kind": "concept",
       "label": "candidate"
-    },
-    {
-      "id": "concept:wordnet:specification.n.01",
-      "key": "wordnet:specification.n.01",
-      "kind": "concept",
-      "label": "specification"
-    },
-    {
-      "id": "concept:wordnet:anchor.n.01",
-      "key": "wordnet:anchor.n.01",
-      "kind": "concept",
-      "label": "anchor"
-    },
-    {
-      "id": "concept:wordnet:default.n.01",
-      "key": "wordnet:default.n.01",
-      "kind": "concept",
-      "label": "default"
-    },
-    {
-      "id": "concept:wordnet:run.n.05",
-      "key": "wordnet:run.n.05",
-      "kind": "concept",
-      "label": "running"
-    },
-    {
-      "id": "concept:wordnet:mention.n.01",
-      "key": "wordnet:mention.n.01",
-      "kind": "concept",
-      "label": "references"
-    },
-    {
-      "id": "concept:wordnet:inside.n.01",
-      "key": "wordnet:inside.n.01",
-      "kind": "concept",
-      "label": "inside"
-    },
-    {
-      "id": "concept:wordnet:summary.n.01",
-      "key": "wordnet:summary.n.01",
-      "kind": "concept",
-      "label": "summary"
-    },
-    {
-      "id": "concept:wordnet:repair.n.01",
-      "key": "wordnet:repair.n.01",
-      "kind": "concept",
-      "label": "fixing"
-    },
-    {
-      "id": "concept:wordnet:material.n.01",
-      "key": "wordnet:material.n.01",
-      "kind": "concept",
-      "label": "material"
-    },
-    {
-      "id": "concept:wordnet:overlap.n.01",
-      "key": "wordnet:overlap.n.01",
-      "kind": "concept",
-      "label": "overlap"
-    },
-    {
-      "id": "concept:wordnet:gateway.n.01",
-      "key": "wordnet:gateway.n.01",
-      "kind": "concept",
-      "label": "gateway"
-    },
-    {
-      "id": "concept:wordnet:single.n.01",
-      "key": "wordnet:single.n.01",
-      "kind": "concept",
-      "label": "single"
-    },
-    {
-      "id": "concept:wordnet:network.n.01",
-      "key": "wordnet:network.n.01",
-      "kind": "concept",
-      "label": "network"
-    },
-    {
-      "id": "concept:wordnet:mechanism.n.01",
-      "key": "wordnet:mechanism.n.01",
-      "kind": "concept",
-      "label": "mechanism"
-    },
-    {
-      "id": "concept:wordnet:quality.n.01",
-      "key": "wordnet:quality.n.01",
-      "kind": "concept",
-      "label": "quality"
-    },
-    {
-      "id": "concept:wordnet:writing.n.01",
-      "key": "wordnet:writing.n.01",
-      "kind": "concept",
-      "label": "writing"
-    },
-    {
-      "id": "concept:wordnet:confirmation.n.01",
-      "key": "wordnet:confirmation.n.01",
-      "kind": "concept",
-      "label": "verification"
-    },
-    {
-      "id": "concept:wordnet:budget.n.01",
-      "key": "wordnet:budget.n.01",
-      "kind": "concept",
-      "label": "budget"
-    },
-    {
-      "id": "concept:wordnet:package.n.01",
-      "key": "wordnet:package.n.01",
-      "kind": "concept",
-      "label": "package"
-    },
-    {
-      "id": "concept:wordnet:press.n.09",
-      "key": "wordnet:press.n.09",
-      "kind": "concept",
-      "label": "pressing"
-    },
-    {
-      "id": "concept:wordnet:fields.n.01",
-      "key": "wordnet:fields.n.01",
-      "kind": "concept",
-      "label": "fields"
-    },
-    {
-      "id": "concept:wordnet:format.n.01",
-      "key": "wordnet:format.n.01",
-      "kind": "concept",
-      "label": "format"
-    },
-    {
-      "id": "concept:wordnet:import.n.01",
-      "key": "wordnet:import.n.01",
-      "kind": "concept",
-      "label": "import"
-    },
-    {
-      "id": "concept:wordnet:supplier.n.01",
-      "key": "wordnet:supplier.n.01",
-      "kind": "concept",
-      "label": "provider"
-    },
-    {
-      "id": "concept:wordnet:string.n.01",
-      "key": "wordnet:string.n.01",
-      "kind": "concept",
-      "label": "string"
-    },
-    {
-      "id": "concept:wordnet:ballast.n.01",
-      "key": "wordnet:ballast.n.01",
-      "kind": "concept",
-      "label": "ballast"
-    },
-    {
-      "id": "concept:wordnet:griddle.n.01",
-      "key": "wordnet:griddle.n.01",
-      "kind": "concept",
-      "label": "griddle"
-    },
-    {
-      "id": "concept:wordnet:land.n.04",
-      "key": "wordnet:land.n.04",
-      "kind": "concept",
-      "label": "ground"
-    },
-    {
-      "id": "concept:wordnet:version.n.01",
-      "key": "wordnet:version.n.01",
-      "kind": "concept",
-      "label": "version"
     },
     {
       "id": "concept:wordnet:manifest.n.01",
@@ -1718,34 +2234,22 @@
       "label": "manifest"
     },
     {
-      "id": "concept:lemma:doesnt",
-      "key": "lemma:doesnt",
+      "id": "concept:wordnet:import.n.01",
+      "key": "wordnet:import.n.01",
       "kind": "concept",
-      "label": "doesnt"
+      "label": "import"
     },
     {
-      "id": "concept:wordnet:undertaking.n.01",
-      "key": "wordnet:undertaking.n.01",
+      "id": "concept:wordnet:compaction.n.01",
+      "key": "wordnet:compaction.n.01",
       "kind": "concept",
-      "label": "project"
+      "label": "compaction"
     },
     {
-      "id": "concept:wordnet:token.n.01",
-      "key": "wordnet:token.n.01",
+      "id": "concept:wordnet:latest.n.01",
+      "key": "wordnet:latest.n.01",
       "kind": "concept",
-      "label": "tokens"
-    },
-    {
-      "id": "concept:wordnet:acoustic.n.01",
-      "key": "wordnet:acoustic.n.01",
-      "kind": "concept",
-      "label": "acoustic"
-    },
-    {
-      "id": "concept:wordnet:class.n.01",
-      "key": "wordnet:class.n.01",
-      "kind": "concept",
-      "label": "categories"
+      "label": "latest"
     },
     {
       "id": "concept:wordnet:snapshot.n.01",
@@ -1754,92 +2258,80 @@
       "label": "snapshot"
     },
     {
-      "id": "concept:wordnet:agent.n.01",
-      "key": "wordnet:agent.n.01",
+      "id": "concept:wordnet:document.n.01",
+      "key": "wordnet:document.n.01",
       "kind": "concept",
-      "label": "agents"
+      "label": "document"
     },
     {
-      "id": "concept:lemma:doomscroll",
-      "key": "lemma:doomscroll",
+      "id": "concept:wordnet:fields.n.01",
+      "key": "wordnet:fields.n.01",
       "kind": "concept",
-      "label": "doomscroll"
+      "label": "fields"
     },
     {
-      "id": "concept:wordnet:bottom.n.01",
-      "key": "wordnet:bottom.n.01",
+      "id": "concept:lemma:docstring",
+      "key": "lemma:docstring",
       "kind": "concept",
-      "label": "bottom"
+      "label": "docstring"
     },
     {
-      "id": "concept:wordnet:section.n.01",
-      "key": "wordnet:section.n.01",
+      "id": "concept:wordnet:writing.n.01",
+      "key": "wordnet:writing.n.01",
       "kind": "concept",
-      "label": "section"
+      "label": "writing"
     },
     {
-      "id": "concept:wordnet:background.n.01",
-      "key": "wordnet:background.n.01",
+      "id": "concept:wordnet:porosity.n.01",
+      "key": "wordnet:porosity.n.01",
       "kind": "concept",
-      "label": "background"
+      "label": "porosity"
     },
     {
-      "id": "concept:wordnet:register.n.01",
-      "key": "wordnet:register.n.01",
+      "id": "concept:wordnet:sketch.n.03",
+      "key": "wordnet:sketch.n.03",
       "kind": "concept",
-      "label": "register"
+      "label": "resumes"
     },
     {
-      "id": "concept:lemma:whats",
-      "key": "lemma:whats",
+      "id": "concept:wordnet:budget.n.01",
+      "key": "wordnet:budget.n.01",
       "kind": "concept",
-      "label": "whats"
+      "label": "budget"
     },
     {
-      "id": "concept:wordnet:desktop.n.01",
-      "key": "wordnet:desktop.n.01",
+      "id": "concept:wordnet:supplier.n.01",
+      "key": "wordnet:supplier.n.01",
       "kind": "concept",
-      "label": "desktop"
+      "label": "provider"
     },
     {
-      "id": "concept:wordnet:standard.n.01",
-      "key": "wordnet:standard.n.01",
+      "id": "concept:wordnet:engine.n.01",
+      "key": "wordnet:engine.n.01",
       "kind": "concept",
-      "label": "standard"
+      "label": "engine"
     },
     {
-      "id": "concept:wordnet:choice.n.02",
-      "key": "wordnet:choice.n.02",
+      "id": "concept:wordnet:mechanism.n.01",
+      "key": "wordnet:mechanism.n.01",
       "kind": "concept",
-      "label": "selection"
+      "label": "mechanism"
     },
     {
-      "id": "concept:wordnet:baseline.n.01",
-      "key": "wordnet:baseline.n.01",
+      "id": "concept:wordnet:format.n.01",
+      "key": "wordnet:format.n.01",
       "kind": "concept",
-      "label": "baseline"
+      "label": "format"
     },
     {
-      "id": "concept:wordnet:reasoning.n.01",
-      "key": "wordnet:reasoning.n.01",
+      "id": "concept:wordnet:marker.n.01",
+      "key": "wordnet:marker.n.01",
       "kind": "concept",
-      "label": "reasoning"
-    },
-    {
-      "id": "concept:wordnet:attempt.n.01",
-      "key": "wordnet:attempt.n.01",
-      "kind": "concept",
-      "label": "effort"
+      "label": "marker"
     }
   ],
   "summary": {
-    "edges:co_served": 31,
-    "edges:in_project": 36,
-    "edges:served_in": 48,
-    "edges:touched": 6,
-    "nodes:concept": 120,
-    "nodes:file": 36,
-    "nodes:project": 3,
-    "nodes:session": 12
+    "edges:near_in_meaning": 178,
+    "nodes:concept": 120
   }
 }

@@ -60,14 +60,17 @@ def snapshot(limit: int = MAX_NODES, max_edges: int = MAX_EDGES) -> Dict[str, An
             nodes[nid] = {"id": nid, "kind": kind, "key": key, "label": label}
         return nid
 
-    def edge(a: str, b: str, relation: str, weight: int = 1) -> None:
+    def edge(a: str, b: str, relation: str, weight: int = 1, evidence: Dict[str, Any] = None) -> None:
         if len(edges) >= max_edges or a == b:
             return
         key = (a, b, relation)
         if key in seen_edges:
             return
         seen_edges.add(key)
-        edges.append({"source": a, "target": b, "relation": relation, "weight": weight})
+        out = {"source": a, "target": b, "relation": relation, "weight": weight}
+        if evidence:
+            out["evidence"] = evidence
+        edges.append(out)
 
     # a picture of one kind of thing is not a picture of a graph: give each kind a quota
     q_concepts = max(8, int(limit * 0.50))
@@ -95,7 +98,8 @@ def snapshot(limit: int = MAX_NODES, max_edges: int = MAX_EDGES) -> Dict[str, An
             continue
         per_session[session] = per_session.get(session, 0) + 1
         sid = node("session", session, session_label(session))
-        edge(by_id[cid], sid, "served_in")
+        edge(by_id[cid], sid, "served_in", weight=per_session.get(session, 1),
+             evidence={"last_seen": at})
 
     # concept -> artifact: a file name a repository's commit touched
     files = _rows(history, """SELECT kind, key, label FROM concepts WHERE kind = 'file'
@@ -111,17 +115,18 @@ def snapshot(limit: int = MAX_NODES, max_edges: int = MAX_EDGES) -> Dict[str, An
             if want & _tokens(clabel):
                 edge(by_id[cid], fid, "touched")
 
-    # concept <-> concept: co-served in the same move of the same session
-    groups = _rows(history, """SELECT session, move, GROUP_CONCAT(DISTINCT concept_id)
-                               FROM served WHERE session != ''
-                               GROUP BY session, move HAVING COUNT(DISTINCT concept_id) BETWEEN 2 AND 8
-                               LIMIT ?""", (limit,))
-    for _session, _move, ids in groups:
-        members = [int(x) for x in (ids or "").split(",") if x.strip().isdigit()]
-        members = [by_id[m] for m in members if m in by_id][:8]
-        for i, a in enumerate(members):
-            for b in members[i + 1:]:
-                edge(a, b, "co_served")
+    # concept <-> concept: the two appeared in the same message. That is co-occurrence a reader
+    # can check; sharing a session is only the session template.
+    for left, right, n in _rows(history, """SELECT a.concept_id, b.concept_id, COUNT(*)
+                                            FROM appearances a
+                                            JOIN appearances b ON b.source = a.source
+                                                              AND b.ref = a.ref
+                                                              AND b.concept_id > a.concept_id
+                                            WHERE a.source = 'message'
+                                            GROUP BY a.concept_id, b.concept_id
+                                            ORDER BY COUNT(*) DESC LIMIT ?""", (min(max_edges, 200),)):
+        if left in by_id and right in by_id:
+            edge(by_id[left], by_id[right], "co_served", weight=n, evidence={"messages": n})
 
     # an edge whose endpoint did not fit under the node cap is not an edge of this graph
     known = set(nodes)

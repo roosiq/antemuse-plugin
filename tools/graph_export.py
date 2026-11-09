@@ -208,7 +208,8 @@ def semantic_layout(graph_data: dict, embeddings: dict, width: int = 1400,
                 continue
             seen.add(key)
             edges.append({"source": by_label[label], "target": by_label[other],
-                          "relation": "near_in_meaning", "weight": 1})
+                          "relation": "near_in_meaning", "weight": 1,
+                          "evidence": {"cosine": round(_score, 3)}})
     return nodes, {"pos": pos, "edges": edges}
 
 
@@ -274,7 +275,9 @@ def draw_png(nodes: list, edges: list, pos: dict, path: Path, labelled: list = N
         a, b = pos.get(e["source"]), pos.get(e["target"])
         if not a or not b:
             continue
-        draw.line([tuple(a), tuple(b)], fill=(120, 120, 130, 46), width=1)
+        w = e.get("weight", 1)
+        draw.line([tuple(a), tuple(b)], fill=(120, 120, 130, 46),
+                  width=1 + min(3, int(math.log2(max(1, w)))))
     order = sorted(nodes, key=lambda n: RADIUS.get(n["kind"], 4))
     for node in order:
         x, y = pos[node["id"]]
@@ -311,8 +314,9 @@ def draw_svg(nodes: list, edges: list, pos: dict, path: Path, labelled: list = N
         a, b = pos.get(e["source"]), pos.get(e["target"])
         if not a or not b:
             continue
+        w = 1 + min(3, int(math.log2(max(1, e.get("weight", 1)))))
         parts.append(f'<line x1="{a[0]:.1f}" y1="{a[1]:.1f}" x2="{b[0]:.1f}" y2="{b[1]:.1f}" '
-                     f'stroke="#787882" stroke-opacity="0.22" stroke-width="1"/>')
+                     f'stroke="#787882" stroke-opacity="0.22" stroke-width="{w}"/>')
     for node in nodes:
         x, y = pos[node["id"]]
         r = RADIUS.get(node["kind"], 4)
@@ -383,6 +387,7 @@ def main(argv: list[str]) -> int:
                 f"({embeddings.get('dim', '?')}d) · {len(nodes)} concepts")
         data = {"nodes": nodes, "edges": edges,
                 "counts": {"nodes": len(nodes), "edges": len(edges)}}
+        summary = graph_mod.summary(data)          # the summary must describe what is drawn
         quality = projection_quality({n["label"]: pos[n["id"]] for n in nodes},
                                      {n["label"]: embeddings["vectors"][n["label"]] for n in nodes})
         print(json.dumps({"concepts": len(nodes), "edges": len(edges),

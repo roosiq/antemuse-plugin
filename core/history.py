@@ -87,6 +87,14 @@ CREATE TABLE IF NOT EXISTS links (
     move TEXT NOT NULL,
     at REAL NOT NULL
 );
+CREATE TABLE IF NOT EXISTS appearances (
+    concept_id INTEGER NOT NULL,
+    source TEXT NOT NULL,             -- 'message' | 'commit' | 'file'
+    ref TEXT NOT NULL,                -- message id, commit sha, or path
+    at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_appearances_concept ON appearances(concept_id, at);
+CREATE INDEX IF NOT EXISTS idx_appearances_ref ON appearances(source, ref);
 CREATE TABLE IF NOT EXISTS cursor (name TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -188,7 +196,8 @@ def active_session() -> str:
 
 
 def notice(term: str, move: str = "", session: str = "", kind: str = "",
-           key: str = "", at: Optional[float] = None) -> None:
+           key: str = "", at: Optional[float] = None, ref: str = "",
+           source: str = "message") -> None:
     """Record one sighting. Cheap, idempotent per (kind, key), and never raises."""
     now = at or time.time()
     session = session or active_session()
@@ -211,11 +220,109 @@ def notice(term: str, move: str = "", session: str = "", kind: str = "",
                                (kind, key)).fetchone()[0]
             conn.execute("INSERT INTO served(concept_id, move, session, at) VALUES(?,?,?,?)",
                          (cid, move or "", session or "", now))
+            if ref:
+                # the evidence: which message, commit or file this sighting came from
+                conn.execute("INSERT INTO appearances(concept_id, source, ref, at) VALUES(?,?,?,?)",
+                             (cid, source, str(ref)[:160], now))
         _prune(conn, now)
     except Exception as exc:
         _note_failure(f"concept write failed · {str(exc).splitlines()[0][:70]}")
     finally:
         conn.close()
+
+
+def detail(term: str, limit: int = 8) -> Dict[str, Any]:
+    """Everything the ledger knows about one concept, with the evidence behind it.
+
+    This is the answer to "what does this connect to": the sessions it was met in, the messages
+    it was read from (ids only — the text stays in Hermes' store), the commits whose files it
+    touches, the sibling concepts served beside it, and any links recorded between terms.
+    """
+    ident = identify(term)
+    if not ident:
+        return {"ok": False, "reason": f"not a concept · {term}"}
+    kind, key, label = ident
+    row = _query("SELECT id, kind, key, label, times, first_seen, last_seen FROM concepts "
+                 "WHERE kind=? AND key=?", (kind, key))
+    if not row:
+        return {"ok": False, "reason": f"never seen · {label}"}
+    cid, kind, key, label, times, first_seen, last_seen = row[0]
+
+    sessions = _query("""SELECT session, COUNT(*), MAX(at) FROM served
+                         WHERE concept_id=? AND session != ''
+                         GROUP BY session ORDER BY MAX(at) DESC LIMIT ?""", (cid, limit))
+    messages = _query("""SELECT ref, at FROM appearances WHERE concept_id=? AND source='message'
+                         ORDER BY at DESC LIMIT ?""", (cid, limit))
+    commits = _query("""SELECT ref, at FROM appearances WHERE concept_id=? AND source='commit'
+                        ORDER BY at DESC LIMIT ?""", (cid, limit))
+    siblings = _query("""SELECT c.label, COUNT(*) FROM appearances a
+                         JOIN appearances b ON b.source = a.source AND b.ref = a.ref
+                                           AND b.concept_id != a.concept_id
+                         JOIN concepts c ON c.id = b.concept_id
+                         WHERE a.concept_id=? AND a.source = 'message'
+                         GROUP BY c.id ORDER BY COUNT(*) DESC LIMIT ?""", (cid, limit))
+    links = _query("""SELECT a, b, relation FROM links WHERE a=? OR b=? LIMIT ?""",
+                   (label, label, limit))
+
+    # files share the concept's own words in their path — the artifact side of the graph
+    files, words = [], _tokens(label)
+    for fkey, flabel in _query("SELECT key, label FROM concepts WHERE kind='file' LIMIT 400"):
+        if words & _tokens(flabel):
+            files.append(fkey)
+            if len(files) >= limit:
+                break
+
+    # a commit is attached to the file it touched, so a concept inherits the commits of the
+    # files it is attached to
+    if files:
+        marks = ",".join("?" for _ in files)
+        more = _query(f"""SELECT ap.ref, ap.at FROM appearances ap
+                          JOIN concepts c ON c.id = ap.concept_id
+                          WHERE ap.source='commit' AND c.kind='file'
+                          AND c.key IN ({marks}) ORDER BY ap.at DESC LIMIT ?""",
+                      (*files, limit))
+        have = {sha for sha, _at in commits}
+        commits = commits + [(sha, at) for sha, at in more if sha not in have]
+
+    return {"ok": True, "concept": {"kind": kind, "key": key, "label": label, "times": times,
+                                    "first_seen": first_seen, "last_seen": last_seen},
+            "sessions": [{"session": s, "count": n, "at": at} for s, n, at in sessions],
+            "messages": [{"id": ref, "at": at} for ref, at in messages],
+            "commits": [{"sha": sha, "at": at} for sha, at in commits],
+            "siblings": [{"label": l, "count": n} for l, n in siblings],
+            "files": files, "links": [{"a": a, "b": b, "relation": r} for a, b, r in links]}
+
+
+def message_excerpts(ids: List[str], limit: int = 160) -> Dict[str, str]:
+    """Resolve message ids to short excerpts, read on demand from Hermes' own store.
+
+    Nothing here is stored: the ledger keeps ids, the transcript never enters it, and this is a
+    diagnostic that shows why a concept was noticed — not a memory the plugin can consult.
+    """
+    if not ids:
+        return {}
+    path = Path(HERMES_DB)
+    if not path.exists():
+        return {}
+    placeholders = ",".join("?" for _ in ids)
+    try:
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=3.0)
+        rows = conn.execute(
+            f"SELECT id, role, content FROM messages WHERE id IN ({placeholders})",  # noqa: S608
+            [int(i) for i in ids]).fetchall()
+        conn.close()
+    except Exception:
+        return {}
+    out = {}
+    for mid, role, content in rows:
+        text = " ".join((content or "").split())
+        out[str(mid)] = f"{role}: {text[:limit]}…" if len(text) > limit else f"{role}: {text}"
+    return out
+
+
+def _tokens(text: str) -> set:
+    import re
+    return {w for w in re.findall(r"[a-z][a-z0-9\-]{2,}", (text or "").lower())}
 
 
 def link(a: str, b: str, relation: str = "shared", move: str = "") -> None:
@@ -232,7 +339,8 @@ def link(a: str, b: str, relation: str = "shared", move: str = "") -> None:
         conn.close()
 
 
-def notice_artifact(project: str, relpath: str, at: Optional[float] = None) -> None:
+def notice_artifact(project: str, relpath: str, at: Optional[float] = None,
+                    commit: str = "") -> None:
     """Record a file a repository's own commit touched: the artifact side of the graph.
 
     Only the path is stored — never the file's contents. This is what lets a concept be
@@ -255,6 +363,11 @@ def notice_artifact(project: str, relpath: str, at: Optional[float] = None) -> N
                    VALUES('file', ?, ?, ?, ?, 1)
                    ON CONFLICT(kind, key) DO UPDATE SET
                      last_seen=excluded.last_seen, times=times+1""", (key, label, now, now))
+            if commit:
+                cid = conn.execute("SELECT id FROM concepts WHERE kind='file' AND key=?",
+                                   (key,)).fetchone()[0]
+                conn.execute("INSERT INTO appearances(concept_id, source, ref, at) VALUES(?,?,?,?)",
+                             (cid, "commit", commit[:64], now))
     except Exception as exc:
         _note_failure(f"artifact write failed · {str(exc).splitlines()[0][:70]}")
     finally:
@@ -284,6 +397,9 @@ def _prune(conn: sqlite3.Connection, now: float) -> None:
     conn.execute("""DELETE FROM concepts WHERE id IN (
                       SELECT id FROM concepts ORDER BY last_seen DESC LIMIT -1 OFFSET ?)""",
                  (MAX_CONCEPTS,))
+    conn.execute("""DELETE FROM appearances WHERE rowid IN (
+                      SELECT rowid FROM appearances ORDER BY at DESC LIMIT -1 OFFSET ?)""",
+                 (CAP_SERVED * 2,))
     conn.execute("""DELETE FROM served WHERE rowid IN (
                       SELECT rowid FROM served ORDER BY at DESC LIMIT -1 OFFSET ?)""",
                  (MAX_SERVED,))
@@ -506,19 +622,22 @@ def scan_sessions(days: int = 7, batch: int = 400, source: str = "",
         row = _query("SELECT value FROM cursor WHERE name='session_scan'")
         start = int(row[0][0]) if row else 0
         message = conn.execute(
-            """SELECT id, session_id, role, content FROM messages
+            """SELECT id, session_id, role, content, timestamp FROM messages
                WHERE id > ? AND timestamp >= ? AND role IN ('user','assistant')
                AND content IS NOT NULL AND length(content) > 0
                ORDER BY id LIMIT ?""", (start, since, batch)).fetchall()
         scanned, stored, sessions = 0, 0, set()
         last = start
         deadline = (time.time() + budget_s) if budget_s else None
-        for mid, sid, _role, content in message:
+        for mid, sid, _role, content, ts in message:
             scanned += 1
             last = max(last, mid)
             sessions.add(sid)
             for term in extract(content):
-                notice(term, move="session", session=sid)
+                # the message's own timestamp, not the scan's: the ledger should say when the
+                # thing was said, not when we got round to reading it
+                notice(term, move="session", session=sid, ref=str(mid), source="message",
+                       at=float(ts))
                 stored += 1
             # the cursor is only ever advanced to a message actually read, so a budget that
             # runs out mid-batch loses nothing and re-reads nothing
