@@ -178,11 +178,17 @@ library level: `evaluation/`, `core/collider.py`, `core/collision.py`,
 ## Verify
 
 ```bash
-antemuse                     # full-screen view
+tools/test.sh                    # suite, temp data home, ~30 s
+tools/test.sh --with-renderers   # npm ci first, so renderer tests run too
 hermes plugins doctor antemuse
-env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data   ANTEMUSE_STATES_HOME=$(mktemp -d)   uvx --with pillow --with nltk --quiet pytest tests/ -q
-hermes chat -q '/walk' && hermes chat -q '/return'
+hermes plugins validate . --install-deps --json   # what catalog CI runs
 ```
+
+`tools/test.sh` uses `uvx` with the test dependencies from
+`requirements-test.txt` (`pytest`, `pillow`, `nltk`, `pyyaml`, `fastapi`) and
+drops the exported `PYTHONPATH`, which otherwise breaks collection. If you prefer
+your own environment: `pip install -r requirements-test.txt` then
+`ANTEMUSE_STATES_HOME=$(mktemp -d) pytest tests/ -q`.
 
 A count written here rots the moment the next test is added, and this line had
 drifted twice. The current count, its date, and the exact command live in
@@ -190,8 +196,7 @@ drifted twice. The current count, its date, and the exact command live in
 stochastic case, FLAKE-1, is documented in
 `specs/changes/creative-state-evidence/tasks.md`; it is narrower than it was but
 not proven gone, so a single green run is not proof of stability. Renderer tests
-skip when the npm dependencies are unavailable; run `npm ci` to fetch three and
-the software renderer.
+skip when the npm dependencies are unavailable; `--with-renderers` fetches them.
 
 ## Notes
 

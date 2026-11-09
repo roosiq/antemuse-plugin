@@ -911,6 +911,36 @@ The card PNG grew from 84 bright pixels of 90,692 (0.09%) to 950 of 111,548
 point is that the frame is now legible as a picture rather than a blank
 rectangle.
 
+### Verification record, 2026-11-09 (test-user build)
+
+Code commit `e26ccc9`; documentation and the test wrapper follow in the next
+commit.
+
+```
+$ tools/test.sh --with-renderers
+906 passed, 1 skipped in 27.92s
+
+$ hermes plugins validate . --install-deps --json
+ok: true · warnings: [] · 16/16 checks
+
+$ hermes plugins doctor .
+manifest: antemuse 0.9.0 (standalone)
+OK: runtime discovery, manifest parsing, import, and registration passed
+registrations: 1 tool(s), 8 hook(s)
+```
+
+Fresh-profile install: a throwaway `HERMES_HOME` with the plugin symlinked into
+`plugins/` and `hermes plugins enable antemuse` reported `✓ Plugin antemuse
+enabled.`; doctor passed with 1 tool and 8 hooks. The throwaway profile has no
+provider credentials, so command output was not exercised there — command paths
+are covered by the suite and by `tools/walkthrough.py`.
+
+Defect this found: the previously documented command
+(`uvx --with pillow --with nltk pytest tests/`) fails at this commit with one
+collection error (`yaml` in `tests/test_settings.py`) and six failures
+(`fastapi` in `dashboard/plugin_api.py`). `tools/test.sh` and
+`requirements-test.txt` add both, which is what the suite actually needs.
+
 ---
 
 ## 14. Documentation drift and known defects found while collating

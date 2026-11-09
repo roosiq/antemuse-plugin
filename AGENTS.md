@@ -40,9 +40,10 @@ a human-facing surface, and the human card stays wordless.
 ## Commands
 
 ```bash
-# tests — the exported PYTHONPATH breaks collection and PIL, so drop it
-env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) \
-  uvx --with pillow --with nltk pytest tests/ -q
+# tests — one command; it drops the exported PYTHONPATH (breaks collection and PIL)
+# and points the plugin at a temp data home
+tools/test.sh
+tools/test.sh --with-renderers     # npm ci first, so renderer tests run
 
 # the plugin loads as a package and registers its surfaces
 hermes plugins doctor antemuse        # expect: 1 tool(s), 8 hook(s)

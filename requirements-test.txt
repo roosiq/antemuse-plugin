@@ -1,0 +1,7 @@
+# Test-only dependencies. The plugin itself declares pillow and nltk in
+# plugin.yaml; these are what the suite additionally needs.
+pytest>=8
+pillow>=10,<14
+nltk>=3.8,<4
+pyyaml>=6
+fastapi>=0.110
