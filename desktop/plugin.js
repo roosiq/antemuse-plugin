@@ -43,11 +43,11 @@ const CELL_H = 1.0
 const PROBE_FONT = 10
 
 const copy = {
-  pane: 'State',
+  pane: 'Antemuse',
   idle: 'no state',
   unavailable: 'backend unavailable',
   unreachable: 'the plugin backend is not mounted',
-  watch: 'show antemuse state'
+  watch: 'show antemuse'
 }
 
 // ---------------------------------------------------------------- pure helpers

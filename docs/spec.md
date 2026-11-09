@@ -675,7 +675,13 @@ whole batch and one server for the batch, waited on before the first request —
 to back was where it was flaky. If no browser or three build is present, the stills keep their
 plain render and the reason is named; a missing effect never costs the picture.
 
-**How the pane reaches them.** The desktop pane is a `file://` page: it cannot fetch
+The look is settable at bake time without editing the page: `?grain=`, `?vignette=` and `?bloom=`
+override the defaults (0.055 / 0.72 / 0.95). Recognising the grain is the loudest of the three is
+the reason it is a parameter rather than a constant — at 0.055 a flat dark patch carries a
+standard deviation of about 17 levels and the JPEG grows from 219 KB to 1.19 MB.
+
+**How the pane reaches them.** The pane is called **Antemuse** in the sidebar; it is not called "State" — the state is what the
+pane shows, not what the pane is. The desktop pane is a `file://` page: it cannot fetch
 `/api/plugins/antemuse/art/...` without the gateway's token, and the app's `ctx.rest` goes over IPC
 rather than the page's network stack, so no `<img>` can ride on it. The pane therefore reads the
 stills as local files from `plugin-data/antemuse/activation/<state>/` — the sibling directory of

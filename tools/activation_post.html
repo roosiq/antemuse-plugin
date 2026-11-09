@@ -33,6 +33,15 @@ try {
   const w = parseInt(params.get('w') || '960', 10)
   const h = parseInt(params.get('h') || '600', 10)
   const src = params.get('src')
+  // The look is tunable without editing the page: ?grain=&vignette=&bloom=
+  const num = (name, fallback) => {
+    const raw = params.get(name)
+    const value = raw === null ? NaN : parseFloat(raw)
+    return Number.isFinite(value) ? value : fallback
+  }
+  const grainAmount = num('grain', 0.055)
+  const vignetteAmount = num('vignette', 0.72)
+  const bloomAmount = num('bloom', 0.55)
 
   const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true })
   renderer.setPixelRatio(1)
@@ -60,7 +69,7 @@ try {
   composer.setSize(w, h)
   composer.addPass(new RenderPass(scene, camera))
 
-  const bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.95, 0.62, 0.10)
+  const bloom = new UnrealBloomPass(new THREE.Vector2(w, h), bloomAmount, 0.62, 0.10)
   composer.addPass(bloom)
 
   const shift = new ShaderPass(RGBShiftShader)
@@ -72,8 +81,8 @@ try {
     uniforms: {
       tDiffuse: { value: null },
       time: { value: 0 },
-      grain: { value: 0.055 },
-      vignette: { value: 0.72 }
+      grain: { value: grainAmount },
+      vignette: { value: vignetteAmount }
     },
     vertexShader: `
       varying vec2 vUv;
