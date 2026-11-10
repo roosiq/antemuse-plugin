@@ -439,8 +439,13 @@ class GraphWalk:
 
         def remember(node_) -> None:
             try:
-                from . import history
-                history.notice(str(node_.get("label") or ""), move="walk")
+                from . import engine, history
+                # The session the state belongs to, not an empty string: the pane asks
+                # activations(<state's session>) and a serving filed under "" is invisible to it,
+                # so a running walk lit nothing while serving a concept per hop.
+                origin = engine.current_origin() or {}
+                history.notice(str(node_.get("label") or ""), move="walk",
+                               session=str(origin.get("session_id") or ""))
             except Exception:
                 pass
 

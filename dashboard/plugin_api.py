@@ -213,17 +213,27 @@ def graph(session: str = "", limit: int = 1400):
         belongs_here = owner in (None, "") or owner == session
     drawable = bool(active and belongs_here)
     key = str(active.get("key") or "") if drawable else "profile"
-    own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""
+    # A state entered with no session — from the app, or by a script — records its firings with an
+    # empty session. Falling back to the *pane's* session there filtered those firings out, so a
+    # running walk served nine concepts and the pane lit two. The owner is empty means everyone.
+    if drawable:
+        own = str((active.get("origin") or {}).get("session_id") or "")
+    else:
+        own = str(session or "")
 
     activation_stills = _core_module("activation_stills")
     activation = _core_module("activation")
-    labels = activation_stills._all_labels(int(max(120, min(limit, 2400))))
-    pos = activation_stills.positions(labels) if labels else {}
     lit = {}
     try:
         lit = activation.activations(own, key if drawable else None) or {}
     except Exception:  # health: BLE001 -- no firings is a fact, not a failure
         lit = {}
+    # The ground is the busiest `limit` concepts, so a concept the state just served can fall
+    # outside it — and then it had nothing to light: the walk served three concepts per hop and
+    # the map drew none of them. Whatever is firing is always part of the picture.
+    ground = activation_stills._all_labels(int(max(120, min(limit, 2400))))
+    labels = sorted(set(ground) | set(lit))
+    pos = activation_stills.positions(labels) if labels else {}
     nodes = []
     for label, xyz in pos.items():
         slot = lit.get(label) or {}

@@ -418,9 +418,11 @@ def possibility(a: str, b: str, shared: set) -> str:
 def _note_terms(text: str, move: str, limit: int = 6) -> None:
     """Record what a state served. Identity only, and never in the way of the material."""
     try:
-        from . import history
+        from . import engine, history
+        origin = engine.current_origin() or {}
+        session = str(origin.get("session_id") or "")
         for term in history.extract(text, limit=limit):
-            history.notice(term, move=move)
+            history.notice(term, move=move, session=session)
     except Exception:
         pass
 

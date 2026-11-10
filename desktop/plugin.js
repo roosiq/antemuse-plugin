@@ -586,12 +586,24 @@ function createGraph3D(el, doc, ctx, host, win) {
     Promise.race([Promise.resolve(ctx.rest(q)), slow]).then((seed) => {
       if (stopped) return
       const g = seed && seed.graph ? seed.graph : (seed && seed.nodes ? seed : null)
-      report({ routeMs: Math.round(performance.now() - askedAt), fails: 0 })
+      report({ routeMs: Math.round(performance.now() - askedAt), fails: 0, session: session || '' })
       boot('graph:' + (g ? (g.nodes ? g.nodes.length : 'nonodes') : 'none'))
       if (!g || !g.nodes || !g.nodes.length) {
         const local = pasted()
         if (local) upload(local)
         else if (demo) upload(demoCloud())
+        return
+      }
+      // An explicitly pasted payload wins over the live route. It is only ever there because
+      // someone put it there to look at something specific; silently replacing it with whatever
+      // the host happens to be serving makes the hook useless the moment the route works.
+      const pastedNodes = pasted()
+      if (pastedNodes) {
+        upload(pastedNodes)
+        boot('pasted:' + pastedNodes.length)
+        el.querySelectorAll('[data-antemuse-bake], img, canvas:not([data-antemuse-3d])').forEach((im) => {
+          if (im.style.opacity !== '0') im.style.opacity = '0'
+        })
         return
       }
       const changed = sig !== g.nodes.length + '|' + g.nodes[0].l + '|' + g.nodes[g.nodes.length - 1].l

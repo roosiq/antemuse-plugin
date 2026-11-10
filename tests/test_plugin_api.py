@@ -699,3 +699,29 @@ def test_numbers_only_skips_the_picture_it_would_never_show():
 
     full = client.get("/api/plugins/antemuse/state").json()
     assert "stills" in full
+
+
+def test_a_state_with_no_owner_lights_the_pane():
+    """A walk entered from the app has no session; its firings must still reach the pane.
+
+    graph() fell back to the pane's own session id when the active state had no owner, so a
+    running walk served nine concepts and the pane lit two. Empty owner means everyone.
+    """
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import dashboard.plugin_api as api
+    from core import engine, history
+
+    engine.enter("walk", minutes=5, session="")
+    history.notice("doorstop", move="walk", session="")
+
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api/plugins/antemuse")
+    client = TestClient(app)
+
+    body = client.get("/api/plugins/antemuse/state?graph=1&stills=0&session=some-pane-session").json()
+    lit = [n for n in body["graph"]["nodes"] if n["w"] > 0.05]
+    assert lit, "a walk that served a concept must light it"
+    assert any(n["l"] == "doorstop" for n in lit)
+    engine.exit() if hasattr(engine, "exit") else None
