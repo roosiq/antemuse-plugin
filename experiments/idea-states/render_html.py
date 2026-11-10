@@ -23,14 +23,45 @@ def _pct(bl, cond, metric) -> str:
     return f"{m:+.0f}%" if abs(m) >= 10 else f"{m:+.1f}%"
 
 
+def concepts_table() -> str:
+    """Distinct concepts with and without a state, read from concepts.md."""
+    path = HERE / "concepts.md"
+    if not path.exists():
+        return ""
+    rows, section = "", None
+    for line in path.read_text().split("\n"):
+        if line.startswith("## "):
+            section = line[3:].strip()
+            continue
+        if section != "food-waste-city" or not line.startswith("| "):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) != 5 or cells[0].startswith("model") or cells[0].startswith("---"):
+            continue
+        tds = ""
+        for c in cells[1:]:
+            pct = c.rsplit("(", 1)[-1].rstrip(")") if "(" in c else ""
+            tds += f"<td><span class=num>{esc(pct)}</span><span class=sub>{esc(c.split(' of ')[0])} distinct</span></td>"
+        rows += f"<tr><th>{esc(cells[0])}</th>{tds}</tr>"
+    if not rows:
+        return ""
+    return ("<h2>Distinct concepts with a state and without</h2>"
+            "<p class=muted>Two lists of 50 from the same model, pooled to 100 ideas and "
+            "clustered. Without a state the model repeats itself; with a state in between it "
+            "does not. Share of the 100 ideas that are distinct concepts, and the raw count.</p>"
+            "<table class=floor><thead><tr><th></th><th>no state</th><th>walk</th>"
+            "<th>daydream</th><th>doomscroll</th></tr></thead>"
+            f"<tbody>{rows}</tbody></table>")
+
+
 def floor_table() -> str:
-    """The resampling floor, read from floor.md so the page and the write-up agree."""
+    """Distance from the plain list, against the no-state baseline. Read from floor.md."""
     path = HERE / "floor.md"
     if not path.exists():
         return ""
     rows = ""
     for line in path.read_text().split("\n"):
-        if not line.startswith("| ") or line.startswith("|---") or "model | asked again" in line:
+        if not line.startswith("| ") or line.startswith("|---") or "no state (two lists)" in line:
             continue
         cells = [c.strip() for c in line.strip("|").split("|")]
         if len(cells) != 5:
@@ -39,12 +70,13 @@ def floor_table() -> str:
         rows += f"<tr><th>{esc(cells[0])}</th>{tds}</tr>"
     if not rows:
         return ""
-    return ("<h2>Is the change bigger than asking again?</h2>"
-            "<p class=muted>Same model, same brief. First column: one straight list against "
-            "another straight list. Next three: the state's list against the straight list from "
-            "the same seed. Lower means the ideas moved further. Every state column that reads "
-            "below its model's first number moved further than re-asking ever does.</p>"
-            "<table class=floor><thead><tr><th></th><th>asked again</th><th>walk</th>"
+    return ("<h2>With a state vs without, against the no-state baseline</h2>"
+            "<p class=muted>First column: one plain list scored against another plain list from "
+            "the same model — what it does when nothing is done to it. Next three: the state's "
+            "list against the plain list from the same seed. Lower means the ideas moved further. "
+            "Every state figure below its model's first number moved further than two plain "
+            "lists ever do.</p>"
+            "<table class=floor><thead><tr><th></th><th>no state</th><th>walk</th>"
             "<th>daydream</th><th>doomscroll</th></tr></thead>"
             f"<tbody>{rows}</tbody></table>")
 
@@ -146,7 +178,7 @@ __FLOOR_BLOCK__
 <footer>Demonstration, not a preregistered result. Four lists per condition per model, two
 briefs. None of these numbers say an idea is good.</footer>
 </main></body></html>"""
-    page = page.replace("__FLOOR_BLOCK__", floor_table())
+    page = page.replace("__FLOOR_BLOCK__", concepts_table() + floor_table())
     (HERE / "index.html").write_text(page)
     print(f"wrote {HERE / 'index.html'}")
     return 0

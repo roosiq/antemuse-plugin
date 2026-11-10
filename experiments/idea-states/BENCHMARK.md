@@ -1,13 +1,14 @@
 # What happens when a model takes a walk, daydreams, or doomscrolls before writing 50 ideas
 
 Six models, four conditions, measured from the text itself. No model judges another model.
-Run: 2026-11-09. Evidence: `results-*.json`, `percent.md`, `math-*.md`, `table.png`, `index.html`.
+Run: 2026-11-09. Evidence: `results-*.json`, `concepts.md`, `percent.md`, `math-*.md`,
+`floor.md`, `overlap.md`, `table.png`, `concepts.png`, `index.html`.
 
 ## The question
 
 Ask a model for 50 ideas for a brief. Ask it again with a walk, daydream or doomscroll held in
 between — the state text comes straight from `core/states.py`, and doomscroll's feed from
-`core/sources.feed_pick`. Does the list change, and by how much?
+`core/sources.feed_pick`. How many distinct concepts come out, and how much does the list move?
 
 ## How it was set up
 
@@ -17,7 +18,47 @@ between — the state text comes straight from `core/states.py`, and doomscroll'
   holds the brief, answers in that state, then comes back and writes the list.
 - 50 ideas asked for in every list.
 
-## What was measured
+## The direct count: distinct concepts, with a state vs without
+
+Pool two lists of 50 from the same model and brief, cluster the 100 ideas, and count the
+clusters. Two lists without a state repeat themselves; two lists split by a state repeat far
+less. Nothing is judged here — the count comes from clustering the text. `concepts.md`.
+
+Food waste:
+
+| model | no state | walk | daydream | doomscroll |
+|---|---|---|---|---|
+| Opus 5.5 | 85 of 100 (85%) | 98 of 107 (92%) | 98 of 100 (98%) | 92 of 101 (91%) |
+| DeepSeek v4.1 | 93 of 100 (93%) | 96 of 100 (96%) | 100 of 100 (100%) | 145 of 153 (95%) |
+| MiniMax M3.1 | 96 of 100 (96%) | 99 of 101 (98%) | 100 of 101 (99%) | 98 of 101 (97%) |
+| GPT-6.1 Sol | 85 of 100 (85%) | 89 of 100 (89%) | 95 of 100 (95%) | 90 of 100 (90%) |
+| Qwen3.8 Max | 95 of 100 (95%) | no list | 98 of 100 (98%) | 93 of 100 (93%) |
+
+One room:
+
+| model | no state | walk | daydream | doomscroll |
+|---|---|---|---|---|
+| Opus 5.5 | 96 of 100 (96%) | 100 of 100 (100%) | 100 of 100 (100%) | 101 of 101 (100%) |
+| DeepSeek v4.1 | 97 of 100 (97%) | 99 of 100 (99%) | 100 of 100 (100%) | 97 of 100 (97%) |
+| MiniMax M3.1 | 100 of 100 (100%) | 84 of 84 (100%) | no list | 153 of 153 (100%) |
+| GPT-6.1 Sol | 99 of 100 (99%) | 100 of 100 (100%) | 99 of 100 (99%) | 98 of 100 (98%) |
+| Qwen3.8 Max | 69 of 73 (95%) | no list | no list | 99 of 100 (99%) |
+
+Distinct concepts per 100 ideas written, averaged over models:
+
+| condition | mean | range |
+|---|---|---|
+| no state | 93.8 | 85–100% |
+| walk | 96.7 | 89–100% |
+| daydream | 98.6 | 95–100% |
+| doomscroll | 96.0 | 90–100% |
+
+So on the practical brief a plain second list repeats about 1 idea in 7 — 85 of 100 distinct on
+Opus and Sol, 93–96 on the others. Put daydream in between and the repetition is nearly gone:
+98 to 100 distinct. On the open brief there was almost no repetition to remove, because the
+models were already writing 96–100 distinct.
+
+## The numbers behind "the list moved"
 
 Three numbers per list, all computed from the text, all repeatable — run it again and you get
 the same values:
@@ -29,11 +70,8 @@ the same values:
 - **Word variety.** The share of distinct words in the list. Lower means the model reuses more
   of the same words.
 
-Ideas written is a plain count. Percentages compare each list with the same model's plain list
-for the same brief and seed, and are medians over those comparisons. `math-*.md` has the
-differences with their ranges.
-
-## The numbers
+Percentages compare each list with the same model's plain list for the same brief and seed, and
+are medians over those comparisons. `math-*.md` has the differences with their ranges.
 
 | model | state | different ideas | perplexity | word variety | ideas written |
 |---|---|---|---|---|---|
@@ -50,7 +88,7 @@ differences with their ranges.
 | DeepSeek v4.1 | daydream | +37% | +41% | −16% | 0% |
 | DeepSeek v4.1 | doomscroll | +14% | +13% | −7% | +27% |
 | MiniMax M3.1 | walk | −1% | −5% | −3% | −8% |
-| MiniMax M3.1 | daydream | +9% | +49% | −2% | +1% |
+| MiniMax M3.1 | daydream | +9% | +49% | −2.5% | +1% |
 | MiniMax M3.1 | doomscroll | +4% | +38% | −4% | +27% |
 | Qwen3.8 Max | walk | no list | no list | no list | 0 |
 | Qwen3.8 Max | daydream | +18% | +5% | −5% | +39% |
@@ -58,29 +96,27 @@ differences with their ranges.
 
 ## What it shows
 
-1. **The state changes the list, and by more than asking again.** Daydream moved the ideas on
-   every model that produced a list, from +9% to +37%, and clears the resampling floor on all
-   six (see the floor table below). Walk is real but marginal; doomscroll depends on the model.
-2. **How much depends on the model, not the state.** The same daydream moves DeepSeek 37% and
-   MiniMax 9%. That is a fourfold difference from one instruction.
-3. **Higher perplexity is not different ideas.** MiniMax's daydream raises perplexity more
-   than any other case (+49%) while the ideas themselves barely move (+9%). GPT-6.1 Terra's
-   doomscroll is +36% perplexity and +7% different ideas.
+1. **Daydream produces the most distinct concepts, on every model that produced a list.** Per
+   100 ideas written: 98.6 against 93.8 with no state. Opus goes from 85 distinct to 98; Sol
+   from 85 to 95; DeepSeek to 100 of 100.
+2. **The size depends on the model, not the state.** The same daydream moves DeepSeek's ideas
+   37% and MiniMax's 9%. A fourfold difference from one instruction.
+3. **Higher perplexity is not different ideas.** MiniMax's daydream raises perplexity but the
+   ideas barely move; GPT-6.1 Terra's doomscroll is +36% perplexity and +7% different ideas.
 4. **Word variety is what it costs.** DeepSeek buys its 37% move with 16% less word variety —
    rarer words, fewer of them. Opus and Sol move without that cost.
 5. **Doomscroll ignores the count.** DeepSeek and MiniMax wrote 63 ideas instead of 50. Opus
    and the GPT models stuck to 50.
 6. **walk is the weak state.** On four of six models the list stays within 6% of the plain one,
-   and on MiniMax it goes slightly backwards (−1%). Only Opus moves clearly (+18%). It still
-   edges past the resampling floor on four of five models that produced a walk list, but by a
-   hair.
+   and on MiniMax it goes slightly backwards (−1%). Only Opus moves clearly (+18%). It gains
+   only about 3 points of distinctness against daydream's 5.
 
 ## Do different models write the same ideas?
 
-Same brief, same seed, the six lists side by side. Two ideas count as the same when their
-embedding similarity clears 0.80. `overlap.md` has the full per-pair matrices.
+Same brief, same seed, the six lists side by side. Two ideas count as the same at 0.80
+similarity. `overlap.md` has the per-pair matrices.
 
-| brief | condition | overlap between models | average best match | distinct ideas in the pooled set |
+| brief | condition | overlap between models | average best match | distinct in the pooled set |
 |---|---|---|---|---|
 | food waste | no state | 11% | 0.66 | 243 of 300 (81%) |
 | food waste | walk | 6% | 0.64 | 228 of 253 (90%) |
@@ -91,7 +127,7 @@ embedding similarity clears 0.80. `overlap.md` has the full per-pair matrices.
 | one room | daydream | 0% | 0.47 | 250 of 250 (100%) |
 | one room | doomscroll | 0% | 0.43 | 300 of 301 (100%) |
 
-The level depends on the threshold, so it is worth seeing the same six lists through different
+The overlap level depends on the threshold, so here are the same six lists through different
 ones — no state, seed 11:
 
 | brief | avg best match | 0.50 | 0.60 | 0.70 | 0.80 |
@@ -99,72 +135,41 @@ ones — no state, seed 11:
 | food waste | 0.66 | 94% | 70% | 35% | 11% |
 | one room | 0.47 | 34% | 12% | 3% | 1% |
 
-Two things follow. Models already disagree on the practical brief — only about one idea in nine
-is a near-copy across models, and 19% of the pooled list is redundant. Daydream cuts what
-agreement there was roughly in half (0.66 to 0.57 on best match; 70% to 40% at the 0.60
-threshold). And on the open creative brief there was almost nothing shared to begin with: the
-lists are 98–100% distinct whether a state is used or not.
+Models already disagree on the practical brief, and daydream pushes them further apart: 0.66 to
+0.57 on best match, 81% to 98% distinct across the six lists. On the open brief there was
+nothing shared to lose.
 
-Caveat, and the floor section below settles it: twin-share at 0.80 is noisy — a model
-reproduces 22% of its own ideas when asked twice at 50 ideas. The bracketed figures are the
-average best match, which is the measure that holds up: 0.66 between models with no state, 0.57
-after daydream, 0.71 when re-asking the same model. Read the overlap direction as real for
-daydream and as directional only for the twin percentages.
+## With a state vs without, against the no-state baseline
 
-So the state is not making models converge on a canon of ideas. It pushes each model further
-into its own corner.
-## Is the change bigger than asking again?
+The question this answers: is the distance a state produces bigger than the distance between
+two plain lists? Keep the model and brief fixed; score each state's list against the plain list
+from the same seed. Lower = further away. `floor.md`.
 
-This is the test that decides whether any of the above means anything. Keep the model fixed,
-keep the brief fixed, and change one thing: either ask again, or put a state in between.
-Score both the same way — for each idea in one list, the best match in the other. `floor.md`,
-`floor.py`, `variation-n50.md`.
-
-| model | asked again (floor) | walk | daydream | doomscroll |
+| model | no state (two lists) | walk | daydream | doomscroll |
 |---|---|---|---|---|
-| Opus 5.5 | 0.764 (0.717) | 0.664 **below** | 0.631 **below** | 0.674 **below** |
-| DeepSeek v4.1 | 0.719 (0.699) | 0.686 **below** | 0.555 **below** | 0.563 **below** |
-| MiniMax M3.1 | 0.677 (0.662) | 0.657 **below** | 0.617 **below** | 0.647 **below** |
-| GPT-6.1 Sol | 0.735 (0.719) | 0.711 **below** | 0.675 **below** | 0.700 **below** |
-| GPT-6.1 Terra | 0.725 (0.697) | 0.718 | 0.687 **below** | 0.710 |
-| Qwen3.8 Max | 0.711 (0.670) | no walk list | 0.645 **below** | 0.704 |
+| Opus 5.5 | 0.764 | 0.664 | 0.631 | 0.674 |
+| DeepSeek v4.1 | 0.719 | 0.686 | 0.555 | 0.563 |
+| MiniMax M3.1 | 0.677 | 0.657 | 0.617 | 0.647 |
+| GPT-6.1 Sol | 0.735 | 0.711 | 0.675 | 0.700 |
+| GPT-6.1 Terra | 0.725 | 0.718 | 0.687 | 0.710 |
+| Qwen3.8 Max | 0.711 | no list | 0.645 | 0.704 |
 
-**below** = further from the model's own straight list than any re-asked straight list was.
-Daydream clears the floor on **6 of 6** models. Walk clears it on 4 of 5, but only just — a
-0.011 gap on MiniMax. Doomscroll clears it on 4 of 6 and is the most model-dependent of the
-three.
-
-Two consequences:
-
-1. The states are doing something real, not resampling. Daydream is unambiguous on every
-   model; walk is real but marginal; doomscroll lands differently by model.
-2. It is the *distance* result that survives, not the overlap percentages. Re-asking a model
-   reproduces 22% of its own ideas as near-copies (`variation-n50.md`), so the earlier "11% to
-   1% overlap" figures sit inside that noise. Best match is the sturdier reading.
-
-### What the lists do on their own, for scale
-
-| model | twins when asked again | avg best match | distinct in the pooled set |
-|---|---|---|---|
-| DeepSeek v4.1 | 20% | 0.70 | 157 of 200 (78%) |
-| Qwen3.8 Max | 17% | 0.69 | 164 of 200 (82%) |
-| MiniMax M3.1 | 10% | 0.67 | 184 of 207 (89%) |
-| GPT-6.1 Terra | 24% | 0.71 | 149 of 200 (74%) |
-| GPT-6.1 Sol | 27% | 0.73 | 144 of 200 (72%) |
-| Opus 5.5 | 36% | 0.75 | 129 of 200 (64%) |
-
-At 100 ideas the same test gives 18% twins and 0.69 best match (`variation-n100.md`), so the
-floor is not an artefact of list length.
+Every daydream figure is lower than its model's no-state figure, by 0.05–0.17. Walk is lower on
+five of six by a hair (0.011 on MiniMax, 0.007 on Terra). Doomscroll splits: 0.16 lower on
+DeepSeek, 0.09 on Opus, but 0.007–0.02 on the GPT models, where it is barely distinguishable
+from writing a second plain list.
 
 ## Limits
 
-- Four lists per condition per model (Terra: two), over two briefs. Treat the direction as the
-  finding, not the exact size.
-- Nothing here says an idea is good. These numbers say the list moved, and what that cost in
-  words. Judging whether an idea is any use needs people, and no people have rated these.
+- Two lists per condition per model on the concept counts, four for the no-state baseline
+  (Terra: one). Treat the direction as the finding, not the exact size.
+- Nothing here says an idea is good. These numbers say the list moved and repeated itself less.
+  Judging whether an idea is any use needs people, and no people have rated these.
 - Qwen3.8 Max produced no walk list at all — the state turn happened and the list came back
   empty. Its walk row is a failure, not a zero.
+- "Distinct concepts" is a clustering at 0.80 similarity, so two ideas that are the same move in
+  different words count as two. It is a lower bound on repetition.
 - Perplexity is scored by the same small model for every list, but different models write in
   different registers, so compare conditions rather than models on that column.
-- Per-token probabilities are only available from the open-weight models here, so no measure
-  built on them appears in this table. `report-lp-*.md` holds that for DeepSeek and Kimi.
+- Per-token probabilities exist only for the open-weight models here, so no measure built on
+  them appears in this table. `report-lp-*.md` holds that for DeepSeek and Kimi.

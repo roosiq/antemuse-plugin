@@ -63,12 +63,13 @@ def run(task: str) -> str:
             row["states"][cond] = st.mean(vals) if vals else None
         rows.append(row)
 
-    lines += ["# Is the change bigger than asking again?", "",
-              f"Brief: {task}. Same model, same brief. Re-ask = one straight list against "
-              "another straight list. State = the state's list against the straight list from "
-              "the same seed. Score is the average best embedding match, higher = more of the "
-              "same ideas.", "",
-              "| model | asked again | walk | daydream | doomscroll |", "|---|---|---|---|---|"]
+    lines += ["# With a state vs without, against the no-state baseline", "",
+              f"Brief: {task}. Same model, same brief, four conditions. **No state** = one plain "
+              "list scored against another plain list from the same model — what the model does "
+              "when nothing is done to it. The three state columns score the state's list against "
+              "the plain list from the same seed. Score is the average best embedding match: "
+              "higher = more of the same ideas, lower = further away.", "",
+              "| model | no state (two lists) | walk | daydream | doomscroll |", "|---|---|---|---|---|"]
 
     def fmt(v):
         return "—" if v is None else f"{v:.3f}"
@@ -84,8 +85,8 @@ def run(task: str) -> str:
         lines.append(f"| {r['model']} | {r['reask']:.3f} (floor {r['reask_min']:.3f}) | "
                      + " | ".join(cells_txt) + " |")
 
-    lines += ["", "**below** = under the lowest re-ask value for that model, i.e. further from "
-                  "its own straight list than another straight list ever is.", ""]
+    lines += ["", "**below** = under the lowest no-state value for that model, i.e. further from "
+                  "its own plain list than two plain lists ever are from each other.", ""]
 
     def verdict(cond: str) -> str:
         checked = [r for r in rows if r["states"][cond] is not None]
