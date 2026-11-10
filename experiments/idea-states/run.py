@@ -167,17 +167,17 @@ def render(payload: dict, stats: dict) -> str:
              f"`{payload['model']}`. In the state conditions the model holds the brief, answers a "
              "state turn, then returns to write the list.", "",
              "All columns are deterministic - same text, same number, no judge.", "",
-             "| condition | ideas / 50 | distinctiveness | mean pairwise | perplexity | TTR | MTLD | dist-2 | state turn (words) |",
-             "|---|---|---|---|---|---|---|---|---|"]
+             "| condition | ideas / 50 | different ideas | unusual wording | word variety | state answer (words) |",
+             "|---|---|---|---|---|---|"]
     for cond in CONDITIONS:
         e = a[cond]
         fail = "" if not e["failed"] else f" ({e['failed']}/{e['cells']} failed)"
         lines.append(f"| {LABEL[cond]} | {e['n_parsed']}{fail} | {e['distinctiveness']} | "
-                     f"{e['mean_pairwise']} | {e['in_ppl']} | {e['in_ttr']} | {e['in_mtld']} | "
-                     f"{e['in_distinct2']} | {e['state_words']} |")
-    lines += ["", "Perplexity is Qwen3-0.6B over the list, lower = more predictable text. "
-                  "Distinctiveness is distance from the other conditions' ideas on the same brief. "
-                  "Neither measures quality; see math.md for the paired deltas and their intervals.", ""]
+                     f"{e['in_ppl']} | {e['in_ttr']} | {e['state_words']} |")
+    lines += ["", "Different ideas: average distance from the ideas the same model wrote for the "
+                  "same brief without a state. Unusual wording: how surprising the list is to a "
+                  "small fixed language model, higher = less ordinary. Word variety: share of "
+                  "distinct words. None of these say an idea is good.", ""]
     return "\n".join(lines)
 
 

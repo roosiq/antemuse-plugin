@@ -67,13 +67,13 @@ def section(payload: dict) -> str:
 <section>
   <h2>{esc(model)}</h2>
   <table>
-    <thead><tr><th>condition</th><th>ideas / 50</th><th>distance from straight</th>
-    <th>perplexity</th><th>vocabulary spread</th>
-    <th>Δ ideas</th><th>Δ distance</th><th>Δ surprise</th><th>Δ vocabulary</th></tr></thead>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
+    <th>unusual wording</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
     <tbody>{rows}</tbody>
   </table>
-  <p class=muted>Left of the Δ columns: the raw number. Right: median change against the same
-  model's straight answer for the same brief and seed. No judge is involved.</p>
+  <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same
+  model's plain list for the same brief and seed. No judge is involved.</p>
   <h3>The middle turn</h3>
   {state_notes}
   <h3>What the list looks like</h3>
@@ -114,11 +114,11 @@ def main() -> int:
 <p class=muted>Two briefs × two seeds × four conditions. The model writes the same list twice:
 straight, and with a state held in the middle. State directives are read from
 <code>core/states.py</code>; doomscroll's feed from <code>core/sources.feed_pick</code>.
-Every number is deterministic — perplexity from Qwen3-0.6B, distances from MiniLM embeddings.
-No LLM judge is involved anywhere.</p>
+Every number is reproducible: word counts from the text, distance from an embedding model,
+unusual wording from a small fixed language model. No LLM judge is involved anywhere.</p>
 {body}
-<footer>Demonstration, not a preregistered result. Four cells per condition per model, two
-development briefs. Perplexity is a predictability measure, not a quality one.</footer>
+<footer>Demonstration, not a preregistered result. Four lists per condition per model, two
+briefs. None of these numbers say an idea is good.</footer>
 </main></body></html>"""
     (HERE / "index.html").write_text(page)
     print(f"wrote {HERE / 'index.html'}")

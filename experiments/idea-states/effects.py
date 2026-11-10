@@ -16,16 +16,9 @@ import statistics as st
 from typing import Iterable
 
 METRICS = [("n_parsed", "ideas delivered"),
-           ("distinctiveness", "distinctiveness (distance from other conditions)"),
-           ("mean_pairwise", "diversity (mean pairwise distance)"),
-           ("in_ppl", "perplexity (Qwen3-0.6B, lower = more predictable)"),
-           ("in_surprisal", "surprisal per token (nats)"),
-           ("in_ttr", "type-token ratio"),
-           ("in_mtld", "MTLD lexical diversity"),
-           ("in_distinct2", "distinct bigrams"),
-           ("in_hapax", "hapax share"),
-           ("in_compression", "compression ratio"),
-           ("in_self_overlap", "self bigram overlap")]
+           ("distinctiveness", "different ideas (distance from the plain list)"),
+           ("in_ppl", "unusual wording (perplexity of the list)"),
+           ("in_ttr", "word variety (type-token ratio)")]
 
 
 def _t975(df: int) -> float:
@@ -90,9 +83,9 @@ def render(payload: dict) -> str:
     cells = payload["stats"]["cells"]
     bl = blocks(cells, payload.get("model", ""))
     models = sorted({m for m, _t, _s in bl})
-    lines = ["# Idea states — the arithmetic", "",
-             f"Blocks: {len(bl)} (model × brief × seed with a usable straight cell). "
-             "Every number below is the paired difference state − straight inside a block.", ""]
+    lines = ["# The arithmetic behind the numbers", "",
+             f"{len(bl)} comparisons, each one the same model, brief and seed with and without a "
+             "state. Every number is the difference between the two lists.", ""]
 
     for cond in ("walk", "daydream", "doomscroll"):
         lines += [f"## {cond}", "",
@@ -110,7 +103,7 @@ def render(payload: dict) -> str:
         lines.append("")
 
     lines += ["## Per model", "",
-              "| model | condition | Δ distinctiveness | Δ perplexity | Δ ideas | n |",
+              "| model | condition | change in different ideas | change in unusual wording | change in ideas | n |",
               "|---|---|---|---|---|---|"]
     for m in models:
         for cond in ("walk", "daydream", "doomscroll"):

@@ -24,10 +24,9 @@ SHORT = {"deepseek/deepseek-v4.1-flash-1017": "deepseek-v4.1",
          "openai/gpt-6.1-terra": "gpt-6.1-terra"}
 
 METRICS = [("n_parsed", "ideas", 1),
-           ("distinctiveness", "how far the list sits from the straight answer", 3),
-           ("in_ppl", "how surprising the wording is (perplexity)", 0),
-           ("in_ttr", "vocabulary spread", 3),
-           ("in_mtld", "vocabulary longevity (MTLD)", 0)]
+           ("distinctiveness", "different ideas", 0),
+           ("in_ppl", "unusual wording", 0),
+           ("in_ttr", "word variety", 1)]
 
 
 def load() -> dict:
@@ -72,17 +71,17 @@ def pct(bl: dict, cond: str, metric: str) -> tuple[float, int] | None:
 
 
 def render(data: dict) -> str:
-    lines = ["# What the state changes, in percent", "",
-             "Each number is the median change against the same model's straight answer for the "
-             "same brief and seed. Positive = more. A blank means that model did not produce a "
-             "usable cell for that condition.", ""]
+    lines = ["# What changes after a state, in percent", "",
+             "Each number compares the list to the same model's plain list for the same brief, "
+             "same seed. Positive means more. A dash means that model produced nothing usable "
+             "for that condition.", ""]
     for model, cells in sorted(data.items()):
         bl = blocks(cells)
         if not bl:
             continue
         lines += [f"## {SHORT.get(model, model)}", "",
-                  "| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |",
-                  "|---|---|---|---|---|---|"]
+                  "| after a | ideas | different ideas | unusual wording | word variety |",
+                  "|---|---|---|---|---|"]
         for cond in ("walk", "daydream", "doomscroll"):
             cellsrow = []
             for metric, _label, nd in METRICS:
@@ -94,10 +93,10 @@ def render(data: dict) -> str:
                     cellsrow.append(f"{m:+.0f}%" if nd == 0 else f"{m:+.{nd}f}%")
             lines.append(f"| {cond} | " + " | ".join(cellsrow) + " |")
         lines.append("")
-    lines += ["Reading it: wording surprise up with vocabulary spread down means the model picked "
-              "less ordinary words while reaching for a smaller set of them. Distance from "
-              "straight is the only column that says the ideas moved somewhere new; it does not "
-              "say they are better.", ""]
+    lines += ["Reading it: more unusual wording with less word variety means the model reached "
+              "for less ordinary words while using a narrower set of them. \"Different ideas\" is "
+              "the only column that says the list went somewhere new. None of them say the ideas "
+              "are better.", ""]
     return "\n".join(lines)
 
 

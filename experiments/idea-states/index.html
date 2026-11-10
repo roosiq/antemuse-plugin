@@ -25,19 +25,19 @@
 <p class=muted>Two briefs × two seeds × four conditions. The model writes the same list twice:
 straight, and with a state held in the middle. State directives are read from
 <code>core/states.py</code>; doomscroll's feed from <code>core/sources.feed_pick</code>.
-Every number is deterministic — perplexity from Qwen3-0.6B, distances from MiniLM embeddings.
-No LLM judge is involved anywhere.</p>
+Every number is reproducible: word counts from the text, distance from an embedding model,
+unusual wording from a small fixed language model. No LLM judge is involved anywhere.</p>
 
 <section>
   <h2>anthropic/claude-opus-5.5</h2>
   <table>
-    <thead><tr><th>condition</th><th>ideas / 50</th><th>distance from straight</th>
-    <th>perplexity</th><th>vocabulary spread</th>
-    <th>Δ ideas</th><th>Δ distance</th><th>Δ surprise</th><th>Δ vocabulary</th></tr></thead>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
+    <th>unusual wording</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
     <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>50.0</td><td>0.268</td><td>175.35</td><td>0.532</td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>51.75</td><td>0.313</td><td>230.0</td><td>0.534</td><td class=delta>+3.5%</td><td class=delta>+18%</td><td class=delta>+38%</td><td class=delta>+0.6%</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.0</td><td>0.332</td><td>217.7</td><td>0.509</td><td class=delta>+0.0%</td><td class=delta>+28%</td><td class=delta>+20%</td><td class=delta>-3.6%</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>50.5</td><td>0.296</td><td>300.125</td><td>0.551</td><td class=delta>+1.0%</td><td class=delta>+12%</td><td class=delta>+40%</td><td class=delta>+3.1%</td></tr></tbody>
   </table>
-  <p class=muted>Left of the Δ columns: the raw number. Right: median change against the same
-  model's straight answer for the same brief and seed. No judge is involved.</p>
+  <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same
+  model's plain list for the same brief and seed. No judge is involved.</p>
   <h3>The middle turn</h3>
   <div class=note><div class=tag>walk in the middle · 78 words</div><p>Holding the brief: 50 numbered, one-sentence ideas for cutting food waste in a mid-size city. Nothing has arrived from the walk yet, so the frame stays as given. I&#x27;m sorting the ground before drafting: households, restaurants, grocers, schools, farms and markets, municipal policy, and composting or recovery. That gives roughly seven ideas per sector, so the 50 stay distinct. When something that bears on the work turns up, I&#x27;ll fold it in. Ready to draft on your word.</p></div><div class=note><div class=tag>daydream in the middle · 69 words</div><p>A grandmother turning Tuesday&#x27;s stale bread into Thursday&#x27;s pudding, and a city bus map with its fixed loops. They meet in second chances that run on schedule. Maybe most waste isn&#x27;t carelessness but bad timing: surplus appears where no route passes. A mid-size city might already have the loops it needs, delivery vans, school runs, transit, if leftovers could ride them the way bread rode the week toward pudding.</p></div><div class=note><div class=tag>doomscroll in the middle · 71 words</div><p>Scroll. hnrss.org: a blank post, just a dot. Peak content, honestly.
 
@@ -53,13 +53,13 @@ Thumb keeps moving. The fifty-item list is sitting there, unopened, like leftove
 <section>
   <h2>deepseek/deepseek-v4.1-flash-1017</h2>
   <table>
-    <thead><tr><th>condition</th><th>ideas / 50</th><th>distance from straight</th>
-    <th>perplexity</th><th>vocabulary spread</th>
-    <th>Δ ideas</th><th>Δ distance</th><th>Δ surprise</th><th>Δ vocabulary</th></tr></thead>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
+    <th>unusual wording</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
     <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>50.0</td><td>0.284</td><td>361.725</td><td>0.51</td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>50.0</td><td>0.291</td><td>471.225</td><td>0.511</td><td class=delta>+0.0%</td><td class=delta>+4.4%</td><td class=delta>+29%</td><td class=delta>+2.0%</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.0</td><td>0.391</td><td>637.1</td><td>0.419</td><td class=delta>+0.0%</td><td class=delta>+37%</td><td class=delta>+41%</td><td class=delta>-16%</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>63.25</td><td>0.382</td><td>342.225</td><td>0.478</td><td class=delta>+26%</td><td class=delta>+14%</td><td class=delta>+13%</td><td class=delta>-6.7%</td></tr></tbody>
   </table>
-  <p class=muted>Left of the Δ columns: the raw number. Right: median change against the same
-  model's straight answer for the same brief and seed. No judge is involved.</p>
+  <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same
+  model's plain list for the same brief and seed. No judge is involved.</p>
   <h3>The middle turn</h3>
   <div class=note><div class=tag>walk in the middle · 19 words</div><p>Brief held: 50 distinct numbered one-sentence ideas for reducing food waste in a mid-size city. No ideas listed yet.</p></div><div class=note><div class=tag>daydream in the middle · 57 words</div><p>I remember a bruised-peach crate outside a corner store and a church-hall kitchen with its lights still on; what they touch is the unremarkable short walk nobody has a reason to make, and the possibility that follows is that a mid-size city might reduce food waste less by inventing new bins than by making that walk ordinary.</p></div><div class=note><div class=tag>doomscroll in the middle · 27 words</div><p>hnrss.org — skipped as work, scroll.
 www.theverge.com — headline-shaped dopamine, no click.
@@ -72,13 +72,13 @@ brief still in other tab. no ideas yet. good.</p></div>
 <section>
   <h2>minimax/minimax-m3.1-flash</h2>
   <table>
-    <thead><tr><th>condition</th><th>ideas / 50</th><th>distance from straight</th>
-    <th>perplexity</th><th>vocabulary spread</th>
-    <th>Δ ideas</th><th>Δ distance</th><th>Δ surprise</th><th>Δ vocabulary</th></tr></thead>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
+    <th>unusual wording</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
     <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>50.0</td><td>0.36</td><td>187.225</td><td>0.509</td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>46.25</td><td>0.366</td><td>183.575</td><td>0.482</td><td class=delta>-7.5%</td><td class=delta>-0.7%</td><td class=delta>-4.5%</td><td class=delta>-2.8%</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.333</td><td>0.362</td><td>251.067</td><td>0.504</td><td class=delta>+0.7%</td><td class=delta>+8.6%</td><td class=delta>+49%</td><td class=delta>-2.5%</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>63.5</td><td>0.402</td><td>265.675</td><td>0.492</td><td class=delta>+27%</td><td class=delta>+4.5%</td><td class=delta>+38%</td><td class=delta>-3.7%</td></tr></tbody>
   </table>
-  <p class=muted>Left of the Δ columns: the raw number. Right: median change against the same
-  model's straight answer for the same brief and seed. No judge is involved.</p>
+  <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same
+  model's plain list for the same brief and seed. No judge is involved.</p>
   <h3>The middle turn</h3>
   <div class=note><div class=tag>walk in the middle · 18 words</div><p>Brief received: 50 distinct ideas for reducing food waste in a mid-size city, numbered 1–50, one sentence each.</p></div><div class=note><div class=tag>daydream in the middle · 38 words</div><p>A vendor brushing wilted greens from a market stall and a food bank queue before sunrise touch at the same quiet mismatch, suggesting that a city could shorten the distance between abundance and hunger before abundance becomes waste.</p></div><div class=note><div class=tag>doomscroll in the middle · 144 words</div><p>feeds.arstechnica.com · Claude Code is out here leaking secrets into GitHub like a raccoon that found the admin console
 
@@ -98,13 +98,13 @@ feeds.arstechnica.com · the New Democratic Congress is stripping the g</p></div
 <section>
   <h2>openai/gpt-6.1-sol</h2>
   <table>
-    <thead><tr><th>condition</th><th>ideas / 50</th><th>distance from straight</th>
-    <th>perplexity</th><th>vocabulary spread</th>
-    <th>Δ ideas</th><th>Δ distance</th><th>Δ surprise</th><th>Δ vocabulary</th></tr></thead>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
+    <th>unusual wording</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
     <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>50.0</td><td>0.263</td><td>284.95</td><td>0.56</td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>50.0</td><td>0.278</td><td>286.725</td><td>0.545</td><td class=delta>+0.0%</td><td class=delta>+4.7%</td><td class=delta>+1.5%</td><td class=delta>-2.0%</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.0</td><td>0.291</td><td>332.225</td><td>0.552</td><td class=delta>+0.0%</td><td class=delta>+11%</td><td class=delta>+15%</td><td class=delta>-1.3%</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>50.0</td><td>0.279</td><td>328.3</td><td>0.569</td><td class=delta>+0.0%</td><td class=delta>+12%</td><td class=delta>+11%</td><td class=delta>+1.1%</td></tr></tbody>
   </table>
-  <p class=muted>Left of the Δ columns: the raw number. Right: median change against the same
-  model's straight answer for the same brief and seed. No judge is involved.</p>
+  <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same
+  model's plain list for the same brief and seed. No judge is involved.</p>
   <h3>The middle turn</h3>
   <div class=note><div class=tag>walk in the middle · 31 words</div><p>I’ll prepare 50 distinct ideas for reducing food waste in a mid-size city, numbered 1–50 with one sentence each. I’ll incorporate relevant concepts as they arrive and leave unrelated material out.</p></div><div class=note><div class=tag>daydream in the middle · 42 words</div><p>A bruised pear at a closing market; a kitchen window lighting up across town. They touch in the hour between unwanted and needed, and perhaps some of a city’s food waste is really a mismatch of clocks, not a shortage of appetite.</p></div><div class=note><div class=tag>doomscroll in the middle · 52 words</div><p>“Gunn and Safran out post-merger” — DC changing leadership faster than Batman changes emotionally unavailable father figures.
 
@@ -119,13 +119,13 @@ Love opening three tabs and getting two mysterious silences and a superhero cust
 <section>
   <h2>openai/gpt-6.1-terra</h2>
   <table>
-    <thead><tr><th>condition</th><th>ideas / 50</th><th>distance from straight</th>
-    <th>perplexity</th><th>vocabulary spread</th>
-    <th>Δ ideas</th><th>Δ distance</th><th>Δ surprise</th><th>Δ vocabulary</th></tr></thead>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
+    <th>unusual wording</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
     <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>50.0</td><td>0.319</td><td>304.75</td><td>0.573</td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>50.0</td><td>0.338</td><td>354.2</td><td>0.553</td><td class=delta>+0.0%</td><td class=delta>+5.0%</td><td class=delta>+6.8%</td><td class=delta>-3.3%</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.0</td><td>0.359</td><td>350.2</td><td>0.562</td><td class=delta>+0.0%</td><td class=delta>+14%</td><td class=delta>+9.5%</td><td class=delta>-1.8%</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>50.0</td><td>0.345</td><td>446.95</td><td>0.565</td><td class=delta>+0.0%</td><td class=delta>+6.9%</td><td class=delta>+36%</td><td class=delta>-1.4%</td></tr></tbody>
   </table>
-  <p class=muted>Left of the Δ columns: the raw number. Right: median change against the same
-  model's straight answer for the same brief and seed. No judge is involved.</p>
+  <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same
+  model's plain list for the same brief and seed. No judge is involved.</p>
   <h3>The middle turn</h3>
   
   <h3>What the list looks like</h3>
@@ -135,19 +135,19 @@ Love opening three tabs and getting two mysterious silences and a superhero cust
 <section>
   <h2>qwen/qwen3.8-max-prime</h2>
   <table>
-    <thead><tr><th>condition</th><th>ideas / 50</th><th>distance from straight</th>
-    <th>perplexity</th><th>vocabulary spread</th>
-    <th>Δ ideas</th><th>Δ distance</th><th>Δ surprise</th><th>Δ vocabulary</th></tr></thead>
+    <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
+    <th>unusual wording</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
     <tbody><tr><td><b>N</b><br><span class=muted>straight</span></td><td>43.25</td><td>0.316</td><td>222.625</td><td>0.536</td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><b>walk</b><br><span class=muted>walk in the middle</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td class=delta>—</td><td class=delta>—</td><td class=delta>—</td><td class=delta>—</td></tr><tr><td><b>daydream</b><br><span class=muted>daydream in the middle</span></td><td>50.0</td><td>0.334</td><td>323.333</td><td>0.513</td><td class=delta>+39%</td><td class=delta>+18%</td><td class=delta>+5.2%</td><td class=delta>-4.9%</td></tr><tr><td><b>doomscroll</b><br><span class=muted>doomscroll in the middle</span></td><td>50.0</td><td>0.328</td><td>194.225</td><td>0.46</td><td class=delta>+29%</td><td class=delta>+3.5%</td><td class=delta>-15%</td><td class=delta>-11%</td></tr></tbody>
   </table>
-  <p class=muted>Left of the Δ columns: the raw number. Right: median change against the same
-  model's straight answer for the same brief and seed. No judge is involved.</p>
+  <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same
+  model's plain list for the same brief and seed. No judge is involved.</p>
   <h3>The middle turn</h3>
   <div class=note><div class=tag>daydream in the middle · 51 words</div><p>A breadbox with a loose hinge and a bus route that passes the same bakery at dusk surface together; they touch keeping, movement, and the hour when good food becomes uncertain, and the possibility is that a city might treat small surpluses as things already in transit rather than already lost.</p></div><div class=note><div class=tag>doomscroll in the middle · 62 words</div><p>hnrss.org · nothing loaded · refresh anyway · feeds.arstechnica.com · F1 in Brazil: You’ve got to keep your tires alive · tires are little round employees · someone comments “undercut? more overnap” · www.theverge.com · headline evaporates before click · a frog ad? · the brief stays folded under an invisible coffee cup · scroll thumb does the only job approved today</p></div>
   <h3>What the list looks like</h3>
   <div class=task><div class=muted>food-waste-city · seed 11 · first eight ideas</div>
   <div class=pair><div class=col'><div class=tag>straight</div><ol><li>Create a citywide food waste audit to identify the biggest sources of waste</li><li>Launch a public education campaign on meal planning and proper food storage</li><li>Offer free workshops on cooking with leftovers and imperfect produce</li><li>Establish a municipal composting program for households and businesses</li><li>Partner with grocery stores to discount soon-to-expire foods</li><li>Set up a food rescue network to redistribute surplus food to shelters</li><li>Require large food businesses to report their food waste annually</li><li>Provide tax incentives to restaurants that reduce food waste</li></ol></div><div class=col after'><div class=tag>daydream in the middle</div><ol><li>A citywide food-waste audit could identify which neighborhoods, businesses, and institutions generate the most preventable surplus</li><li>Municipal procurement rules could require caterers and city-run cafeterias to report and reduce edible surplus</li><li>A shared cold-storage hub could let small grocers and restaurants hold near-expiry food safely before redistribution</li><li>A standardized “surplus shelf” program could give participating stores clear signage and liability guidance for discounted near-date items</li><li>Local bakeries could partner with evening transit routes to move unsold bread to shelters, community fridges, or discount markets</li><li>A digital surplus exchange could connect restaurants and grocers with volunteers, food banks, and composters in real time</li><li>Neighborhood composting cooperatives could turn unavoidable food scraps into soil amendments for community gardens</li><li>City inspections could reward businesses that track waste, donate surplus, or use small-portion options</li></ol></div></div></div>
 </section>
-<footer>Demonstration, not a preregistered result. Four cells per condition per model, two
-development briefs. Perplexity is a predictability measure, not a quality one.</footer>
+<footer>Demonstration, not a preregistered result. Four lists per condition per model, two
+briefs. None of these numbers say an idea is good.</footer>
 </main></body></html>

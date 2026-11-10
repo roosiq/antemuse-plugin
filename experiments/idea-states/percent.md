@@ -1,53 +1,53 @@
-# What the state changes, in percent
+# What changes after a state, in percent
 
-Each number is the median change against the same model's straight answer for the same brief and seed. Positive = more. A blank means that model did not produce a usable cell for that condition.
+Each number compares the list to the same model's plain list for the same brief, same seed. Positive means more. A dash means that model produced nothing usable for that condition.
 
 ## anthropic/claude-opus-5.5
 
-| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
-|---|---|---|---|---|---|
-| walk | +3.5% | +18.477% | +38% | +0.561% | +2% |
-| daydream | +0.0% | +27.649% | +20% | -3.603% | -1% |
-| doomscroll | +1.0% | +12.276% | +40% | +3.096% | +6% |
+| after a | ideas | different ideas | unusual wording | word variety |
+|---|---|---|---|---|
+| walk | +3.5% | +18% | +38% | +0.6% |
+| daydream | +0.0% | +28% | +20% | -3.6% |
+| doomscroll | +1.0% | +12% | +40% | +3.1% |
 
 ## deepseek-v4.1
 
-| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
-|---|---|---|---|---|---|
-| walk | +0.0% | +4.417% | +29% | +2.048% | -6% |
-| daydream | +0.0% | +37.138% | +41% | -15.703% | -13% |
-| doomscroll | +26.5% | +14.332% | +13% | -6.682% | -10% |
+| after a | ideas | different ideas | unusual wording | word variety |
+|---|---|---|---|---|
+| walk | +0.0% | +4% | +29% | +2.0% |
+| daydream | +0.0% | +37% | +41% | -15.7% |
+| doomscroll | +26.5% | +14% | +13% | -6.7% |
 
 ## minimax-m3.1
 
-| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
-|---|---|---|---|---|---|
-| walk | -7.5% | -0.728% | -5% | -2.790% | -34% |
-| daydream | +0.7% | +8.578% | +49% | -2.476% | -22% |
-| doomscroll | +27.0% | +4.491% | +38% | -3.684% | -16% |
+| after a | ideas | different ideas | unusual wording | word variety |
+|---|---|---|---|---|
+| walk | -7.5% | -1% | -5% | -2.8% |
+| daydream | +0.7% | +9% | +49% | -2.5% |
+| doomscroll | +27.0% | +4% | +38% | -3.7% |
 
 ## openai/gpt-6.1-sol
 
-| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
-|---|---|---|---|---|---|
-| walk | +0.0% | +4.653% | +2% | -2.042% | +0% |
-| daydream | +0.0% | +11.409% | +15% | -1.332% | +12% |
-| doomscroll | +0.0% | +12.142% | +11% | +1.057% | +11% |
+| after a | ideas | different ideas | unusual wording | word variety |
+|---|---|---|---|---|
+| walk | +0.0% | +5% | +2% | -2.0% |
+| daydream | +0.0% | +11% | +15% | -1.3% |
+| doomscroll | +0.0% | +12% | +11% | +1.1% |
 
 ## gpt-6.1-terra
 
-| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
-|---|---|---|---|---|---|
-| walk | +0.0% | +5.027% | +7% | -3.335% | -20% |
-| daydream | +0.0% | +13.984% | +9% | -1.824% | +14% |
-| doomscroll | +0.0% | +6.857% | +36% | -1.365% | +12% |
+| after a | ideas | different ideas | unusual wording | word variety |
+|---|---|---|---|---|
+| walk | +0.0% | +5% | +7% | -3.3% |
+| daydream | +0.0% | +14% | +9% | -1.8% |
+| doomscroll | +0.0% | +7% | +36% | -1.4% |
 
 ## qwen3.8-max
 
-| after a | ideas | distance from straight | wording surprise | vocabulary spread | vocabulary longevity |
-|---|---|---|---|---|---|
-| walk | — | — | — | — | — |
-| daydream | +39.1% | +17.568% | +5% | -4.851% | +33% |
-| doomscroll | +29.3% | +3.536% | -15% | -11.060% | -5% |
+| after a | ideas | different ideas | unusual wording | word variety |
+|---|---|---|---|---|
+| walk | — | — | — | — |
+| daydream | +39.1% | +18% | +5% | -4.9% |
+| doomscroll | +29.3% | +4% | -15% | -11.1% |
 
-Reading it: wording surprise up with vocabulary spread down means the model picked less ordinary words while reaching for a smaller set of them. Distance from straight is the only column that says the ideas moved somewhere new; it does not say they are better.
+Reading it: more unusual wording with less word variety means the model reached for less ordinary words while using a narrower set of them. "Different ideas" is the only column that says the list went somewhere new. None of them say the ideas are better.
