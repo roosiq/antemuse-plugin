@@ -177,6 +177,387 @@ function Frame({ lines, cells }) {
 }
 
 
+
+/**
+ * The map as a space you can turn.
+ *
+ * The stills are a picture of the concept map; this is the map. Nodes are the labels the ledger
+ * has actually served, placed at their real 3D coordinates from the stored projection; the warm
+ * ones are what is firing right now. Drag to orbit, wheel to zoom, hover to read a concept, click
+ * to pin it. Nothing is invented here — a label with no projection is simply absent, and nothing
+ * is warm unless the backend says it fired.
+ *
+ * Raw WebGL, no library: this file is the whole plugin, so a vendored scene graph would be a
+ * megabyte of someone else's code shipped for one canvas.
+ */
+let GRAPH3D_SEQ = 0
+
+function createGraph3D(el, doc, ctx, host, win) {
+  if (!ctx || typeof ctx.rest !== 'function') return null
+  const INSTANCE = ++GRAPH3D_SEQ
+  const report = (patch) => {
+    if (!win.__antemuse) return
+    const box = win.__antemuse.g3s = win.__antemuse.g3s || {}
+    box[INSTANCE] = Object.assign(box[INSTANCE] || {}, { instance: INSTANCE }, patch)
+    if (INSTANCE === 1) win.__antemuse.g3 = box[INSTANCE]
+  }
+  const canvas = doc.createElement('canvas')
+  canvas.setAttribute('data-antemuse-3d', 'pane')
+  canvas.setAttribute('aria-hidden', 'true')
+  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:2;display:block;cursor:grab;touch-action:none;outline:none'
+  const gl = canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false })
+    || canvas.getContext('experimental-webgl')
+  if (!gl) return null
+  el.appendChild(canvas)
+
+  const tip = doc.createElement('div')
+  tip.style.cssText = 'position:absolute;z-index:3;pointer-events:none;padding:3px 7px;border-radius:6px;' +
+    'background:rgba(8,10,14,0.86);color:#efe9d8;font:12px/1.35 ui-sans-serif,system-ui,sans-serif;' +
+    'letter-spacing:0.01em;opacity:0;transition:opacity 120ms ease;white-space:nowrap'
+  el.appendChild(tip)
+
+  const VS_POINT = 'attribute vec3 aPos; attribute float aW; uniform mat4 uMVP; uniform float uDpr;' +
+    'uniform float uSize; varying float vW;' +
+    'void main(){ vec4 p = uMVP * vec4(aPos,1.0); gl_Position = p;' +
+    'gl_PointSize = (1.5 + 5.5*aW) * uDpr * uSize * (2.4 / max(0.45, p.w)); vW = aW; }'
+  const FS_POINT = 'precision mediump float; varying float vW;' +
+    'void main(){ vec2 d = gl_PointCoord - vec2(0.5); float r = length(d)*2.0;' +
+    'if (r > 1.0) discard; float core = smoothstep(1.0, 0.18, r);' +
+    'vec3 cool = vec3(0.60,0.64,0.78); vec3 warm = vec3(1.0,0.83,0.44);' +
+    'vec3 c = mix(cool, warm, clamp(vW*2.2, 0.0, 1.0));' +
+    'float a = mix(0.13, 0.98, clamp(vW, 0.0, 1.0)) * core;' +
+    'gl_FragColor = vec4(c, a); }'
+  const VS_LINE = 'attribute vec3 aPos; attribute float aA; uniform mat4 uMVP; varying float vA;' +
+    'void main(){ gl_Position = uMVP * vec4(aPos,1.0); vA = aA; }'
+  const FS_LINE = 'precision mediump float; varying float vA;' +
+    'void main(){ gl_FragColor = vec4(0.58,0.62,0.80, vA); }'
+
+  const compile = (type, src) => {
+    const s = gl.createShader(type)
+    gl.shaderSource(s, src); gl.compileShader(s)
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      throw new Error('shader: ' + gl.getShaderInfoLog(s))
+    }
+    return s
+  }
+  const link = (vs, fs) => {
+    const p = gl.createProgram()
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs))
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs))
+    gl.linkProgram(p)
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(p))
+    return p
+  }
+  let pointProg, lineProg
+  try {
+    pointProg = link(VS_POINT, FS_POINT)
+    lineProg = link(VS_LINE, FS_LINE)
+  } catch (e) {
+    el.removeChild(canvas); el.removeChild(tip)
+    return null
+  }
+  const loc = (prog, name) => gl.getAttribLocation(prog, name)
+  const uni = (prog, name) => gl.getUniformLocation(prog, name)
+  const pPos = loc(pointProg, 'aPos'), pW = loc(pointProg, 'aW')
+  const pMVP = uni(pointProg, 'uMVP'), pDpr = uni(pointProg, 'uDpr'), pSize = uni(pointProg, 'uSize')
+  const lPos = loc(lineProg, 'aPos'), lA = loc(lineProg, 'aA'), lMVP = uni(lineProg, 'uMVP')
+
+  const pointBuf = gl.createBuffer(), lineBuf = gl.createBuffer()
+  let nodes = [], nodePos = new Float32Array(0), nodeW = new Float32Array(0), edges = []
+  let edgePos = new Float32Array(0), edgeA = new Float32Array(0)
+  let sig = ''
+  let pinned = null, hovered = null
+  let yaw = 0.55, pitch = 0.22, dist = 3.05
+  let dragging = false, lastX = 0, lastY = 0, idleAt = 0, frames = 0, stopped = false
+
+  const norm = (raw) => {
+    // Centre and scale once, so the camera only ever has to frame a unit cloud.
+    let cx = 0, cy = 0, cz = 0
+    for (const n of raw) { cx += n.x; cy += n.y; cz += n.z }
+    const m = raw.length || 1
+    cx /= m; cy /= m; cz /= m
+    let r = 0
+    for (const n of raw) {
+      const d = Math.hypot(n.x - cx, n.y - cy, n.z - cz)
+      if (d > r) r = d
+    }
+    const s = r ? 1 / r : 1
+    return raw.map((n) => ({ l: n.l, w: n.w, x: (n.x - cx) * s, y: (n.y - cy) * s, z: (n.z - cz) * s }))
+  }
+
+  // k-nearest edges in the same space the stills draw in: an edge means "these two are near here".
+  const buildEdges = (ns) => {
+    const out = []
+    const seen = new Set()
+    for (let i = 0; i < ns.length; i++) {
+      const a = ns[i]
+      let b1 = -1, d1 = Infinity, b2 = -1, d2 = Infinity
+      for (let j = 0; j < ns.length; j++) {
+        if (j === i) continue
+        const b = ns[j]
+        const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
+        if (d < d1) { d2 = d1; b2 = b1; d1 = d; b1 = j }
+        else if (d < d2) { d2 = d; b2 = j }
+      }
+      for (const j of [b1, b2]) {
+        if (j < 0) continue
+        const key = i < j ? i + ':' + j : j + ':' + i
+        if (seen.has(key)) continue
+        seen.add(key)
+        out.push([i, j])
+      }
+    }
+    return out
+  }
+
+  const upload = (raw) => {
+    const next = norm(raw)
+    const id = raw.length + '|' + (raw[0] ? raw[0].l : '') + '|' + (raw[raw.length - 1] ? raw[raw.length - 1].l : '')
+    if (id !== sig) {
+      sig = id
+      nodes = next
+      edges = buildEdges(nodes)
+      nodePos = new Float32Array(nodes.length * 3)
+      edgePos = new Float32Array(edges.length * 6)
+      edgeA = new Float32Array(edges.length * 2).fill(0.11)
+      nodes.forEach((n, i) => { nodePos[i * 3] = n.x; nodePos[i * 3 + 1] = n.y; nodePos[i * 3 + 2] = n.z })
+      edges.forEach(([a, b], e) => {
+        const A = nodes[a], B = nodes[b]
+        edgePos.set([A.x, A.y, A.z, B.x, B.y, B.z], e * 6)
+      })
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf)
+      gl.bufferData(gl.ARRAY_BUFFER, edgePos, gl.STATIC_DRAW)
+    }
+    nodeW = new Float32Array(nodes.length)
+    nodes.forEach((n, i) => {
+      const live = raw.length === nodes.length ? raw[i] : null
+      const w = live && live.w ? live.w : n.w
+      n.w = w
+      nodeW[i] = w
+    })
+    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, nodePos, gl.STATIC_DRAW)
+    const wBuf = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, wBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, nodeW, gl.STATIC_DRAW)
+    upload.wBuf = wBuf
+    report({ nodes: nodes.length, edges: edges.length,
+      lit: nodeW.reduce((a, b) => a + (b > 0.05 ? 1 : 0), 0) })
+  }
+
+  const perspective = (fovy, aspect, near, far) => {
+    const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far)
+    return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0])
+  }
+  const mul = (a, b) => {
+    const o = new Float32Array(16)
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3]
+    }
+    return o
+  }
+  const mvpNow = () => {
+    const w = canvas.width || 1, h = canvas.height || 1
+    const P = perspective(0.9, w / h, 0.05, 12)
+    const cy = Math.cos(pitch), sy = Math.sin(pitch)
+    const cx = Math.cos(yaw), sx = Math.sin(yaw)
+    const Rx = new Float32Array([1, 0, 0, 0, 0, cy, sy, 0, 0, -sy, cy, 0, 0, 0, 0, 1])
+    const Ry = new Float32Array([cx, 0, -sx, 0, 0, 1, 0, 0, sx, 0, cx, 0, 0, 0, 0, 1])
+    const T = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -dist, 1])
+    return mul(P, mul(T, mul(Rx, Ry)))
+  }
+
+  const resize = () => {
+    const dpr = win.devicePixelRatio || 1
+    const w = Math.max(1, Math.round((el.clientWidth || 640) * dpr))
+    const h = Math.max(1, Math.round((el.clientHeight || 480) * dpr))
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
+  }
+
+  const draw = () => {
+    if (stopped) return
+    resize()
+    gl.viewport(0, 0, canvas.width, canvas.height)
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.enable(gl.DEPTH_TEST)
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+    const MVP = mvpNow()
+    gl.useProgram(lineProg)
+    gl.uniformMatrix4fv(lMVP, false, MVP)
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf)
+    gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
+    gl.disableVertexAttribArray(lA)
+    gl.vertexAttrib1f(lA, 0.11)
+    gl.drawArrays(gl.LINES, 0, edgePos.length / 3)
+    gl.useProgram(pointProg)
+    gl.uniformMatrix4fv(pMVP, false, MVP)
+    gl.uniform1f(pDpr, win.devicePixelRatio || 1)
+    gl.uniform1f(pSize, 1.0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf)
+    gl.enableVertexAttribArray(pPos); gl.vertexAttribPointer(pPos, 3, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, upload.wBuf || pointBuf)
+    gl.enableVertexAttribArray(pW); gl.vertexAttribPointer(pW, 1, gl.FLOAT, false, 0, 0)
+    gl.drawArrays(gl.POINTS, 0, nodePos.length / 3)
+    frames++
+    report({ frames, yaw: +yaw.toFixed(3), pitch: +pitch.toFixed(3), dist: +dist.toFixed(3),
+      hover: hovered, pinned })
+  }
+
+  let rafId = 0
+  const loop = (ts) => {
+    if (stopped) return
+    rafId = win.requestAnimationFrame ? win.requestAnimationFrame(loop) : win.setTimeout(() => loop(Date.now()), 16)
+    if (!dragging && ts && idleAt && ts - idleAt > 2600) yaw += 0.00022 * (ts - (loop.lastTs || ts))
+    loop.lastTs = ts
+    // A pane that is not on screen draws nothing: the shell mounts a surface per route, and an
+    // off-screen instance would otherwise burn frames on a cloud nobody is looking at.
+    const visible = (el.clientWidth || 0) > 0 && (el.clientHeight || 0) > 0
+    if (nodes.length && visible) draw()
+  }
+
+  // ---- interaction ------------------------------------------------------------
+  const project = (MVP) => {
+    // Screen-space positions, so hover can be decided in pixels rather than in the cloud.
+    const out = []
+    const w = canvas.width, h = canvas.height
+    for (let i = 0; i < nodes.length; i++) {
+      const x = nodePos[i * 3], y = nodePos[i * 3 + 1], z = nodePos[i * 3 + 2]
+      const cx = MVP[0] * x + MVP[4] * y + MVP[8] * z + MVP[12]
+      const cy = MVP[1] * x + MVP[5] * y + MVP[9] * z + MVP[13]
+      const cw = MVP[3] * x + MVP[7] * y + MVP[11] * z + MVP[15]
+      if (cw <= 0.001) { out.push(null); continue }
+      out.push([(cx / cw * 0.5 + 0.5) * w, (1 - (cy / cw * 0.5 + 0.5)) * h])
+    }
+    return out
+  }
+  const pick = (px, py) => {
+    const pts = project(mvpNow())
+    let best = null, bestD = 18 * (win.devicePixelRatio || 1)
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i]
+      if (!p) continue
+      const d = Math.hypot(p[0] - px, p[1] - py)
+      if (d < bestD) { bestD = d; best = i }
+    }
+    return best
+  }
+  const showTip = (i, cx, cy) => {
+    if (i == null || !nodes[i]) { tip.style.opacity = '0'; return }
+    const n = nodes[i]
+    tip.textContent = n.w > 0.05 ? n.l + ' · firing' : n.l
+    tip.style.left = Math.max(6, cx + 12) + 'px'
+    tip.style.top = Math.max(6, cy + 12) + 'px'
+    tip.style.opacity = '1'
+  }
+  const bump = (what) => {
+    const g = (win.__antemuse && win.__antemuse.g3s && win.__antemuse.g3s[INSTANCE]) || {}
+    const ev = Object.assign({}, g.ev || {})
+    ev[what] = (ev[what] || 0) + 1
+    report({ ev })
+  }
+  const onDown = (e) => { bump('down'); dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.style.cursor = 'grabbing'; idleAt = 0 }
+  const onMove = (e) => {
+    bump('move')
+    if (dragging) {
+      yaw -= (e.clientX - lastX) * 0.006
+      pitch = Math.max(-1.35, Math.min(1.35, pitch - (e.clientY - lastY) * 0.006))
+      lastX = e.clientX; lastY = e.clientY
+      return
+    }
+    const r = canvas.getBoundingClientRect()
+    const i = pick((e.clientX - r.left) * (win.devicePixelRatio || 1), (e.clientY - r.top) * (win.devicePixelRatio || 1))
+    hovered = i == null ? null : nodes[i].l
+    showTip(i, e.clientX - r.left, e.clientY - r.top)
+    canvas.style.cursor = i == null ? 'grab' : 'pointer'
+  }
+  const onUp = (e) => {
+    const moved = dragging
+    dragging = false; canvas.style.cursor = 'grab'; idleAt = performance.now ? performance.now() : Date.now()
+    if (!moved) return
+    const r = canvas.getBoundingClientRect()
+    const i = pick((e.clientX - r.left) * (win.devicePixelRatio || 1), (e.clientY - r.top) * (win.devicePixelRatio || 1))
+    pinned = i == null ? null : nodes[i].l
+    report({ pinned })
+    if (pinned) showTip(i, e.clientX - r.left, e.clientY - r.top)
+  }
+  const onWheel = (e) => {
+    bump('wheel')
+    e.preventDefault()
+    dist = Math.max(1.15, Math.min(7.5, dist * (1 + Math.sign(e.deltaY) * 0.08)))
+  }
+  const onLeave = () => { hovered = null; if (!pinned) tip.style.opacity = '0' }
+
+  // Capture phase on the document, filtered to this pane: the shell puts its own listeners on the
+  // way down the tree, and a pointerdown that stops propagating never reaches a listener on the
+  // canvas — which made drag look broken while wheel kept working.
+  const mine = (e) => !!(e.target && (e.target === canvas || el.contains(e.target)))
+  const guard = (fn) => (e) => { if (mine(e)) fn(e) }
+  const gDown = guard(onDown), gMove = guard(onMove), gUp = guard(onUp)
+  const gWheel = guard(onWheel), gLeave = guard(onLeave)
+  doc.addEventListener('pointerdown', gDown, true)
+  doc.addEventListener('pointermove', gMove, true)
+  doc.addEventListener('pointerup', gUp, true)
+  doc.addEventListener('pointerleave', gLeave, true)
+  doc.addEventListener('wheel', gWheel, { capture: true, passive: false })
+
+  // ---- data -------------------------------------------------------------------
+  // Preview aid, same convention as `antemuse:scene`: `localStorage['antemuse:graph3d-demo']='1'`
+  // draws a fixed synthetic cloud so the renderer and its input can be looked at without a
+  // backend that serves /graph. Never on by itself.
+  const demo = (() => { try { return win.localStorage.getItem('antemuse:graph3d-demo') === '1' } catch (e) { return false } })()
+  const demoCloud = () => {
+    let seed = 7
+    const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648 }
+    const out = []
+    for (let i = 0; i < 620; i++) {
+      const t2 = rnd() * Math.PI * 2, ph = Math.acos(2 * rnd() - 1), r = Math.cbrt(rnd())
+      out.push({ l: 'n' + i, w: i % 97 === 0 ? 0.6 + rnd() * 0.4 : 0,
+        x: r * Math.sin(ph) * Math.cos(t2), y: r * Math.cos(ph) * 0.62, z: r * Math.sin(ph) * Math.sin(t2) })
+    }
+    return out
+  }
+  const pull = () => {
+    if (stopped || typeof ctx.rest !== 'function') return
+    if (!(el.clientWidth || 0) || !(el.clientHeight || 0)) return
+    const session = host && host.state && host.state.focusedSessionId
+      ? host.state.focusedSessionId.get() : ''
+    const q = '/graph' + (session ? '?session=' + encodeURIComponent(session) : '')
+    Promise.resolve(ctx.rest(q)).then((g) => {
+      if (stopped) return
+      if (!g || !g.nodes || !g.nodes.length) { if (demo) upload(demoCloud()); return }
+      const changed = sig !== g.nodes.length + '|' + g.nodes[0].l + '|' + g.nodes[g.nodes.length - 1].l
+      upload(g.nodes)
+      if (changed && el.querySelector('[data-antemuse-bake]')) {
+        // The 3D surface is the picture now; the JPEG cross-fade behind it would ghost through.
+        el.querySelectorAll('[data-antemuse-bake]').forEach((im) => { im.style.opacity = '0' })
+      }
+    }, () => { if (demo) upload(demoCloud()) })
+  }
+  pull()
+  const timer = typeof ctx.setInterval === 'function' ? ctx.setInterval(pull, 4000) : setInterval(pull, 4000)
+  rafId = win.requestAnimationFrame ? win.requestAnimationFrame(loop) : win.setTimeout(() => loop(Date.now()), 16)
+
+  return {
+    dispose: () => {
+      stopped = true
+      try { if (win.cancelAnimationFrame) win.cancelAnimationFrame(rafId); else win.clearTimeout(rafId) } catch (e) {}
+      try { if (typeof ctx.clearInterval === 'function' && typeof ctx.setInterval === 'function') ctx.clearInterval(timer); else clearInterval(timer) } catch (e) {}
+      doc.removeEventListener('pointerdown', gDown, true)
+      doc.removeEventListener('pointermove', gMove, true)
+      doc.removeEventListener('pointerup', gUp, true)
+      doc.removeEventListener('pointerleave', gLeave, true)
+      doc.removeEventListener('wheel', gWheel, { capture: true })
+      if (canvas.parentNode) canvas.parentNode.removeChild(canvas)
+      if (tip.parentNode) tip.parentNode.removeChild(tip)
+      const lose = gl.getExtension('WEBGL_lose_context')
+      if (lose) lose.loseContext()
+    }
+  }
+}
+
+
 /**
  * The picture, filling whatever box it is given — a dock pane or a route page.
  * This is where the art belongs: its own surface, no transcript underneath, so
@@ -415,6 +796,13 @@ function ArtSurface({ ctx }) {
     try { preview = win.localStorage.getItem('antemuse:scene') } catch (e) { /* no storage */ }
     if (preview) art.setScene(preview)
 
+    // The space, above the stills: the same map, turnable. The JPEG cross-fade stays underneath as
+    // the fallback for a pane with no WebGL or a backend that cannot serve /graph.
+    let graph3d = null
+    try {
+      graph3d = createGraph3D(el, doc, ctx, host, win)
+    } catch (e) { graph3d = null }
+
     if (!preview) say()
     // Host-managed timer where the SDK provides one, so disposal is the host's
     // job too and a pane close cannot leave a poll running.
@@ -446,6 +834,7 @@ function ArtSurface({ ctx }) {
       if (ro) ro.dispose ? ro.dispose() : ro.disconnect()
       else win.removeEventListener('resize', fit)
       cancel(rafId)
+      if (graph3d) { try { graph3d.dispose() } catch (e) { /* gone */ } }
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas)
     }
   }, [ctx])

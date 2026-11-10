@@ -1278,6 +1278,33 @@ The renderer exists (§10.6); the surface does not. Registration and budget are 
 Not started, and not claimed. `desktop/art` is carrying an unrelated reorganization that the
 owner asked to leave alone, which is where the scene table lives.
 
+## 17f. The pane is a space, not a still
+
+The pane used to be a JPEG: `/state` rendered 960×600 stills of the concept map and the surface
+cross-faded them. That showed the map; it could not be entered.
+
+`/graph` serves the same map as numbers — the label, its real 3D position from the stored
+projection, and its activation weight — and the pane draws it with raw WebGL (no scene-graph
+library: this file is the whole plugin, and a vendored three.js would be a megabyte for one
+canvas). Edges are built in the pane from the same rule the stills use: k-nearest in this space,
+so an edge means "these two are near here" and nothing else.
+
+Interactions: drag to orbit, wheel to zoom, hover to read a concept, click to pin it. The camera
+drifts slowly when the pointer has been still, so an unattended pane keeps breathing.
+
+Three constraints this keeps:
+
+- **Nothing invented.** A label without a projection is absent; nothing is warm unless the ledger
+  says it fired. `/graph` returns zeros rather than simulated activations.
+- **The stills remain the fallback.** No WebGL, or a backend that cannot serve `/graph`, falls
+  through to the cross-fading JPEG — the pane never goes blank because a driver is missing.
+- **An off-screen surface draws nothing.** The shell mounts a surface per route; only a visible
+  pane spends frames.
+
+Preview aid, same convention as `antemuse:scene`: `localStorage['antemuse:graph3d-demo'] = '1'`
+draws a fixed synthetic cloud so the renderer and its input can be looked at without a backend
+serving `/graph`. It is never on by default, and it is not evidence of the real map.
+
 ## 18. Must-not-change constraints
 
 Unless a change spec says otherwise and is approved:

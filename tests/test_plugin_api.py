@@ -559,3 +559,26 @@ def test_a_foreign_core_module_cannot_hide_the_plugins_own():
         sys.modules.pop("core", None)
         sys.modules.update(saved)
 
+def test_the_graph_route_serves_real_positions_and_lights_only_what_fired():
+    """/graph is the same map the stills draw, as numbers: no invented node, no invented light."""
+    import importlib.util
+    import sys
+
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("pa_graph", repo / "dashboard" / "plugin_api.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    payload = module.graph(session="", limit=400)
+    assert payload["plugin"], payload.keys()
+    nodes = payload["nodes"]
+    assert nodes, "the profile has servings, so the ground cannot be empty"
+    assert len(nodes) <= 400
+    for n in nodes[:50]:
+        assert isinstance(n["l"], str) and n["l"]
+        assert all(isinstance(n[k], float) for k in ("x", "y", "z"))
+        assert 0.0 <= n["w"] <= 1.0
+    # brightest last: a poll must not reshuffle the draw order of equal weights
+    weights = [n["w"] for n in nodes]
+    assert weights == sorted(weights)
+    assert payload["lit"] == sum(1 for n in nodes if n["w"] > 0.05)
+

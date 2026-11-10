@@ -183,6 +183,58 @@ def _core_module(name: str):
     return importlib.import_module(_core().__name__ + "." + name)
 
 
+@router.get("/graph")
+def graph(session: str = "", limit: int = 1400):
+    """The same map the stills draw, as numbers a 3D surface can turn.
+
+    The stills are 960x600 JPEGs: a picture of the map. This is the map — labels, their real 3D
+    position from the stored projection, and how strongly each is firing. The pane builds its own
+    edges from these positions (k-nearest in this space, the same rule `nearest()` uses), so an
+    edge means "these two are near here", exactly as in the stills.
+
+    Nothing here is invented: a concept with no projection simply is not in the list, and nothing
+    is lit unless the ledger says it fired.
+    """
+    engine_state = _core_module("engine").peek() or {}
+    active = engine_state or {}
+    belongs_here = True
+    if active and session:
+        origin = active.get("origin") or {}
+        owner = origin.get("session_id") if isinstance(origin, dict) else None
+        belongs_here = owner in (None, "") or owner == session
+    drawable = bool(active and belongs_here)
+    key = str(active.get("key") or "") if drawable else "profile"
+    own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""
+
+    activation_stills = _core_module("activation_stills")
+    activation = _core_module("activation")
+    labels = activation_stills._all_labels(int(max(120, min(limit, 2400))))
+    pos = activation_stills.positions(labels) if labels else {}
+    lit = {}
+    try:
+        lit = activation.activations(own, key if drawable else None) or {}
+    except Exception:  # health: BLE001 -- no firings is a fact, not a failure
+        lit = {}
+    nodes = []
+    for label, xyz in pos.items():
+        slot = lit.get(label) or {}
+        try:
+            w = max(0.0, min(1.0, float(slot.get("weight", 0.0))))
+        except (TypeError, ValueError):
+            w = 0.0
+        nodes.append({"l": label, "x": float(xyz[0]), "y": float(xyz[1]), "z": float(xyz[2]),
+                      "w": w})
+    nodes.sort(key=lambda n: n["w"])  # brightest last: a stable draw order across polls
+    return {
+        "key": key,
+        "session": own,
+        "nodes": nodes,
+        "lit": sum(1 for n in nodes if n["w"] > 0.05),
+        "plugin": _LOADED_VERSION,
+        "server": f"{Path(__file__).stat().st_mtime_ns}",
+    }
+
+
 @router.get("/state")
 # The request is injected by FastAPI and optional so the route can be called directly in tests.
 def state(request: Request = None, cols: int | None = None, rows: int | None = None, fit: str = "contain",
