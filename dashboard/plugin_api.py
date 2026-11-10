@@ -99,8 +99,41 @@ def _core():
         from .. import core as core_pkg  # imported as <plugin>.dashboard.plugin_api
         return core_pkg
     except Exception:
-        import core as core_pkg  # imported flat, with the plugin dir on sys.path
-        return core_pkg
+        pass
+    # Imported as a top-level module (`plugin_api`), which the host does when it loads a router
+    # file directly: there is no package parent and the plugin root is not on sys.path, so both
+    # earlier legs fail. Put the plugin root on the path and verify we got OUR core, not an
+    # unrelated module that happens to be called `core`.
+    import sys
+    from pathlib import Path as _Path
+
+    root = _Path(__file__).resolve().parent.parent
+    def _inside(module) -> bool:
+        # `core.__file__` is `<root>/core/__init__.py`, so the plugin root is a PARENT of it,
+        # not its parent directory: comparing `.parent` rejected the correct package.
+        try:
+            return root in _Path(module.__file__).resolve().parents
+        except (AttributeError, OSError, TypeError):
+            return False
+
+    known = sys.modules.get("core")
+    if known is not None and _inside(known):
+        return known
+    root_s = str(root)
+    added = root_s not in sys.path
+    if added:
+        sys.path.insert(0, root_s)
+    try:
+        import core as core_pkg
+    except Exception:
+        if added:
+            sys.path.remove(root_s)
+        raise
+    if not _inside(core_pkg):
+        if added:
+            sys.path.remove(root_s)
+        raise ImportError(f"`core` resolved outside the plugin at {core_pkg.__file__}")
+    return core_pkg
 
 
 def _core_module(name: str):

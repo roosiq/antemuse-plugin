@@ -8,6 +8,8 @@ asserted, not merely reviewed.
 """
 from __future__ import annotations
 
+import pathlib
+
 import importlib.util
 import json
 from pathlib import Path
@@ -496,3 +498,34 @@ def test_every_path_state_advertises_is_one_the_routes_can_serve(monkeypatch, tm
         parts = url.rsplit("/", 2)
         name, filename = parts[-2], parts[-1]
         assert api._still_path(name, filename) is not None, url
+
+def test_the_router_finds_core_when_the_host_loads_it_as_a_bare_module(tmp_path):
+    """The third load shape: no package parent and no plugin root on sys.path.
+
+    The gateway recovered from `ModuleNotFoundError: No module named 'core'` by naming the failure
+    in `still_note` — which is how it was finally caught — but it still served no picture. The
+    router has to find `core` itself when neither relative nor flat import works.
+    """
+    import importlib.util
+    import sys
+
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    target = repo / "dashboard" / "plugin_api.py"
+    saved = {k: v for k, v in sys.modules.items() if k == "core" or k.startswith("core.")}
+    for key in saved:
+        del sys.modules[key]
+    saved_path = list(sys.path)
+    for entry in [str(repo), str(repo / "dashboard")]:
+        while entry in sys.path:
+            sys.path.remove(entry)
+    try:
+        spec = importlib.util.spec_from_file_location("plugin_api_probe", target)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        payload = module.state()
+        assert payload["still_note"] == "", payload["still_note"]
+        assert payload["stills"], "a bare-module load still has to find core"
+    finally:
+        sys.path[:] = saved_path
+        sys.modules.update(saved)
+

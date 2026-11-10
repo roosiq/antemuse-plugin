@@ -41,7 +41,7 @@ else:  # flat load: this file is or is not on sys.path, but its directory is wha
     from core import (engine, history, options, panel, recall, runtime, session, settings,
                       states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
 
-__version__ = "0.9.9"
+__version__ = "0.9.10"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
