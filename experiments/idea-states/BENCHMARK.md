@@ -58,8 +58,9 @@ differences with their ranges.
 
 ## What it shows
 
-1. **The state always changes the list.** Daydream moved the ideas on every model that
-   produced a list, from +9% to +37%. None was unaffected.
+1. **The state changes the list, and by more than asking again.** Daydream moved the ideas on
+   every model that produced a list, from +9% to +37%, and clears the resampling floor on all
+   six (see the floor table below). Walk is real but marginal; doomscroll depends on the model.
 2. **How much depends on the model, not the state.** The same daydream moves DeepSeek 37% and
    MiniMax 9%. That is a fourfold difference from one instruction.
 3. **Higher perplexity is not different ideas.** MiniMax's daydream raises perplexity more
@@ -70,7 +71,9 @@ differences with their ranges.
 5. **Doomscroll ignores the count.** DeepSeek and MiniMax wrote 63 ideas instead of 50. Opus
    and the GPT models stuck to 50.
 6. **walk is the weak state.** On four of six models the list stays within 6% of the plain one,
-   and on MiniMax it goes slightly backwards. Only Opus moves clearly (+18%).
+   and on MiniMax it goes slightly backwards (−1%). Only Opus moves clearly (+18%). It still
+   edges past the resampling floor on four of five models that produced a walk list, but by a
+   hair.
 
 ## Do different models write the same ideas?
 
@@ -102,48 +105,56 @@ agreement there was roughly in half (0.66 to 0.57 on best match; 70% to 40% at t
 threshold). And on the open creative brief there was almost nothing shared to begin with: the
 lists are 98–100% distinct whether a state is used or not.
 
-Caveat, and the next section covers it: twin-share at 0.80 turns out to be noisy — a model
-reproduces only 18% of its own ideas when asked twice. The sturdier figure is the average best
-match: 0.66 between models with no state, 0.57 after daydream, against 0.69 when re-asking the
-same model. Read the overlap direction as real for daydream on best match, and as directional
-only for the twin percentages.
+Caveat, and the floor section below settles it: twin-share at 0.80 is noisy — a model
+reproduces 22% of its own ideas when asked twice at 50 ideas. The bracketed figures are the
+average best match, which is the measure that holds up: 0.66 between models with no state, 0.57
+after daydream, 0.71 when re-asking the same model. Read the overlap direction as real for
+daydream and as directional only for the twin percentages.
 
 So the state is not making models converge on a canon of ideas. It pushes each model further
 into its own corner.
-## How much does a straight list vary on its own?
+## Is the change bigger than asking again?
 
-No state at all: same brief, 100 ideas, asked four times per model. This is the floor
-anything else has to clear — if re-asking moves the list as much as a state does, the state
-effect is not separable from sampling. `variation.md`, seed-free, files `variation-*.json`.
+This is the test that decides whether any of the above means anything. Keep the model fixed,
+keep the brief fixed, and change one thing: either ask again, or put a state in between.
+Score both the same way — for each idea in one list, the best match in the other. `floor.md`,
+`floor.py`, `variation-n50.md`.
 
-| model | twin ideas when asked again | avg best match | distinct ideas in the pooled 400 |
+| model | asked again (floor) | walk | daydream | doomscroll |
+|---|---|---|---|---|
+| Opus 5.5 | 0.764 (0.717) | 0.664 **below** | 0.631 **below** | 0.674 **below** |
+| DeepSeek v4.1 | 0.719 (0.699) | 0.686 **below** | 0.555 **below** | 0.563 **below** |
+| MiniMax M3.1 | 0.677 (0.662) | 0.657 **below** | 0.617 **below** | 0.647 **below** |
+| GPT-6.1 Sol | 0.735 (0.719) | 0.711 **below** | 0.675 **below** | 0.700 **below** |
+| GPT-6.1 Terra | 0.725 (0.697) | 0.718 | 0.687 **below** | 0.710 |
+| Qwen3.8 Max | 0.711 (0.670) | no walk list | 0.645 **below** | 0.704 |
+
+**below** = further from the model's own straight list than any re-asked straight list was.
+Daydream clears the floor on **6 of 6** models. Walk clears it on 4 of 5, but only just — a
+0.011 gap on MiniMax. Doomscroll clears it on 4 of 6 and is the most model-dependent of the
+three.
+
+Two consequences:
+
+1. The states are doing something real, not resampling. Daydream is unambiguous on every
+   model; walk is real but marginal; doomscroll lands differently by model.
+2. It is the *distance* result that survives, not the overlap percentages. Re-asking a model
+   reproduces 22% of its own ideas as near-copies (`variation-n50.md`), so the earlier "11% to
+   1% overlap" figures sit inside that noise. Best match is the sturdier reading.
+
+### What the lists do on their own, for scale
+
+| model | twins when asked again | avg best match | distinct in the pooled set |
 |---|---|---|---|
-| DeepSeek v4.1 | 14% | 0.68 | 339 (85%) |
-| Qwen3.8 Max | 15% | 0.69 | 330 (82%) |
-| MiniMax M3.1 | 6% | 0.66 | 372 (93%) |
-| GPT-6.1 Terra | 20% | 0.70 | 315 (79%) |
-| GPT-6.1 Sol | 25% | 0.72 | 299 (75%) |
-| Opus 5.5 | 28% | 0.72 | 287 (72%) |
+| DeepSeek v4.1 | 20% | 0.70 | 157 of 200 (78%) |
+| Qwen3.8 Max | 17% | 0.69 | 164 of 200 (82%) |
+| MiniMax M3.1 | 10% | 0.67 | 184 of 207 (89%) |
+| GPT-6.1 Terra | 24% | 0.71 | 149 of 200 (74%) |
+| GPT-6.1 Sol | 27% | 0.73 | 144 of 200 (72%) |
+| Opus 5.5 | 36% | 0.75 | 129 of 200 (64%) |
 
-- Average: **18% of ideas are near-copies when the same model is asked again**, best match 0.69.
-- Across every pair of lists, best match never fell below **0.64** (mean 0.69, sd 0.02).
-- Different models, one list each: **8% twins**, best match 0.65.
-- Every model delivered exactly the 100 ideas asked for.
-
-This sets the bar. The straight lists agree with themselves only about 18% of the time at
-0.80, so a state that shifts twin-share from 11% to 1% is changing something smaller than the
-model's own run-to-run wobble. Best match is the stable measure: re-asking stays at 0.69 and
-never drops below 0.64, while daydream drops the cross-model figure to 0.57 — below anything
-re-asking ever produced. So the daydream divergence holds; the twin percentages do not carry
-that weight on their own.
-
-Two consequences for the rest of this document:
-
-1. Any claim resting on twin-share (11% → 1%) is inside the noise floor. Restate those as best
-   match, or treat them as directional only.
-2. The state comparisons were made with 50-idea lists. Re-asking four 50-idea lists would give
-   a slightly higher twin-share than four 100-idea lists, since shorter lists have fewer
-   chances to diverge — the 18% here is a conservative floor, not an exact match.
+At 100 ideas the same test gives 18% twins and 0.69 best match (`variation-n100.md`), so the
+floor is not an artefact of list length.
 
 ## Limits
 

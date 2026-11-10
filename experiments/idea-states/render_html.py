@@ -8,8 +8,7 @@ from pathlib import Path
 import percent
 
 HERE = Path(__file__).resolve().parent
-LABEL = {"N": "straight", "walk": "walk in the middle", "daydream": "daydream in the middle",
-         "doomscroll": "doomscroll in the middle"}
+LABEL = {"N": "straight", "walk": "walk", "daydream": "daydream", "doomscroll": "doomscroll"}
 
 
 def esc(x) -> str:
@@ -22,6 +21,32 @@ def _pct(bl, cond, metric) -> str:
         return "—"
     m, _n = got
     return f"{m:+.0f}%" if abs(m) >= 10 else f"{m:+.1f}%"
+
+
+def floor_table() -> str:
+    """The resampling floor, read from floor.md so the page and the write-up agree."""
+    path = HERE / "floor.md"
+    if not path.exists():
+        return ""
+    rows = ""
+    for line in path.read_text().split("\n"):
+        if not line.startswith("| ") or line.startswith("|---") or "model | asked again" in line:
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) != 5:
+            continue
+        tds = "".join(f"<td>{esc(c.replace('**', ''))}</td>" for c in cells[1:])
+        rows += f"<tr><th>{esc(cells[0])}</th>{tds}</tr>"
+    if not rows:
+        return ""
+    return ("<h2>Is the change bigger than asking again?</h2>"
+            "<p class=muted>Same model, same brief. First column: one straight list against "
+            "another straight list. Next three: the state's list against the straight list from "
+            "the same seed. Lower means the ideas moved further. Every state column that reads "
+            "below its model's first number moved further than re-asking ever does.</p>"
+            "<table class=floor><thead><tr><th></th><th>asked again</th><th>walk</th>"
+            "<th>daydream</th><th>doomscroll</th></tr></thead>"
+            f"<tbody>{rows}</tbody></table>")
 
 
 def section(payload: dict) -> str:
@@ -117,9 +142,11 @@ straight, and with a state held in the middle. State directives are read from
 Every number is reproducible: word counts from the text, distance from an embedding model,
 unusual wording from a small fixed language model. No LLM judge is involved anywhere.</p>
 {body}
+__FLOOR_BLOCK__
 <footer>Demonstration, not a preregistered result. Four lists per condition per model, two
 briefs. None of these numbers say an idea is good.</footer>
 </main></body></html>"""
+    page = page.replace("__FLOOR_BLOCK__", floor_table())
     (HERE / "index.html").write_text(page)
     print(f"wrote {HERE / 'index.html'}")
     return 0

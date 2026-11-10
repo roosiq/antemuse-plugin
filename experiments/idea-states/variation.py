@@ -136,7 +136,7 @@ def main() -> int:
 
     results = []
     for model in a.models:
-        path = HERE / f"variation-{slug(model)}.json"
+        path = HERE / f"variation-{slug(model)}-n{a.count}.json"
         if a.report_only and path.exists():
             results.append(json.loads(path.read_text()))
             continue
@@ -149,7 +149,7 @@ def main() -> int:
         results.append(payload)
 
     text = report({"models": results, "count": a.count, "repeats": a.repeats})
-    (HERE / "variation.md").write_text(text)
+    (HERE / f"variation-n{a.count}.md").write_text(text)
     print(text)
     return 0
 
