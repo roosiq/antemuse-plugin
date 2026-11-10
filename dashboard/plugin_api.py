@@ -26,7 +26,7 @@ from pathlib import Path
 import time
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 
 router = APIRouter()
@@ -253,7 +253,8 @@ def graph(session: str = "", limit: int = 1400):
 @router.get("/state")
 # The request is injected by FastAPI and optional so the route can be called directly in tests.
 def state(request: Request = None, cols: int | None = None, rows: int | None = None, fit: str = "contain",
-          busy: bool = False, session: str | None = None) -> Dict[str, Any]:
+          busy: bool = False, session: str | None = None,
+          with_graph: int = Query(0, alias="graph")) -> Dict[str, Any]:
     """The current state, as counts and a served frame.
 
     ``?busy=1`` says a turn is in flight, which changes only the ambient scene:
@@ -263,6 +264,11 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
     profile, so if the active state belongs to another chat the layer must not
     borrow it: that chat gets its ambient scene instead. The counts stay
     profile-level — they are what the engine holds, not what one chat owns.
+
+    ``?graph=1`` adds the map as numbers under ``graph``. It is a parameter of the one route the
+    pane already calls, not a second route: a router is mounted when the host process boots, so
+    every new path is a gateway restart waiting to happen, and the pane needs its data not to
+    depend on when the host was last started.
 
     ``?cols=&rows=`` lets a surface ask for the grid its own pixel box can hold.
     The numbers are clamped to the projection's envelope and echoed back in the
@@ -354,6 +360,11 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
         payload["files_http"] = []
         payload["stills_b64"] = []
         payload["still_note"] = f"picture failed: {type(exc).__name__}: {exc}"[:160]
+    if with_graph:
+        try:
+            payload["graph"] = graph(session=str(session or ""), limit=1400)
+        except Exception as exc:  # health: BLE001 -- no map is not a broken state
+            payload["graph"] = {"nodes": [], "lit": 0, "error": f"{type(exc).__name__}: {exc}"[:160]}
     return payload
 
 

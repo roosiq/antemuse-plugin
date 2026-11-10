@@ -630,3 +630,35 @@ console.log(out.join(','))
     harness_path.unlink(missing_ok=True)
     assert done.returncode == 0, done.stderr
     assert done.stdout.strip() == ",".join(["ok"] * 6), done.stdout
+
+
+def test_the_map_rides_the_route_that_was_always_mounted():
+    """`/graph` is a new path, and a path exists only in the process that booted after it.
+
+    That cost hours of the pane polling a route its backend had never mounted. The map is now also
+    a parameter of `/state` — the one route every backend has carried since the first release — so
+    the pane can get real positions from a host started long before this code landed.
+    """
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import dashboard.plugin_api as api
+
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api/plugins/antemuse")
+    client = TestClient(app)
+
+    plain = client.get("/api/plugins/antemuse/state").json()
+    assert "graph" not in plain
+
+    seeded = client.get("/api/plugins/antemuse/state?graph=1").json()
+    assert "graph" in seeded
+    nodes = seeded["graph"]["nodes"]
+    assert isinstance(nodes, list)
+    for node in nodes[:5]:
+        assert set(node) >= {"l", "x", "y", "z", "w"}
+        assert 0.0 <= node["w"] <= 1.0
+    # The two doors must hand back the same map, or one of them is lying.
+    direct = client.get("/api/plugins/antemuse/graph?limit=1400").json()
+    assert len(nodes) == len(direct["nodes"])
+    assert seeded["graph"]["lit"] == direct["lit"]
