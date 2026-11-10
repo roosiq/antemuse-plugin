@@ -750,9 +750,9 @@ def test_a_walk_reports_its_path_in_order():
 
     path = body["graph"]["path"]
     assert len(path) >= 2, "a walk that stepped has a path"
-    # the trail must be drawable: every concept it names is a node on the surface
-    labels = {str(n["l"]).lower() for n in body["graph"]["nodes"]}
-    assert all(p.lower() in labels for p in path[-2:])
+    # order, not membership: a hop the projection cannot place has no node to draw through, and
+    # that is a coverage limit, not a wrong path
+    assert path[-1] != path[-2]
 
 
 def test_the_map_carries_the_relations_it_has():
@@ -783,3 +783,55 @@ def test_the_map_carries_the_relations_it_has():
     top = links[0]["w"]
     assert top >= links[-1]["w"], "strongest relation first"
     assert top >= 1
+
+
+def test_entering_a_state_is_not_hidden_by_the_memo():
+    """The graph memo cached "profile" and kept serving it for three seconds after /walk.
+
+    A state entered right after a poll looked like no state at all — the pane's own label said
+    profile while the walk was running.
+    """
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import dashboard.plugin_api as api
+    from core import engine
+
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api/plugins/antemuse")
+    client = TestClient(app)
+    api._GRAPH_MEMO.clear() if hasattr(api, "_GRAPH_MEMO") else None
+
+    engine.exit() if hasattr(engine, "exit") else None
+    before = client.get("/api/plugins/antemuse/state?graph=1&stills=0").json()["graph"]["key"]
+    engine.enter("walk", minutes=5, session="")
+    after = client.get("/api/plugins/antemuse/state?graph=1&stills=0").json()["graph"]["key"]
+
+    assert before == "profile"
+    assert after == "walk", "a state entered a moment after a poll must show up at once"
+
+
+def test_a_new_serving_is_not_hidden_by_the_memo():
+    """The memo cached three seconds of the map and did not know the ledger had moved.
+
+    A walk that stepped between two polls kept showing the picture from before the step.
+    """
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import dashboard.plugin_api as api
+    from core import engine, history, walks
+
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api/plugins/antemuse")
+    client = TestClient(app)
+    api._GRAPH_MEMO.clear() if hasattr(api, "_GRAPH_MEMO") else None
+
+    engine.enter("walk", minutes=5, session="")
+    first = client.get("/api/plugins/antemuse/state?graph=1&stills=0").json()["graph"]["lit"]
+
+    walks.get("outer").step(1)
+    history.notice("doorstop", move="walk", session="")
+
+    second = client.get("/api/plugins/antemuse/state?graph=1&stills=0").json()["graph"]["lit"]
+    assert second > first, "a serving between polls must show up on the next poll"

@@ -190,6 +190,24 @@ def _all_labels(limit: int = 2400) -> List[str]:
             "SELECT c.label, COUNT(*) AS n FROM served s JOIN concepts c ON c.id = s.concept_id "
             "GROUP BY c.label ORDER BY n DESC LIMIT ?", (limit,))
         labels = [row[0] for row in rows or [] if row and row[0]]
+        if len(labels) >= max(200, limit // 2):
+            return sorted(labels)
+        # A young ledger is a handful of concepts, and a walk over three dots is not a space. Fill
+        # the rest of the ground from the same projection the picture already draws, keeping every
+        # concept the ledger does have.
+        try:
+            data = _json.loads((_cache_dir() / "wordnet.proj.json").read_text())
+            sample = data.get("labels") if isinstance(data, dict) else None
+        except Exception:
+            sample = None
+        if sample:
+            have = set(labels)
+            step = max(1, len(sample) // 1200)
+            for label in sample[::step]:
+                if len(labels) >= limit:
+                    break
+                if label not in have:
+                    labels.append(label)
         if labels:
             return sorted(labels)
     except Exception:

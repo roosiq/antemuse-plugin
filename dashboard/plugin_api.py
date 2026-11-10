@@ -201,7 +201,17 @@ def graph(session: str = "", limit: int = 1400):
     import time as _time
     started = _time.time()
     engine_state = _core_module("engine").peek() or {}
-    want = (session, int(limit))
+    # The memo must know what state it was drawn for. Entering a walk within three seconds of a
+    # poll otherwise served the previous "profile" map, and the pane showed no state at all.
+    # ...and it must know whether the ledger has moved. A walk that stepped between two polls
+    # served a new concept, and the memo answered the old picture for the rest of its three
+    # seconds: every poll in a test showed lit 0 while three servings were already recorded.
+    try:
+        stamp = (_core_module("activation")._rows("SELECT MAX(at) FROM served") or [[0]])[0][0] or 0
+    except Exception:  # health: BLE001 -- no ledger is a fact, not a failure
+        stamp = 0
+    want = (session, int(limit), str(engine_state.get("key") or ""),
+            float(engine_state.get("entered_at") or 0.0), float(stamp))
     if (_GRAPH_MEMO.get("want") == want and _GRAPH_MEMO.get("payload") is not None
             and _time.time() - float(_GRAPH_MEMO.get("at") or 0) < 3.0):
         return _GRAPH_MEMO["payload"]

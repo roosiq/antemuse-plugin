@@ -479,3 +479,30 @@ def test_overlapping_requests_render_the_set_once(tmp_path, monkeypatch):
         th.join()
     assert len(calls) == 1, f"{len(calls)} renders for 4 overlapping requests"
     assert all(o == out[0] for o in out)
+
+
+def test_a_state_entered_by_command_files_its_work_under_itself():
+    """current_origin() read the last *turn*, so a walk started by /walk served concepts into the
+    previous channel's session and its own pane saw nothing firing."""
+    from core import activation, engine, walks
+
+    engine.enter("walk", minutes=5, session="desk-1", platform="desktop")
+    assert engine.current_origin()["session_id"] == "desk-1"
+
+    for _ in range(2):
+        walks.get("outer").step(1)
+
+    lit = activation.activations("desk-1", "walk") or {}
+    assert lit, "the walk's own firings must be filed under the session that asked for it"
+
+
+def test_a_young_ledger_still_has_a_space_to_walk_in():
+    """The ground is the ledger's concepts — which on a first run is three of them.
+
+    A walk over three dots is not a space, so a small ledger borrows the rest of the picture from
+    the same projection, keeping every concept it does have.
+    """
+    from core import activation_stills
+
+    labels = activation_stills._all_labels(1200)
+    assert len(labels) > 600, f"a first run needs structure, got {len(labels)}"

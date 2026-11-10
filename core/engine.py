@@ -322,9 +322,14 @@ def current_origin() -> Dict[str, str]:
     with _LOCK:
         data = _load()
     root = storage.project_root()
+    # While a state is running, where *it* was entered from is where its work belongs. Reading
+    # only the remembered last turn meant a walk started by a command filed every concept it
+    # served under the previous channel's session, and its own pane then saw nothing firing.
+    active = data.get("active") or {}
+    origin = (active.get("origin") or {}) if isinstance(active, dict) else {}
     return {
-        "session_id": str(data.get("session_id") or ""),
-        "platform": str(data.get("platform") or ""),
+        "session_id": str(origin.get("session_id") or data.get("session_id") or ""),
+        "platform": str(origin.get("platform") or data.get("platform") or ""),
         "project": str(root) if root else "",
     }
 
