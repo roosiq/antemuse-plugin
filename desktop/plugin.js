@@ -238,7 +238,15 @@ function createGraph3D(el, doc, ctx, host, win) {
   canvas.setAttribute('data-antemuse-3d', 'pane')
   canvas.setAttribute('aria-hidden', 'true')
   canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:2;display:block;cursor:grab;touch-action:none;outline:none'
-  const gl = canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false })
+    // preserveDrawingBuffer: the frame must still be there when something wants to copy it —
+  // a screenshot, a video capture, or a person pasting the pane into a bug report. Without it the
+  // buffer is discarded on composite and every capture of this surface comes back blank.
+  // Opaque, not transparent. This canvas has an additive blend into its own buffer, and a
+  // transparent canvas is composited *again* by the browser, which multiplied every ground point
+  // by its own alpha and left the cloud invisible — 1,373 points reading as two specks. An opaque
+  // surface with its own dark clear colour composites exactly once.
+  const gl = canvas.getContext('webgl', { antialias: true, alpha: false,
+    preserveDrawingBuffer: true })
     || canvas.getContext('experimental-webgl')
   if (!gl) return null
   el.appendChild(canvas)
@@ -252,13 +260,13 @@ function createGraph3D(el, doc, ctx, host, win) {
   const VS_POINT = 'attribute vec3 aPos; attribute float aW; uniform mat4 uMVP; uniform float uDpr;' +
     'uniform float uSize; varying float vW;' +
     'void main(){ vec4 p = uMVP * vec4(aPos,1.0); gl_Position = p;' +
-    'gl_PointSize = (1.5 + 5.5*aW) * uDpr * uSize * (2.4 / max(0.45, p.w)); vW = aW; }'
+    'gl_PointSize = (2.3 + 6.0*aW) * uDpr * uSize * (2.4 / max(0.45, p.w)); vW = aW; }'
   const FS_POINT = 'precision mediump float; varying float vW;' +
     'void main(){ vec2 d = gl_PointCoord - vec2(0.5); float r = length(d)*2.0;' +
     'if (r > 1.0) discard; float core = smoothstep(1.0, 0.18, r);' +
     'vec3 cool = vec3(0.60,0.64,0.78); vec3 warm = vec3(1.0,0.83,0.44);' +
     'vec3 c = mix(cool, warm, clamp(vW*2.2, 0.0, 1.0));' +
-    'float a = mix(0.13, 0.98, clamp(vW, 0.0, 1.0)) * core;' +
+    'float a = mix(0.70, 1.0, clamp(vW, 0.0, 1.0)) * core;' +
     'gl_FragColor = vec4(c, a); }'
   const VS_LINE = 'attribute vec3 aPos; attribute float aA; uniform mat4 uMVP; varying float vA;' +
     'void main(){ gl_Position = uMVP * vec4(aPos,1.0); vA = aA; }'
@@ -300,7 +308,7 @@ function createGraph3D(el, doc, ctx, host, win) {
   let edgePos = new Float32Array(0), edgeA = new Float32Array(0)
   let sig = ''
   let pinned = null, hovered = null
-  let yaw = 0.55, pitch = 0.22, dist = 3.05
+  let yaw = 0.55, pitch = 0.22, dist = 2.35
   let dragging = false, lastX = 0, lastY = 0, idleAt = 0, frames = 0, stopped = false
 
   const norm = (raw) => {
@@ -391,7 +399,7 @@ function createGraph3D(el, doc, ctx, host, win) {
   }
   const mvpNow = () => {
     const w = canvas.width || 1, h = canvas.height || 1
-    const P = perspective(0.9, w / h, 0.05, 12)
+    const P = perspective(0.78, w / h, 0.05, 12)
     const cy = Math.cos(pitch), sy = Math.sin(pitch)
     const cx = Math.cos(yaw), sx = Math.sin(yaw)
     const Rx = new Float32Array([1, 0, 0, 0, 0, cy, sy, 0, 0, -sy, cy, 0, 0, 0, 0, 1])
@@ -411,7 +419,7 @@ function createGraph3D(el, doc, ctx, host, win) {
     if (stopped) return
     resize()
     gl.viewport(0, 0, canvas.width, canvas.height)
-    gl.clearColor(0, 0, 0, 0)
+    gl.clearColor(0.027, 0.031, 0.043, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.DEPTH_TEST)
     gl.enable(gl.BLEND)
@@ -422,7 +430,7 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf)
     gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
     gl.disableVertexAttribArray(lA)
-    gl.vertexAttrib1f(lA, 0.11)
+    gl.vertexAttrib1f(lA, 0.26)
     gl.drawArrays(gl.LINES, 0, edgePos.length / 3)
     gl.useProgram(pointProg)
     gl.uniformMatrix4fv(pMVP, false, MVP)
@@ -604,10 +612,21 @@ function createGraph3D(el, doc, ctx, host, win) {
   }
   const hideStills = () => {
     // From the moment this surface can draw, the stills behind it are not the picture.
-    el.querySelectorAll('[data-antemuse-bake], img').forEach((im) => { im.style.opacity = '0' })
+    // Three kinds of layer can sit behind this surface: the baked JPEGs, a plain <img>, and the
+    // art canvas itself. The canvas mattered most — the 3D surface has an alpha channel, so the
+    // art canvas underneath showed through its empty rows as two translucent bands across the map.
+    el.querySelectorAll('[data-antemuse-bake], img, canvas:not([data-antemuse-3d])').forEach((im) => {
+      // Only write when it differs, or this observer would wake itself forever.
+      if (im.style.opacity !== '0') im.style.opacity = '0'
+    })
   }
   hideStills()
-  ctx.setInterval(hideStills, 4000)
+  // A polling loop is the wrong shape for this: the stills are inserted fresh every time a state
+  // advances, so between sweeps a new image sits at full opacity and paints a translucent band
+  // across the cloud. Hide each one as it arrives, and on any style change that would show it.
+  const stillsGuard = new win.MutationObserver(hideStills)
+  stillsGuard.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'src'] })
+  if (typeof ctx.onDispose === 'function') ctx.onDispose(() => stillsGuard.disconnect())
 
   // Draw what is already known first: a pasted payload must not wait on a gateway that may never
   // answer, and neither should the pane wait for its first poll to have a shape.
