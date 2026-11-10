@@ -144,8 +144,12 @@ say "4. desktop half (the pane the app loads)"
 DESKTOP_DIR="$HERMES_HOME/desktop-plugins/antemuse"
 run mkdir -p "$DESKTOP_DIR"
 if command -v rsync >/dev/null 2>&1; then
-  run rsync -a "$SRC"/desktop/ "$DESKTOP_DIR"/
+  # --delete: this directory is ours, and a stale file left behind by an older version is how a
+  # machine ends up running the previous pane while the new one is on disk next to it.
+  run rsync -a --delete "$SRC"/desktop/ "$DESKTOP_DIR"/
 else
+  run rm -rf "$DESKTOP_DIR"
+  run mkdir -p "$DESKTOP_DIR"
   run cp -a "$SRC"/desktop/. "$DESKTOP_DIR"/
 fi
 if [[ $DRY -eq 0 ]]; then
@@ -154,6 +158,20 @@ if [[ $DRY -eq 0 ]]; then
 JSON
 fi
 ok "$DESKTOP_DIR"
+
+# A packaged or Store install can run with HERMES_HOME somewhere else while the desktop app still
+# reads the default ~/.hermes copy — the two are different directories, and refreshing only one
+# leaves the app showing the previous pane while the new one sits on disk. If a default copy
+# exists, it is a copy something is reading: refresh it too, and say so.
+DEFAULT_DESKTOP="$HOME/.hermes/desktop-plugins/antemuse"
+if [[ "$DEFAULT_DESKTOP" != "$DESKTOP_DIR" && -d "$DEFAULT_DESKTOP" ]]; then
+  if command -v rsync >/dev/null 2>&1; then
+    run rsync -a --delete "$SRC"/desktop/ "$DEFAULT_DESKTOP"/
+  else
+    run rm -rf "$DEFAULT_DESKTOP" && run mkdir -p "$DEFAULT_DESKTOP" && run cp -a "$SRC"/desktop/. "$DEFAULT_DESKTOP"/
+  fi
+  ok "also refreshed $DEFAULT_DESKTOP (a second copy the app may be reading)"
+fi
 
 # -------------------------------------------------------------- 5. projection
 say "5. wordnet projection (where concepts sit on the picture)"

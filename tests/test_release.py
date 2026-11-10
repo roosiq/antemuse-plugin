@@ -61,3 +61,25 @@ def test_the_doctor_count_reads_the_number_the_doctor_printed():
     out = subprocess.run(["bash", "-c", f'. {script}; doctor_count "$1" hook', "_", "nothing here"],
                          capture_output=True, text=True, check=True).stdout
     assert out.strip() == ""
+
+
+def test_the_desktop_half_is_one_file_the_host_can_load():
+    """The desktop loader accepts a single ES module importing only the plugin SDK and react.
+    Anything else in that directory is either dead weight or — worse — an older pane's asset that
+    an older copy of the module can still find, which is what "I still see the old viz" means."""
+    js = (ROOT / "desktop" / "plugin.js").read_text()
+    imports = [ln for ln in js.splitlines() if ln.startswith("import")]
+    for line in imports:
+        assert "from './" not in line and 'from "./' not in line, line
+    assert "applyScene" not in js and "BAKED" not in js
+
+
+def test_the_installer_deletes_rather_than_layers():
+    """Without --delete the previous version's files stay next to the new pane forever."""
+    text = (ROOT / "scripts" / "install.sh").read_text()
+    assert "--delete" in text
+
+
+def test_the_package_carries_no_baked_scenes():
+    build = (ROOT / "scripts" / "build-release.sh").read_text()
+    assert "desktop/art" in build

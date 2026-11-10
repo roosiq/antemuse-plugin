@@ -39,6 +39,11 @@ else
   rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,docs,tests,plugin-catalog,dist}
   find "$STAGE" -name __pycache__ -prune -exec rm -rf {} +
 fi
+# The pane is the only thing the desktop loads. The baked scenes were deleted from the renderer
+# but their files are still in the checkout; shipping them lets an older pane find them, and a
+# backup of a truncated file has no business on anyone's install.
+rm -rf "$STAGE/desktop/art" "$STAGE/desktop/vendor" "$STAGE/desktop/scene3d.js"
+find "$STAGE/desktop" -name '*.bak' -delete 2>/dev/null || true
 ok "staged $(du -sh "$STAGE" | cut -f1)"
 
 # The projection travels WITH the package but not in the repository: it carries 117k WordNet
