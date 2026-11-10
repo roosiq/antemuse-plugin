@@ -426,3 +426,56 @@ def test_the_payload_names_the_version_it_loaded():
     assert payload.get("plugin"), payload.keys()
     assert payload["plugin"][0].isdigit(), payload["plugin"]
 
+
+
+def test_a_failed_bake_is_still_a_picture_and_is_not_redrawn_every_call(tmp_path, monkeypatch):
+    """When post-processing cannot run, the plain frames in base/ are the picture.
+
+    fresh() only looked for stamped frames in dest/, so a failed bake read as "no picture yet":
+    every request redrew and relaunched the browser. The live gateway logged 13,495 failed bakes in
+    three hours this way. A fallback frame must satisfy the cache like any other.
+    """
+    from core import activation_stills
+
+    calls = []
+    real = activation_stills.stills
+
+    def counting(*a, **k):
+        calls.append(1)
+        return real(*a, **k)
+
+    monkeypatch.setattr(activation_stills, "_postprocess", lambda drawn: [])
+    monkeypatch.setattr(activation_stills, "stills", counting)
+    dest = tmp_path / "activation" / "profile"
+    first = activation_stills.fresh(move="profile", dest=dest)
+    second = activation_stills.fresh(move="profile", dest=dest)
+    assert first and all(p.parent.name == "base" for p in first)
+    assert second == first
+    assert len(calls) == 1, f"redrew {len(calls)} times for two calls"
+
+
+def test_overlapping_requests_render_the_set_once(tmp_path, monkeypatch):
+    """Two requests that both find the set stale must not both render it."""
+    import threading
+    import time as _t
+
+    from core import activation_stills
+
+    calls = []
+
+    def slow_post(drawn):
+        calls.append(1)
+        _t.sleep(0.3)
+        return []
+
+    monkeypatch.setattr(activation_stills, "_postprocess", slow_post)
+    dest = tmp_path / "activation" / "profile"
+    out = []
+    threads = [threading.Thread(target=lambda: out.append(activation_stills.fresh(move="profile", dest=dest)))
+               for _ in range(4)]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
+    assert len(calls) == 1, f"{len(calls)} renders for 4 overlapping requests"
+    assert all(o == out[0] for o in out)

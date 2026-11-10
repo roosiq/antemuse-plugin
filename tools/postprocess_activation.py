@@ -14,6 +14,7 @@ import os
 import shutil
 import socket
 import subprocess
+import time
 import sys
 from pathlib import Path
 from typing import List, Optional
@@ -84,8 +85,20 @@ def apply(paths: List[Path], size: tuple = (960, 600), timeout: int = TIMEOUT_S)
         return []
     # The server is rooted at the repo (that is where the page and the three build live), and a
     # still may live in the plugin's data directory, so each one is staged inside the repo first.
-    stage = ROOT / "tools" / ".post-staging"
-    stage.mkdir(parents=True, exist_ok=True)
+    # One staging dir per call. A shared one was removed in every call's `finally`, so two
+    # overlapping requests deleted each other's textures mid-render ("texture failed"), every bake
+    # failed, and the caller redrew on the next request — thousands of browser launches an hour.
+    import tempfile
+    parent = ROOT / "tools" / ".post-staging"
+    parent.mkdir(parents=True, exist_ok=True)
+    # A process killed mid-bake leaves its dir behind; nothing legitimate runs for ten minutes.
+    for stale in parent.glob("bake-*"):
+        try:
+            if time.time() - stale.stat().st_mtime > 600:
+                shutil.rmtree(stale, ignore_errors=True)
+        except OSError:
+            pass
+    stage = Path(tempfile.mkdtemp(prefix="bake-", dir=str(parent)))
     port = _free_port()
     server = subprocess.Popen([sys.executable, "-m", "http.server", str(port),
                                "--bind", "127.0.0.1"],

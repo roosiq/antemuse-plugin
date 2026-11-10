@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Optional
 
 STILL_COUNT = 3
 STILL_SIZE = (960, 600)
+import threading as _threading
+_RENDER_LOCK = _threading.Lock()
 STILL_TTL_S = 45.0          # regenerating three stills costs ~200 ms; this keeps it rare
 _PEAK = {"shape": (0, 0), "n": 0}
 
@@ -439,23 +441,43 @@ def fresh(move: str = "", session: str = "", dest: Optional[Path] = None,
             dest = _storage.data_dir() / "activation" / (move or "all")
         except Exception:
             return []
-    if dest.is_dir():
+    cached = _cached(dest)
+    if cached is not None:
+        return cached
+    # One render at a time per process. Overlapping requests (the pane polling, the pane fetching
+    # a URL, a second mounted surface) each found the set stale and each rendered it; the second
+    # one in waits here and then takes the first one's frames.
+    with _RENDER_LOCK:
+        cached = _cached(dest)
+        if cached is not None:
+            return cached
+        return stills(move=move, session=session, dest=dest, palette=palette)
+
+
+def _cached(dest: Path) -> Optional[List[Path]]:
+    """The current stamped stills if they are younger than STILL_TTL_S, else None.
+
+    Post-processed frames live in ``dest``; when the bake could not run, the plain frames stay in
+    ``dest/base`` and *those* are the picture. Looking only in ``dest`` treated a failed bake as
+    "no picture yet", so every request redrew, re-launched the browser, failed the same way, and
+    the route cost two seconds a call.
+    """
+    if not dest.is_dir():
+        return None
+    for folder in (dest, dest / "base"):
         # The stamped stills only: f0.jpg..f2.jpg are the aliases the desktop pane asks for, and
         # returning both would serve every frame twice.
         existing: List[Path] = []
         newest = 0.0
-        for path in dest.glob("f*.jpg"):
+        for path in folder.glob("f*.jpg"):
             if "-" not in path.stem:
                 continue
             try:
                 newest = max(newest, path.stat().st_mtime)
             except OSError:
-                # A concurrent render rotated this frame away between glob and stat. Two requests
-                # (the pane polling, the pane fetching a URL) can overlap, and a stat race used to
-                # take the whole payload down with FileNotFoundError, which the pane reported as
-                # "picture failed" while a perfectly good frame was already on screen.
+                # A concurrent render rotated this frame away between glob and stat.
                 continue
             existing.append(path)
-        if existing and time.time() - newest < STILL_TTL_S:
-            return sorted(existing)
-    return stills(move=move, session=session, dest=dest, palette=palette)
+        if existing:
+            return sorted(existing) if time.time() - newest < STILL_TTL_S else None
+    return None
