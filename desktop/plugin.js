@@ -256,6 +256,21 @@ function createGraph3D(el, doc, ctx, host, win) {
     'background:rgba(8,10,14,0.86);color:#efe9d8;font:12px/1.35 ui-sans-serif,system-ui,sans-serif;' +
     'letter-spacing:0.01em;opacity:0;transition:opacity 120ms ease;white-space:nowrap'
   el.appendChild(tip)
+  // Names for what is firing. Only the firing set — labelling 1,400 points would be a wall of
+  // text, and the point of a label here is "which concept is that", not "name everything".
+  const labelLayer = doc.createElement('div')
+  labelLayer.style.cssText = 'position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden'
+  el.appendChild(labelLayer)
+  const labelEls = []
+  const makeLabel = () => {
+    const d = doc.createElement('span')
+    d.style.cssText = 'position:absolute;left:0;top:0;font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;' +
+      'letter-spacing:0.02em;color:#f2cf8f;text-shadow:0 0 6px rgba(0,0,0,0.95),0 0 2px rgba(0,0,0,1);' +
+      'white-space:nowrap;opacity:0;transition:opacity 120ms linear;will-change:transform'
+    labelLayer.appendChild(d)
+    labelEls.push(d)
+    return d
+  }
 
   const VS_POINT = 'attribute vec3 aPos; attribute float aW; uniform mat4 uMVP; uniform float uDpr;' +
     'uniform float uSize; varying float vW;' +
@@ -294,7 +309,7 @@ function createGraph3D(el, doc, ctx, host, win) {
     pointProg = link(VS_POINT, FS_POINT)
     lineProg = link(VS_LINE, FS_LINE)
   } catch (e) {
-    el.removeChild(canvas); el.removeChild(tip)
+    el.removeChild(canvas); el.removeChild(tip); el.removeChild(labelLayer)
     return null
   }
   const loc = (prog, name) => gl.getAttribLocation(prog, name)
@@ -500,8 +515,9 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.enableVertexAttribArray(pW); gl.vertexAttribPointer(pW, 1, gl.FLOAT, false, 0, 0)
     gl.drawArrays(gl.POINTS, 0, nodePos.length / 3)
     frames++
+    placeLabels(MVP)
     report({ frames, yaw: +yaw.toFixed(3), pitch: +pitch.toFixed(3), dist: +dist.toFixed(3),
-      hover: hovered, pinned })
+      hover: hovered, pinned, labels: placeLabels.k || 0, litN: placeLabels.lit || 0, wType: placeLabels.has })
   }
 
   let rafId = 0
@@ -535,6 +551,42 @@ function createGraph3D(el, doc, ctx, host, win) {
     }
     return out
   }
+  const placeLabels = (MVP) => {
+    const dpr = win.devicePixelRatio || 1
+    const w = canvas.width / dpr, h = canvas.height / dpr
+    const pts = project(MVP)
+    const lit = []
+    for (let i = 0; i < nodes.length; i++) {
+      if ((nodes[i].w || 0) > 0.05 && pts[i]) lit.push([i, nodes[i].w || 0])
+    }
+    lit.sort((a, b) => b[1] - a[1])
+    const boxes = []
+    let k = 0
+    for (const [i, wt] of lit) {
+      if (k >= 9) break
+      const x = pts[i][0] / dpr, y = pts[i][1] / dpr
+      if (x < -40 || y < -20 || x > w + 40 || y > h + 20) continue
+      const text = String(nodes[i].l)
+      const tw = text.length * 6.1 + 6
+      // Two names on top of each other are one unreadable name: the strongest wins the space.
+      let clash = false
+      for (const b of boxes) {
+        if (Math.abs(b[0] - x) < (b[2] + tw) / 2 + 4 && Math.abs(b[1] - y) < 14) { clash = true; break }
+      }
+      if (clash) continue
+      boxes.push([x, y, tw])
+      const node = labelEls[k] || makeLabel()
+      k++
+      node.textContent = text
+      node.style.transform = 'translate(' + Math.round(x + 7) + 'px,' + Math.round(y - 8) + 'px)'
+      node.style.opacity = wt > 0.2 ? '0.95' : '0.6'
+    }
+    for (let j = k; j < labelEls.length; j++) labelEls[j].style.opacity = '0'
+    placeLabels.k = k
+    placeLabels.lit = lit.length
+    placeLabels.has = nodes.length ? typeof nodes[0].w : 'no nodes'
+  }
+
   const pick = (px, py) => {
     const pts = project(mvpNow())
     let best = null, bestD = 18 * (win.devicePixelRatio || 1)

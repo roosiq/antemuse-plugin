@@ -181,3 +181,19 @@ def test_the_camera_goes_to_what_just_fired():
     assert "if (fresh.length && !dragging)" in js
     # the focus point has to be applied to the view, or the camera just rotates
     assert "-focus[0], -focus[1], -focus[2]" in js
+
+
+def test_the_firing_nodes_carry_their_names():
+    """A firing you cannot name is a light. Only the firing set is labelled, and nothing overlaps.
+
+    Labelling all 1,400 points would be a wall of text; labelling none leaves the pane decorative.
+    """
+    here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
+    js = here.read_text()
+    assert "const labelLayer" in js and "pointer-events:none;overflow:hidden" in js
+    assert "const placeLabels = (MVP)" in js
+    assert "(nodes[i].w || 0) > 0.05 && pts[i]" in js, "only firing nodes get a name"
+    assert "if (k >= 9) break" in js, "a pane is not a word cloud"
+    assert "clash" in js and "if (clash) continue" in js, "two names in one place is no name"
+    # and the DOM layer is cleaned up with the surface
+    assert "el.removeChild(labelLayer)" in js
