@@ -68,8 +68,8 @@ def section(payload: dict) -> str:
   <h2>{esc(model)}</h2>
   <table>
     <thead><tr><th>condition</th><th>ideas / 50</th><th>different ideas</th>
-    <th>unusual wording</th><th>word variety</th>
-    <th>Δ ideas</th><th>Δ different</th><th>Δ wording</th><th>Δ variety</th></tr></thead>
+    <th>perplexity</th><th>word variety</th>
+    <th>Δ ideas</th><th>Δ different</th><th>Δ perplexity</th><th>Δ variety</th></tr></thead>
     <tbody>{rows}</tbody>
   </table>
   <p class=muted>Left of the Δ columns: the raw number. Right: the change compared with the same

@@ -167,7 +167,7 @@ def render(payload: dict, stats: dict) -> str:
              f"`{payload['model']}`. In the state conditions the model holds the brief, answers a "
              "state turn, then returns to write the list.", "",
              "All columns are deterministic - same text, same number, no judge.", "",
-             "| condition | ideas / 50 | different ideas | unusual wording | word variety | state answer (words) |",
+             "| condition | ideas / 50 | different ideas | perplexity | word variety | state answer (words) |",
              "|---|---|---|---|---|---|"]
     for cond in CONDITIONS:
         e = a[cond]
@@ -175,9 +175,9 @@ def render(payload: dict, stats: dict) -> str:
         lines.append(f"| {LABEL[cond]} | {e['n_parsed']}{fail} | {e['distinctiveness']} | "
                      f"{e['in_ppl']} | {e['in_ttr']} | {e['state_words']} |")
     lines += ["", "Different ideas: average distance from the ideas the same model wrote for the "
-                  "same brief without a state. Unusual wording: how surprising the list is to a "
-                  "small fixed language model, higher = less ordinary. Word variety: share of "
-                  "distinct words. None of these say an idea is good.", ""]
+                  "same brief without a state. Perplexity: how surprising the list is to a small "
+                  "fixed language model, higher = less ordinary. Word variety: share of distinct "
+                  "words. None of these say an idea is good.", ""]
     return "\n".join(lines)
 
 

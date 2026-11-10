@@ -4,7 +4,7 @@ Each number compares the list to the same model's plain list for the same brief,
 
 ## anthropic/claude-opus-5.5
 
-| after a | ideas | different ideas | unusual wording | word variety |
+| state | ideas | different ideas | perplexity | word variety |
 |---|---|---|---|---|
 | walk | +3.5% | +18% | +38% | +0.6% |
 | daydream | +0.0% | +28% | +20% | -3.6% |
@@ -12,7 +12,7 @@ Each number compares the list to the same model's plain list for the same brief,
 
 ## deepseek-v4.1
 
-| after a | ideas | different ideas | unusual wording | word variety |
+| state | ideas | different ideas | perplexity | word variety |
 |---|---|---|---|---|
 | walk | +0.0% | +4% | +29% | +2.0% |
 | daydream | +0.0% | +37% | +41% | -15.7% |
@@ -20,7 +20,7 @@ Each number compares the list to the same model's plain list for the same brief,
 
 ## minimax-m3.1
 
-| after a | ideas | different ideas | unusual wording | word variety |
+| state | ideas | different ideas | perplexity | word variety |
 |---|---|---|---|---|
 | walk | -7.5% | -1% | -5% | -2.8% |
 | daydream | +0.7% | +9% | +49% | -2.5% |
@@ -28,7 +28,7 @@ Each number compares the list to the same model's plain list for the same brief,
 
 ## openai/gpt-6.1-sol
 
-| after a | ideas | different ideas | unusual wording | word variety |
+| state | ideas | different ideas | perplexity | word variety |
 |---|---|---|---|---|
 | walk | +0.0% | +5% | +2% | -2.0% |
 | daydream | +0.0% | +11% | +15% | -1.3% |
@@ -36,7 +36,7 @@ Each number compares the list to the same model's plain list for the same brief,
 
 ## gpt-6.1-terra
 
-| after a | ideas | different ideas | unusual wording | word variety |
+| state | ideas | different ideas | perplexity | word variety |
 |---|---|---|---|---|
 | walk | +0.0% | +5% | +7% | -3.3% |
 | daydream | +0.0% | +14% | +9% | -1.8% |
@@ -44,10 +44,10 @@ Each number compares the list to the same model's plain list for the same brief,
 
 ## qwen3.8-max
 
-| after a | ideas | different ideas | unusual wording | word variety |
+| state | ideas | different ideas | perplexity | word variety |
 |---|---|---|---|---|
 | walk | — | — | — | — |
 | daydream | +39.1% | +18% | +5% | -4.9% |
 | doomscroll | +29.3% | +4% | -15% | -11.1% |
 
-Reading it: more unusual wording with less word variety means the model reached for less ordinary words while using a narrower set of them. "Different ideas" is the only column that says the list went somewhere new. None of them say the ideas are better.
+Reading it: higher perplexity with less word variety means the model reached for less ordinary words while using a narrower set of them. "Different ideas" is the only column that says the list went somewhere new. None of them say the ideas are better.

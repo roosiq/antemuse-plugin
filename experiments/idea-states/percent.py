@@ -25,7 +25,7 @@ SHORT = {"deepseek/deepseek-v4.1-flash-1017": "deepseek-v4.1",
 
 METRICS = [("n_parsed", "ideas", 1),
            ("distinctiveness", "different ideas", 0),
-           ("in_ppl", "unusual wording", 0),
+           ("in_ppl", "perplexity", 0),
            ("in_ttr", "word variety", 1)]
 
 
@@ -80,7 +80,7 @@ def render(data: dict) -> str:
         if not bl:
             continue
         lines += [f"## {SHORT.get(model, model)}", "",
-                  "| after a | ideas | different ideas | unusual wording | word variety |",
+                  "| state | ideas | different ideas | perplexity | word variety |",
                   "|---|---|---|---|---|"]
         for cond in ("walk", "daydream", "doomscroll"):
             cellsrow = []
@@ -93,10 +93,10 @@ def render(data: dict) -> str:
                     cellsrow.append(f"{m:+.0f}%" if nd == 0 else f"{m:+.{nd}f}%")
             lines.append(f"| {cond} | " + " | ".join(cellsrow) + " |")
         lines.append("")
-    lines += ["Reading it: more unusual wording with less word variety means the model reached "
-              "for less ordinary words while using a narrower set of them. \"Different ideas\" is "
-              "the only column that says the list went somewhere new. None of them say the ideas "
-              "are better.", ""]
+    lines += ["Reading it: higher perplexity with less word variety means the model reached for "
+              "less ordinary words while using a narrower set of them. \"Different ideas\" is the "
+              "only column that says the list went somewhere new. None of them say the ideas are "
+              "better.", ""]
     return "\n".join(lines)
 
 

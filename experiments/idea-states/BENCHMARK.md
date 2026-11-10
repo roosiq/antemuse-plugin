@@ -24,7 +24,7 @@ the same values:
 
 - **Different ideas.** How far the list sits from the ideas the same model wrote for the same
   brief without a state. Bigger means the ideas moved somewhere new.
-- **Unusual wording.** How surprising the list is to a small fixed language model. Higher means
+- **Perplexity.** How surprising the list is to a small fixed language model. Higher means
   less ordinary phrasing.
 - **Word variety.** The share of distinct words in the list. Lower means the model reuses more
   of the same words.
@@ -35,7 +35,7 @@ differences with their ranges.
 
 ## The numbers
 
-| model | after a | different ideas | unusual wording | word variety | ideas written |
+| model | state | different ideas | perplexity | word variety | ideas written |
 |---|---|---|---|---|---|
 | Opus 5.5 | walk | +18% | +38% | +1% | +3.5% |
 | Opus 5.5 | daydream | +28% | +20% | −4% | 0% |
@@ -62,9 +62,9 @@ differences with their ranges.
    produced a list, from +9% to +37%. None was unaffected.
 2. **How much depends on the model, not the state.** The same daydream moves DeepSeek 37% and
    MiniMax 9%. That is a fourfold difference from one instruction.
-3. **Different wording is not different ideas.** MiniMax's daydream changes its phrasing more
+3. **Higher perplexity is not different ideas.** MiniMax's daydream raises perplexity more
    than any other case (+49%) while the ideas themselves barely move (+9%). GPT-6.1 Terra's
-   doomscroll is +36% wording and +7% ideas.
+   doomscroll is +36% perplexity and +7% different ideas.
 4. **Word variety is what it costs.** DeepSeek buys its 37% move with 16% less word variety —
    rarer words, fewer of them. Opus and Sol move without that cost.
 5. **Doomscroll ignores the count.** DeepSeek and MiniMax wrote 63 ideas instead of 50. Opus
@@ -80,7 +80,7 @@ differences with their ranges.
   words. Judging whether an idea is any use needs people, and no people have rated these.
 - Qwen3.8 Max produced no walk list at all — the state turn happened and the list came back
   empty. Its walk row is a failure, not a zero.
-- Unusual wording is scored by the same small model for every list, but different models write
-  in different registers, so compare conditions rather than models on that column.
+- Perplexity is scored by the same small model for every list, but different models write in
+  different registers, so compare conditions rather than models on that column.
 - Per-token probabilities are only available from the open-weight models here, so no measure
   built on them appears in this table. `report-lp-*.md` holds that for DeepSeek and Kimi.

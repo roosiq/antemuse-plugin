@@ -17,7 +17,7 @@ from typing import Iterable
 
 METRICS = [("n_parsed", "ideas delivered"),
            ("distinctiveness", "different ideas (distance from the plain list)"),
-           ("in_ppl", "unusual wording (perplexity of the list)"),
+           ("in_ppl", "perplexity of the list"),
            ("in_ttr", "word variety (type-token ratio)")]
 
 
