@@ -691,13 +691,20 @@ the plugins install, resolved from the module URL and, when the module is bundle
 
 Because a `file://` page cannot list a directory, each still is written twice: a stamped
 `f0-<stamp>-post.jpg` for evidence, and a stable `f0.jpg`..`f2.jpg` for the pane to ask for by a
-name it can predict. `fresh()` returns only the stamped set. A probe `<img>` decides between the
-live stills and the baked scene, so a state with nothing baked falls back instead of going blank.
+name it can predict. `fresh()` returns only the stamped set. There are **no baked scenes**: the
+activation of the concept graph is the only visualization, so a probe `<img>` that fails leaves
+the surface bare (`clearLayers()`) rather than showing stand-in art for a moment that did not
+happen (`tests/test_plugin_api.py::test_the_activation_is_the_only_picture`).
 
-**Status: PARTIAL.** The path is wired end to end (stills written, served, painted, with a
-fall-through to the baked scene when nothing is firing), but it has not been seen in the running
-desktop app: verification so far is the backend route, the harness mount and the stills
-themselves. See §17.2.
+A remote desktop cannot reach the bytes either way: an `<img>` arrives without the gateway's
+cookie and a `file://` path names a file on the other computer. `GET /art_b64/{state}/{file}`
+serves the same still as base64 with the same traversal guard, `stills_b64` names those paths, and
+the pane fetches them over `ctx.rest` — the RPC it already uses for status — as data URLs.
+
+**Status: PARTIAL.** The path is wired end to end (stills written, served over three routes, and
+painted; a state with nothing firing stays bare), but it has not been seen painting in the
+owner's remote desktop app: verification so far is the backend routes, the harness mount and the
+stills themselves. See §17.2.
 
 ### 10.7 Palette
 
@@ -1252,15 +1259,16 @@ The tags remain `cognitive`, `creativity`, `states`, `imagery`.
 
 The renderer exists (§10.6); the surface does not. Registration and budget are the work:
 
-1. ~~register the scene and paint it~~ — **done**: the backend serves `stills`, the pane paints
-   them, and an empty list falls back to the baked art. Still to do: a look at it in the running
-   app, and a decision on whether a state with no servings should say so on screen;
-2. pick a frame budget per surface: the terminal takes quantised frames at ~2 fps like the baked
-   scenes; chat takes a still and, at state edges, the strip; the desktop pane takes the GIF;
+1. ~~register the scene and paint it~~ — **done**: the backend serves `stills`, `files`, `files_http`
+   and `stills_b64`, and the pane paints them. An empty list draws nothing at all: the baked
+   scenes were removed, because the activation is the only visualization. Still to do: a look at
+   it in the running remote app;
+2. pick a frame budget per surface: the terminal takes quantised frames at ~2 fps; chat takes a
+   still and, at state edges, the strip; the desktop pane takes the GIF;
 3. encode the same frames for the card path without letting any text in — the no-words rule in
    §10.1 applies, and `tests/test_activation.py` asserts the renderer draws none;
-4. keep it derivable when the ledger is empty: a state with no servings falls back to the baked
-   scene, named as a fallback rather than a blank.
+4. keep it derivable when the ledger is empty: a state with no servings falls back to the busiest
+   chat in the profile — still real activation, never stand-in art.
 
 Not started, and not claimed. `desktop/art` is carrying an unrelated reorganization that the
 owner asked to leave alone, which is where the scene table lives.

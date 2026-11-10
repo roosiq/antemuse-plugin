@@ -311,7 +311,7 @@ def test_the_pane_paints_stills_before_baked_art():
     assert "p.files && p.files.length" in js
     assert "if (await applyActivation(served)) return" in js
     assert "if (await fromB64(p && p.stills_b64)) return" in js
-    assert "if (!tryLive(key)) applyScene(key)" in js
+    assert "if (!tryLive(key)) clearLayers()" in js
     assert "stills = urls.slice()" in js
 
 
@@ -320,7 +320,7 @@ def test_the_pane_can_reach_stills_without_the_gateway():
     backend baked, and falls back to the baked scene when there are none."""
     js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
     assert "plugin-data/antemuse/activation/" in js
-    assert "probe.onerror" in js and "applyScene(key)" in js
+    assert "probe.onerror" in js and "clearLayers()" in js
     assert "AMDBG" not in js, "no debug hooks left in the pane"
 
 
@@ -372,3 +372,13 @@ def test_the_stills_also_travel_as_bytes_for_a_remote_pane(monkeypatch, tmp_path
     # and the guard is the same as the byte route's
     assert client.get("/art_b64/walk/../../state.json").status_code == 404
     assert client.get("/art_b64/walk/state.json").status_code == 404
+
+
+def test_the_activation_is_the_only_picture(monkeypatch, tmp_path):
+    """No baked scenes: a state with nothing firing shows nothing, rather than stand-in art for a
+    moment that did not happen. The activation of the concept graph is the whole visualization."""
+    js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
+    assert "applyScene" not in js
+    assert "./art/" not in js
+    assert "BAKED" not in js
+    assert "clearLayers()" in js

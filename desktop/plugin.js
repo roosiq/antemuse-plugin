@@ -217,11 +217,6 @@ function ArtSurface({ ctx }) {
     let stillIdx = 0
     let bake = null
 
-    const stillUrl = (name, i) => {
-      try { return new URL('./art/' + name + '/s' + i + '.jpg', import.meta.url).href }
-      catch (e) { return 'file:///home/ryan/.hermes/plugins/antemuse/desktop/art/' + name + '/s' + i + '.jpg' }
-    }
-
     // A frame is only revealed once its bytes are in. Setting opacity before the load lands
     // showed the browser's broken-image glyph at full size whenever a URL did not resolve —
     // which is exactly what a remote desktop sees when the picture lives on another machine.
@@ -309,20 +304,22 @@ function ArtSurface({ ctx }) {
       const probe = new win.Image()
       let settled = false
       probe.onload = () => { if (!settled) { settled = true; applyActivation(urls) } }
-      probe.onerror = () => { if (!settled) { settled = true; applyScene(key) } }
+      probe.onerror = () => { if (!settled) { settled = true; clearLayers() } }
       probe.src = urls[0]
       return true
     }
 
-    const applyScene = (key) => {
-      const name = BAKED[key]
-      if (!name) { bake = null; stills = []; layers.forEach((l) => { l.style.opacity = '0' }); return }
-      if (bake === name) return
-      bake = name
-      stills = Array.from({ length: STILLS }, (_, i) => stillUrl(name, i))
+    // Nothing firing means nothing drawn. The layers are emptied rather than filled with
+    // something that is not the activation.
+    const clearLayers = () => {
+      bake = null
+      stills = []
       stillIdx = 0
-      show(stills[0])
-      if (win.__antemuse) win.__antemuse.bake = name
+      layers.forEach((l) => {
+        l.style.opacity = '0'
+        l.removeAttribute('src')
+      })
+      if (win.__antemuse) win.__antemuse.bake = null
     }
 
     const win = doc.defaultView || window
@@ -372,7 +369,8 @@ function ArtSurface({ ctx }) {
       Promise.resolve(ctx.rest(q)).then((p) => {
         const key = (p && p.active && p.active.key) || (busy ? 'work' : 'idle')
         if (stopped) return
-        art.setScene(key)
+        // The canvas is a neutral ground now: the only picture is the activation itself.
+        art.setScene('idle')
         // A remote desktop shows this pane on a different computer: the stills live on the host,
         // so only an absolute URL reaches them. On the host itself the file:// paths are cheaper
         // and work without a token. The probe covers a backend too old to say either.
@@ -384,7 +382,7 @@ function ArtSurface({ ctx }) {
           // bytes over the gateway RPC (a remote desktop), a file on this machine, then baked art.
           if (await applyActivation(served)) return
           if (await fromB64(p && p.stills_b64)) return
-          if (!tryLive(key)) applyScene(key)
+          if (!tryLive(key)) clearLayers()
         }
         void paint()
       }, () => { /* keep painting the idle scene */ })
@@ -393,7 +391,7 @@ function ArtSurface({ ctx }) {
     // composition can be looked at without driving the agent into that state.
     let preview = null
     try { preview = win.localStorage.getItem('antemuse:scene') } catch (e) { /* no storage */ }
-    if (preview) { art.setScene(preview); applyScene(preview) }
+    if (preview) art.setScene(preview)
 
     if (!preview) say()
     // Host-managed timer where the SDK provides one, so disposal is the host's
@@ -503,13 +501,10 @@ function StateChip({ ctx }) {
 // Baked scenes: rendered by a real renderer offline, shipped as frame loops,
 // because a runtime plugin cannot import three. Only the states that earn it get
 // a bake; the rest fall through to the live kit.
-const BAKED = {
-  idle: 'idle', work: 'work', walk: 'walk',
-  daydream: 'daydream', dream: 'dream', doomscroll: 'doomscroll'
-}
-// Three stills per state, held six seconds, dissolved over FADE_MS. A loop
-// needs 24 files per state and shows a beat you can count; stills don't.
-const STILLS = 3
+// There are no baked scenes any more. The activation of the concept graph is the only
+// visualization: what a state looks like IS which concepts are firing while it runs. A state
+// with nothing firing has no picture, and the surface stays bare rather than showing stand-in
+// art for a moment that did not happen.
 const HOLD_MS = 6000
 const FADE_MS = 900
 
