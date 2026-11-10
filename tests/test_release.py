@@ -74,10 +74,18 @@ def test_the_desktop_half_is_one_file_the_host_can_load():
     assert "applyScene" not in js and "BAKED" not in js
 
 
-def test_the_installer_deletes_rather_than_layers():
-    """Without --delete the previous version's files stay next to the new pane forever."""
+def test_the_installer_does_not_take_ownership_of_the_app_s_directory():
+    """`<home>/desktop-plugins/<name>/` belongs to the desktop app: it materializes the half and
+    stamps `.hermes-package.json` with the fields it needs. Deleting the directory, or writing a
+    marker by hand, makes the app's reconcile see something it did not make — and the pane can
+    disappear from the sidebar."""
     text = (ROOT / "scripts" / "install.sh").read_text()
-    assert "--delete" in text
+    install_step = text.split('say "4. desktop half')[1].split('5. projection')[0]
+    assert "cp -f" in install_step
+    assert "--delete" not in install_step
+    assert "rm -rf \"$DESKTOP_DIR\"" not in install_step
+    # it may only remove a marker it wrote itself, and only when that marker is the wrong shape
+    assert '"package"' in install_step
 
 
 def test_the_package_carries_no_baked_scenes():

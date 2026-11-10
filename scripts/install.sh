@@ -139,38 +139,30 @@ fi
 
 # ------------------------------------------------------------ 4. desktop half
 say "4. desktop half (the pane the app loads)"
-# Electron copies a package's desktop half into this directory and loads THAT copy. Editing the
-# checkout changes nothing on screen until it is copied or the app rescans.
+# The app owns this directory. It materializes `plugins/<name>/desktop/plugin.js` into
+# `<home>/desktop-plugins/<name>/` itself and stamps `.hermes-package.json` with the fields it
+# needs (package, source, sourceMtimeMs). Writing that marker by hand — with `name` instead of
+# `package` — produced a marker the app reads as null, and deleting the directory under it
+# fights the app's own reconcile. So: put the module where the app looks, touch nothing else,
+# and remove a marker we wrote earlier that the app cannot parse.
 DESKTOP_DIR="$HERMES_HOME/desktop-plugins/antemuse"
 run mkdir -p "$DESKTOP_DIR"
-if command -v rsync >/dev/null 2>&1; then
-  # --delete: this directory is ours, and a stale file left behind by an older version is how a
-  # machine ends up running the previous pane while the new one is on disk next to it.
-  run rsync -a --delete "$SRC"/desktop/ "$DESKTOP_DIR"/
-else
-  run rm -rf "$DESKTOP_DIR"
-  run mkdir -p "$DESKTOP_DIR"
-  run cp -a "$SRC"/desktop/. "$DESKTOP_DIR"/
+run cp -f "$SRC"/desktop/plugin.js "$DESKTOP_DIR"/plugin.js
+if [[ $DRY -eq 0 && -f "$DESKTOP_DIR/.hermes-package.json" ]]; then
+  if ! grep -q '"package"' "$DESKTOP_DIR/.hermes-package.json" 2>/dev/null; then
+    rm -f "$DESKTOP_DIR/.hermes-package.json"
+    ok "removed a marker this installer wrote in the wrong shape (the app rewrites its own)"
+  fi
 fi
-if [[ $DRY -eq 0 ]]; then
-  cat > "$DESKTOP_DIR/.hermes-package.json" <<JSON
-{"name": "antemuse", "source": "$SRC/desktop"}
-JSON
-fi
-ok "$DESKTOP_DIR"
+ok "$DESKTOP_DIR/plugin.js"
 
-# A packaged or Store install can run with HERMES_HOME somewhere else while the desktop app still
-# reads the default ~/.hermes copy — the two are different directories, and refreshing only one
-# leaves the app showing the previous pane while the new one sits on disk. If a default copy
-# exists, it is a copy something is reading: refresh it too, and say so.
+# A packaged or Store install can run with HERMES_HOME somewhere else while the desktop app
+# reads the default ~/.hermes copy — two different directories, and refreshing one leaves the app
+# on the previous pane.
 DEFAULT_DESKTOP="$HOME/.hermes/desktop-plugins/antemuse"
 if [[ "$DEFAULT_DESKTOP" != "$DESKTOP_DIR" && -d "$DEFAULT_DESKTOP" ]]; then
-  if command -v rsync >/dev/null 2>&1; then
-    run rsync -a --delete "$SRC"/desktop/ "$DEFAULT_DESKTOP"/
-  else
-    run rm -rf "$DEFAULT_DESKTOP" && run mkdir -p "$DEFAULT_DESKTOP" && run cp -a "$SRC"/desktop/. "$DEFAULT_DESKTOP"/
-  fi
-  ok "also refreshed $DEFAULT_DESKTOP (a second copy the app may be reading)"
+  run cp -f "$SRC"/desktop/plugin.js "$DEFAULT_DESKTOP"/plugin.js
+  ok "also refreshed $DEFAULT_DESKTOP/plugin.js (a second copy the app may be reading)"
 fi
 
 # -------------------------------------------------------------- 5. projection
