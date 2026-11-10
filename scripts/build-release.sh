@@ -32,7 +32,7 @@ if command -v rsync >/dev/null 2>&1; then
   rsync -a \
     --exclude .git --exclude node_modules --exclude __pycache__ --exclude .pytest_cache \
     --exclude .venv --exclude experiments --exclude evaluation --exclude specs --exclude site \
-    --exclude docs --exclude tests --exclude plugin-catalog --exclude dist \
+    --exclude docs --exclude tests --exclude plugin-catalog --exclude dist --exclude .post-staging \
     "$SRC"/ "$STAGE"/
 else
   cp -a "$SRC" "$STAGE"
