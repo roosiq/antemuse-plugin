@@ -254,7 +254,8 @@ def graph(session: str = "", limit: int = 1400):
 # The request is injected by FastAPI and optional so the route can be called directly in tests.
 def state(request: Request = None, cols: int | None = None, rows: int | None = None, fit: str = "contain",
           busy: bool = False, session: str | None = None,
-          with_graph: int = Query(0, alias="graph")) -> Dict[str, Any]:
+          with_graph: int = Query(0, alias="graph"),
+          stills: int = Query(1)) -> Dict[str, Any]:
     """The current state, as counts and a served frame.
 
     ``?busy=1`` says a turn is in flight, which changes only the ambient scene:
@@ -264,6 +265,10 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
     profile, so if the active state belongs to another chat the layer must not
     borrow it: that chat gets its ambient scene instead. The counts stay
     profile-level — they are what the engine holds, not what one chat owns.
+
+    ``?stills=0`` skips the picture. Rendering a frame is ~1.9s of image work; a surface that only
+    wants numbers should not pay for a JPEG it never shows, and a poll that pays for one is what
+    times out under load.
 
     ``?graph=1`` adds the map as numbers under ``graph``. It is a parameter of the one route the
     pane already calls, not a second route: a router is mounted when the host process boots, so
@@ -331,6 +336,15 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
     # with no state (or one belonging to another chat) it draws the profile's recent firings on
     # the ledger's concept space. An empty pane shows the app's own artwork, which is not ours to
     # show — and that is exactly what "I still see the wrong viz" was.
+    if not stills:
+        # Numbers only: no JPEG, no post-processing, no frame rotation. This is the path a 3D
+        # surface polls, and it must stay cheap enough not to time out while a turn is running.
+        if with_graph:
+            try:
+                payload["graph"] = graph(session=str(session or ""), limit=1400)
+            except Exception as exc:  # health: BLE001 -- no map is not a broken state
+                payload["graph"] = {"nodes": [], "lit": 0, "error": f"{type(exc).__name__}: {exc}"[:160]}
+        return payload
     drawable = bool(active and belongs_here)
     key = str(active.get("key") or "") if drawable else "profile"
     own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""

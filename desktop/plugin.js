@@ -569,7 +569,7 @@ function createGraph3D(el, doc, ctx, host, win) {
     // when the host process boots — which is why this pane spent hours polling a route its backend
     // did not have. The map now rides on `/state`, the one route every backend has had for months,
     // so new data never again waits on a host restart.
-    const q = '/state?graph=1' + (session ? '&session=' + encodeURIComponent(session) : '')
+    const q = '/state?graph=1&stills=0' + (session ? '&session=' + encodeURIComponent(session) : '')
     const askedAt = performance.now()
     const slow = new Promise((_, reject) => setTimeout(() => reject(new Error('graph timeout')), 12000))
     Promise.race([Promise.resolve(ctx.rest(q)), slow]).then((seed) => {

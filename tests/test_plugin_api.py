@@ -662,3 +662,33 @@ def test_the_map_rides_the_route_that_was_always_mounted():
     direct = client.get("/api/plugins/antemuse/graph?limit=1400").json()
     assert len(nodes) == len(direct["nodes"])
     assert seeded["graph"]["lit"] == direct["lit"]
+
+
+def test_numbers_only_skips_the_picture_it_would_never_show():
+    """A 3D surface polls for the map, not for a JPEG.
+
+    Rendering one frame is ~1.9 s of image work. Paying that on every poll is what made a route
+    that answers in 134 ms time out at 12 s once a turn was running, so `?stills=0` skips the whole
+    image path and returns the numbers alone.
+    """
+    import time
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import dashboard.plugin_api as api
+
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api/plugins/antemuse")
+    client = TestClient(app)
+
+    started = time.time()
+    lean = client.get("/api/plugins/antemuse/state?graph=1&stills=0").json()
+    took = time.time() - started
+    # The keys exist in the base payload as empty lists; the point is that no frame was rendered.
+    assert not lean.get("stills") and not lean.get("stills_b64")
+    assert lean["graph"]["nodes"], "the map must still be there"
+    assert took < 3.0, f"numbers-only took {took:.1f}s"
+
+    full = client.get("/api/plugins/antemuse/state").json()
+    assert "stills" in full
