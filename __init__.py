@@ -345,18 +345,25 @@ def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> 
 # --------------------------------------------------------------- commands
 
 def _enter(key: str, minutes: int | None = None):
-    def handler(raw_args: str) -> str:
+    # The host hands every command handler the same context (source, session_id, session_key,
+    # platform) when the handler names it. A command carries no turn with it, so the session has
+    # to come from here — otherwise the state is filed under whichever channel spoke last, and a
+    # state entered from the desktop is attributed to Discord.
+    def handler(raw_args: str, session_id: str | None = None,
+                session_key: str | None = None, platform: str | None = None,
+                source: str | None = None) -> str:
         arg = (raw_args or "").strip()
-        arg = (arg or "").strip()
+        where = {"session": session_id or session_key or None,
+                 "platform": platform or source or None}
         if arg and not arg.isdigit():
             # /walk upward  →  walk that graph; /walk 5  →  five minutes
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
-            line = engine.enter(key, minutes, walk=arg)
+            line = engine.enter(key, minutes, walk=arg, **where)
             _picture()
             return line + "\n" + states.palette()
         override = int(arg) if arg.isdigit() else minutes
-        line = engine.enter(key, override)
+        line = engine.enter(key, override, **where)
         _picture()
         return line + "\n" + states.palette()
     return handler
@@ -381,8 +388,10 @@ def _picture() -> bool:
         return False
 
 
-def _return(_raw: str) -> str:
-    return engine.stop(engine.current_session())
+def _return(_raw: str, session_id: str | None = None,
+            session_key: str | None = None, **_ignored: object) -> str:
+    # /return ends the state of the chat that asked, not of whichever chat was remembered.
+    return engine.stop(session_id or session_key or engine.current_session())
 
 
 def _state(raw: str) -> str:

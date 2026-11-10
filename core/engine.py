@@ -225,7 +225,8 @@ def settle() -> None:
 
 def enter(key: str, minutes: int | None = None, walk: str | None = None,
           options: Dict[str, Any] | None = None, block: bool = False,
-          allow: List[str] | None = None, dose: int | None = None) -> str:
+          allow: List[str] | None = None, dose: int | None = None,
+          session: str | None = None, platform: str | None = None) -> str:
     spec_key = states.resolve(key)
     if not spec_key:
         return f"no such state. try: {', '.join(states.STATES)}"
@@ -247,9 +248,14 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         previous = data.get("active") or {}
         now = time.time()
         root = storage.project_root()
+        # A command is not a message: on a slash command no turn arrived to remember where it
+        # came from, so the caller's own session and surface win over the last remembered ones.
+        # Without this a walk entered from the desktop is filed under the channel that spoke
+        # last — the pane then asks about its own chat and is correctly told the state is
+        # somebody else's.
         origin = {
-            "session_id": data.get("session_id") or "",
-            "platform": data.get("platform") or "",
+            "session_id": session or data.get("session_id") or "",
+            "platform": platform or data.get("platform") or "",
             "project": str(root) if root else "",
         }
         duration = float(minutes if minutes else spec["minutes"])

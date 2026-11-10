@@ -20,11 +20,15 @@ STILL_TTL_S = 45.0          # regenerating three stills costs ~200 ms; this keep
 _PEAK = {"shape": (0, 0), "n": 0}
 
 
-def _embeddings() -> Dict[str, List[float]]:
-    import json
+def _cache_dir() -> Path:
     import os
     base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")).expanduser()
-    path = base / "antemuse" / "embeddings.json"
+    return base / "antemuse"
+
+
+def _embeddings() -> Dict[str, List[float]]:
+    import json
+    path = _cache_dir() / "embeddings.json"
     if not path.exists():
         return {}
     try:
@@ -33,16 +37,123 @@ def _embeddings() -> Dict[str, List[float]]:
         return {}
 
 
-def coords(labels: List[str]) -> Dict[str, tuple]:
-    """Semantic coordinates — the same projection the graph export draws."""
-    vectors = _embeddings()
+#: Whole-WordNet *projection*, loaded once per process. The vectors themselves are never stored:
+#: `tools/project_wordnet.py` embeds all 117,659 synsets offline and keeps only what a picture needs
+#: — five coordinates and three neighbour indices per label, a few megabytes — plus the 384x3 basis,
+#: so a concept that lives in the ledger's own embeddings file can still be placed by projecting it.
+#: Read with `struct`: the plugin's dependency set is pillow and nltk, never numpy.
+_PROJ: Dict[str, Any] = {"at": None, "index": None, "coords": None, "basis": None}
+
+
+def _projection(labels: List[str]) -> Dict[str, tuple]:
+    """Stored coordinates (x2, y2, x3, y3, z3) for whichever of these labels WordNet knows."""
+    import json
+    import struct
+    base = _cache_dir()
+    meta_path, coord_path = base / "wordnet.proj.json", base / "wordnet.proj.f16"
+    if not (meta_path.exists() and coord_path.exists()):
+        return {}
+    try:
+        stamp = coord_path.stat().st_mtime
+        if _PROJ["at"] != stamp:
+            meta = json.loads(meta_path.read_text())
+            names = [str(x) for x in meta.get("labels") or []]
+            _PROJ["index"] = {name: i for i, name in enumerate(names)}
+            _PROJ["basis"] = meta.get("basis") or []
+            if _PROJ["coords"] is not None:
+                try:
+                    _PROJ["coords"].close()
+                except Exception:
+                    pass
+            _PROJ["coords"] = coord_path.open("rb")
+            _PROJ["at"] = stamp
+        index, handle = _PROJ["index"], _PROJ["coords"]
+        stride = 5 * 2
+        out = {}
+        for label in labels:
+            row = index.get(label)
+            if row is None:
+                continue
+            handle.seek(row * stride)
+            raw = handle.read(stride)
+            if len(raw) != stride:
+                continue
+            out[label] = struct.unpack("<5e", raw)
+        return out
+    except Exception:
+        return {}
+
+
+def _project_one(vector: List[float]) -> tuple:
+    """Place a vector that WordNet does not know (a project name, a tool) in the same space."""
+    basis = _PROJ.get("basis") or []
+    if not basis or not vector:
+        return ()
+    try:
+        return tuple(sum(float(v) * float(b[i]) for v, b in zip(vector, basis)) for i in range(3))
+    except Exception:
+        return ()
+
+
+def positions(labels: List[str]) -> Dict[str, tuple]:
+    """Every label's 3D position: WordNet's stored projection, or a projected ledger vector."""
+    stored = _projection(labels)
+    out = {}
+    missing = []
+    for label in labels:
+        got = stored.get(label)
+        if got:
+            out[label] = (got[2], got[3], got[4])
+        else:
+            missing.append(label)
+    if missing:
+        have = _embeddings()
+        for label in missing:
+            if label in have:
+                placed = _project_one(have[label])
+                if placed:
+                    out[label] = placed
+    return out
+
+
+def nearest(labels: List[str], k: int = 2) -> List[tuple]:
+    """Edges between concepts that are close in the stored projection.
+
+    Only the projection is stored, never the vectors, so adjacency is decided in the same space the
+    picture draws: two concepts are joined when they are near each other in 3D, which is what a
+    viewer reads off the panel. Computed per frame from the active set, so an edge always means
+    "these two are near here", not "these two were near some other time".
+    """
+    pos = positions(labels)
+    usable = sorted(pos)
+    if len(usable) < 2:
+        return []
+    out, seen = [], set()
+    for label in usable:
+        a = pos[label]
+        ranked = sorted(((sum((x - y) ** 2 for x, y in zip(a, pos[o])), o) for o in usable if o != label))
+        for _d, other in ranked[:k]:
+            key = tuple(sorted((label, other)))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append((label, other))
+    return out
+
+
+def _local_pca(vectors: Dict[str, List[float]], labels: List[str]) -> Dict[str, tuple]:
+    """The old per-frame projection, kept for the case the stored projection cannot cover.
+
+    A ledger-only concept set (a test fixture, a cache with no WordNet artifact) still gets a
+    picture: principal directions of this frame's own vectors, seeded, so it is reproducible.
+    """
     usable = [label for label in labels if label in vectors]
-    if not usable:
+    if len(usable) < 2:
         return {}
     import random
-    rng = random.Random(3)
     rows = [vectors[label] for label in usable]
     d = len(rows[0])
+    rng = random.Random(3)
     mean = [sum(r[j] for r in rows) / len(rows) for j in range(d)]
     centred = [[r[j] - mean[j] for j in range(d)] for r in rows]
     comps = []
@@ -59,6 +170,23 @@ def coords(labels: List[str]) -> Dict[str, tuple]:
     return {label: (sum(a * b for a, b in zip(row, comps[0])),
                     sum(a * b for a, b in zip(row, comps[1])))
             for label, row in zip(usable, rows)}
+
+
+def coords(labels: List[str]) -> Dict[str, tuple]:
+    """Semantic coordinates in 2D — the stored x2, y2 of each label."""
+    stored = _projection(labels)
+    out = {label: (v[0], v[1]) for label, v in stored.items()}
+    missing = [label for label in labels if label not in out]
+    if missing:
+        have = _embeddings()
+        for label in missing:
+            if label in have:
+                placed = _project_one(have[label])
+                if placed:
+                    out[label] = (placed[0], placed[1])
+    if len(out) < 2:
+        out.update(_local_pca(_embeddings(), labels))
+    return out
 
 
 def fit(coords_in: Dict[str, tuple], width: int, height: int, pad: int = 46) -> Dict[str, list]:
@@ -141,22 +269,6 @@ def frame_image(pos: Dict[str, list], edges: List[tuple], active: Dict[str, Dict
     return img
 
 
-def _edges(labels: List[str], vectors: Dict[str, List[float]]) -> List[tuple]:
-    usable = [label for label in labels if label in vectors]
-    out, seen = [], set()
-    for label in usable:
-        mine = vectors[label]
-        best = sorted(((sum(x * y for x, y in zip(mine, vectors[o])), o)
-                       for o in usable if o != label), reverse=True)[:2]
-        for _score, other in best:
-            key = tuple(sorted((label, other)))
-            if key in seen:
-                continue
-            seen.add(key)
-            out.append((label, other))
-    return out
-
-
 def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
            count: int = STILL_COUNT, size: tuple = STILL_SIZE,
            now: Optional[float] = None, palette: str = "amber") -> List[Path]:
@@ -192,11 +304,10 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     if not labels:
         return []
 
-    vectors = _embeddings()
     pos = fit(coords(labels), *size)
     if not pos:
         return []
-    edges = _edges(labels, vectors)
+    edges = nearest(labels)
 
     stamp = int(now)
     base = dest / "base"
