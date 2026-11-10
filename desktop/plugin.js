@@ -47,7 +47,28 @@ const copy = {
   idle: 'no state',
   unavailable: 'backend unavailable',
   unreachable: 'the plugin backend is not mounted',
+  signin: 'sign-in required',
+  silent: 'the backend did not answer',
   watch: 'show antemuse'
+}
+
+/**
+ * Why the poll failed, as far as the failure actually says.
+ *
+ * The pane used to answer every failed poll with "the plugin backend is not mounted", which is a
+ * claim about a cause it had not established: an expired session, a slow server and a missing route
+ * all looked identical. A 401 says sign in; a 404 says the route is not there; anything without a
+ * status is the server not answering. Only a 404 is allowed to say "not mounted".
+ */
+export function whyFailed(err) {
+  const text = String((err && (err.message || err.detail || err.error)) || err || '')
+  const status = Number((err && (err.status || err.statusCode)) || (text.match(/\b(4\d\d|5\d\d)\b/) || [])[1] || 0)
+  if (/no_cookie|unauthenticated|unauthorized|sign in|login/i.test(text)) return copy.signin
+  if (status === 401 || status === 403) return copy.signin
+  if (status === 404) return copy.unreachable
+  if (status >= 500) return copy.silent
+  if (/timeout|timed out|did not answer|ECONNREFUSED|Failed to fetch|network/i.test(text)) return copy.silent
+  return copy.unavailable
 }
 
 // ---------------------------------------------------------------- pure helpers
@@ -90,7 +111,7 @@ export function viewModel(payload, error) {
   return {
     situation: situation(payload, error),
     label: error ? copy.unavailable : active ? String(active.label || '') : copy.idle,
-    note: error ? copy.unreachable : '',
+    note: error ? whyFailed(error) : '',
     clock: active ? clock(active.seconds_left) : '',
     counts: counts(payload),
     contract: active ? String(active.contract || '') : '',

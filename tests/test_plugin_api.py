@@ -582,3 +582,51 @@ def test_the_graph_route_serves_real_positions_and_lights_only_what_fired():
     assert weights == sorted(weights)
     assert payload["lit"] == sum(1 for n in nodes if n["w"] > 0.05)
 
+
+
+def test_the_pane_names_the_failure_it_actually_saw():
+    """A failed poll is not automatically a missing route.
+
+    An expired session, a slow server and an absent route all arrive as one rejected promise. The
+    pane used to print "the plugin backend is not mounted" for every one of them, which sent us
+    looking for a mount that was there. Each cause now answers with its own words, and only a 404
+    is allowed to claim the route is missing.
+    """
+    import subprocess
+
+    root = Path(__file__).resolve().parents[1]
+    js = (root / "desktop" / "plugin.js").read_text()
+    start = js.index("export function whyFailed(err) {")
+    end = js.index("\n}", start) + 2
+    fn = js[start:end].replace("export function", "function")
+    copy_src = js[js.index("const copy = {"):js.index("}", js.index("const copy = {")) + 1]
+    harness = copy_src + "\n" + fn + """
+const cases = [
+  ['signin', new Error('401: {"reason":"no_cookie"}')],
+  ['signin', new Error('Error: 403 Forbidden')],
+  ['mount', new Error('Error: 404 Not Found')],
+  ['silent', new Error('Timed out connecting to Hermes backend after 5000ms')],
+  ['silent', new Error('503 Service Unavailable')],
+  ['other', new Error('boom')]
+]
+const out = cases.map(([want, err]) => {
+  const said = whyFailed(err)
+  const ok = want === 'signin' ? said === 'sign-in required'
+    : want === 'mount' ? said === 'the plugin backend is not mounted'
+    : want === 'silent' ? said === 'the backend did not answer'
+    : said === 'backend unavailable'
+  return ok ? 'ok' : 'WRONG ' + said
+})
+console.log(out.join(','))
+"""
+    harness_path = root / "tests" / "_whyfailed_probe.mjs"
+    harness_path.write_text(harness)
+    try:
+        done = subprocess.run(["node", str(harness_path)], capture_output=True, text=True, timeout=60)
+    except FileNotFoundError:
+        harness_path.unlink(missing_ok=True)
+        import pytest
+        pytest.skip("node is not installed here")
+    harness_path.unlink(missing_ok=True)
+    assert done.returncode == 0, done.stderr
+    assert done.stdout.strip() == ",".join(["ok"] * 6), done.stdout
