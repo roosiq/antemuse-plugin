@@ -330,7 +330,12 @@ function ArtSurface({ ctx }) {
         const key = (p && p.active && p.active.key) || (busy ? 'work' : 'idle')
         if (stopped) return
         art.setScene(key)
-        const served = (p && p.files && p.files.length) ? p.files : (p && p.stills)
+        // A remote desktop shows this pane on a different computer: the stills live on the host,
+        // so only an absolute URL reaches them. On the host itself the file:// paths are cheaper
+        // and work without a token. The probe covers a backend too old to say either.
+        const served = (p && p.files_http && p.files_http.length) ? p.files_http
+          : (p && p.files && p.files.length) ? p.files
+          : (p && p.stills)
         if (!applyActivation(served) && !tryLive(key)) applyScene(key)
       }, () => { /* keep painting the idle scene */ })
     }

@@ -307,7 +307,8 @@ def test_the_pane_paints_stills_before_baked_art():
     """The wiring, checked at the source: the surface must prefer what the backend served, and
     fall back to the baked scene when there is nothing to show."""
     js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
-    assert "const served = (p && p.files && p.files.length) ? p.files : (p && p.stills)" in js
+    assert "const served = (p && p.files_http && p.files_http.length) ? p.files_http" in js
+    assert "p.files && p.files.length" in js
     assert "if (!applyActivation(served) && !tryLive(key)) applyScene(key)" in js
     assert "stills = urls.slice()" in js
 
@@ -319,3 +320,28 @@ def test_the_pane_can_reach_stills_without_the_gateway():
     assert "plugin-data/antemuse/activation/" in js
     assert "probe.onerror" in js and "applyScene(key)" in js
     assert "AMDBG" not in js, "no debug hooks left in the pane"
+
+
+def test_stills_carry_an_absolute_url_for_a_remote_desktop(monkeypatch, tmp_path):
+    """A remote desktop shows the pane on another computer, where a file:// path means nothing:
+    the payload has to carry a URL the browser can actually fetch."""
+    pytest.importorskip("httpx")
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from core import activation_stills, history
+
+    api = _walk_api(monkeypatch, tmp_path)
+    now = 1_760_000_000.0
+    for i, label in enumerate(["gateway", "plugin", "ledger", "shipper"]):
+        history.notice(label, move="walk", session="s1", at=now - i, ref=str(i))
+    api.plugin = lambda: type("P", (), {"core": type("C", (), {
+        "panel": type("Pan", (), {"engine_state": staticmethod(lambda: {
+            "active": {"key": "walk", "origin": {"session_id": "s1"}, "ends_at": now + 600},
+            "session": "s1"})}),
+        "screensaver": __import__("core.screensaver", fromlist=["x"])})()})()
+
+    app = FastAPI()
+    app.include_router(api.router)
+    body = TestClient(app).get("/state?session=s1").json()
+    assert body["files_http"], body.get("still_note")
+    assert all(u.startswith("http://testserver/api/plugins/antemuse/art/walk/") for u in body["files_http"])

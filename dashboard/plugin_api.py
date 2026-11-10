@@ -26,7 +26,7 @@ from pathlib import Path
 import time
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
 router = APIRouter()
@@ -88,7 +88,8 @@ def frame_index(key: str, frames: int = 8, now: float | None = None) -> int:
 
 
 @router.get("/state")
-def state(cols: int | None = None, rows: int | None = None, fit: str = "contain",
+# The request is injected by FastAPI and optional so the route can be called directly in tests.
+def state(request: Request = None, cols: int | None = None, rows: int | None = None, fit: str = "contain",
           busy: bool = False, session: str | None = None) -> Dict[str, Any]:
     """The current state, as counts and a served frame.
 
@@ -165,7 +166,14 @@ def state(cols: int | None = None, rows: int | None = None, fit: str = "contain"
                 # The desktop pane is a file:// page: it cannot fetch these without the gateway's
                 # token, but it can load a local file directly, which is how the baked scenes
                 # already reach it. Both are offered; the pane takes the file.
+                # Three ways to reach the same picture, because the pane's surface decides which
+                # one works: absolute HTTP URLs (a remote desktop, where the files are on the
+                # host and not on the computer showing the pane), file:// (a desktop running on
+                # the host itself), and the router-relative paths older clients used.
+                base = str(request.base_url).rstrip("/") if request is not None else ""
                 payload["files"] = [p.as_uri() for p in paths]
+                payload["files_http"] = [f"{base}/api/plugins/antemuse/art/{key}/{p.name}"
+                                         for p in paths] if base else []
                 if not paths:
                     payload["still_note"] = f"nothing firing in {key}"
             except Exception:  # health: BLE001 -- a missing picture is not a broken state
