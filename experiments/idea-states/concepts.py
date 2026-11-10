@@ -29,18 +29,18 @@ def slug(model: str) -> str:
     return model.replace("/", "-").replace(".", "-").replace(":", "-")
 
 
-def straight_lists(model: str, task: str, cells: dict) -> list[list[str]]:
-    """Two straight lists for this model and brief: stored cells first, then variation runs."""
-    out = [cells[(model, task, s, "N")]["ideas"] for s in (11, 12)
-           if (model, task, s, "N") in cells]
-    if len(out) < 2:
-        path = HERE / f"variation-{slug(model)}-n50.json"
-        if path.exists():
-            payload = json.loads(path.read_text())
-            for lst in payload["lists"]:
-                if len(lst["ideas"]) >= 25:
-                    out.append(lst["ideas"])
-    return out[:2]
+def straight_lists(model: str, task: str, cells: dict, k: int = 2) -> list[list[str]]:
+    """Plain lists for this model and brief: stored cells first, then variation runs, by seed."""
+    by_seed: dict[int, list[str]] = {}
+    for (m, t, s, cond), cell in cells.items():
+        if m == model and t == task and cond == "N":
+            by_seed[s] = cell["ideas"]
+    path = HERE / f"variation-{slug(model)}-n50.json"
+    if path.exists():
+        for lst in json.loads(path.read_text())["lists"]:
+            if len(lst["ideas"]) >= 25:
+                by_seed.setdefault(lst["seed"], lst["ideas"])
+    return [by_seed[s] for s in sorted(by_seed)][:k]
 
 
 def counts(lists: list[list[str]]) -> tuple[int, int]:

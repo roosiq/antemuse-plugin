@@ -19,24 +19,15 @@ import json
 import statistics as st
 from pathlib import Path
 
+import concepts
 import overlap as ov
 
 HERE = Path(__file__).resolve().parent
 
 
 def straight_lists(model: str, task: str, cells: dict) -> dict:
-    seeds: dict = {}
-    for (m, t, s, cond), cell in cells.items():
-        if m == model and t == task and cond == "N":
-            seeds[s] = cell["ideas"]
-    slug = model.replace("/", "-").replace(".", "-").replace(":", "-")
-    for path in HERE.glob(f"variation-{slug}-n*.json"):
-        payload = json.loads(path.read_text())
-        n = payload["count"]
-        for lst in payload["lists"]:
-            if len(lst["ideas"]) >= n // 2:
-                seeds.setdefault(lst["seed"], lst["ideas"])
-    return seeds
+    lists = concepts.straight_lists(model, task, cells, k=99)
+    return {11 + i: l for i, l in enumerate(lists)}
 
 
 def run(task: str) -> str:

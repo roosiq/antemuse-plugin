@@ -2,7 +2,7 @@
 
 Six models, four conditions, measured from the text itself. No model judges another model.
 Run: 2026-11-09. Evidence: `results-*.json`, `concepts.md`, `percent.md`, `math-*.md`,
-`floor.md`, `overlap.md`, `table.png`, `concepts.png`, `index.html`.
+`floor.md`, `overlap.md`, `master.md`, `table.png`, `concepts.png`, `master.png`, `index.html`.
 
 ## The question
 
@@ -108,8 +108,9 @@ are medians over those comparisons. `math-*.md` has the differences with their r
 5. **Doomscroll ignores the count.** DeepSeek and MiniMax wrote 63 ideas instead of 50. Opus
    and the GPT models stuck to 50.
 6. **walk is the weak state.** On four of six models the list stays within 6% of the plain one,
-   and on MiniMax it goes slightly backwards (−1%). Only Opus moves clearly (+18%). It gains
-   only about 3 points of distinctness against daydream's 5.
+   and on MiniMax it goes slightly backwards (−1%). Only Opus moves clearly (+18%). Against the
+   no-state floor it clears on 2 of 5 models, where daydream clears on 6 of 6. Walk is a real but
+   small nudge; daydream is the state that changes what the model writes.
 
 ## Do different models write the same ideas?
 
@@ -147,17 +148,17 @@ from the same seed. Lower = further away. `floor.md`.
 
 | model | no state (two lists) | walk | daydream | doomscroll |
 |---|---|---|---|---|
-| Opus 5.5 | 0.764 | 0.664 | 0.631 | 0.674 |
-| DeepSeek v4.1 | 0.719 | 0.686 | 0.555 | 0.563 |
-| MiniMax M3.1 | 0.677 | 0.657 | 0.617 | 0.647 |
-| GPT-6.1 Sol | 0.735 | 0.711 | 0.675 | 0.700 |
-| GPT-6.1 Terra | 0.725 | 0.718 | 0.687 | 0.710 |
-| Qwen3.8 Max | 0.711 | no list | 0.645 | 0.704 |
+| Opus 5.5 | 0.757 | 0.664 | 0.631 | 0.674 |
+| DeepSeek v4.1 | 0.710 | 0.686 | 0.555 | 0.563 |
+| MiniMax M3.1 | 0.668 | 0.657 | 0.617 | 0.647 |
+| GPT-6.1 Sol | 0.713 | 0.711 | 0.675 | 0.700 |
+| GPT-6.1 Terra | 0.715 | 0.718 | 0.687 | 0.710 |
+| Qwen3.8 Max | 0.696 | no list | 0.645 | 0.704 |
 
-Every daydream figure is lower than its model's no-state figure, by 0.05–0.17. Walk is lower on
-five of six by a hair (0.011 on MiniMax, 0.007 on Terra). Doomscroll splits: 0.16 lower on
-DeepSeek, 0.09 on Opus, but 0.007–0.02 on the GPT models, where it is barely distinguishable
-from writing a second plain list.
+Every daydream figure is lower than its model's no-state figure, by 0.05–0.17, and lower than
+the lowest plain-vs-plain pair for that model. That is 6 of 6 models. Walk clears that floor on
+2 of 5 (Opus, DeepSeek) and sits level on MiniMax, Sol and Terra. Doomscroll clears it on 3 of 6
+(Opus, DeepSeek, Sol), and on Terra and Qwen it is under 0.02 from writing a second plain list.
 
 ## Limits
 
