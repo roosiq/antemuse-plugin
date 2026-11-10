@@ -126,7 +126,16 @@ def art(cols: int = 44, rows: int = 12, index: int = 0, ramp: str = ASCII_RAMP,
             p for d in sorted(base.iterdir()) if d.is_dir() for p in sorted(d.glob("*.png"))[:1]
         ]
     if not pngs:
-        return []
+        # A fresh install has no baked bank. Fall back to the small frame committed
+        # with the plugin so the card is a picture, not an empty rectangle.
+        fallback = Path(__file__).resolve().parent.parent / "assets" / "frames"
+        pick = scene if (fallback / f"{scene}.png").exists() else ""
+        if not pick:
+            pick = "walk" if (fallback / "walk.png").exists() else ""
+        if pick:
+            pngs = [fallback / f"{pick}.png"]
+        else:
+            return []
     im = Image.open(pngs[index % len(pngs)]).convert("L")
     if fit == "cover":
         im = _cover(im, cols, rows).resize((cols, rows), Image.LANCZOS)

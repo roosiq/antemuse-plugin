@@ -3,6 +3,21 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.9.1 — 2026-11-09
+
+QA pass in a throwaway profile (34 checks, `docs/qa/2026-11-09-qa-pass.md`).
+
+- A fresh install now shows a picture instead of a blank card: one 400x105 frame per
+  state ships in `assets/frames/` and is used until a real bake exists.
+- `python3 -m core.tui` opens the takeover. It had no entry point and exited silently.
+- The takeover no longer draws nothing when the terminal reports 0x0, and the
+  renderer's `THREE.SoftwareRenderer 82` banner no longer lands in the frame.
+- The registered skill describes the five states that ship, not a retired one.
+- A mistyped `state` action says which actions exist instead of returning the status
+  picture.
+- The retired-name test exempts recorded experiment output, so a working tree with
+  experiment results does not fail the suite.
+
 ## 0.9.0 — 2026-11-09
 
 First packaged build.

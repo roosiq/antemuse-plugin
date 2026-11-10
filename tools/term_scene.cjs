@@ -20,9 +20,15 @@
 
 const path = require('path')
 const fs = require('fs')
+// The software renderer announces itself on stdout at require time, which lands in
+// the middle of the takeover's alt screen as "THREE.SoftwareRenderer 82". Frames are
+// the only thing allowed on stdout.
+const _log = console.log
+console.log = () => {}
 const ROOT = path.join(__dirname, '..', 'node_modules')
 const THREE = require(path.join(ROOT, 'three'))
 const SoftwareRenderer = require(path.join(ROOT, 'three-software-renderer'))
+console.log = _log
 
 const argv = process.argv.slice(2)
 const flag = (name, fallback) => {

@@ -274,11 +274,15 @@ def run() -> str:
         tty.setcbreak(tty_fd)
         os.write(tty_fd, b"\x1b[?1049h\x1b[?25l")
         w, h = os.get_terminal_size(tty_fd)
+        # A pty with no window size reports 0x0, and a zero-width grid draws nothing:
+        # the takeover looked like a blank screen with a hidden cursor.
+        w, h = max(w, 40), max(h, 12)
         live_key = (engine.watch_state().get("active") or {}).get("key")
         renderer = _spawn_renderer(tty_fd, w, h, live_key) if _keyframed(live_key) else None
         typed = False
         while True:
             w, h = os.get_terminal_size(tty_fd)
+            w, h = max(w, 40), max(h, 12)
             state = engine.watch_state()
             key = (state.get("active") or {}).get("key")
             if renderer and (key != live_key):
@@ -373,3 +377,11 @@ def run() -> str:
             termios.tcsetattr(tty_fd, termios.TCSADRAIN, old)
             os.close(tty_fd)
     return engine.status()
+
+
+if __name__ == "__main__":
+    # Without this the module documented in README and TESTING ("python3 -m
+    # core.tui") imported itself and exited 0 without drawing anything.
+    result = run()
+    if not sys.stdin.isatty() and result:
+        print(result)

@@ -68,11 +68,16 @@ def test_no_retired_name_appears_anywhere():
     # not branding. Only the evidence directory is exempt — not every directory
     # that happens to be called "results".
     evidence = pathlib.Path(ROOT) / "evaluation" / "results"
+    # Experiment output is recorded model output too: `experiments/*/*.json(l)` holds
+    # answers that mention a scene set in a domestic room. Data files only — notes and
+    # READMEs in the same tree are still ours and still checked.
     offenders = []
     for path in pathlib.Path(ROOT).rglob("*"):
         if not path.is_file() or skip & set(path.parts):
             continue
         if evidence in path.parents:
+            continue
+        if "experiments" in path.parts and path.suffix in {".json", ".jsonl", ".html", ".log"}:
             continue
         if path.suffix in {".png", ".jpg", ".jpeg", ".zip", ".pyc", ".ico"}:
             continue

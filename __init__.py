@@ -29,7 +29,7 @@ try:
 except ImportError:  # flat-module load
     from core import engine, history, options, panel, recall, runtime, session, settings, states, surfaces, tui, walks  # type: ignore[no-redef]
 
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
@@ -207,7 +207,12 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
                              str(a.get("name") or engine.platform() or "discord"))
     if action == "image":
         return f"MEDIA:{surfaces.snapshot_path(engine.watch_state(), str(a.get('name') or 'discord'))}\n" + surfaces.record(engine.watch_state())
-    return panel.render(engine.watch_state())
+    if action in ("status", ""):
+        return panel.render(engine.watch_state())
+    # An unrecognised action used to fall through to the status picture, so a caller
+    # that mistyped got art instead of an answer. Say what exists.
+    return ("no such action: " + repr(action) + ". try: enter, exit, status, list, break, "
+            "mood, walks, walk_new, walk_del, spark, keep, complete, watch, card, image.")
 
 
 # ------------------------------------------------------------------ hooks
@@ -586,7 +591,7 @@ def register(ctx) -> None:
         ctx.register_skill(
             "antemuse",
             Path(__file__).resolve().parent / "SKILL.md",
-            description="Take and leave agent states: walk, daydream, dissociate, dream, doomscroll.",
+            description="Take and leave agent states: walk, daydream, doomscroll, unstuck, dream.",
         )
     except Exception:
         pass
