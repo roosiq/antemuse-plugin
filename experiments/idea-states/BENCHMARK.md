@@ -72,6 +72,39 @@ differences with their ranges.
 6. **walk is the weak state.** On four of six models the list stays within 6% of the plain one,
    and on MiniMax it goes slightly backwards. Only Opus moves clearly (+18%).
 
+## Do different models write the same ideas?
+
+Same brief, same seed, the six lists side by side. Two ideas count as the same when their
+embedding similarity clears 0.80. `overlap.md` has the full per-pair matrices.
+
+| brief | condition | overlap between models | average best match | distinct ideas in the pooled set |
+|---|---|---|---|---|
+| food waste | no state | 11% | 0.66 | 243 of 300 (81%) |
+| food waste | walk | 6% | 0.64 | 228 of 253 (90%) |
+| food waste | daydream | 1% | 0.57 | 293 of 300 (98%) |
+| food waste | doomscroll | 5% | 0.63 | 275 of 302 (91%) |
+| one room | no state | 1% | 0.47 | 295 of 300 (98%) |
+| one room | walk | 0% | 0.45 | 232 of 234 (99%) |
+| one room | daydream | 0% | 0.47 | 250 of 250 (100%) |
+| one room | doomscroll | 0% | 0.43 | 300 of 301 (100%) |
+
+The level depends on the threshold, so it is worth seeing the same six lists through different
+ones — no state, seed 11:
+
+| brief | avg best match | 0.50 | 0.60 | 0.70 | 0.80 |
+|---|---|---|---|---|---|
+| food waste | 0.66 | 94% | 70% | 35% | 11% |
+| one room | 0.47 | 34% | 12% | 3% | 1% |
+
+Two things follow. Models already disagree on the practical brief — only about one idea in nine
+is a near-copy across models, and 19% of the pooled list is redundant. Daydream cuts what
+agreement there was roughly in half (0.66 to 0.57 on best match; 70% to 40% at the 0.60
+threshold). And on the open creative brief there was almost nothing shared to begin with: the
+lists are 98–100% distinct whether a state is used or not.
+
+So the state is not making models converge on a canon of ideas. It pushes each model further
+into its own corner.
+
 ## Limits
 
 - Four lists per condition per model (Terra: two), over two briefs. Treat the direction as the
