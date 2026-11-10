@@ -600,7 +600,11 @@ def test_the_pane_names_the_failure_it_actually_saw():
     end = js.index("\n}", start) + 2
     fn = js[start:end].replace("export function", "function")
     copy_src = js[js.index("const copy = {"):js.index("}", js.index("const copy = {")) + 1]
-    harness = copy_src + "\n" + fn + """
+    # The label is what the pane prints; viewModel must route the failure through whyFailed.
+    vm_start = js.index("export function viewModel(payload, error) {")
+    vm_end = js.index("\n}", vm_start) + 2
+    vm_fn = js[vm_start:vm_end].replace("export function", "function")
+    harness = copy_src + "\n" + fn + "\n" + vm_fn + """
 const cases = [
   ['signin', new Error('401: {"reason":"no_cookie"}')],
   ['signin', new Error('Error: 403 Forbidden')],
@@ -630,6 +634,9 @@ console.log(out.join(','))
     harness_path.unlink(missing_ok=True)
     assert done.returncode == 0, done.stderr
     assert done.stdout.strip() == ",".join(["ok"] * 6), done.stdout
+    # A failed poll must print its cause where a person reads it, not the generic category.
+    assert "copy.unavailable : active" not in js, "the label still answers every failure with one category"
+    assert "label: error ? whyFailed(error)" in js
 
 
 def test_the_map_rides_the_route_that_was_always_mounted():

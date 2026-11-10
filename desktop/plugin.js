@@ -110,8 +110,11 @@ export function viewModel(payload, error) {
   const frame = (payload && payload.frame) || {}
   return {
     situation: situation(payload, error),
-    label: error ? copy.unavailable : active ? String(active.label || '') : copy.idle,
-    note: error ? whyFailed(error) : '',
+    // One honest string, not a category plus a footnote: the label is what a person reads at
+    // 11px in a corner, and "backend unavailable" for an expired session sends them looking at
+    // the server instead of at their sign-in.
+    label: error ? whyFailed(error) : active ? String(active.label || '') : copy.idle,
+    note: '',
     clock: active ? clock(active.seconds_left) : '',
     counts: counts(payload),
     contract: active ? String(active.contract || '') : '',
