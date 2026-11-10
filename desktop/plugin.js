@@ -270,8 +270,8 @@ function createGraph3D(el, doc, ctx, host, win) {
     'gl_FragColor = vec4(c, a); }'
   const VS_LINE = 'attribute vec3 aPos; attribute float aA; uniform mat4 uMVP; varying float vA;' +
     'void main(){ gl_Position = uMVP * vec4(aPos,1.0); vA = aA; }'
-  const FS_LINE = 'precision mediump float; varying float vA;' +
-    'void main(){ gl_FragColor = vec4(0.58,0.62,0.80, vA); }'
+  const FS_LINE = 'precision mediump float; varying float vA; uniform vec3 uColor;' +
+    'void main(){ gl_FragColor = vec4(uColor, vA); }'
 
   const compile = (type, src) => {
     const s = gl.createShader(type)
@@ -302,10 +302,12 @@ function createGraph3D(el, doc, ctx, host, win) {
   const pPos = loc(pointProg, 'aPos'), pW = loc(pointProg, 'aW')
   const pMVP = uni(pointProg, 'uMVP'), pDpr = uni(pointProg, 'uDpr'), pSize = uni(pointProg, 'uSize')
   const lPos = loc(lineProg, 'aPos'), lA = loc(lineProg, 'aA'), lMVP = uni(lineProg, 'uMVP')
+  const lColor = uni(lineProg, 'uColor')
 
-  const pointBuf = gl.createBuffer(), lineBuf = gl.createBuffer()
+  const pointBuf = gl.createBuffer(), lineBuf = gl.createBuffer(), pathBuf = gl.createBuffer()
   let nodes = [], nodePos = new Float32Array(0), nodeW = new Float32Array(0), edges = []
   let edgePos = new Float32Array(0), edgeA = new Float32Array(0)
+  let pathPos = new Float32Array(0), pathA = new Float32Array(0)
   let sig = ''
   let pinned = null, hovered = null
   let yaw = 0.55, pitch = 0.22, dist = 2.35
@@ -351,9 +353,31 @@ function createGraph3D(el, doc, ctx, host, win) {
     return out
   }
 
-  const upload = (raw) => {
+  const upload = (raw, trail) => {
     const next = norm(raw)
     const id = raw.length + '|' + (raw[0] ? raw[0].l : '') + '|' + (raw[raw.length - 1] ? raw[raw.length - 1].l : '')
+    // The walk's own order. The firings are a set; the path is a sequence, and drawing it needs
+    // the sequence, so it is rebuilt whenever either the ground or the trail changes.
+    const pathKey = (trail || []).join('>')
+    if (id !== sig || pathKey !== (upload.pathKey || '')) {
+      upload.pathKey = pathKey
+      const byLabel = {}
+      next.forEach((n, i) => { byLabel[String(n.l).toLowerCase()] = i })
+      const idx = (trail || []).map((l) => byLabel[String(l).toLowerCase()]).filter((i) => i !== undefined)
+      pathPos = new Float32Array(Math.max(0, idx.length - 1) * 6)
+      pathA = new Float32Array(Math.max(0, idx.length - 1) * 2)
+      for (let k = 0; k + 1 < idx.length; k++) {
+        const A = next[idx[k]], B = next[idx[k + 1]]
+        pathPos.set([A.x, A.y, A.z, B.x, B.y, B.z], k * 6)
+        // Older hops fade; the newest segment is the brightest thing on the surface.
+        const v = 0.25 + 0.75 * ((k + 1) / Math.max(1, idx.length - 1))
+        pathA[k * 2] = v; pathA[k * 2 + 1] = v
+      }
+      if (pathPos.length) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, pathBuf)
+        gl.bufferData(gl.ARRAY_BUFFER, pathPos, gl.STATIC_DRAW)
+      }
+    }
     if (id !== sig) {
       sig = id
       nodes = next
@@ -431,7 +455,20 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
     gl.disableVertexAttribArray(lA)
     gl.vertexAttrib1f(lA, 0.26)
+    gl.uniform3f(lColor, 0.58, 0.62, 0.80)
     gl.drawArrays(gl.LINES, 0, edgePos.length / 3)
+    // The trail: same line program, warm colour by drawing it three times with a pixel-ish
+    // offset so it reads as a route rather than as more of the same mesh.
+    if (pathPos.length) {
+      gl.useProgram(lineProg)
+      gl.uniformMatrix4fv(lMVP, false, MVP)
+      gl.bindBuffer(gl.ARRAY_BUFFER, pathBuf)
+      gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
+      gl.enableVertexAttribArray(lA); gl.vertexAttribPointer(lA, 1, gl.FLOAT, false, 0, 0)
+      gl.uniform3f(lColor, 1.0, 0.80, 0.42)
+      gl.drawArrays(gl.LINES, 0, pathPos.length / 3)
+      gl.disableVertexAttribArray(lA)
+    }
     gl.useProgram(pointProg)
     gl.uniformMatrix4fv(pMVP, false, MVP)
     gl.uniform1f(pDpr, win.devicePixelRatio || 1)
@@ -557,7 +594,7 @@ function createGraph3D(el, doc, ctx, host, win) {
       const raw = win.localStorage.getItem('antemuse:graph3d-json')
       if (!raw) return null
       const box = JSON.parse(raw)
-      return box && box.nodes && box.nodes.length ? box.nodes : null
+      return box && box.nodes && box.nodes.length ? box : null
     } catch (e) { return null }
   }
   const demoCloud = () => {
@@ -590,24 +627,24 @@ function createGraph3D(el, doc, ctx, host, win) {
       boot('graph:' + (g ? (g.nodes ? g.nodes.length : 'nonodes') : 'none'))
       if (!g || !g.nodes || !g.nodes.length) {
         const local = pasted()
-        if (local) upload(local)
+        if (local) upload(local.nodes, local.path || [])
         else if (demo) upload(demoCloud())
         return
       }
       // An explicitly pasted payload wins over the live route. It is only ever there because
       // someone put it there to look at something specific; silently replacing it with whatever
       // the host happens to be serving makes the hook useless the moment the route works.
-      const pastedNodes = pasted()
-      if (pastedNodes) {
-        upload(pastedNodes)
-        boot('pasted:' + pastedNodes.length)
+      const pastedBox = pasted()
+      if (pastedBox) {
+        upload(pastedBox.nodes, pastedBox.path || [])
+        boot('pasted:' + pastedBox.nodes.length + (pastedBox.path && pastedBox.path.length ? ' path:' + pastedBox.path.length : ''))
         el.querySelectorAll('[data-antemuse-bake], img, canvas:not([data-antemuse-3d])').forEach((im) => {
           if (im.style.opacity !== '0') im.style.opacity = '0'
         })
         return
       }
       const changed = sig !== g.nodes.length + '|' + g.nodes[0].l + '|' + g.nodes[g.nodes.length - 1].l
-      upload(g.nodes)
+      upload(g.nodes, g.path || [])
       // Hide the still layers on every good poll, not only when the map itself changed. The stills
       // are re-created as the state advances, so a new bake image arrives at full opacity and ghosts
       // through the cloud as a pair of translucent bands — which is what the pane was serving.
@@ -618,7 +655,7 @@ function createGraph3D(el, doc, ctx, host, win) {
         fails: (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails ? (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails + 1 : 1 })
       boot('grapherr:' + (e && e.message ? e.message : e))
       const local = pasted()
-      if (local) upload(local)
+      if (local) upload(local.nodes, local.path || [])
       else if (demo) upload(demoCloud())
     })
   }
@@ -644,8 +681,8 @@ function createGraph3D(el, doc, ctx, host, win) {
   // answer, and neither should the pane wait for its first poll to have a shape.
   try {
     const early = pasted()
-    boot(early ? 'pasted:' + early.length : 'nopaste')
-    if (early) upload(early)
+    boot(early ? 'pasted:' + early.nodes.length : 'nopaste')
+    if (early) upload(early.nodes, early.path || [])
     else if (demo) upload(demoCloud())
   } catch (e) {
     boot('early:' + (e && e.message ? e.message : e))

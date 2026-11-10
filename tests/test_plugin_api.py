@@ -725,3 +725,30 @@ def test_a_state_with_no_owner_lights_the_pane():
     assert lit, "a walk that served a concept must light it"
     assert any(n["l"] == "doorstop" for n in lit)
     engine.exit() if hasattr(engine, "exit") else None
+
+
+def test_a_walk_reports_its_path_in_order():
+    """The firings are a set; the path is a sequence. The route has to say which order it walked.
+
+    Without this the pane can only light points, and a walk reads as a scatter of lit concepts
+    rather than a route out from the task and back.
+    """
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import dashboard.plugin_api as api
+    from core import engine, walks
+
+    engine.enter("walk", minutes=5, session="")
+    walk = walks.get("outer")
+    for _ in range(3):
+        walk.step(1)
+
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api/plugins/antemuse")
+    body = TestClient(app).get("/api/plugins/antemuse/state?graph=1&stills=0").json()
+
+    path = body["graph"]["path"]
+    assert len(path) >= 2, "a walk that stepped has a path"
+    labels = {n["l"] for n in body["graph"]["nodes"] if n["w"] > 0.05}
+    assert all(p in labels or p.lower() in {l.lower() for l in labels} for p in path[-2:])

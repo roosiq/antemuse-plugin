@@ -244,8 +244,23 @@ def graph(session: str = "", limit: int = 1400):
         nodes.append({"l": label, "x": float(xyz[0]), "y": float(xyz[1]), "z": float(xyz[2]),
                       "w": w})
     nodes.sort(key=lambda n: n["w"])  # brightest last: a stable draw order across polls
+    # The trail the state actually walked, in order. The firings say which concepts are live; they
+    # do not say that the walk went A -> B -> C, which is the thing a path is. Servings are the
+    # record of that order: each hop serves the concept it lands on.
+    path: List[str] = []
+    if drawable and key == "walk":
+        try:
+            trail = activation._rows(
+                "SELECT c.label FROM served s JOIN concepts c ON c.id = s.concept_id "
+                "WHERE s.move = 'walk' AND s.session = ? AND s.at >= ? "
+                "ORDER BY s.at DESC LIMIT 32",
+                (own, float(active.get("entered_at") or 0.0)))
+            path = [row[0] for row in reversed(trail or []) if row and row[0]]
+        except Exception:  # health: BLE001 -- no trail is a fact, not a failure
+            path = []
     payload = {
         "key": key,
+        "path": path,
         "session": own,
         "nodes": nodes,
         "lit": sum(1 for n in nodes if n["w"] > 0.05),
