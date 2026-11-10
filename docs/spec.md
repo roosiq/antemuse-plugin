@@ -771,7 +771,16 @@ place and be unrestricted in the next. Rendering follows origin; policy does not
 
 ## 13. Verification record
 
-**Current count: 909 tests** (`tools/test.sh`, 2026-11-09). This line is the only
+**Current count: 909 tests** (`tools/test.sh`, 2026-11-09)
+
+**Verification record, 2026-11-09 (QA pass).** 34 host-shaped checks in a throwaway
+profile and data home: 34/34 after fixes. Seven defects fixed — blank card on a fresh
+install, dead `python3 -m core.tui`, blank takeover at 0x0, renderer banner in the
+frame, retired state in the skill description, unknown tool action returning art,
+and the suite failing in a tree with experiment output. Version 0.9.1. `validate` is
+16/16 with `ok: true` but now reports cautions: the scanner reads the tracked
+experiment transcripts and flags recorded model phrasing. See
+`docs/qa/2026-11-09-qa-pass.md`.. This line is the only
 authoritative number in this document; the blocks below are dated evidence from the
 day they were taken, and later blocks are history, not claims. `tools/spec_audit.py
 --counts` compares this line against the suite and fails when they disagree.
