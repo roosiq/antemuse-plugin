@@ -222,26 +222,69 @@ function ArtSurface({ ctx }) {
       catch (e) { return 'file:///home/ryan/.hermes/plugins/antemuse/desktop/art/' + name + '/s' + i + '.jpg' }
     }
 
-    const show = (url) => {
+    // A frame is only revealed once its bytes are in. Setting opacity before the load lands
+    // showed the browser's broken-image glyph at full size whenever a URL did not resolve —
+    // which is exactly what a remote desktop sees when the picture lives on another machine.
+    const show = (url) => new Promise((resolve) => {
       const back = layers[1 - front]
+      let settled = false
+      const done = (ok) => {
+        if (settled) return
+        settled = true
+        back.onload = null
+        back.onerror = null
+        if (!ok) { resolve(false); return }
+        back.style.opacity = '1'
+        layers[front].style.opacity = '0'
+        front = 1 - front
+        resolve(true)
+      }
+      back.onload = () => done(true)
+      back.onerror = () => done(false)
       back.src = url
-      back.style.opacity = '1'
-      layers[front].style.opacity = '0'
-      front = 1 - front
-    }
+      // A cached frame may already be complete and never fire onload.
+      if (back.complete) done(back.naturalWidth > 0)
+    })
 
     // Activation stills, when the backend sends them: the live concept map for the state that
     // is running. Absent or empty means nothing is firing, and the baked scene draws instead.
-    const applyActivation = (urls) => {
+    const applyActivation = async (urls) => {
       if (!urls || !urls.length) return false
       const sig = 'activation:' + urls.join('|')
       if (bake === sig) return true
+      const ok = await show(urls[0])
+      if (!ok) return false
       bake = sig
       stills = urls.slice()
       stillIdx = 0
-      show(stills[0])
       if (win.__antemuse) win.__antemuse.bake = 'activation'
       return true
+    }
+
+    // The one path that works when the pane is on another computer: the bytes come back over the
+    // same gateway RPC the status already uses, so no cookie and no host path is needed. Three
+    // frames, fetched once per still set, carried as data URLs.
+    const fromB64 = async (paths) => {
+      if (!paths || !paths.length || !ctx || typeof ctx.rest !== 'function') return false
+      const sig = 'b64:' + paths.join('|')
+      if (bake === sig) return true
+      try {
+        const urls = []
+        for (const q of paths) {
+          const body = await Promise.resolve(ctx.rest(q))
+          if (!body || !body.data) return false
+          urls.push('data:' + (body.type || 'image/jpeg') + ';base64,' + body.data)
+        }
+        const ok = await show(urls[0])
+        if (!ok) return false
+        bake = sig
+        stills = urls
+        stillIdx = 0
+        if (win.__antemuse) win.__antemuse.bake = 'activation'
+        return true
+      } catch (e) {
+        return false
+      }
     }
 
     // Live stills the backend baked for this state. plugin-data sits beside the plugin
@@ -336,7 +379,14 @@ function ArtSurface({ ctx }) {
         const served = (p && p.files_http && p.files_http.length) ? p.files_http
           : (p && p.files && p.files.length) ? p.files
           : (p && p.stills)
-        if (!applyActivation(served) && !tryLive(key)) applyScene(key)
+        const paint = async () => {
+          // In order of how likely the surface is to reach the bytes: an absolute URL, the same
+          // bytes over the gateway RPC (a remote desktop), a file on this machine, then baked art.
+          if (await applyActivation(served)) return
+          if (await fromB64(p && p.stills_b64)) return
+          if (!tryLive(key)) applyScene(key)
+        }
+        void paint()
       }, () => { /* keep painting the idle scene */ })
     }
     // Preview aid: `localStorage['antemuse:scene'] = 'walk'` pins one scene, so a

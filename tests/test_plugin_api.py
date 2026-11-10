@@ -309,7 +309,9 @@ def test_the_pane_paints_stills_before_baked_art():
     js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
     assert "const served = (p && p.files_http && p.files_http.length) ? p.files_http" in js
     assert "p.files && p.files.length" in js
-    assert "if (!applyActivation(served) && !tryLive(key)) applyScene(key)" in js
+    assert "if (await applyActivation(served)) return" in js
+    assert "if (await fromB64(p && p.stills_b64)) return" in js
+    assert "if (!tryLive(key)) applyScene(key)" in js
     assert "stills = urls.slice()" in js
 
 
@@ -345,3 +347,28 @@ def test_stills_carry_an_absolute_url_for_a_remote_desktop(monkeypatch, tmp_path
     body = TestClient(app).get("/state?session=s1").json()
     assert body["files_http"], body.get("still_note")
     assert all(u.startswith("http://testserver/api/plugins/antemuse/art/walk/") for u in body["files_http"])
+
+
+def test_the_stills_also_travel_as_bytes_for_a_remote_pane(monkeypatch, tmp_path):
+    """A remote pane is a file:// page: it cannot fetch the route as an <img> and has no path on
+    the host. The same stills come back over the RPC it already uses, as base64."""
+    pytest.importorskip("httpx")
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from core import storage
+
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    api = _walk_api(monkeypatch, tmp_path)
+    still = storage.data_dir() / "activation" / "walk" / "f0.jpg"
+    still.parent.mkdir(parents=True, exist_ok=True)
+    still.write_bytes(b"\xff\xd8\xff\xd9" + b"0" * 2000)
+
+    app = FastAPI()
+    app.include_router(api.router)
+    client = TestClient(app)
+    body = client.get("/art_b64/walk/f0.jpg").json()
+    assert body["type"] == "image/jpeg"
+    assert len(body["data"]) > 2000
+    # and the guard is the same as the byte route's
+    assert client.get("/art_b64/walk/../../state.json").status_code == 404
+    assert client.get("/art_b64/walk/state.json").status_code == 404

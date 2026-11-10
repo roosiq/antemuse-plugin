@@ -174,6 +174,9 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
                 payload["files"] = [p.as_uri() for p in paths]
                 payload["files_http"] = [f"{base}/api/plugins/antemuse/art/{key}/{p.name}"
                                          for p in paths] if base else []
+                # Router-relative, because the pane reaches these over ctx.rest, which is
+                # already scoped to this plugin's router.
+                payload["stills_b64"] = [f"/art_b64/{key}/{p.name}" for p in paths]
                 if not paths:
                     payload["still_note"] = f"nothing firing in {key}"
             except Exception:  # health: BLE001 -- a missing picture is not a broken state
@@ -197,3 +200,27 @@ def art(name: str, filename: str):
     if not path.is_file():
         raise HTTPException(status_code=404, detail="not found")
     return FileResponse(str(path), media_type="image/jpeg")
+
+
+@router.get("/art_b64/{name}/{filename}")
+def art_b64(name: str, filename: str):
+    """The same still, carried as base64 instead of bytes.
+
+    A desktop pane is a file:// page: an <img> pointed at this route reaches it with no cookie and
+    no host path, which is fine on the machine that has the files and useless on a remote desktop.
+    The pane already talks to this router over the gateway RPC, so the bytes can travel that way.
+    """
+    safe_name = "".join(ch for ch in name if ch.isalnum() or ch in "-_")
+    safe_file = "".join(ch for ch in filename if ch.isalnum() or ch in "-_.")
+    if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
+        raise HTTPException(status_code=404, detail="not found")
+    try:
+        from core import storage
+        path = storage.data_dir() / "activation" / safe_name / safe_file
+    except Exception:
+        raise HTTPException(status_code=404, detail="not found")
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="not found")
+    import base64
+    return {"type": "image/jpeg",
+            "data": base64.b64encode(path.read_bytes()).decode("ascii")}
