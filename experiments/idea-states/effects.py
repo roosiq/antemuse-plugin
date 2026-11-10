@@ -25,8 +25,7 @@ METRICS = [("n_parsed", "ideas delivered"),
            ("in_distinct2", "distinct bigrams"),
            ("in_hapax", "hapax share"),
            ("in_compression", "compression ratio"),
-           ("in_self_overlap", "self bigram overlap"),
-           ("self_nll", "self NLL/token from own logprobs")]
+           ("in_self_overlap", "self bigram overlap")]
 
 
 def _t975(df: int) -> float:

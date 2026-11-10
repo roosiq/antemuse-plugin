@@ -27,8 +27,7 @@ METRICS = [("n_parsed", "ideas", 1),
            ("distinctiveness", "how far the list sits from the straight answer", 3),
            ("in_ppl", "how surprising the wording is (perplexity)", 0),
            ("in_ttr", "vocabulary spread", 3),
-           ("in_mtld", "vocabulary longevity (MTLD)", 0),
-           ("self_nll", "surprise per word, model's own logprobs", 3)]
+           ("in_mtld", "vocabulary longevity (MTLD)", 0)]
 
 
 def load() -> dict:
@@ -87,9 +86,6 @@ def render(data: dict) -> str:
         for cond in ("walk", "daydream", "doomscroll"):
             cellsrow = []
             for metric, _label, nd in METRICS:
-                if metric == "self_nll" and not any(v.get(cond, {}).get("self_nll") for v in bl.values()):
-                    cellsrow.append("—")
-                    continue
                 got = pct(bl, cond, metric)
                 if got is None:
                     cellsrow.append("—")
