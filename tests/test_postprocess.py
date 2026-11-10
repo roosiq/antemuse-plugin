@@ -150,3 +150,18 @@ def test_stills_are_written_under_predictable_names(tmp_path, monkeypatch):
     for i in range(activation_stills.STILL_COUNT):
         stable = dest / f"f{i}.jpg"
         assert stable.exists() and stable.stat().st_size > 2000, stable
+
+
+def test_a_chat_nothing_was_served_in_still_draws_the_profile(tmp_path, monkeypatch):
+    """A fresh desktop session has no firings of its own. An empty field reads as the plugin
+    doing nothing, so the busiest chat's recent firings stand in for it."""
+    from core import activation_stills, history
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    now = 1_760_000_000.0
+    for i, label in enumerate(["gateway", "plugin", "ledger", "shipper"]):
+        history.notice(label, move="session", session="busy-chat", at=now - i, ref=str(i))
+    dest = tmp_path / "stills"
+    activation_stills._PEAK["n"] = 0
+    paths = activation_stills.stills(move="walk", session="never-seen", dest=dest, now=now)
+    assert len(paths) == activation_stills.STILL_COUNT
+    assert all(p.exists() and p.stat().st_size > 2000 for p in paths), paths

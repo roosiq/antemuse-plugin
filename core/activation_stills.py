@@ -302,6 +302,17 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
                   for m in moments]
     labels = sorted({label for f in frames for label in f["activations"]})
     if not labels:
+        # A chat nothing has been served in yet — a fresh desktop session — has no firings of its
+        # own, and an empty field would look like the plugin doing nothing. The profile's busiest
+        # chat is real, recent material: a picture of something that happened beats a blank one.
+        rows = activation._rows(
+            "SELECT session FROM served WHERE session != '' GROUP BY session "
+            "ORDER BY COUNT(*) DESC LIMIT 1")
+        if rows and rows[0][0]:
+            frames = (activation.sequence(rows[0][0], move or None, steps=count)
+                      or activation.sequence(rows[0][0], None, steps=count))
+            labels = sorted({label for f in frames for label in f["activations"]})
+    if not labels:
         return []
 
     pos = fit(coords(labels), *size)
