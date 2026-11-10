@@ -156,6 +156,27 @@ def _core():
     return module
 
 
+def _plugin_version() -> str:
+    """The version of the code that is answering, not the version on disk.
+
+    A gateway holds the module it imported at startup, so "is this the new code?" was being
+    guessed from mtimes and file stats — and guessed wrong twice. Shipping the version in the
+    payload makes a stale process say its own name.
+    """
+    try:
+        from pathlib import Path as _Path
+        text = (_Path(__file__).resolve().parent.parent / "plugin.yaml").read_text()
+        for line in text.splitlines():
+            if line.strip().startswith("version:"):
+                return line.split(":", 1)[1].strip().strip('"\'')
+    except Exception:
+        pass
+    return "unknown"
+
+
+_LOADED_VERSION = _plugin_version()
+
+
 def _core_module(name: str):
     """One submodule of `core` (`core.activation_stills`), loaded the same way either time."""
     import importlib
@@ -226,6 +247,9 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
     # Which build of this file answered: the pane and the app can disagree about that, and the
     # field is how you tell instead of guessing.
     payload["server"] = f"{Path(__file__).stat().st_mtime_ns}"
+    # the version THIS PROCESS loaded, captured at import: a gateway that started before a
+    # fix says its own old number instead of leaving "is it stale?" to be guessed
+    payload["plugin"] = _LOADED_VERSION
     if active and not belongs_here:
         # Named, not silent: a pane asking about another chat's state gets its ambient scene, and
         # whoever wonders why can find out.
