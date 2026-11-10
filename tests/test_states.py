@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import pathlib
 import os
 import sys
 import tempfile
@@ -390,4 +391,38 @@ def test_unstuck_survives_entry_and_returns_its_account():
     answer = engine.stop(session_id="un")
     assert answer != "not in a state.", "a finished state still owes its account"
     assert "UNSTUCK finished" in answer, answer
+
+def test_a_frame_rotated_away_mid_read_does_not_break_the_payload():
+    """Two requests overlap: the pane polls while it also fetches a URL.
+
+    A stat race on a frame the other request had just rotated away used to raise
+    FileNotFoundError out of `fresh()`, and the pane reported "picture failed" while a perfectly
+    good frame was already on screen.
+    """
+    from core import activation_stills
+
+    dest = pathlib.Path(tempfile.mkdtemp(prefix="still-race-")) / "activation" / "profile"
+    dest.mkdir(parents=True)
+    stamped = dest / "f0-1794321466-post.jpg"
+    stamped.write_bytes(b"jpeg")
+    # the rotating request deletes it after we listed the directory
+    stale = dest / "f1-1794321000-post.jpg"
+    stale.write_bytes(b"jpeg")
+    stale.unlink()
+    paths = activation_stills.fresh(move="profile", session="", dest=dest)
+    assert paths, "a vanished sibling must not take the set down"
+    assert all(p.exists() for p in paths)
+
+
+def test_the_payload_names_the_version_it_loaded():
+    """Staleness was guessed from mtimes and guessed wrong twice."""
+    import importlib.util
+
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("pa_version", repo / "dashboard" / "plugin_api.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    payload = module.state()
+    assert payload.get("plugin"), payload.keys()
+    assert payload["plugin"][0].isdigit(), payload["plugin"]
 

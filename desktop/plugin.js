@@ -375,6 +375,7 @@ function ArtSurface({ ctx }) {
             stills: p && p.stills ? p.stills.length : -1,
             b64: p && p.stills_b64 ? p.stills_b64.length : -1,
             note: p && p.still_note,
+            plugin: p && p.plugin,
             server: p && p.server
           })
         } catch (e) { /* diagnostics never break the pane */ }

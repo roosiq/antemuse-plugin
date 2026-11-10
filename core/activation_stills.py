@@ -442,9 +442,20 @@ def fresh(move: str = "", session: str = "", dest: Optional[Path] = None,
     if dest.is_dir():
         # The stamped stills only: f0.jpg..f2.jpg are the aliases the desktop pane asks for, and
         # returning both would serve every frame twice.
-        existing = sorted(p for p in dest.glob("f*.jpg") if "-" in p.stem)
-        if existing:
-            age = time.time() - max(p.stat().st_mtime for p in existing)
-            if age < STILL_TTL_S:
-                return existing
+        existing: List[Path] = []
+        newest = 0.0
+        for path in dest.glob("f*.jpg"):
+            if "-" not in path.stem:
+                continue
+            try:
+                newest = max(newest, path.stat().st_mtime)
+            except OSError:
+                # A concurrent render rotated this frame away between glob and stat. Two requests
+                # (the pane polling, the pane fetching a URL) can overlap, and a stat race used to
+                # take the whole payload down with FileNotFoundError, which the pane reported as
+                # "picture failed" while a perfectly good frame was already on screen.
+                continue
+            existing.append(path)
+        if existing and time.time() - newest < STILL_TTL_S:
+            return sorted(existing)
     return stills(move=move, session=session, dest=dest, palette=palette)

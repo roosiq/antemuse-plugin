@@ -263,7 +263,12 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
     own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""
     try:
         activation_stills = _core_module("activation_stills")
-        paths = activation_stills.fresh(move=key, session=str(own))
+        try:
+            paths = activation_stills.fresh(move=key, session=str(own))
+        except OSError:
+            # The frame set was rotated away under us. One forced redraw is cheaper than telling
+            # the person their picture failed when it did not.
+            paths = activation_stills.stills(move=key, session=str(own))
         payload["stills"] = [f"/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
         payload["files"] = [p.as_uri() for p in paths]
         # Three ways to reach the same picture, because the pane's surface decides which one
