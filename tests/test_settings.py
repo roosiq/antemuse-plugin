@@ -108,3 +108,45 @@ def test_no_host_means_defaults_and_no_crash():
     settings.bind(None)
     assert settings.flag("picture_enabled") is True
     assert settings.number("journal_cap") == 60
+
+
+def test_the_manifest_and_the_code_agree_on_every_default():
+    """Two places declare the same six settings. Drift is silent: the form shows one default and
+    the code uses another, and nobody sees it until someone wonders why the box does nothing."""
+    from core import settings
+
+    schema = yaml.safe_load(open(os.path.join(ROOT, "plugin.yaml")))["config_schema"]
+
+    for key, spec in schema.items():
+        if key in settings.BOOL_DEFAULTS:
+            assert spec["default"] == settings.BOOL_DEFAULTS[key], key
+        else:
+            default, low, high = settings.INT_BOUNDS[key]
+            assert spec["default"] == default, key
+            # a bound the form does not know is a value the code silently rewrites
+            assert spec.get("min") == low and spec.get("max") == high, key
+
+
+def test_turning_the_picture_off_actually_stops_posting_it(monkeypatch):
+    """`picture_enabled` was declared, described and rendered as a toggle, and nothing read it.
+
+    A setting that does nothing is worse than no setting: the user turns it off, the picture keeps
+    arriving, and the form has lied to them.
+    """
+    import importlib
+
+    plugin = importlib.import_module("__init__")
+
+    posted = []
+    monkeypatch.setattr(plugin, "_post", lambda text: posted.append(text) or True)
+    monkeypatch.setattr(plugin.engine, "watch_state", lambda: {"active": True, "key": "walk"})
+    monkeypatch.setattr(plugin.engine, "platform", lambda: "discord")
+    # the card itself is a separate surface; this test is about whether it is asked for at all
+    monkeypatch.setattr("core.surfaces.card", lambda *a, **k: "· · ·")
+
+    settings.bind(Host({"picture_enabled": True}))
+    assert plugin._picture() is True and posted
+
+    posted.clear()
+    settings.bind(Host({"picture_enabled": False}))
+    assert plugin._picture() is False and not posted, "off means no picture"

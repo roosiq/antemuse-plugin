@@ -2,7 +2,7 @@ name: antemuse
 label: Antemuse
 kind: standalone
 manifest_version: 2
-version: "0.9.34"
+version: "0.9.35"
 author: Antemuse
 homepage: https://antemuse.com
 license: MIT
@@ -38,6 +38,8 @@ config_schema:
   recommend_cooling_minutes:
     type: int
     default: 45
+    min: 10
+    max: 240
     label: Minutes between recommendations
     description: >-
       How long one recommendation holds before another may replace it. Below 10 is
@@ -45,6 +47,8 @@ config_schema:
   long_stretch_minutes:
     type: int
     default: 0
+    min: 0
+    max: 360
     label: Long-stretch threshold
     description: >-
       Minutes without a state before one is recommended. 0 keeps the measured
@@ -55,7 +59,9 @@ config_schema:
     default: true
     label: Post the picture in chat
     description: >-
-      Post the state's wordless card as its own message when a state begins.
+      Post the state's wordless card as its own message when a state begins. On by
+      default; turn it off when the desktop pane is where you watch states. Asking for
+      it directly (/state picture) always works either way.
   picture_narrow:
     type: bool
     default: false
@@ -66,6 +72,8 @@ config_schema:
   journal_cap:
     type: int
     default: 60
+    min: 20
+    max: 60
     label: Journal entries kept
     description: >-
       How many journal entries the state keeps. Reduce only: values above 60 are

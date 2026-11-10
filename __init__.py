@@ -41,7 +41,7 @@ else:  # flat load: this file is or is not on sys.path, but its directory is wha
     from core import (engine, history, options, panel, recall, runtime, session, settings,
                       states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
 
-__version__ = "0.9.34"
+__version__ = "0.9.35"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
@@ -390,6 +390,8 @@ def _picture() -> bool:
     """
     try:
         from core import settings, surfaces
+        if not settings.flag("picture_enabled"):
+            return False
         view = engine.watch_state()
         if not view.get("active"):
             return False
