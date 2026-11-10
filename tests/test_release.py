@@ -91,3 +91,33 @@ def test_the_installer_does_not_take_ownership_of_the_app_s_directory():
 def test_the_package_carries_no_baked_scenes():
     build = (ROOT / "scripts" / "build-release.sh").read_text()
     assert "desktop/art" in build
+
+
+def test_the_installer_runs_where_hermes_runs():
+    """The install used to be bash + rsync + cp + tar, which is Linux and macOS only.
+
+    Hermes runs on Windows, so the installer must be Python: no shell, no external tools, no
+    POSIX paths. The shell script stays as an entry point and nothing more.
+    """
+    root = Path(__file__).resolve().parent.parent
+    py = (root / "scripts" / "install.py").read_text()
+    sh = (root / "scripts" / "install.sh").read_text()
+
+    assert "install.py" in sh, "the shell entry point must delegate"
+    assert "exec " in sh
+    # no external binaries the standard library already covers
+    for tool in ('"rsync"', '"cp"', '"tar"', '"bash"'):
+        assert tool not in py, f"{tool} is not available everywhere Hermes runs"
+    # paths come from the environment, not from a POSIX assumption
+    assert "HERMES_HOME" in py and "Path.home()" in py
+    assert "shutil.copytree" in py, "copy with the standard library"
+    # it has to compile on any platform
+    compile(py, "install.py", "exec")
+
+
+def test_the_e2e_does_not_shell_out_to_posix_tools():
+    root = Path(__file__).resolve().parent.parent
+    src = (root / "tools" / "e2e_install_walk.py").read_text()
+    assert "tarfile.open" in src, "extract with the standard library"
+    assert '"tar"' not in src and '"bash"' not in src
+    assert "/home/" not in src and "/tmp/" not in src, "no hand-written host paths"

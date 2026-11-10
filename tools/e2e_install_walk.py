@@ -12,6 +12,8 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
@@ -24,7 +26,7 @@ def _ver(path):
 
 
 TARBALL = sorted(DIST.glob("antemuse-*.tar.gz"), key=_ver)[-1]
-ROOT = Path("/tmp/e2e")
+ROOT = Path(tempfile.gettempdir()) / "antemuse-e2e"
 HOME = ROOT / "home"
 PORT = 18931
 SESSION = "e2e-install-walk"
@@ -49,21 +51,25 @@ def main():
     ROOT.mkdir(parents=True)
     HOME.mkdir()
 
-    # 1. the artefact a person downloads
-    sh(["tar", "-xzf", str(TARBALL), "-C", str(ROOT)])
+    # 1. the artefact a person downloads — tarfile, not `tar`: no shell, no PATH, no POSIX
+    with tarfile.open(TARBALL) as tf:
+        tf.extractall(ROOT)
     src = next(p for p in ROOT.iterdir() if p.is_dir() and p.name.startswith("antemuse"))
     step("tarball extracts", (src / "scripts/install.sh").exists(), src.name)
 
     # 2. one command, into an empty home
-    env = dict(os.environ, HERMES_HOME=str(HOME), NLTK_DATA="/home/ryan/nltk_data")
+    env = dict(os.environ, HERMES_HOME=str(HOME))
+    # corpora are wherever the host keeps them; a hand-written path is the same class of bug as a
+    # hardcoded home
+    env.setdefault("NLTK_DATA", str(Path(os.environ.get("NLTK_DATA") or Path.home() / "nltk_data")))
     env.pop("PYTHONPATH", None)
     env.pop("ANTEMUSE_STATES_HOME", None)
     # --no-cli: this host cannot commit a dependency env for a scratch home (python-olm fails to
     # build), and that is the host's problem, not the installer's. Everything the plugin itself
     # installs still runs.
-    r = sh(["bash", "scripts/install.sh", "--no-cli"], cwd=str(src), env=env)
+    r = sh([sys.executable, str(src / "scripts" / "install.py"), "--no-cli"], cwd=str(src), env=env)
     installed = HOME / "plugins/antemuse"
-    step("install.sh exits 0", r.returncode == 0, (r.stdout or "").strip().splitlines()[-1:]and
+    step("install.py exits 0", r.returncode == 0, (r.stdout or "").strip().splitlines()[-1:]and
          (r.stdout or "").strip().splitlines()[-1][:90] or "")
     if r.returncode != 0:
         print(r.stdout[-2000:], r.stderr[-2000:])

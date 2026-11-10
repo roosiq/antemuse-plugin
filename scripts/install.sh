@@ -19,6 +19,17 @@
 # silently.
 set -euo pipefail
 
+# The install itself is scripts/install.py: no bash, rsync, tar or POSIX paths needed, so the same
+# installer runs on Linux, macOS and Windows (`python scripts/install.py`). This entry point only
+# finds an interpreter and hands over.
+SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY_BIN="$(command -v python3 || command -v python || true)"
+if [[ -n "$PY_BIN" ]]; then
+  exec "$PY_BIN" "$SRC_DIR/scripts/install.py" "$@"
+fi
+echo "no python3 on PATH — run 'python scripts/install.py' with a Python 3.10+" >&2
+exit 1
+
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=scripts/doctor_counts.sh
 . "$SRC/scripts/doctor_counts.sh"
