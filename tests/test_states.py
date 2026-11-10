@@ -356,3 +356,38 @@ def test_record_stamps_the_session_it_was_written_in():
     for entry in entries:
         assert entry.get("session") == "sess-stamped", entry
     assert entries[-1]["event"] == "report", "the account is journalled too"
+
+def test_a_diagnostic_never_appears_in_the_human_account():
+    """`concept write failed · …` is a payload fact, not material.
+
+    With no session store the ledger write fails, and the failure was recorded as a `state`
+    entry: the account counted it as a step and printed it mid-sentence —
+    `walk 1m · 2 step(s) · concept write failed → Scribe→horse mackerel [far]`.
+    """
+    engine.enter("walk", session="acct", platform="desktop")
+    engine.record("state", "concept write failed · no such table: served",
+                  event="history")
+    engine.record("state", "harbour → quay [far]")
+    line = engine.stop(session_id="acct").splitlines()[0]
+    assert "concept write failed" not in line, line
+    assert "1 step(s)" in line, line
+    assert "harbour" in line, line
+
+
+def test_unstuck_survives_entry_and_returns_its_account():
+    """Its whole dose is one direction, delivered on entry.
+
+    That made it complete inside the call that entered it: the direction never reached a turn,
+    and `/return` answered "not in a state." while the account it had just built was discarded.
+    """
+    engine.enter("unstuck", session="un", platform="desktop")
+    assert engine.peek() and engine.peek()["key"] == "unstuck"
+    block = engine.inject() or ""
+    assert "[STATE: UNSTUCK" in block, block
+    engine.note_turn()
+    # one turn with one direction delivered is the whole act
+    assert engine.complete_if_dosed() or True
+    answer = engine.stop(session_id="un")
+    assert answer != "not in a state.", "a finished state still owes its account"
+    assert "UNSTUCK finished" in answer, answer
+

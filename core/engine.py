@@ -50,6 +50,9 @@ def _save(data: Dict[str, Any]) -> None:
     tmp.replace(path)
 
 
+DIAGNOSTIC_EVENTS = ("history", "failure", "error")
+
+
 def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     """What happened while the agent was away, in one line it can speak from.
 
@@ -61,6 +64,12 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     events = [
         e for e in data.get("journal", [])
         if e.get("state") == key and e.get("at", 0) >= started and e.get("text")
+        # A diagnostic is not material. `history` records "concept write failed · …" when the
+        # store is missing or unwritable; counting it as a step both inflated the step count and
+        # printed an internal failure inline in the human account ("walk 1m · 2 step(s) ·
+        # concept write failed → Scribe→horse mackerel"). The failure belongs in the payload and
+        # the journal, not mid-sentence in the line a person reads.
+        and e.get("event") not in DIAGNOSTIC_EVENTS
     ]
     # the account is the material the state delivered, not the agent's own prose:
     # counting replies as "steps" made a five-step walk report ten.
@@ -325,6 +334,15 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
         data = _load()
         active = data.get("active")
         if not active:
+            # A state that completed on its own is still worth answering: `/return` used to say
+            # "not in a state." because the dose had already ended it, throwing away the account
+            # the plugin had just built. A fresh residue report is that account.
+            for entry in reversed(data.get("residue") or []):
+                if entry.get("kind") == "report" and int(entry.get("turns_left") or 0) > 0:
+                    label = (states.STATES.get(entry.get("state")) or {}).get("label") or "state"
+                    return (f"{label} finished · {entry.get('text', '')}\n"
+                            f"The act is done, so the state is over. Carry what it gave you "
+                            f"into the work.")
             return "not in a state."
         spec = states.STATES[active["key"]]
         origin = active.get("origin") or {}
@@ -487,6 +505,12 @@ def complete_if_dosed() -> bool:
         served = int(active.get("served") or 0)
         worked = int(active.get("turns") or 0)
         done = (worked >= dose) if unit == "turns" else (served >= dose)
+        # A dose counted in deliveries must not finish the state before the agent has had a turn
+        # to use what arrived. Unstuck's whole dose is one direction, delivered on entry, so it
+        # used to complete inside the call that entered it: the direction never reached a turn,
+        # `/return` answered "not in a state.", and the person saw only the recovery block.
+        if done and worked < 1:
+            return False
     if not done:
         return False
     stop(current_session(), reason="complete")
