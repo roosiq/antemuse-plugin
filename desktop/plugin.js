@@ -195,8 +195,17 @@ let GRAPH3D_SEQ = 0
 function createGraph3D(el, doc, ctx, host, win) {
   if (!ctx || typeof ctx.rest !== 'function') return null
   const INSTANCE = ++GRAPH3D_SEQ
+  const boot = (v) => {
+    try {
+      win.__antemuse = win.__antemuse || {}
+      win.__antemuse.g3boot = (win.__antemuse.g3boot || '') + '|' + v
+    } catch (e) { /* diagnostics never break the pane */ }
+  }
+  boot('mount' + INSTANCE)
   const report = (patch) => {
-    if (!win.__antemuse) return
+    // The pane's diagnostics object is created by the /state poll, which may not have answered
+    // yet — a report that waits for it was silently dropped on a cold start.
+    if (!win.__antemuse) win.__antemuse = {}
     const box = win.__antemuse.g3s = win.__antemuse.g3s || {}
     box[INSTANCE] = Object.assign(box[INSTANCE] || {}, { instance: INSTANCE }, patch)
     if (INSTANCE === 1) win.__antemuse.g3 = box[INSTANCE]
@@ -503,10 +512,22 @@ function createGraph3D(el, doc, ctx, host, win) {
   doc.addEventListener('wheel', gWheel, { capture: true, passive: false })
 
   // ---- data -------------------------------------------------------------------
-  // Preview aid, same convention as `antemuse:scene`: `localStorage['antemuse:graph3d-demo']='1'`
-  // draws a fixed synthetic cloud so the renderer and its input can be looked at without a
-  // backend that serves /graph. Never on by itself.
-  const demo = (() => { try { return win.localStorage.getItem('antemuse:graph3d-demo') === '1' } catch (e) { return false } })()
+  // Preview aids, same convention as `antemuse:scene`, never on by themselves: a pasted
+  // `antemuse:graph3d-json` payload, or a fixed synthetic cloud for `antemuse:graph3d-demo`.
+  const demo = (() => {
+    try { return win.localStorage.getItem('antemuse:graph3d-demo') === '1' } catch (e) { return false }
+  })()
+  // A real `/graph` payload pasted into `antemuse:graph3d-json` is drawn instead, so the surface
+  // can be looked at (or filmed) on a machine whose gateway predates the route. The nodes are
+  // whatever was pasted; nothing is synthesised here.
+  const pasted = () => {
+    try {
+      const raw = win.localStorage.getItem('antemuse:graph3d-json')
+      if (!raw) return null
+      const box = JSON.parse(raw)
+      return box && box.nodes && box.nodes.length ? box.nodes : null
+    } catch (e) { return null }
+  }
   const demoCloud = () => {
     let seed = 7
     const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648 }
@@ -524,16 +545,38 @@ function createGraph3D(el, doc, ctx, host, win) {
     const session = host && host.state && host.state.focusedSessionId
       ? host.state.focusedSessionId.get() : ''
     const q = '/graph' + (session ? '?session=' + encodeURIComponent(session) : '')
-    Promise.resolve(ctx.rest(q)).then((g) => {
+    const slow = new Promise((_, reject) => setTimeout(() => reject(new Error('graph timeout')), 12000))
+    Promise.race([Promise.resolve(ctx.rest(q)), slow]).then((g) => {
       if (stopped) return
-      if (!g || !g.nodes || !g.nodes.length) { if (demo) upload(demoCloud()); return }
+      boot('graph:' + (g ? (g.nodes ? g.nodes.length : 'nonodes') : 'none'))
+      if (!g || !g.nodes || !g.nodes.length) {
+        const local = pasted()
+        if (local) upload(local)
+        else if (demo) upload(demoCloud())
+        return
+      }
       const changed = sig !== g.nodes.length + '|' + g.nodes[0].l + '|' + g.nodes[g.nodes.length - 1].l
       upload(g.nodes)
       if (changed && el.querySelector('[data-antemuse-bake]')) {
         // The 3D surface is the picture now; the JPEG cross-fade behind it would ghost through.
         el.querySelectorAll('[data-antemuse-bake]').forEach((im) => { im.style.opacity = '0' })
       }
-    }, () => { if (demo) upload(demoCloud()) })
+    }, (e) => {
+      boot('grapherr:' + (e && e.message ? e.message : e))
+      const local = pasted()
+      if (local) upload(local)
+      else if (demo) upload(demoCloud())
+    })
+  }
+  // Draw what is already known first: a pasted payload must not wait on a gateway that may never
+  // answer, and neither should the pane wait for its first poll to have a shape.
+  try {
+    const early = pasted()
+    boot(early ? 'pasted:' + early.length : 'nopaste')
+    if (early) upload(early)
+    else if (demo) upload(demoCloud())
+  } catch (e) {
+    boot('early:' + (e && e.message ? e.message : e))
   }
   pull()
   const timer = typeof ctx.setInterval === 'function' ? ctx.setInterval(pull, 4000) : setInterval(pull, 4000)
@@ -801,7 +844,15 @@ function ArtSurface({ ctx }) {
     let graph3d = null
     try {
       graph3d = createGraph3D(el, doc, ctx, host, win)
-    } catch (e) { graph3d = null }
+    } catch (e) {
+      graph3d = null
+      // Named, not silent: a surface that fails to build must say why, or the pane just looks
+      // like it has nothing to draw.
+      try {
+        win.__antemuse = win.__antemuse || {}
+        win.__antemuse.g3boot = (win.__antemuse.g3boot || '') + '|throw:' + (e && e.message ? e.message : e)
+      } catch (_e) {}
+    }
 
     if (!preview) say()
     // Host-managed timer where the SDK provides one, so disposal is the host's

@@ -183,6 +183,9 @@ def _core_module(name: str):
     return importlib.import_module(_core().__name__ + "." + name)
 
 
+_GRAPH_MEMO: Dict[str, Any] = {"key": None, "at": 0.0, "payload": None}
+
+
 @router.get("/graph")
 def graph(session: str = "", limit: int = 1400):
     """The same map the stills draw, as numbers a 3D surface can turn.
@@ -195,7 +198,13 @@ def graph(session: str = "", limit: int = 1400):
     Nothing here is invented: a concept with no projection simply is not in the list, and nothing
     is lit unless the ledger says it fired.
     """
+    import time as _time
+    started = _time.time()
     engine_state = _core_module("engine").peek() or {}
+    want = (session, int(limit))
+    if (_GRAPH_MEMO.get("want") == want and _GRAPH_MEMO.get("payload") is not None
+            and _time.time() - float(_GRAPH_MEMO.get("at") or 0) < 3.0):
+        return _GRAPH_MEMO["payload"]
     active = engine_state or {}
     belongs_here = True
     if active and session:
@@ -225,14 +234,20 @@ def graph(session: str = "", limit: int = 1400):
         nodes.append({"l": label, "x": float(xyz[0]), "y": float(xyz[1]), "z": float(xyz[2]),
                       "w": w})
     nodes.sort(key=lambda n: n["w"])  # brightest last: a stable draw order across polls
-    return {
+    payload = {
         "key": key,
         "session": own,
         "nodes": nodes,
         "lit": sum(1 for n in nodes if n["w"] > 0.05),
         "plugin": _LOADED_VERSION,
         "server": f"{Path(__file__).stat().st_mtime_ns}",
+        "ms": int((_time.time() - started) * 1000),
     }
+    # The pane polls this every four seconds and the positions only change when the projection or
+    # the ledger changes, so a short memo keeps a poll from re-walking 1,373 labels. The weights
+    # are part of the payload, so the TTL stays below the poll interval.
+    _GRAPH_MEMO.update({"want": want, "at": _time.time(), "payload": payload})
+    return payload
 
 
 @router.get("/state")
