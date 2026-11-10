@@ -79,7 +79,7 @@ actually reads from — dependencies, corpora, plugin, desktop half, the WordNet
 places concepts on the picture, and a first ledger scan — and checks each step:
 
 ```bash
-tar -xzf antemuse-0.9.1.tar.gz && cd antemuse-0.9.1
+tar -xzf antemuse-0.9.3.tar.gz && cd antemuse-0.9.3
 ./scripts/install.sh            # --dry-run to see every step first
 ```
 

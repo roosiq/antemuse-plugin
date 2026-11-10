@@ -20,6 +20,8 @@
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/doctor_counts.sh
+. "$SRC/scripts/doctor_counts.sh"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 DRY=0
 NO_CLI=0
@@ -194,8 +196,8 @@ elif [[ $DRY -eq 0 ]]; then
   printf '%s\n' "$out" | tail -3
   # A doctor that passes while nothing registered is the failure we actually hit on Windows:
   # the tool and hook counts are the part that matters, so check them, not the exit code alone.
-  tools="$(printf '%s' "$out" | sed -n 's/.*registrations: \([0-9]*\) tool.*/\1/p' | head -1)"
-  hooks="$(printf '%s' "$out" | sed -n 's/.*\([0-9]*\) hook.*/\1/p' | head -1)"
+  tools="$(doctor_count "$out" tool)"
+  hooks="$(doctor_count "$out" hook)"
   [[ "${tools:-0}" -ge 1 ]] || die "the plugin registered ${tools:-0} tools — expected at least 1 (run 'hermes plugins doctor antemuse' and read the first error)"
   [[ "${hooks:-0}" -ge 5 ]] || die "the plugin registered ${hooks:-0} hooks — expected at least 5"
   ok "${tools} tool(s), ${hooks} hook(s) registered"
