@@ -87,6 +87,28 @@ def frame_index(key: str, frames: int = 8, now: float | None = None) -> int:
     return int((time.time() if now is None else now) // step) % frames
 
 
+def _core():
+    """The plugin's own `core` package, whichever way this module was loaded.
+
+    The host imports the router as `<plugin>.dashboard.plugin_api`; the tests import it flat. A
+    bare `from core import ...` works only in the second case — in the running gateway it raised
+    ImportError, the surrounding `except` swallowed it, and the pane was told "nothing firing"
+    while the ledger had plenty. That single line is why the picture never appeared.
+    """
+    try:
+        from .. import core as core_pkg  # imported as <plugin>.dashboard.plugin_api
+        return core_pkg
+    except Exception:
+        import core as core_pkg  # imported flat, with the plugin dir on sys.path
+        return core_pkg
+
+
+def _core_module(name: str):
+    """One submodule of `core` (`core.activation_stills`), loaded the same way either time."""
+    import importlib
+    return importlib.import_module(_core().__name__ + "." + name)
+
+
 @router.get("/state")
 # The request is injected by FastAPI and optional so the route can be called directly in tests.
 def state(request: Request = None, cols: int | None = None, rows: int | None = None, fit: str = "contain",
@@ -155,12 +177,16 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
         # Named, not silent: a pane asking about another chat's state gets its ambient scene, and
         # whoever wonders why can find out.
         payload["still_note"] = "state belongs to another chat"
-    if active and belongs_here:
-        key = str(active.get("key") or "")
-        if key:
+    # The map is the pane's whole surface, not a decoration that appears only while a state runs:
+    # with no state (or one belonging to another chat) it draws the profile's recent firings on
+    # the ledger's concept space. An empty pane is the app's own artwork, which is not ours to
+    # show — and that is exactly what "I still see the wrong viz" was.
+    drawable = bool(active and belongs_here)
+    key = str(active.get("key") or "") if drawable else "profile"
+    if key:
             try:
-                from core import activation_stills
-                own = (active.get("origin") or {}).get("session_id") or session or ""
+                activation_stills = _core_module("activation_stills")
+                own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""
                 paths = activation_stills.fresh(move=key, session=str(own))
                 payload["stills"] = [f"/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
                 # The desktop pane is a file:// page: it cannot fetch these without the gateway's
@@ -178,9 +204,10 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
                 # already scoped to this plugin's router.
                 payload["stills_b64"] = [f"/art_b64/{key}/{p.name}" for p in paths]
                 if not paths:
-                    payload["still_note"] = f"nothing firing in {key}"
-            except Exception:  # health: BLE001 -- a missing picture is not a broken state
+                    payload["still_note"] = f"nothing firing in {key}" if drawable else "nothing firing yet"
+            except Exception as exc:  # health: BLE001 -- a missing picture is not a broken state
                 payload["stills"] = []
+                payload["still_note"] = f"picture failed: {type(exc).__name__}: {exc}"[:160]
     return payload
 
 
@@ -193,7 +220,7 @@ def art(name: str, filename: str):
     if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
         raise HTTPException(status_code=404, detail="not found")
     try:
-        from core import storage
+        storage = _core_module("storage")
         path = storage.data_dir() / "activation" / safe_name / safe_file
     except Exception:
         raise HTTPException(status_code=404, detail="not found")
@@ -215,7 +242,7 @@ def art_b64(name: str, filename: str):
     if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
         raise HTTPException(status_code=404, detail="not found")
     try:
-        from core import storage
+        storage = _core_module("storage")
         path = storage.data_dir() / "activation" / safe_name / safe_file
     except Exception:
         raise HTTPException(status_code=404, detail="not found")

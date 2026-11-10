@@ -39,8 +39,8 @@ try {
     const value = raw === null ? NaN : parseFloat(raw)
     return Number.isFinite(value) ? value : fallback
   }
-  const grainAmount = num('grain', 0.055)
-  const vignetteAmount = num('vignette', 0.72)
+  const grainAmount = num('grain', 0.022)
+  const vignetteAmount = num('vignette', 0.45)
   const bloomAmount = num('bloom', 0.55)
 
   const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true })

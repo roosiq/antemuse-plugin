@@ -267,12 +267,14 @@ def test_the_art_route_refuses_anything_it_did_not_write(monkeypatch, tmp_path):
             raise AssertionError(f"{name}/{filename} was not refused")
 
 
-def test_no_state_means_no_stills(monkeypatch, tmp_path):
+def test_no_state_still_draws_the_profile_and_an_empty_ledger_draws_nothing(monkeypatch, tmp_path):
     api = _walk_api(monkeypatch, tmp_path)
     monkeypatch.setattr(api, "plugin", lambda: type("P", (), {"core": type("C", (), {
         "panel": type("Pan", (), {"engine_state": staticmethod(lambda: {"active": None})}),
         "screensaver": __import__("core.screensaver", fromlist=["x"])})()})())
-    assert api.state(cols=40, rows=12)["stills"] == []
+    # No state, and a ledger with no servings: there is nothing true to draw.
+    payload = api.state(cols=40, rows=12)
+    assert payload["stills"] == [] and payload["still_note"] == "nothing firing yet"
 
 
 def test_stills_are_written_for_a_state_with_servings(monkeypatch, tmp_path):
@@ -382,3 +384,51 @@ def test_the_activation_is_the_only_picture(monkeypatch, tmp_path):
     assert "./art/" not in js
     assert "BAKED" not in js
     assert "clearLayers()" in js
+
+
+def test_the_map_is_drawn_when_no_state_is_running(monkeypatch, tmp_path):
+    """The pane's whole surface is the map. Showing the app's own artwork between states made the
+    plugin look broken ("I still see the wrong viz") when it was working."""
+    from core import history
+
+    api = _walk_api(monkeypatch, tmp_path)
+    monkeypatch.setattr(api, "plugin", lambda: type("P", (), {"core": type("C", (), {
+        "panel": type("Pan", (), {"engine_state": staticmethod(lambda: {"active": None})}),
+        "screensaver": __import__("core.screensaver", fromlist=["x"])})()})())
+    now = 1_760_000_000.0
+    for i, label in enumerate(["gateway", "plugin", "ledger", "shipper"]):
+        history.notice(label, move="walk", session="desk-1", at=now - i, ref=str(i))
+
+    payload = api.state(cols=40, rows=12, session="desk-1")
+    assert payload["stills"], payload.get("still_note")
+
+
+def test_the_router_finds_core_when_the_host_imports_it_as_a_package(monkeypatch, tmp_path):
+    """The host imports this router as `<plugin>.dashboard.plugin_api`, and a bare `from core
+    import ...` raises ImportError there — swallowed, it told the pane "nothing firing" while the
+    ledger had plenty, so the picture never appeared. This test loads the router the way the host
+    does and demands stills."""
+    import importlib
+    import sys as _sys
+
+    from core import history
+
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    now = 1_760_000_000.0
+    for i, label in enumerate(["gateway", "plugin", "ledger", "shipper", "walk"]):
+        history.notice(label, move="walk", session="desk-1", at=now - i, ref=str(i))
+
+    link = tmp_path / "as_a_package"
+    link.mkdir()
+    (link / "pkg").symlink_to(ROOT)
+    _sys.path.insert(0, str(link))
+    try:
+        mod = importlib.import_module("pkg.dashboard.plugin_api")
+        payload = mod.state(cols=40, rows=12, session="desk-1")
+    finally:
+        _sys.path.remove(str(link))
+        for name in [n for n in _sys.modules if n == "pkg" or n.startswith("pkg.")]:
+            _sys.modules.pop(name, None)
+
+    assert payload["stills"], payload.get("still_note")
+    assert payload["stills_b64"]

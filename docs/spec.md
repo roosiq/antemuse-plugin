@@ -1260,7 +1260,12 @@ The tags remain `cognitive`, `creativity`, `states`, `imagery`.
 The renderer exists (§10.6); the surface does not. Registration and budget are the work:
 
 1. ~~register the scene and paint it~~ — **done**: the backend serves `stills`, `files`, `files_http`
-   and `stills_b64`, and the pane paints them. An empty list draws nothing at all: the baked
+   and `stills_b64`, and the pane paints them. The map is drawn whether or not a state is
+   running — with no state it is the profile's recent firings on the ledger's concept space —
+   because an empty pane shows the app's own artwork, which is not this plugin's picture. The
+   field is the agent's own concept space (~2,400 concepts from the ledger), joined to nearest
+   neighbours in the stored projection, with the firing concepts lit on top. An empty list draws
+   nothing at all: the baked
    scenes were removed, because the activation is the only visualization. Still to do: a look at
    it in the running remote app;
 2. pick a frame budget per surface: the terminal takes quantised frames at ~2 fps; chat takes a

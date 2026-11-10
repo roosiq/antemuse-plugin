@@ -367,6 +367,17 @@ function ArtSurface({ ctx }) {
       const session = host.state.focusedSessionId.get()
       const q = '/state?cols=48&rows=24&fit=cover&busy=' + busy + (session ? '&session=' + encodeURIComponent(session) : '')
       Promise.resolve(ctx.rest(q)).then((p) => {
+        try {
+          win.__antemuse = Object.assign(win.__antemuse || {}, {
+            asked: q,
+            got: p === undefined ? 'undefined' : p === null ? 'null' : typeof p,
+            keys: p && typeof p === 'object' ? Object.keys(p) : String(p).slice(0, 120),
+            stills: p && p.stills ? p.stills.length : -1,
+            b64: p && p.stills_b64 ? p.stills_b64.length : -1,
+            note: p && p.still_note,
+            server: p && p.server
+          })
+        } catch (e) { /* diagnostics never break the pane */ }
         const key = (p && p.active && p.active.key) || (busy ? 'work' : 'idle')
         if (stopped) return
         // The canvas is a neutral ground now: the only picture is the activation itself.
@@ -385,7 +396,9 @@ function ArtSurface({ ctx }) {
           if (!tryLive(key)) clearLayers()
         }
         void paint()
-      }, () => { /* keep painting the idle scene */ })
+      }, (e) => {
+        try { win.__antemuse = Object.assign(win.__antemuse || {}, { error: String(e && e.message || e).slice(0, 200) }) } catch (_e) {}
+      })
     }
     // Preview aid: `localStorage['antemuse:scene'] = 'walk'` pins one scene, so a
     // composition can be looked at without driving the agent into that state.

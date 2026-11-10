@@ -9,6 +9,7 @@ No text is drawn. The card is a picture.
 """
 from __future__ import annotations
 
+import json as _json
 import math
 import time
 from pathlib import Path
@@ -172,6 +173,37 @@ def _local_pca(vectors: Dict[str, List[float]], labels: List[str]) -> Dict[str, 
             for label, row in zip(usable, rows)}
 
 
+def _all_labels(limit: int = 2400) -> List[str]:
+    """The ground the picture is drawn on: the concepts this agent has actually touched.
+
+    A few firing concepts drawn alone are two dots in the dark and read as nothing happening —
+    which is how the pane looked. The whole WordNet projection is 117,659 labels and would be an
+    even mush at pane size, so the ground is the ledger's own concept space: the things this agent
+    has been served, which is also the only ground the picture is honest about. Concepts the
+    projection cannot place simply do not appear.
+    """
+    try:
+        from . import activation
+        rows = activation._rows(
+            "SELECT c.label, COUNT(*) AS n FROM served s JOIN concepts c ON c.id = s.concept_id "
+            "GROUP BY c.label ORDER BY n DESC LIMIT ?", (limit,))
+        labels = [row[0] for row in rows or [] if row and row[0]]
+        if labels:
+            return sorted(labels)
+    except Exception:
+        pass
+    # No ledger yet: a sparse sample of the projection, so a first run still has structure.
+    try:
+        data = _json.loads((_cache_dir() / "wordnet.proj.json").read_text())
+        labels = data.get("labels") if isinstance(data, dict) else None
+        if labels:
+            step = max(1, len(labels) // 1200)
+            return sorted(labels[::step][:limit])
+    except Exception:
+        return []
+    return []
+
+
 def coords(labels: List[str]) -> Dict[str, tuple]:
     """Semantic coordinates in 2D — the stored x2, y2 of each label."""
     stored = _projection(labels)
@@ -211,15 +243,17 @@ def fit(coords_in: Dict[str, tuple], width: int, height: int, pad: int = 46) -> 
 PALETTES = {
     "amber": {
         "ground": (6, 6, 8),
-        "edge": (120, 120, 134, 34),
-        "dim": (110, 110, 122, 110),
+        # measured at 960x600 in a 700px pane: the first values were invisible once the composer
+        # added its vignette, so the marks are brighter and the vignette is gentler.
+        "edge": (150, 150, 168, 78),
+        "dim": (196, 196, 208, 165),
         "halo": (214, 156, 74),
         "core": (255, 214, 126),
     },
     "nous": {
         "ground": (25, 25, 46),
-        "edge": (142, 142, 200, 26),
-        "dim": (126, 126, 176, 96),
+        "edge": (176, 176, 232, 66),
+        "dim": (208, 208, 244, 150),
         "halo": (0, 40, 242),
         "core": (242, 242, 252),
     },
@@ -228,20 +262,26 @@ PALETTES = {
 
 def frame_image(pos: Dict[str, list], edges: List[tuple], active: Dict[str, Dict[str, Any]],
                 width: int = STILL_SIZE[0], height: int = STILL_SIZE[1],
-                palette: str = "amber"):
+                palette: str = "amber", field_edges: Optional[List[tuple]] = None):
     """One still: the map dimmed, the firing concepts lit, nothing written on it."""
     from PIL import Image, ImageDraw, ImageFilter
 
     ink = PALETTES.get(palette, PALETTES["amber"])
     img = Image.new("RGB", (width, height), ink["ground"])
     draw = ImageDraw.Draw(img, "RGBA")
+    # the ground's own web, faint: it is what makes the field read as a graph and not as stars
+    edge_ink = ink["edge"]
+    faint = (edge_ink[0], edge_ink[1], edge_ink[2], max(28, edge_ink[3] // 2))
+    for left, right in (field_edges or []):
+        if left in pos and right in pos:
+            draw.line([tuple(pos[left]), tuple(pos[right])], fill=faint, width=1)
     for a, b in edges:
         if a in pos and b in pos:
             draw.line([tuple(pos[a]), tuple(pos[b])], fill=ink["edge"], width=1)
     for label, p in pos.items():
         if label in active:
             continue
-        draw.ellipse([p[0] - 1.6, p[1] - 1.6, p[0] + 1.6, p[1] + 1.6], fill=ink["dim"])
+        draw.ellipse([p[0] - 1.7, p[1] - 1.7, p[0] + 1.7, p[1] + 1.7], fill=ink["dim"])
 
     glow = Image.new("RGB", (width, height), (0, 0, 0))
     gdraw = ImageDraw.Draw(glow, "RGBA")
@@ -315,10 +355,19 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     if not labels:
         return []
 
-    pos = fit(coords(labels), *size)
+    # The whole concept space is the ground; the firing concepts are what is lit on it. Without
+    # the ground, two active concepts are two dots and the pane looks empty — which is exactly how
+    # it looked, and why it read as the wrong picture.
+    context = _all_labels()
+    pos = fit(coords(sorted(set(context) | set(labels))), *size)
     if not pos:
         return []
-    edges = nearest(labels)
+    edges = nearest(labels, k=3)
+    # The ground's edges: a sample of the ledger's concepts joined to their nearest neighbour in
+    # the same projection, so the field has the texture of a graph rather than of a starfield.
+    ground = sorted(set(context) & set(pos))
+    sampled = ground[::max(1, len(ground) // 520)][:520]
+    field_edges = nearest(sampled, k=1) if len(sampled) > 1 else []
 
     stamp = int(now)
     base = dest / "base"
@@ -326,7 +375,8 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     drawn = []
     for i, frame in enumerate(frames):
         path = base / f"f{i}-{stamp}.jpg"
-        frame_image(pos, edges, frame["activations"], *size, palette=palette).save(path, quality=86)
+        frame_image(pos, edges, frame["activations"], *size, palette=palette,
+                    field_edges=field_edges).save(path, quality=86)
         drawn.append(path)
 
     # The look, not the information: three.js post-processes the same stills at bake time.
