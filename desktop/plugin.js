@@ -319,10 +319,12 @@ function createGraph3D(el, doc, ctx, host, win) {
   const lPos = loc(lineProg, 'aPos'), lA = loc(lineProg, 'aA'), lMVP = uni(lineProg, 'uMVP')
   const lColor = uni(lineProg, 'uColor')
 
-  const pointBuf = gl.createBuffer(), lineBuf = gl.createBuffer(), pathBuf = gl.createBuffer()
+  const pointBuf = gl.createBuffer(), lineBuf = gl.createBuffer(), pathBuf = gl.createBuffer(),
+    liveBuf = gl.createBuffer(), liveABuf = gl.createBuffer()
   let nodes = [], nodePos = new Float32Array(0), nodeW = new Float32Array(0), edges = []
   let edgePos = new Float32Array(0), edgeA = new Float32Array(0)
   let pathPos = new Float32Array(0), pathA = new Float32Array(0)
+  let livePos = new Float32Array(0), liveA = new Float32Array(0)
   let sig = ''
   let pinned = null, hovered = null
   let yaw = 0.55, pitch = 0.22, dist = 2.35
@@ -373,7 +375,7 @@ function createGraph3D(el, doc, ctx, host, win) {
     return out
   }
 
-  const upload = (raw, trail) => {
+  const upload = (raw, trail, links) => {
     const next = norm(raw)
     const id = raw.length + '|' + (raw[0] ? raw[0].l : '') + '|' + (raw[raw.length - 1] ? raw[raw.length - 1].l : '')
     // The walk's own order. The firings are a set; the path is a sequence, and drawing it needs
@@ -413,13 +415,82 @@ function createGraph3D(el, doc, ctx, host, win) {
       distTo = 0.85
       dwell = (win.performance && performance.now ? performance.now() : Date.now()) + 4500
     }
-    if (id !== sig) {
+    if (id !== sig || (links || []).length !== (upload.linkN || -1)) {
       sig = id
       nodes = next
+      upload.linkN = (links || []).length
       edges = buildEdges(nodes)
       nodePos = new Float32Array(nodes.length * 3)
       edgePos = new Float32Array(edges.length * 6)
       edgeA = new Float32Array(edges.length * 2).fill(0.11)
+      // Real relations replace the geometric ones when the route supplies them, and they carry
+      // their own strength: an edge that the ledger has seen a hundred times is not the same
+      // edge as one seen once.
+      const at = {}
+      next.forEach((n, i) => { at[String(n.l).toLowerCase()] = i })
+      const real = (links || []).map((k) => [at[String(k.a).toLowerCase()], at[String(k.b).toLowerCase()], k.w || 1])
+        .filter((e) => e[0] !== undefined && e[1] !== undefined && e[0] !== e[1])
+      let maxW = 1
+      for (const e of real) if (e[2] > maxW) maxW = e[2]
+      if (real.length) {
+        edges = real.map((e) => [e[0], e[1]])
+        edgePos = new Float32Array(edges.length * 6)
+        edgeA = new Float32Array(edges.length * 2)
+        real.forEach(([a, b, w], k) => {
+          const A = nodes[a], B = nodes[b]
+          edgePos.set([A.x, A.y, A.z, B.x, B.y, B.z], k * 6)
+          // sqrt so the top edge is bright without flattening every weak one to invisible
+          const v = 0.06 + 0.24 * Math.sqrt(w / maxW)
+          edgeA[k * 2] = v; edgeA[k * 2 + 1] = v
+        })
+        // What is firing, and what it is connected to.
+        //  - a recorded relation with both ends lit: the strongest statement the picture can make
+        //  - a recorded relation with one end lit: activation crossing that relation
+        //  - a walk's own hops serve one concept per message, so they rarely have a recorded
+        //    partner; their connection is proximity in the projection, which is the same space
+        //    the walk searches. Those are drawn dimmer, because proximity is not provenance.
+        const live = []
+        real.forEach(([a, b]) => {
+          const wa = nodes[a].w || 0, wb = nodes[b].w || 0
+          if (wa > 0.05 && wb > 0.05) live.push([nodes[a], nodes[b], Math.min(wa, wb) + 0.25])
+          else if ((wa > 0.05) !== (wb > 0.05)) live.push([nodes[a], nodes[b], Math.max(wa, wb) * 0.45])
+        })
+        const near = (i, k2) => {
+          const a = nodes[i], out = []
+          let b1 = -1, d1 = Infinity, b2 = -1, d2 = Infinity
+          for (let j = 0; j < nodes.length; j++) {
+            if (j === i) continue
+            const b = nodes[j]
+            const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
+            if (d < d1) { d2 = d1; b2 = b1; d1 = d; b1 = j } else if (d < d2) { d2 = d; b2 = j }
+          }
+          if (b1 >= 0) out.push([b1, d1])
+          if (k2 > 1 && b2 >= 0) out.push([b2, d2])
+          return out
+        }
+        for (let i = 0; i < nodes.length; i++) {
+          const w = nodes[i].w || 0
+          if (w <= 0.05) continue
+          for (const [j, d2] of near(i, 2)) {
+            const fade = 1 / (1 + 9 * Math.sqrt(d2))
+            live.push([nodes[i], nodes[j], 0.10 + 0.30 * w * fade])
+          }
+        }
+        upload.liveN = live.length
+        livePos = new Float32Array(live.length * 6)
+        liveA = new Float32Array(live.length * 2)
+        live.forEach(([A, B, v], k) => {
+          if (k >= 900) return
+          livePos.set([A.x, A.y, A.z, B.x, B.y, B.z], k * 6)
+          liveA[k * 2] = v; liveA[k * 2 + 1] = v
+        })
+        if (livePos.length) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, liveBuf)
+          gl.bufferData(gl.ARRAY_BUFFER, livePos, gl.STATIC_DRAW)
+          gl.bindBuffer(gl.ARRAY_BUFFER, liveABuf)
+          gl.bufferData(gl.ARRAY_BUFFER, liveA, gl.STATIC_DRAW)
+        }
+      }
       nodes.forEach((n, i) => { nodePos[i * 3] = n.x; nodePos[i * 3 + 1] = n.y; nodePos[i * 3 + 2] = n.z })
       edges.forEach(([a, b], e) => {
         const A = nodes[a], B = nodes[b]
@@ -493,6 +564,20 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.vertexAttrib1f(lA, 0.26)
     gl.uniform3f(lColor, 0.58, 0.62, 0.80)
     gl.drawArrays(gl.LINES, 0, edgePos.length / 3)
+    // Connections carrying activation. Drawn before the walk's trail so the route stays on top.
+    if (livePos.length) {
+      gl.useProgram(lineProg)
+      gl.uniformMatrix4fv(lMVP, false, MVP)
+      gl.bindBuffer(gl.ARRAY_BUFFER, liveBuf)
+      gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
+      gl.bindBuffer(gl.ARRAY_BUFFER, liveABuf)
+      gl.enableVertexAttribArray(lA); gl.vertexAttribPointer(lA, 1, gl.FLOAT, false, 0, 0)
+      gl.uniform3f(lColor, 1.0, 0.66, 0.34)
+      gl.drawArrays(gl.LINES, 0, livePos.length / 3)
+      gl.disableVertexAttribArray(lA)
+      gl.vertexAttrib1f(lA, 0.26)
+      gl.uniform3f(lColor, 0.58, 0.62, 0.80)
+    }
     // The trail: same line program, warm colour by drawing it three times with a pixel-ish
     // offset so it reads as a route rather than as more of the same mesh.
     if (pathPos.length) {
@@ -517,7 +602,7 @@ function createGraph3D(el, doc, ctx, host, win) {
     frames++
     placeLabels(MVP)
     report({ frames, yaw: +yaw.toFixed(3), pitch: +pitch.toFixed(3), dist: +dist.toFixed(3),
-      hover: hovered, pinned, labels: placeLabels.k || 0, litN: placeLabels.lit || 0, wType: placeLabels.has })
+      hover: hovered, pinned, labels: placeLabels.k || 0, litN: placeLabels.lit || 0, liveN: upload.liveN || 0, linksN: upload.linkN || 0 })
   }
 
   let rafId = 0
@@ -704,7 +789,7 @@ function createGraph3D(el, doc, ctx, host, win) {
       boot('graph:' + (g ? (g.nodes ? g.nodes.length : 'nonodes') : 'none'))
       if (!g || !g.nodes || !g.nodes.length) {
         const local = pasted()
-        if (local) upload(local.nodes, local.path || [])
+        if (local) upload(local.nodes, local.path || [], local.links || [])
         else if (demo) upload(demoCloud())
         return
       }
@@ -713,7 +798,7 @@ function createGraph3D(el, doc, ctx, host, win) {
       // the host happens to be serving makes the hook useless the moment the route works.
       const pastedBox = pasted()
       if (pastedBox) {
-        upload(pastedBox.nodes, pastedBox.path || [])
+        upload(pastedBox.nodes, pastedBox.path || [], pastedBox.links || [])
         boot('pasted:' + pastedBox.nodes.length + (pastedBox.path && pastedBox.path.length ? ' path:' + pastedBox.path.length : ''))
         el.querySelectorAll('[data-antemuse-bake], img, canvas:not([data-antemuse-3d])').forEach((im) => {
           if (im.style.opacity !== '0') im.style.opacity = '0'
@@ -721,7 +806,7 @@ function createGraph3D(el, doc, ctx, host, win) {
         return
       }
       const changed = sig !== g.nodes.length + '|' + g.nodes[0].l + '|' + g.nodes[g.nodes.length - 1].l
-      upload(g.nodes, g.path || [])
+      upload(g.nodes, g.path || [], g.links || [])
       // Hide the still layers on every good poll, not only when the map itself changed. The stills
       // are re-created as the state advances, so a new bake image arrives at full opacity and ghosts
       // through the cloud as a pair of translucent bands — which is what the pane was serving.
@@ -732,7 +817,7 @@ function createGraph3D(el, doc, ctx, host, win) {
         fails: (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails ? (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails + 1 : 1 })
       boot('grapherr:' + (e && e.message ? e.message : e))
       const local = pasted()
-      if (local) upload(local.nodes, local.path || [])
+      if (local) upload(local.nodes, local.path || [], local.links || [])
       else if (demo) upload(demoCloud())
     })
   }
@@ -759,7 +844,7 @@ function createGraph3D(el, doc, ctx, host, win) {
   try {
     const early = pasted()
     boot(early ? 'pasted:' + early.nodes.length : 'nopaste')
-    if (early) upload(early.nodes, early.path || [])
+    if (early) upload(early.nodes, early.path || [], early.links || [])
     else if (demo) upload(demoCloud())
   } catch (e) {
     boot('early:' + (e && e.message ? e.message : e))

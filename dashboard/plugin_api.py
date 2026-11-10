@@ -231,19 +231,6 @@ def graph(session: str = "", limit: int = 1400):
     # The ground is the busiest `limit` concepts, so a concept the state just served can fall
     # outside it — and then it had nothing to light: the walk served three concepts per hop and
     # the map drew none of them. Whatever is firing is always part of the picture.
-    ground = activation_stills._all_labels(int(max(120, min(limit, 2400))))
-    labels = sorted(set(ground) | set(lit))
-    pos = activation_stills.positions(labels) if labels else {}
-    nodes = []
-    for label, xyz in pos.items():
-        slot = lit.get(label) or {}
-        try:
-            w = max(0.0, min(1.0, float(slot.get("weight", 0.0))))
-        except (TypeError, ValueError):
-            w = 0.0
-        nodes.append({"l": label, "x": float(xyz[0]), "y": float(xyz[1]), "z": float(xyz[2]),
-                      "w": w})
-    nodes.sort(key=lambda n: n["w"])  # brightest last: a stable draw order across polls
     # The trail the state actually walked, in order. The firings say which concepts are live; they
     # do not say that the walk went A -> B -> C, which is the thing a path is. Servings are the
     # record of that order: each hop serves the concept it lands on.
@@ -258,8 +245,42 @@ def graph(session: str = "", limit: int = 1400):
             path = [row[0] for row in reversed(trail or []) if row and row[0]]
         except Exception:  # health: BLE001 -- no trail is a fact, not a failure
             path = []
+
+    ground = activation_stills._all_labels(int(max(120, min(limit, 2400))))
+    # Whatever the surface has to draw must be on it: firings and the trail are drawn, so they
+    # join the ground even when they are not among its busiest concepts.
+    labels = sorted(set(ground) | set(lit) | set(path))
+    pos = activation_stills.positions(labels) if labels else {}
+    nodes = []
+    for label, xyz in pos.items():
+        slot = lit.get(label) or {}
+        try:
+            w = max(0.0, min(1.0, float(slot.get("weight", 0.0))))
+        except (TypeError, ValueError):
+            w = 0.0
+        nodes.append({"l": label, "x": float(xyz[0]), "y": float(xyz[1]), "z": float(xyz[2]),
+                      "w": w})
+    nodes.sort(key=lambda n: n["w"])  # brightest last: a stable draw order across polls
+    # The relations this graph actually has. The pane used to draw k-nearest neighbours in the
+    # projection, which is geometry, not connection — so an edge could light up only if the two
+    # points happened to be near each other. These are co-occurrences from the ledger.
+    links: List[Dict[str, Any]] = []
+    try:
+        rows = activation._rows(
+            "SELECT ca.label, cb.label, COUNT(*) AS n FROM appearances a "
+            "JOIN appearances b ON b.source = a.source AND b.ref = a.ref AND b.concept_id > a.concept_id "
+            "JOIN concepts ca ON ca.id = a.concept_id JOIN concepts cb ON cb.id = b.concept_id "
+            "WHERE a.source = 'message' GROUP BY a.concept_id, b.concept_id "
+            "ORDER BY n DESC LIMIT 2400")
+        for left, right, n in rows or []:
+            if left and right:
+                links.append({"a": left, "b": right, "w": int(n)})
+    except Exception:  # health: BLE001 -- no links is a fact, not a failure
+        links = []
+
     payload = {
         "key": key,
+        "links": links,
         "path": path,
         "session": own,
         "nodes": nodes,

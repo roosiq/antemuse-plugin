@@ -197,3 +197,19 @@ def test_the_firing_nodes_carry_their_names():
     assert "clash" in js and "if (clash) continue" in js, "two names in one place is no name"
     # and the DOM layer is cleaned up with the surface
     assert "el.removeChild(labelLayer)" in js
+
+
+def test_connections_carry_the_activation():
+    """A firing must travel along relations, not sit there as a lone dot.
+
+    Two kinds of edge carry it: a recorded relation incident to a firing node, and — because a
+    walk serves one concept per message and so rarely has a recorded partner — proximity in the
+    same projection the walk searches. Proximity is drawn dimmer, because it is not provenance.
+    """
+    here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
+    js = here.read_text()
+    assert "livePos" in js and "liveBuf" in js and "liveABuf" in js
+    assert "const real = (links || [])" in js
+    assert "gl.uniform3f(lColor, 1.0, 0.66, 0.34)" in js
+    assert "proximity is not provenance" in js
+    assert "upload.liveN = live.length" in js

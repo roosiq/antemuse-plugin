@@ -750,5 +750,36 @@ def test_a_walk_reports_its_path_in_order():
 
     path = body["graph"]["path"]
     assert len(path) >= 2, "a walk that stepped has a path"
-    labels = {n["l"] for n in body["graph"]["nodes"] if n["w"] > 0.05}
-    assert all(p in labels or p.lower() in {l.lower() for l in labels} for p in path[-2:])
+    # the trail must be drawable: every concept it names is a node on the surface
+    labels = {str(n["l"]).lower() for n in body["graph"]["nodes"]}
+    assert all(p.lower() in labels for p in path[-2:])
+
+
+def test_the_map_carries_the_relations_it_has():
+    """Edges must be relations the ledger recorded, not geometry the pane invented.
+
+    The pane drew k-nearest neighbours in the projection, so an edge could carry activation only
+    when two points happened to be near each other. Client code needs the relations itself.
+    """
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import dashboard.plugin_api as api
+    from core import engine, history
+
+    engine.enter("walk", minutes=5, session="")
+    # two concepts sighted in the same message: that is the co-occurrence an edge is evidence of
+    history.notice("doorstop", ref="m-1")
+    history.notice("bookend", ref="m-1")
+    # another test in the suite may have memoised a payload built before this ledger existed
+    api._GRAPH_MEMO.clear() if hasattr(api, "_GRAPH_MEMO") else None
+    app = FastAPI()
+    app.include_router(api.router, prefix="/api/plugins/antemuse")
+    body = TestClient(app).get("/api/plugins/antemuse/state?graph=1&stills=0").json()
+
+    links = body["graph"]["links"]
+    assert links, "a ledger that has served concepts has co-occurrences"
+    assert {"a", "b", "w"} <= set(links[0])
+    top = links[0]["w"]
+    assert top >= links[-1]["w"], "strongest relation first"
+    assert top >= 1
