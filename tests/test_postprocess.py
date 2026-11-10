@@ -165,3 +165,19 @@ def test_a_chat_nothing_was_served_in_still_draws_the_profile(tmp_path, monkeypa
     paths = activation_stills.stills(move="walk", session="never-seen", dest=dest, now=now)
     assert len(paths) == activation_stills.STILL_COUNT
     assert all(p.exists() and p.stat().st_size > 2000 for p in paths), paths
+
+
+def test_the_camera_goes_to_what_just_fired():
+    """A firing is an event; an event you have to hunt for in 1,400 points is not an event.
+
+    The pane must move the camera to a concept the moment it lights, hold there, and drift back
+    out — and it must not fight a person who is dragging.
+    """
+    here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
+    js = here.read_text()
+    assert "focusTo = new Float32Array([go.x, go.y, go.z])" in js
+    assert "distTo = 0.85" in js
+    assert "dwell" in js and "distTo = 2.35" in js
+    assert "if (fresh.length && !dragging)" in js
+    # the focus point has to be applied to the view, or the camera just rotates
+    assert "-focus[0], -focus[1], -focus[2]" in js

@@ -312,6 +312,11 @@ function createGraph3D(el, doc, ctx, host, win) {
   let pinned = null, hovered = null
   let yaw = 0.55, pitch = 0.22, dist = 2.35
   let dragging = false, lastX = 0, lastY = 0, idleAt = 0, frames = 0, stopped = false
+  // The camera goes to what just fired: a firing is an event, and an event you have to hunt for
+  // in a 1,400-point cloud is not an event. `focus` is where the camera is looking, `distTo` how
+  // close, `dwell` until when — then it drifts back out to the whole space.
+  let focus = new Float32Array([0, 0, 0]), focusTo = new Float32Array([0, 0, 0])
+  let distTo = 2.35, dwell = 0, wasLit = {}
 
   const norm = (raw) => {
     // Centre and scale once, so the camera only ever has to frame a unit cloud.
@@ -378,6 +383,21 @@ function createGraph3D(el, doc, ctx, host, win) {
         gl.bufferData(gl.ARRAY_BUFFER, pathPos, gl.STATIC_DRAW)
       }
     }
+    // Anything that was dark last time and is lit now is a firing worth going to look at.
+    const fresh = []
+    for (const n of next) {
+      const key = String(n.l).toLowerCase()
+      const lit = (n.w || 0) > 0.05
+      if (lit && !wasLit[key]) fresh.push(n)
+      wasLit[key] = lit
+    }
+    if (fresh.length && !dragging) {
+      // The strongest firing is the newest: weight decays with time since it was served.
+      const go = fresh.reduce((a, b) => ((b.w || 0) > (a.w || 0) ? b : a), fresh[0])
+      focusTo = new Float32Array([go.x, go.y, go.z])
+      distTo = 0.85
+      dwell = (win.performance && performance.now ? performance.now() : Date.now()) + 4500
+    }
     if (id !== sig) {
       sig = id
       nodes = next
@@ -429,7 +449,8 @@ function createGraph3D(el, doc, ctx, host, win) {
     const Rx = new Float32Array([1, 0, 0, 0, 0, cy, sy, 0, 0, -sy, cy, 0, 0, 0, 0, 1])
     const Ry = new Float32Array([cx, 0, -sx, 0, 0, 1, 0, 0, sx, 0, cx, 0, 0, 0, 0, 1])
     const T = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -dist, 1])
-    return mul(P, mul(T, mul(Rx, Ry)))
+    const F = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -focus[0], -focus[1], -focus[2], 1])
+    return mul(P, mul(T, mul(Rx, mul(Ry, F))))
   }
 
   const resize = () => {
@@ -488,6 +509,10 @@ function createGraph3D(el, doc, ctx, host, win) {
     if (stopped) return
     rafId = win.requestAnimationFrame ? win.requestAnimationFrame(loop) : win.setTimeout(() => loop(Date.now()), 16)
     if (!dragging && ts && idleAt && ts - idleAt > 2600) yaw += 0.00022 * (ts - (loop.lastTs || ts))
+    if (dwell && ts && ts > dwell) { dwell = 0; distTo = 2.35; focusTo = new Float32Array([0, 0, 0]) }
+    // Ease toward the target rather than cutting: the cloud should carry you there.
+    for (let i = 0; i < 3; i++) focus[i] += (focusTo[i] - focus[i]) * 0.08
+    dist += (distTo - dist) * 0.07
     loop.lastTs = ts
     // A pane that is not on screen draws nothing: the shell mounts a surface per route, and an
     // off-screen instance would otherwise burn frames on a cloud nobody is looking at.
