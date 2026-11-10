@@ -72,7 +72,28 @@ antemuse
 
 ## Install
 
-From a clone, for development:
+### Full base install, into a fresh Hermes
+
+Extract the release tarball anywhere and run one script. It puts every piece where Hermes
+actually reads from — dependencies, corpora, plugin, desktop half, the WordNet projection that
+places concepts on the picture, and a first ledger scan — and checks each step:
+
+```bash
+tar -xzf antemuse-0.9.1.tar.gz && cd antemuse-0.9.1
+./scripts/install.sh            # --dry-run to see every step first
+```
+
+Then restart the gateway from your own shell (the installer prints the exact command at the end;
+it cannot do it itself, because the running gateway holds the old module until it restarts).
+Finally restart the desktop app — or use Capabilities ▸ Plugins ▸ Rescan — so it picks up the
+pane and type `/walk`.
+
+The script installs `pillow` and `nltk` into **Hermes' own interpreter** (found by following its
+launcher), downloads the `wordnet` and `framenet_v17` corpora into `~/nltk_data`, registers and
+enables the plugin, and copies the desktop half into `~/.hermes/desktop-plugins/antemuse` — the
+copy the app loads. It is idempotent: running it twice changes nothing.
+
+### From a clone, for development:
 
 ```bash
 git clone https://github.com/roosiq/antemuse-plugin ~/antemuse-plugin
@@ -83,6 +104,16 @@ hermes plugins enable antemuse
 Once the plugin is listed in the catalog, `hermes plugins install antemuse`
 installs the reviewed pin instead. Python dependencies (`pillow`, `nltk`) are
 declared in `plugin.yaml`; Hermes prepares them at install time.
+
+### Building the release
+
+```bash
+./scripts/build-release.sh      # dist/antemuse-<version>.tar.gz, validated before it is packed
+```
+
+Only runtime paths ship. The evaluation corpus and experiment outputs stay in the repository:
+they are evidence, they are someone else's prose, and an install-time scanner rightly treats
+arbitrary model output inside a plugin as untrusted text.
 
 ## Settings
 
