@@ -179,35 +179,32 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
         payload["still_note"] = "state belongs to another chat"
     # The map is the pane's whole surface, not a decoration that appears only while a state runs:
     # with no state (or one belonging to another chat) it draws the profile's recent firings on
-    # the ledger's concept space. An empty pane is the app's own artwork, which is not ours to
+    # the ledger's concept space. An empty pane shows the app's own artwork, which is not ours to
     # show — and that is exactly what "I still see the wrong viz" was.
     drawable = bool(active and belongs_here)
     key = str(active.get("key") or "") if drawable else "profile"
-    if key:
-            try:
-                activation_stills = _core_module("activation_stills")
-                own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""
-                paths = activation_stills.fresh(move=key, session=str(own))
-                payload["stills"] = [f"/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
-                # The desktop pane is a file:// page: it cannot fetch these without the gateway's
-                # token, but it can load a local file directly, which is how the baked scenes
-                # already reach it. Both are offered; the pane takes the file.
-                # Three ways to reach the same picture, because the pane's surface decides which
-                # one works: absolute HTTP URLs (a remote desktop, where the files are on the
-                # host and not on the computer showing the pane), file:// (a desktop running on
-                # the host itself), and the router-relative paths older clients used.
-                base = str(request.base_url).rstrip("/") if request is not None else ""
-                payload["files"] = [p.as_uri() for p in paths]
-                payload["files_http"] = [f"{base}/api/plugins/antemuse/art/{key}/{p.name}"
-                                         for p in paths] if base else []
-                # Router-relative, because the pane reaches these over ctx.rest, which is
-                # already scoped to this plugin's router.
-                payload["stills_b64"] = [f"/art_b64/{key}/{p.name}" for p in paths]
-                if not paths:
-                    payload["still_note"] = f"nothing firing in {key}" if drawable else "nothing firing yet"
-            except Exception as exc:  # health: BLE001 -- a missing picture is not a broken state
-                payload["stills"] = []
-                payload["still_note"] = f"picture failed: {type(exc).__name__}: {exc}"[:160]
+    own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""
+    try:
+        activation_stills = _core_module("activation_stills")
+        paths = activation_stills.fresh(move=key, session=str(own))
+        payload["stills"] = [f"/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
+        payload["files"] = [p.as_uri() for p in paths]
+        # Three ways to reach the same picture, because the pane's surface decides which one
+        # works: absolute HTTP URLs (a remote desktop, where the files are on the host and not on
+        # the computer showing the pane), which the pane cannot fetch from a file:// page but the
+        # gateway serves anyway, and the router-relative paths the pane reaches over ctx.rest.
+        base = str(request.base_url).rstrip("/") if request is not None else ""
+        payload["files_http"] = ([f"{base}/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
+                                 if base else [])
+        payload["stills_b64"] = [f"/art_b64/{key}/{p.name}" for p in paths]
+        if not paths:
+            payload["still_note"] = f"nothing firing in {key}" if drawable else "nothing firing yet"
+    except Exception as exc:  # health: BLE001 -- a missing picture is not a broken state
+        payload["stills"] = []
+        payload["files"] = []
+        payload["files_http"] = []
+        payload["stills_b64"] = []
+        payload["still_note"] = f"picture failed: {type(exc).__name__}: {exc}"[:160]
     return payload
 
 
