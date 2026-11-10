@@ -108,7 +108,7 @@ declared in `plugin.yaml`; Hermes prepares them at install time.
 ### Building the release
 
 ```bash
-./scripts/build-release.sh      # dist/antemuse-<version>.tar.gz, validated before it is packed
+./scripts/build-release.sh      # ~/.cache/antemuse/dist/antemuse-<version>.tar.gz
 ```
 
 Only runtime paths ship. The evaluation corpus and experiment outputs stay in the repository:

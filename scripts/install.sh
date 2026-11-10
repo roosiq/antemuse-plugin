@@ -160,8 +160,10 @@ run mkdir -p "$CACHE_DIR"
 if [[ -f "$SRC/assets/projection/wordnet.proj.json" && -f "$SRC/assets/projection/wordnet.proj.f16" ]]; then
   run cp -f "$SRC/assets/projection/wordnet.proj.json" "$SRC/assets/projection/wordnet.proj.f16" "$CACHE_DIR"/
   ok "placed in $CACHE_DIR"
+elif [[ -f "$CACHE_DIR/wordnet.proj.json" && -f "$CACHE_DIR/wordnet.proj.f16" ]]; then
+  ok "already in $CACHE_DIR"
 else
-  warn "no bundled projection — concepts will fall back to a plain circle until tools/project_wordnet.py runs"
+  warn "no projection — concepts fall back to a plain circle until tools/project_wordnet.py runs"
 fi
 
 # ------------------------------------------------------------------ 6. ledger

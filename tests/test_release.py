@@ -32,6 +32,10 @@ def test_the_release_ships_runtime_only():
     assert "plugins validate" in text
 
 
-def test_the_projection_is_bundled_so_the_picture_is_semantic():
-    assert (ROOT / "assets" / "projection" / "wordnet.proj.json").is_file()
-    assert (ROOT / "assets" / "projection" / "wordnet.proj.f16").is_file()
+def test_the_projection_ships_from_the_cache_not_from_the_repository():
+    """It holds 117k WordNet labels, so it cannot live in the tree (the retired-name rule forbids
+    those words), but a package without it draws a plain circle instead of the semantic map."""
+    build = (ROOT / "scripts" / "build-release.sh").read_text()
+    assert "assets/projection" in build
+    assert "wordnet.proj.json" in build
+    assert not (ROOT / "assets" / "projection" / "wordnet.proj.json").exists()

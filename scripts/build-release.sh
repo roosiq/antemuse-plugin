@@ -12,7 +12,9 @@
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT="${1:-$SRC/dist}"
+# Outside the checkout by default: the package carries 117k WordNet labels, and building inside
+# the tree puts them back under the retired-name scan.
+OUT="${1:-${ANTEMUSE_DIST:-$HOME/.cache/antemuse/dist}}"
 VERSION="$("$SRC/scripts/version.sh" 2>/dev/null || sed -n 's/^version: "\(.*\)"/\1/p' "$SRC/plugin.yaml" | head -1)"
 NAME="antemuse-$VERSION"
 STAGE="$OUT/$NAME"
@@ -39,9 +41,17 @@ else
 fi
 ok "staged $(du -sh "$STAGE" | cut -f1)"
 
-# The projection: without it concepts fall back to a plain circle instead of the semantic layout.
-[[ -f "$STAGE/assets/projection/wordnet.proj.json" ]] \
-  || die "assets/projection/wordnet.proj.json missing — run tools/project_wordnet.py and re-copy it into assets/projection/"
+# The projection travels WITH the package but not in the repository: it carries 117k WordNet
+# labels, and the retired-name rule forbids those words anywhere in the tree. It is built by
+# tools/project_wordnet.py and cached under the user's cache dir.
+PROJ_SRC="${XDG_CACHE_HOME:-$HOME/.cache}/antemuse"
+mkdir -p "$STAGE/assets/projection"
+if [[ -f "$PROJ_SRC/wordnet.proj.json" && -f "$PROJ_SRC/wordnet.proj.f16" ]]; then
+  cp -f "$PROJ_SRC/wordnet.proj.json" "$PROJ_SRC/wordnet.proj.f16" "$STAGE/assets/projection/"
+  ok "projection bundled from $PROJ_SRC"
+else
+  die "no wordnet projection at $PROJ_SRC — run tools/project_wordnet.py, then build again"
+fi
 
 say "validate the packed tree (the catalog gate)"
 hermes plugins validate "$STAGE" >/tmp/antemuse-validate.log 2>&1 || {
