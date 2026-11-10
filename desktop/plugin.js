@@ -588,10 +588,10 @@ function createGraph3D(el, doc, ctx, host, win) {
       }
       const changed = sig !== g.nodes.length + '|' + g.nodes[0].l + '|' + g.nodes[g.nodes.length - 1].l
       upload(g.nodes)
-      if (changed && el.querySelector('[data-antemuse-bake]')) {
-        // The 3D surface is the picture now; the JPEG cross-fade behind it would ghost through.
-        el.querySelectorAll('[data-antemuse-bake]').forEach((im) => { im.style.opacity = '0' })
-      }
+      // Hide the still layers on every good poll, not only when the map itself changed. The stills
+      // are re-created as the state advances, so a new bake image arrives at full opacity and ghosts
+      // through the cloud as a pair of translucent bands — which is what the pane was serving.
+      el.querySelectorAll('[data-antemuse-bake], img').forEach((im) => { im.style.opacity = '0' })
     }, (e) => {
       // A timeout is a number, not a mood: keep how long the route took to not answer.
       report({ routeMs: Math.round(performance.now() - askedAt), lastErr: String(e && e.message || e).slice(0, 60),
@@ -602,6 +602,13 @@ function createGraph3D(el, doc, ctx, host, win) {
       else if (demo) upload(demoCloud())
     })
   }
+  const hideStills = () => {
+    // From the moment this surface can draw, the stills behind it are not the picture.
+    el.querySelectorAll('[data-antemuse-bake], img').forEach((im) => { im.style.opacity = '0' })
+  }
+  hideStills()
+  ctx.setInterval(hideStills, 4000)
+
   // Draw what is already known first: a pasted payload must not wait on a gateway that may never
   // answer, and neither should the pane wait for its first poll to have a shape.
   try {
