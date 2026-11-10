@@ -2,12 +2,12 @@ name: antemuse
 label: Antemuse
 kind: standalone
 manifest_version: 2
-version: "0.9.1"
+version: "0.9.2"
 author: Antemuse
 homepage: https://antemuse.com
 license: MIT
 tags: [state, cognition, workflow, terminal, creativity]
-platforms: [linux, macos]
+platforms: [linux, macos, windows]
 description: >
   Antemuse lets the agent itself take a walk, daydream, dream, doomscroll, or get
   unstuck. A state is a bounded change to behaviour, not a place: it shapes the

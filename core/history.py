@@ -317,7 +317,7 @@ def message_excerpts(ids: List[str], limit: int = 160) -> Dict[str, str]:
     """
     if not ids:
         return {}
-    path = Path(HERMES_DB)
+    path = Path(HERMES_DB) if not callable(HERMES_DB) else HERMES_DB()
     if not path.exists():
         return {}
     placeholders = ",".join("?" for _ in ids)
@@ -570,7 +570,22 @@ def stats() -> Dict[str, Any]:
 
 # ------------------------------------------------------- past-session extraction
 
-HERMES_DB = Path.home() / ".hermes" / "state.db"
+def _hermes_db() -> Path:
+    """The host's session store, resolved through the host's own home.
+
+    `~/.hermes` is only the default: a profile moves it and a packaged or Store install keeps it
+    somewhere else entirely (on Windows, under AppData). A hardcoded path made the first scan of
+    a real install find no store at all and report nothing to draw.
+    """
+    try:
+        from . import storage
+        return storage.hermes_home() / "state.db"
+    except Exception:
+        return Path.home() / ".hermes" / "state.db"
+
+
+#: Kept as a name for callers (and tests) that point it at a fixture store.
+HERMES_DB = _hermes_db()
 
 
 @functools.lru_cache(maxsize=20_000)
@@ -625,7 +640,8 @@ def scan_sessions(days: int = 7, batch: int = 400, source: str = "",
     Only user and assistant text is read: tool output and reasoning are not concepts, and
     reading them would make this a transcript scanner. The cursor makes a repeat call cheap.
     """
-    path = Path(db or source or HERMES_DB)
+    default = HERMES_DB() if callable(HERMES_DB) else Path(HERMES_DB)
+    path = Path(db or source or default)
     if not path.exists():
         return {"ok": False, "reason": f"no session store at {path}"}
     since = time.time() - days * 86400

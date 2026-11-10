@@ -19,17 +19,29 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path as _Path
 from typing import Any, Dict
 
 logger = logging.getLogger("antemuse")
 
-try:
-    from .core import (engine, history, options, panel, runtime, session, settings, states,
-                       surfaces, tui, walks)
-except ImportError:  # flat-module load
-    from core import engine, history, options, panel, recall, runtime, session, settings, states, surfaces, tui, walks  # type: ignore[no-redef]
+# Imported as a package when the host really loaded us as one, flat when it loaded this file
+# directly (a spec load, a synthetic module name, the CLI's own loader). The choice is made by
+# looking at what is in sys.modules, not by catching ImportError: a blanket except turned a real
+# failure inside `core` into "No module named 'core'", which is the wrong diagnosis and sends the
+# person who sees it looking for a packaging problem that is not there (it is how a registration
+# failure looked on Windows).
+_here = _Path(__file__).resolve().parent
+_as_package = bool(__package__) and getattr(sys.modules.get(__package__), "__path__", None) is not None
 
-__version__ = "0.9.1"
+if _as_package:
+    from .core import (engine, history, options, panel, recall, runtime, session, settings,
+                       states, surfaces, tui, walks)  # noqa: F401
+else:  # flat load: this file is or is not on sys.path, but its directory is what `core` needs
+    sys.path.insert(0, str(_here))
+    from core import (engine, history, options, panel, recall, runtime, session, settings,
+                      states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
+
+__version__ = "0.9.2"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",

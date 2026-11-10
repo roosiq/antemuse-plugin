@@ -14,10 +14,21 @@ import select
 import subprocess
 import shutil
 import sys
-import termios
 import time
-import tty
 from typing import Any, Dict, List
+
+# The takeover needs a POSIX terminal. Windows has no termios, and importing this module at plugin
+# load time made the whole plugin fail to register there — every tool and hook lost, for a
+# full-screen feature that only matters in a terminal. Imported defensively: the module loads
+# everywhere, and the takeover itself says what it needs.
+try:
+    import termios  # type: ignore[import-not-found]
+    import tty  # type: ignore[import-not-found]
+    POSIX_TTY = True
+except Exception:  # pragma: no cover - only on Windows
+    termios = None  # type: ignore[assignment]
+    tty = None  # type: ignore[assignment]
+    POSIX_TTY = False
 
 from . import backdrop, engine, panel, photographs, states, storage, walk_map
 
@@ -262,7 +273,8 @@ def _kill_renderer(proc) -> None:
 def run() -> str:
     """Take over the terminal until the user quits; return a one-line summary."""
     tty_fd = _tty_fd()
-    if tty_fd is None:
+    if tty_fd is None or not POSIX_TTY:
+        # No terminal, or a platform without termios: print the frame instead of failing.
         return panel.render(engine.watch_state())
     old = termios.tcgetattr(tty_fd)
     note_mode = False

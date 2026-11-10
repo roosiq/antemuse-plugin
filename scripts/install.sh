@@ -169,10 +169,12 @@ fi
 # ------------------------------------------------------------------ 6. ledger
 say "6. first ledger scan"
 if [[ $DRY -eq 0 ]]; then
-  "$HERMES_PY" - "$PLUGIN_DIR" <<'PY' || warn "scan did not run; the ledger fills as you use Hermes"
+  "$HERMES_PY" - "$PLUGIN_DIR" "$HERMES_HOME" <<'PY' || warn "scan did not run; the ledger fills as you use Hermes"
 import sys
 sys.path.insert(0, sys.argv[1])
 from core import history
+store = history.HERMES_DB() if callable(history.HERMES_DB) else history.HERMES_DB
+print("   session store:", store, "exists" if store.exists() else "MISSING")
 print(" ", history.scan_sessions(days=7))
 PY
 fi
@@ -190,6 +192,13 @@ elif [[ $DRY -eq 0 ]]; then
     die "'hermes plugins doctor antemuse' failed — if the message is about Hermes' own venv rather than this plugin, run 'hermes pm repair'"
   fi
   printf '%s\n' "$out" | tail -3
+  # A doctor that passes while nothing registered is the failure we actually hit on Windows:
+  # the tool and hook counts are the part that matters, so check them, not the exit code alone.
+  tools="$(printf '%s' "$out" | sed -n 's/.*registrations: \([0-9]*\) tool.*/\1/p' | head -1)"
+  hooks="$(printf '%s' "$out" | sed -n 's/.*\([0-9]*\) hook.*/\1/p' | head -1)"
+  [[ "${tools:-0}" -ge 1 ]] || die "the plugin registered ${tools:-0} tools — expected at least 1 (run 'hermes plugins doctor antemuse' and read the first error)"
+  [[ "${hooks:-0}" -ge 5 ]] || die "the plugin registered ${hooks:-0} hooks — expected at least 5"
+  ok "${tools} tool(s), ${hooks} hook(s) registered"
 fi
 
 say "8. smoke test (enters a state in a throwaway home)"
