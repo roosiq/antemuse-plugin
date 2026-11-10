@@ -309,9 +309,12 @@ def test_the_pane_paints_stills_before_baked_art():
     """The wiring, checked at the source: the surface must prefer what the backend served, and
     fall back to the baked scene when there is nothing to show."""
     js = (Path(__file__).resolve().parents[1] / "desktop" / "plugin.js").read_text()
-    assert "const served = (p && p.files_http && p.files_http.length) ? p.files_http" in js
-    assert "p.files && p.files.length" in js
-    assert "if (await applyActivation(served)) return" in js
+    # Every leg is offered and tried in turn. Picking one up front meant a 404 on the absolute
+    # URL hid the file:// leg that would have painted the map.
+    assert "const legs = []" in js
+    assert "if (p && p.files_http && p.files_http.length) legs.push(p.files_http)" in js
+    assert "if (p && p.files && p.files.length) legs.push(p.files)" in js
+    assert "for (const leg of legs) {" in js
     assert "if (await fromB64(p && p.stills_b64)) return" in js
     assert "if (!tryLive(key)) clearLayers()" in js
     assert "stills = urls.slice()" in js
@@ -432,3 +435,51 @@ def test_the_router_finds_core_when_the_host_imports_it_as_a_package(monkeypatch
 
     assert payload["stills"], payload.get("still_note")
     assert payload["stills_b64"]
+
+
+def test_a_still_that_was_never_post_processed_is_still_reachable(monkeypatch, tmp_path):
+    """Without playwright the drawn frames stay in `<state>/base/`, and the routes used to look
+    only at `<state>/` — so every URL `/state` advertised 404'd and the pane painted nothing. That
+    is the "wrong viz" on a machine that has no bake step."""
+    from pathlib import Path
+
+    from core import storage
+
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    root = Path(storage.data_dir()) / "activation" / "profile"
+    (root / "base").mkdir(parents=True, exist_ok=True)
+    (root / "base" / "f0-1760000000-post.jpg").write_bytes(b"\xff\xd8jpeg-bytes")
+
+    api = _walk_api(monkeypatch, tmp_path)
+    resolved = api._still_path("profile", "f0-1760000000-post.jpg")
+    assert resolved is not None and resolved.parent.name == "base"
+
+    body = api.art_b64("profile", "f0-1760000000-post.jpg")
+    assert body["type"] == "image/jpeg" and body["data"]
+
+    # and a name that is nowhere is still a refusal, not a 200 with a body about it
+    try:
+        api.art_b64("profile", "f9-1760000000-post.jpg")
+    except Exception as exc:  # HTTPException
+        assert getattr(exc, "status_code", None) == 404
+    else:
+        raise AssertionError("a missing still must refuse")
+
+
+def test_every_path_state_advertises_is_one_the_routes_can_serve(monkeypatch, tmp_path):
+    """/state and /art must agree. The pane's first leg is the absolute URL, so a URL that 404s
+    costs the whole picture on any machine where that leg is first."""
+    from core import history
+
+    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
+    now = 1_760_000_000.0
+    for i, label in enumerate(["gateway", "plugin", "ledger", "shipper", "walk"]):
+        history.notice(label, move="walk", session="desk-1", at=now - i, ref=str(i))
+
+    api = _walk_api(monkeypatch, tmp_path)
+    payload = api.state(cols=40, rows=12, session="desk-1")
+    assert payload["stills"], payload.get("still_note")
+    for url in payload["stills"] + payload["stills_b64"]:
+        parts = url.rsplit("/", 2)
+        name, filename = parts[-2], parts[-1]
+        assert api._still_path(name, filename) is not None, url

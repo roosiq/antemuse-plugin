@@ -385,13 +385,21 @@ function ArtSurface({ ctx }) {
         // A remote desktop shows this pane on a different computer: the stills live on the host,
         // so only an absolute URL reaches them. On the host itself the file:// paths are cheaper
         // and work without a token. The probe covers a backend too old to say either.
-        const served = (p && p.files_http && p.files_http.length) ? p.files_http
-          : (p && p.files && p.files.length) ? p.files
-          : (p && p.stills)
+        // Every leg is offered, in order of how likely the surface is to reach the bytes: an
+        // absolute URL (a remote desktop), the file:// paths (a desktop on the host), the same
+        // bytes over the gateway RPC, and finally a probe at the local data dir. Picking one leg
+        // up front is how a 404 on the first one used to hide the leg that would have worked.
+        const legs = []
+        if (p && p.files_http && p.files_http.length) legs.push(p.files_http)
+        if (p && p.files && p.files.length) legs.push(p.files)
+        if (p && p.stills && p.stills.length) legs.push(p.stills)
         const paint = async () => {
           // In order of how likely the surface is to reach the bytes: an absolute URL, the same
           // bytes over the gateway RPC (a remote desktop), a file on this machine, then baked art.
-          if (await applyActivation(served)) return
+          for (const leg of legs) {
+            if (stopped) return
+            if (await applyActivation(leg)) return
+          }
           if (await fromB64(p && p.stills_b64)) return
           if (!tryLive(key)) clearLayers()
         }

@@ -208,6 +208,23 @@ def state(request: Request = None, cols: int | None = None, rows: int | None = N
     return payload
 
 
+def _still_path(name: str, filename: str):
+    """Where a still actually is, for this machine.
+
+    `stills()` draws into `<state>/base/` and only promotes them to `<state>/` when the three.js
+    post-process succeeds. Without playwright there is no post-process, so the stamped files stay in
+    `base/` — and this route used to look only at `<state>/`, 404ing every URL `/state` had just
+    advertised. The pane then fell through its legs to nothing, which is what "the wrong viz" was
+    on a machine without the bake step.
+    """
+    storage = _core_module("storage")
+    root = storage.data_dir() / "activation" / name
+    for candidate in (root / filename, root / "base" / filename):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 @router.get("/art/{name}/{filename}")
 def art(name: str, filename: str):
     """Serve one activation still. Only files this plugin wrote are reachable: the name and the
@@ -217,11 +234,10 @@ def art(name: str, filename: str):
     if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
         raise HTTPException(status_code=404, detail="not found")
     try:
-        storage = _core_module("storage")
-        path = storage.data_dir() / "activation" / safe_name / safe_file
+        path = _still_path(safe_name, safe_file)
     except Exception:
-        raise HTTPException(status_code=404, detail="not found")
-    if not path.is_file():
+        path = None
+    if path is None:
         raise HTTPException(status_code=404, detail="not found")
     return FileResponse(str(path), media_type="image/jpeg")
 
@@ -239,11 +255,10 @@ def art_b64(name: str, filename: str):
     if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
         raise HTTPException(status_code=404, detail="not found")
     try:
-        storage = _core_module("storage")
-        path = storage.data_dir() / "activation" / safe_name / safe_file
+        path = _still_path(safe_name, safe_file)
     except Exception:
-        raise HTTPException(status_code=404, detail="not found")
-    if not path.is_file():
+        path = None
+    if path is None:
         raise HTTPException(status_code=404, detail="not found")
     import base64
     return {"type": "image/jpeg",
