@@ -90,24 +90,32 @@ def frame_index(key: str, frames: int = 8, now: float | None = None) -> int:
 def _core():
     """The plugin's own `core` package, whichever way this module was loaded.
 
-    The host imports the router as `<plugin>.dashboard.plugin_api`; the tests import it flat. A
-    bare `from core import ...` works only in the second case — in the running gateway it raised
-    ImportError, the surrounding `except` swallowed it, and the pane was told "nothing firing"
-    while the ledger had plenty. That single line is why the picture never appeared.
+    Three shapes reach this file and each broke the one before it:
+
+    * `<plugin>.dashboard.plugin_api` (the tests) -> `from .. import core`.
+    * flat with the plugin root on sys.path -> `import core`.
+    * a router file loaded as a bare module with nothing on sys.path (the gateway) -> neither
+      works, and the ImportError was swallowed into an empty `stills` with a blank note, which is
+      why the pane showed nothing for four rounds. It is also why every such fix needs a gateway
+      restart to take effect: the module is imported once, at startup.
+
+    The last leg therefore loads the package straight off disk under the name `core`, which does
+    not depend on sys.path order or on what else has already claimed that name.
     """
     try:
         from .. import core as core_pkg  # imported as <plugin>.dashboard.plugin_api
         return core_pkg
     except Exception:
         pass
-    # Imported as a top-level module (`plugin_api`), which the host does when it loads a router
-    # file directly: there is no package parent and the plugin root is not on sys.path, so both
-    # earlier legs fail. Put the plugin root on the path and verify we got OUR core, not an
-    # unrelated module that happens to be called `core`.
+
     import sys
     from pathlib import Path as _Path
 
-    root = _Path(__file__).resolve().parent.parent
+    try:
+        root = _Path(__file__).resolve().parent.parent
+    except NameError:  # loaded without a __file__ (exotic importer)
+        raise ImportError("cannot locate the plugin root: __file__ is undefined")
+
     def _inside(module) -> bool:
         # `core.__file__` is `<root>/core/__init__.py`, so the plugin root is a PARENT of it,
         # not its parent directory: comparing `.parent` rejected the correct package.
@@ -119,21 +127,33 @@ def _core():
     known = sys.modules.get("core")
     if known is not None and _inside(known):
         return known
-    root_s = str(root)
-    added = root_s not in sys.path
-    if added:
-        sys.path.insert(0, root_s)
+
     try:
-        import core as core_pkg
+        import core as flat_pkg  # flat, with the plugin root on sys.path
+        if _inside(flat_pkg):
+            return flat_pkg
     except Exception:
-        if added:
-            sys.path.remove(root_s)
+        pass
+
+    import importlib.util
+
+    package_dir = root / "core"
+    spec = importlib.util.spec_from_file_location(
+        "core", package_dir / "__init__.py", submodule_search_locations=[str(package_dir)]
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"no importable core package at {package_dir}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["core"] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException:
+        if known is not None:
+            sys.modules["core"] = known
+        else:
+            sys.modules.pop("core", None)
         raise
-    if not _inside(core_pkg):
-        if added:
-            sys.path.remove(root_s)
-        raise ImportError(f"`core` resolved outside the plugin at {core_pkg.__file__}")
-    return core_pkg
+    return module
 
 
 def _core_module(name: str):

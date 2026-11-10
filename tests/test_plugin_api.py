@@ -529,3 +529,33 @@ def test_the_router_finds_core_when_the_host_loads_it_as_a_bare_module(tmp_path)
         sys.path[:] = saved_path
         sys.modules.update(saved)
 
+def test_a_foreign_core_module_cannot_hide_the_plugins_own():
+    """`core` is a generic name: something else may already own it.
+
+    The gateway may have imported an unrelated `core` (another plugin, a stray directory on the
+    path) before this router loads. Trusting `sys.modules['core']` or plain path order would then
+    serve the wrong package — or fail — so the loader must take the plugin's own directory.
+    """
+    import importlib.util
+    import sys
+    import types
+
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    target = repo / "dashboard" / "plugin_api.py"
+    foreign = types.ModuleType("core")
+    foreign.__file__ = "/tmp/elsewhere/core/__init__.py"
+    saved = {k: v for k, v in sys.modules.items() if k == "core" or k.startswith("core.")}
+    for key in saved:
+        del sys.modules[key]
+    sys.modules["core"] = foreign
+    try:
+        spec = importlib.util.spec_from_file_location("plugin_api_foreign", target)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        payload = module.state()
+        assert payload["still_note"] == "", payload["still_note"]
+        assert payload["stills"]
+    finally:
+        sys.modules.pop("core", None)
+        sys.modules.update(saved)
+
