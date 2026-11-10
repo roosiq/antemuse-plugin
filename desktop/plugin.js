@@ -566,9 +566,11 @@ function createGraph3D(el, doc, ctx, host, win) {
     const session = host && host.state && host.state.focusedSessionId
       ? host.state.focusedSessionId.get() : ''
     const q = '/graph' + (session ? '?session=' + encodeURIComponent(session) : '')
+    const askedAt = performance.now()
     const slow = new Promise((_, reject) => setTimeout(() => reject(new Error('graph timeout')), 12000))
     Promise.race([Promise.resolve(ctx.rest(q)), slow]).then((g) => {
       if (stopped) return
+      report({ routeMs: Math.round(performance.now() - askedAt), fails: 0 })
       boot('graph:' + (g ? (g.nodes ? g.nodes.length : 'nonodes') : 'none'))
       if (!g || !g.nodes || !g.nodes.length) {
         const local = pasted()
@@ -583,6 +585,9 @@ function createGraph3D(el, doc, ctx, host, win) {
         el.querySelectorAll('[data-antemuse-bake]').forEach((im) => { im.style.opacity = '0' })
       }
     }, (e) => {
+      // A timeout is a number, not a mood: keep how long the route took to not answer.
+      report({ routeMs: Math.round(performance.now() - askedAt), lastErr: String(e && e.message || e).slice(0, 60),
+        fails: (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails ? (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails + 1 : 1 })
       boot('grapherr:' + (e && e.message ? e.message : e))
       const local = pasted()
       if (local) upload(local)
