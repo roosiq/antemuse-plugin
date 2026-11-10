@@ -353,7 +353,10 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
                       or activation.sequence(rows[0][0], None, steps=count))
             labels = sorted({label for f in frames for label in f["activations"]})
     if not labels:
-        return []
+        # A brand-new install has no servings at all. The ground is still the truth — the concept
+        # space exists, nothing is lit — and drawing it beats a blank pane, which reads as broken
+        # and is what a first run looked like. Nothing is invented: no node is lit.
+        labels = []
 
     # The whole concept space is the ground; the firing concepts are what is lit on it. Without
     # the ground, two active concepts are two dots and the pane looks empty — which is exactly how
@@ -362,7 +365,7 @@ def stills(move: str = "", session: str = "", dest: Optional[Path] = None,
     pos = fit(coords(sorted(set(context) | set(labels))), *size)
     if not pos:
         return []
-    edges = nearest(labels, k=3)
+    edges = nearest(labels, k=3) if labels else []
     # The ground's edges: a sample of the ledger's concepts joined to their nearest neighbour in
     # the same projection, so the field has the texture of a graph rather than of a starfield.
     ground = sorted(set(context) & set(pos))

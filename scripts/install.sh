@@ -190,7 +190,12 @@ print("   session store:", store, "exists" if store.exists() else "MISSING")
 print(" ", history.scan_sessions(days=7))
 PY
 fi
-ok "ledger ready (it also fills from use: every served concept is recorded)"
+if [[ -f "$HERMES_HOME/state.db" ]]; then
+  ok "ledger ready (it also fills from use: every served concept is recorded)"
+else
+  warn "no session store at $HERMES_HOME/state.db — the map draws its ground with nothing lit"
+  warn "  until a state serves a concept, or point it at a store with ANTEMUSE_STATES_HOME"
+fi
 
 # -------------------------------------------------------------------- 7. doctor
 say "7. doctor"

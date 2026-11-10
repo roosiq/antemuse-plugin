@@ -267,14 +267,16 @@ def test_the_art_route_refuses_anything_it_did_not_write(monkeypatch, tmp_path):
             raise AssertionError(f"{name}/{filename} was not refused")
 
 
-def test_no_state_still_draws_the_profile_and_an_empty_ledger_draws_nothing(monkeypatch, tmp_path):
+def test_a_fresh_install_draws_the_ground_with_nothing_lit(monkeypatch, tmp_path):
     api = _walk_api(monkeypatch, tmp_path)
     monkeypatch.setattr(api, "plugin", lambda: type("P", (), {"core": type("C", (), {
         "panel": type("Pan", (), {"engine_state": staticmethod(lambda: {"active": None})}),
         "screensaver": __import__("core.screensaver", fromlist=["x"])})()})())
-    # No state, and a ledger with no servings: there is nothing true to draw.
-    payload = api.state(cols=40, rows=12)
-    assert payload["stills"] == [] and payload["still_note"] == "nothing firing yet"
+    # No state, and a ledger with no servings. The ground is still the truth — the concept space
+    # exists, nothing is lit — and a blank pane is what made a first run look broken.
+    payload = api.state(cols=40, rows=12, session="fresh")
+    assert payload["stills"], payload.get("still_note")
+    assert payload["still_note"] == ""
 
 
 def test_stills_are_written_for_a_state_with_servings(monkeypatch, tmp_path):
@@ -299,10 +301,21 @@ def test_stills_are_written_for_a_state_with_servings(monkeypatch, tmp_path):
     assert all(p.suffix == ".jpg" for p in paths)
 
 
-def test_stills_stop_when_nothing_is_firing(monkeypatch, tmp_path):
+def test_stills_with_nothing_firing_light_nothing(monkeypatch, tmp_path):
+    """A frame with no firings is drawn, and it must not invent a lit node to look busy."""
     from core import activation_stills
     monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
-    assert activation_stills.stills(move="walk", session="nobody", dest=tmp_path / "x") == []
+    paths = activation_stills.stills(move="walk", session="nobody", dest=tmp_path / "x")
+    assert paths, "an empty ledger still draws the ground"
+
+    from PIL import Image
+
+    lit = 0
+    for path in paths:
+        px = Image.open(path).convert("RGB").getdata()
+        # the amber core is (255, 214, 126); nothing that bright may appear with nothing firing
+        lit += sum(1 for r, g, b in px if r > 220 and g > 180)
+    assert lit == 0, f"a frame lit {lit} pixels with nothing firing"
 
 
 def test_the_pane_paints_stills_before_baked_art():
