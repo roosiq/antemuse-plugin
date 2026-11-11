@@ -74,17 +74,17 @@ def render(pin: str | None = None) -> str:
             "requires_env": [],
         },
         "known_issues": [
-            "The picture is the desktop app's Antemuse pane only; chat carries no "
-            "visualization, and a terminal gets the full-screen takeover.",
-            "Windows: the installer and runtime are pure Python and the suite passes on Linux; "
-            "the takeover needs a POSIX terminal and prints a still frame elsewhere.",
+            "The picture is the desktop app's Antemuse pane only. Chat carries no visualization and "
+            "a terminal gets the same text record; there is no terminal takeover since 0.10.30.",
+            "Windows: the installer and runtime are pure Python and the suite passes on Linux; there "
+            "is no Windows-specific path, so the pane is expected to work but is unverified there.",
             "The exploration library (spark, keep, collider, selection) is present but runtime-gated "
             "behind experimental.enabled and makes no quality claim.",
         ],
         "image": f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/banner.png",
         "screenshots": [
             f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/{n}"
-            for n in ("pane-walk.png", "takeover.png", "return-account.png", "blocked-tool.png")
+            for n in ("pane-walk.png", "return-account.png", "blocked-tool.png")
         ],
     }
     text = yaml.safe_dump(entry, sort_keys=False, allow_unicode=True, width=100)

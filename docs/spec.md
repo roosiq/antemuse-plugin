@@ -75,7 +75,6 @@ them.
 ```bash
 ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
 hermes plugins enable antemuse
-antemuse                      # full-screen takeover
 hermes plugins doctor antemuse
 ```
 

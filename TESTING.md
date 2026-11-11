@@ -63,9 +63,9 @@ What you should see:
 - A reply made while a state is active ends with a marker such as
   `— daydreaming, 2 min left · /return to come back`.
 
-The full-screen takeover is `python3 -m core.tui` from the plugin directory and
-needs a real terminal; in this build it is not bound to a slash command. It never
-blocks the agent's work.
+There is no terminal takeover to run: `core/tui.py` and the alt-screen surface were
+deleted in 0.10.30, so a terminal gets the same text record the chat gets. The picture
+is the desktop app's pane. Nothing in a state ever blocks the agent's work.
 
 States are **open by default** in this build: entering one does not remove tools.
 To close them, ask the agent to enter with `block: true`
