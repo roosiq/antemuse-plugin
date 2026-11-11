@@ -62,7 +62,7 @@ STATE_SCHEMA: Dict[str, Any] = {
             "action": {"type": "string",
                        "enum": ["enter", "exit", "status", "list", "walks", "walk_new",
                                 "walk_del", "break", "mood", "spark", "keep", "complete",
-                                "watch", "card", "image"]},
+                                "watch"]},
             "name": {"type": "string",
                      "description": "State to enter (walk, daydream, dream, doomscroll) or the walk to use."},
             "minutes": {"type": "integer", "description": "Optional override for how long the state lasts."},
@@ -214,7 +214,7 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         return states.palette()
     if action in ("status", ""):
         return engine.status_line()
-    if action in ("card", "image", "watch"):
+    if action == "watch":
         # the old spellings of "show me a picture"; there is one picture, in the pane
         return _pane_only()
     # An unrecognised action used to fall through to the status picture, so a caller

@@ -186,7 +186,8 @@ def palette() -> str:
             tools = "no tools"
         else:
             tools = "tools: " + ", ".join(s["tools"])
-        lines.append(f"  /{key:<10} {s['minutes']:>3} min · {s['turns']} turn(s) · {tools}")
+        unit = (s.get("dose") or {}).get("unit") or "turn(s)"
+        lines.append(f"  /{key:<10} {s['minutes']:>3} min · {s['dose']['n']} {unit} · {tools}")
         lines.append(f"             {s['contract']}")
     lines.append("  /return     end the current state and keep the residue")
     lines.append("")
