@@ -2,7 +2,7 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: 6741dcf1e25ebbe26988d2b4421d57becf1ddd0d
+sha: 0a7ea0cb4f5fa54407170351c268a5db8eb9e909
 description: 'Antemuse lets the agent itself take a walk, daydream, dream, doomscroll, or get unstuck.
   A state is a bounded change to behaviour, not a place: it shapes the next replies, decides what residue
   the agent carries when the state ends, and — only when the entry asks with block: true — restricts which
@@ -16,7 +16,7 @@ maintainer: roosiq
 tier: community
 category: general
 docs_url: https://github.com/roosiq/antemuse-plugin#readme
-version: "0.10.33"
+version: "0.10.34"
 requires_hermes: '>=0.21.6'
 platforms:
 - linux
@@ -37,15 +37,14 @@ capabilities:
   provides_middleware: []
   requires_env: []
 known_issues:
-- The picture is the desktop app's Antemuse pane only; chat carries no visualization, and a terminal gets
-  the full-screen takeover.
-- 'Windows: the installer and runtime are pure Python and the suite passes on Linux; the takeover needs
-  a POSIX terminal and prints a still frame elsewhere.'
+- The picture is the desktop app's Antemuse pane only. Chat carries no visualization and a terminal gets
+  the same text record; there is no terminal takeover since 0.10.30.
+- 'Windows: the installer and runtime are pure Python and the suite passes on Linux; there is no Windows-specific
+  path, so the pane is expected to work but is unverified there.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/6741dcf1e25ebbe26988d2b4421d57becf1ddd0d/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/0a7ea0cb4f5fa54407170351c268a5db8eb9e909/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6741dcf1e25ebbe26988d2b4421d57becf1ddd0d/docs/screenshots/pane-walk.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6741dcf1e25ebbe26988d2b4421d57becf1ddd0d/docs/screenshots/takeover.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6741dcf1e25ebbe26988d2b4421d57becf1ddd0d/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6741dcf1e25ebbe26988d2b4421d57becf1ddd0d/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/0a7ea0cb4f5fa54407170351c268a5db8eb9e909/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/0a7ea0cb4f5fa54407170351c268a5db8eb9e909/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/0a7ea0cb4f5fa54407170351c268a5db8eb9e909/docs/screenshots/blocked-tool.png
