@@ -694,6 +694,11 @@ function createGraph3D(el, doc, ctx, host, win) {
     segQuads.ink = 0; segQuads.culled = 0
     const trim = dist < 1.55 ? 0 : 0.10
     const cull = dist < 1.55 ? 520 : 210
+    // The colour uniform belongs to the quad program, and the program bound at this point is
+    // still the POINTS one from the previous frame — so every frame set a uniform the bound
+    // program did not own, nine times per poll, in the console of every app that ran the pane.
+    // Bind the program before speaking to it.
+    if (quadProg) gl.useProgram(quadProg)
     if (quadProg && edgePos.length) {
       gl.uniform3f(qColor, 0.58, 0.62, 0.80)
       segQuads(edgePos, null, 0.22, 1.25 * dpr, MVP, trim, true, cull * dpr)
