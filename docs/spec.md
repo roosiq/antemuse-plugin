@@ -269,6 +269,11 @@ At the top of each turn (`tick`):
 
 ### 5.3 Expiry and ending
 
+`/return` ends the state of the conversation that asked and no other: typed in a session that
+does not own the running state it changes nothing and says where the state lives. The earlier
+build ended it anyway and only *said* the account stayed elsewhere, so a bystander could stop
+somebody else's walk.
+
 Expiry and `/return` produce the same account. Expiry is not a silent path.
 Ending appends a report to `residue` (`kind: "report"`, `turns_left: 2`) and a
 `report` event to the journal, clears the active record, and stops the ticker.
@@ -312,6 +317,12 @@ events **from this state only**, since `entered_at`:
 Filtering by state key and `entered_at` was a repair: the earlier build reported
 the previous walk's WordNet steps to a running doomscroll as things it had
 consumed.
+
+**The block goes only to the conversation that entered the state.** The active state
+records its origin session, and `inject(session)` refuses to build a state block for a
+turn from any other session. Before that check, one walk started in one chat delivered its
+concepts into every other chat's next turn on the profile: correct material, wrong message
+chain. An empty owner (a CLI with no session id) still reaches every turn.
 
 After a state ends, the next turn carries the report block and the trail. A walk
 report asks for goal → stuck approach → different first step; the others ask for
@@ -574,6 +585,17 @@ ordered dissolve; drift of 6% of width over a 26 s breath; autocontrast and a
 
 ### 10.4 Chat surfaces
 
+**Chat carries no visualization.** The picture lives in the desktop app's Antemuse pane and
+nowhere else: no card is posted when a state begins, `state(action="card"|"image")` and
+`/state picture` outside a terminal answer with a pointer to the pane, and no `MEDIA:` path is
+returned into a conversation. A terminal is not chat — `/state picture` in a tty still runs the
+takeover, which draws into the terminal and sends nothing.
+
+`picture_enabled` and `picture_narrow` were removed with the surface they controlled: a switch
+for a thing that does not exist is a lie in a settings form.
+
+What follows is the encoder, kept for the terminal and for the takeovers that still use it.
+
 Implementation: `core/surfaces.py`. The same frame dict, encoded per destination:
 
 | channel | cols | fence | char budget | image |
@@ -593,8 +615,9 @@ forces one. Matrix and Telegram profiles are configured but have not been
 verified against real clients.
 
 `state(action="image")` renders a PNG card via Pillow and returns
-`MEDIA:<path>` plus the text record — useful where a proportional font would
-break the ASCII card.
+`MEDIA:<path>` plus the text record. **It is not reachable from chat any more** (§10.4):
+chat carries no visualization, so the action answers with the pane pointer like `card`
+does. The renderer stays because the terminal takeover and the proofs use it.
 
 The text projection (`record()`) is dense and undecorated: state, clock, contract,
 tools, then every journal and residue line. This is the model-facing ledger.
@@ -1112,7 +1135,8 @@ All paths relative to `specs/changes/`.
 | `plugin-updates` | **LIVE** | delivery | a recommendation is pushed as its own message through `ctx.post_message`, once per cooling window, instead of waiting for someone to type a slash command. Discord caps app commands at 100 and this machine already syncs 95, so a command-only channel is not a reliable one. |
 | `unstuck-state` | **LIVE** | states | a fifth state for a repository that does not exist yet: 5 min, 3 turns, read-only (`read_file`, `search_files`), material is what the project actually contains, and the exit criterion is **one direction** named with the spec file it becomes. Recommended automatically while the project has fewer than 3 commits and no spec, then silent. `core/sources.greenfield_text`, `core/recommend._new_project`; 7 tests. Renamed from `greenfield` (kept as an alias) for a plainer, more current word. |
 | `normal-baseline` | **PARTIAL** | measurement | records the ordinary condition — tool calls and failures per turn, and the minutes between states — in `normal.json` (200 turns / 50 stretches, counts only). Below 20 turns nothing is claimed. `long stretch` now uses the measured 75th percentile of this person's stretches (clamped 60–180) instead of the constant 90, and the line says which it used. Loop, wall and saturation keep fixed thresholds until the failure-rate distribution can support a calibration. `core/normal.py`, 8 tests. |
-| `plugin-settings` | **LIVE** | configuration | six bounded keys declared in the manifest's `config_schema` (`recommend_enabled`, `recommend_cooling_minutes`, `long_stretch_minutes`, `picture_enabled`, `picture_narrow`, `journal_cap`), rendered as a form by the **desktop app's** Settings ▸ Plugins and written to `plugins.entries.antemuse.settings.*`; read through `ctx.get_config`, clamped and logged, never raising. The plugin's own settings page was removed so the host form is the only one. Nothing that defines a state is settable. `core/settings.py`, 11 tests. |
+| `chat-is-not-a-surface` | **LIVE** | surface removal + chain correctness | chat carries no visualization: the on-entry card, `card`/`image` and `/state picture` in chat all point at the desktop pane; `picture_enabled`/`picture_narrow` deleted. State material is per message chain: `inject(session)` refuses a turn from another session, and `/return` from a non-owner changes nothing. `suggest_autofollow` added (default off), the one setting that can start a move. |
+| `plugin-settings` | **LIVE** | configuration | five bounded keys declared in the manifest's `config_schema` (`recommend_enabled`, `recommend_cooling_minutes`, `suggest_autofollow`, `long_stretch_minutes`, `journal_cap`), rendered as a form by the **desktop app's** Settings ▸ Plugins and written to `plugins.entries.antemuse.settings.*`; read through `ctx.get_config`, clamped and logged, never raising. The plugin's own settings page was removed so the host form is the only one. Nothing that defines a state is settable. `core/settings.py`, 11 tests. |
 | `gap-closure` | **LIVE** | measurement + repair | the three gaps the review found, closed with numbers: dream **0/40 → 40/40** real connections (file names as material, project as document, thin day widens 24h→72h→7d and says so); walk **9.0 % → 7.8 %** repeated destinations with ledger steering over 600 steps; unstuck quotes clipped at word boundaries and recommendations no longer built on short dictionary nouns. `tools/measure_state_gaps.py`, 7 tests. |
 | `session-scan` | **LIVE** | architecture | the ledger is filled once per session, in the background: first `pre_llm_call` of a session starts one bounded scan (300 messages, 2 s budget, 14 days) in a daemon thread, guarded by a 30-minute interval and a single-flight lock; the cursor advances only over messages actually read, so a spent budget loses nothing. Silent when there is nothing new; one journal line when it stores something. Off under `ANTEMUSE_NO_SCAN` so a test suite never scans. |
 | `concept-history` | **LIVE** | architecture | a durable concept ledger (`core/history.py`, sqlite in the plugin data dir) records identity — term, kind, stable key, move, session, time — and never message text. It answers what no state could: where a concept was met before, which concepts keep circling across sessions, and which were served but never used. Past-session concepts come from Hermes' own `state.db`, read-only and incrementally via a cursor, user and assistant text only. Fail-open: a broken ledger logs one named failure and every state still delivers. Consumers wired: walk annotates and records, dream connects circling concepts, daydream and dream record what they serve, unstuck recommends from circling and unused. |
@@ -1189,7 +1213,9 @@ From `scenes-per-surface` (status: proposed). Kept here so the gap is visible:
 - a deterministic clock grade (exposure, warmth, veil) over the frame bank;
 - two scores per frame, measured at the surface it will be shown on
   (terminal grid versus full size);
-- 4:5 postcards for chat, emitted on entry and resolution, midpoint only for
+- 4:5 postcards for chat — **superseded**: chat carries no visualization (§10.4), so
+  postcards are not emitted while that rule holds. Kept as future work for a surface that
+  does not exist yet, on entry and resolution, midpoint only for
   states over 15 minutes;
 - origin-bound emission keyed to `session_id`, dropped rather than rerouted;
 - idle renders nothing;

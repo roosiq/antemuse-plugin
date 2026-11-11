@@ -51,13 +51,17 @@ off in a dropdown has no identity.
 | `recommend_enabled` | bool | `true` | — | may the recommender speak at all |
 | `recommend_cooling_minutes` | int | `45` | 10–240 | how long one recommendation holds |
 | `long_stretch_minutes` | int | `0` (measured) | 0 or 30–360 | `0` keeps the measured p75; any other value overrides it, and the line says `fixed at N` |
-| `picture_enabled` | bool | `true` | — | post the state picture into the chat on entry |
-| `picture_narrow` | bool | platform default | — | force the narrow card on wide clients |
+| `suggest_autofollow` | bool | `false` | — | enter the state the recommender named instead of only naming it |
 | `journal_cap` | int | `60` | 20–60 | **reduce only**: the journal may be shortened, never lengthened past the spec's cap |
 | `states.<name>.minutes` | int | state default | 1 … default | **reduce only**: a state may be made shorter, never longer. The long states are long on purpose |
 
-Nine settings at most, and every one of them is bounded in both directions. Nothing here
+Six settings at most, and every one of them is bounded in both directions. Nothing here
 can add a command, a state, or a model call.
+
+`picture_enabled` and `picture_narrow` were removed with the chat card: chat carries no
+visualization outside the desktop app, so a setting that turned one on would be a switch
+to a surface that does not exist. `suggest_autofollow` replaced them in the list — it is
+the only setting that can start a move, and it starts it unasked, so it is off by default.
 
 ## Explicitly not settable
 

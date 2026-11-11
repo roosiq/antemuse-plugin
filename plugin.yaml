@@ -2,7 +2,7 @@ name: antemuse
 label: Antemuse
 kind: standalone
 manifest_version: 2
-version: "0.9.35"
+version: "0.9.36"
 author: Antemuse
 homepage: https://antemuse.com
 license: MIT
@@ -44,6 +44,14 @@ config_schema:
     description: >-
       How long one recommendation holds before another may replace it. Below 10 is
       clamped to 10, above 240 to 240: a plugin that speaks every turn is a nag.
+  suggest_autofollow:
+    type: bool
+    default: false
+    label: Follow suggestions automatically
+    description: >-
+      When the plugin suggests a state, enter it instead of only saying so. Off by
+      default: a suggestion is advice, and the person decides whether to act on it.
+      A followed state still ends by its dose, and nothing about the move changes.
   long_stretch_minutes:
     type: int
     default: 0
@@ -54,21 +62,6 @@ config_schema:
       Minutes without a state before one is recommended. 0 keeps the measured
       threshold (the 75th percentile of your own stretches, clamped 60-180).
       Any other value overrides it, and the line says "fixed at N".
-  picture_enabled:
-    type: bool
-    default: true
-    label: Post the picture in chat
-    description: >-
-      Post the state's wordless card as its own message when a state begins. On by
-      default; turn it off when the desktop pane is where you watch states. Asking for
-      it directly (/state picture) always works either way.
-  picture_narrow:
-    type: bool
-    default: false
-    label: Narrow picture
-    description: >-
-      Use the narrow card on wide clients. The card adapts to the platform anyway;
-      this forces the smaller of the two layouts.
   journal_cap:
     type: int
     default: 60

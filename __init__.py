@@ -41,7 +41,7 @@ else:  # flat load: this file is or is not on sys.path, but its directory is wha
     from core import (engine, history, options, panel, recall, runtime, session, settings,
                       states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
 
-__version__ = "0.9.35"
+__version__ = "0.9.36"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
@@ -214,11 +214,8 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         return states.palette() + "\n\n" + panel.render(engine.watch_state())
     if action == "watch":
         return tui.run()
-    if action == "card":
-        return surfaces.card(engine.watch_state(),
-                             str(a.get("name") or engine.platform() or "discord"))
-    if action == "image":
-        return f"MEDIA:{surfaces.snapshot_path(engine.watch_state(), str(a.get('name') or 'discord'))}\n" + surfaces.record(engine.watch_state())
+    if action in ("card", "image"):
+        return _pane_only()
     if action in ("status", ""):
         return panel.render(engine.watch_state())
     # An unrecognised action used to fall through to the status picture, so a caller
@@ -284,6 +281,42 @@ _HOST: Any = None
 _LAST_UPDATE = ""
 
 
+def _follow(advice: str, session_id: str, platform: str) -> str | None:
+    """Act on a suggestion, but only when the person asked the plugin to.
+
+    Auto-follow is the one thing that can move a setting into the behaviour of a state, so it is
+    opt-in, it never stacks on a move already running, and the state it starts ends by its dose
+    like any other. The suggestion line still gets posted either way: following silently would be
+    a state that started itself with nothing to read.
+    """
+    try:
+        from core import settings
+        if not settings.flag("suggest_autofollow"):
+            return None
+        if engine.peek():
+            return None
+        tail = advice.rsplit("/", 1)[-1].strip().split()[0] if "/" in advice else ""
+        if not tail:
+            return None
+        return engine.enter(tail, None, session=session_id or None, platform=platform or None)
+    except Exception as exc:  # a suggestion is advice; failing to act on it costs nothing
+        logger.debug("antemuse: suggestion not followed: %s", exc)
+        return None
+
+
+def _pane_only() -> str:
+    """There is one place a picture is shown, and it is the desktop pane.
+
+    Chat used to carry the card as its own message and on ask. A second surface is a second
+    thing to keep in step, and the pane is the one that can actually animate the graph.
+    """
+    view = engine.watch_state()
+    if not view.get("active"):
+        return "the picture lives in the desktop app's Antemuse pane; no state is running"
+    return ("the picture lives in the desktop app's Antemuse pane — chat carries no "
+            "visualization for now")
+
+
 def _post(text: str) -> bool:
     """Send one line through the host's own message channel, on any platform."""
     host = _HOST
@@ -313,7 +346,7 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
         if engine.peek():
             engine.record("person", said)
     parts = [
-        engine.inject() or "",
+        engine.inject(session_id or engine.current_session()) or "",
         runtime.injection(session_id or engine.current_session(),
                           origin=engine.current_origin()) or "",
     ]
@@ -325,6 +358,9 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
     if advice and advice != _LAST_UPDATE:
         if _post(advice):
             _LAST_UPDATE = advice
+        started = _follow(advice, session_id, platform)
+        if started:
+            block = (block + "\n\n" + started).strip()
     return block or None
 
 
@@ -372,34 +408,11 @@ def _enter(key: str, minutes: int | None = None):
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
             line = engine.enter(key, minutes, walk=arg, **where)
-            _picture()
             return line + "\n" + states.palette()
         override = int(arg) if arg.isdigit() else minutes
         line = engine.enter(key, override, **where)
-        _picture()
         return line + "\n" + states.palette()
     return handler
-
-
-def _picture() -> bool:
-    """Post the state's picture into the chat, as its own message.
-
-    The chat is where a person actually watches a state, so the picture belongs there
-    rather than behind a command they have to remember. It is still only a picture:
-    nothing from the injected material is ever rendered into it.
-    """
-    try:
-        from core import settings, surfaces
-        if not settings.flag("picture_enabled"):
-            return False
-        view = engine.watch_state()
-        if not view.get("active"):
-            return False
-        return _post(surfaces.card(view, engine.platform() or "discord",
-                                   narrow=settings.flag("picture_narrow")))
-    except Exception as exc:
-        logger.debug("antemuse: no picture posted: %s", exc)
-        return False
 
 
 def _return(_raw: str, session_id: str | None = None,
@@ -418,8 +431,8 @@ def _state(raw: str) -> str:
     want = (raw or "").strip().lower()
     if want in ("picture", "image", "frame", "card"):
         if sys.stdout.isatty():
-            return tui.run()
-        return surfaces.card(engine.watch_state(), engine.platform() or "discord")
+            return tui.run()      # a terminal is not chat: the takeover draws nothing into it
+        return _pane_only()
     if want in ("", "text", "frame-text"):
         return panel.render(engine.watch_state())
     return "usage: /state  ·  /state picture"

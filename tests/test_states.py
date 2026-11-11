@@ -302,12 +302,14 @@ def test_another_session_cannot_collect_the_account():
     engine.enter("walk", minutes=3)
     engine.record("state", "hand (n) → palm (n) · took its meronym", event="walk")
     out = engine.stop("sess-B")
-    assert "Nothing was rendered here" in out
-    assert "ended" in out and "hand" not in out, "the account must not travel to another session"
+    # stronger than before: the stranger does not see the account *and* does not end the walk
+    assert "running in the session that started it" in out
+    assert "hand" not in out, "the account must not travel to another session"
+    assert engine.peek() is not None, "a stranger's /return changes nothing"
+
+    # the state is still the one that was entered, and the owner can end it
+    assert "ended" in engine.stop("sess-A")
     assert engine.peek() is None
-    # the account still exists for the session that started it
-    reports = [r for r in engine.watch_state()["residue"] if r.get("kind") == "report"]
-    assert reports and "hand" in reports[-1]["text"]
 
 
 def test_only_this_session_can_collect_it():
@@ -506,3 +508,33 @@ def test_a_young_ledger_still_has_a_space_to_walk_in():
 
     labels = activation_stills._all_labels(1200)
     assert len(labels) > 600, f"a first run needs structure, got {len(labels)}"
+
+
+def test_a_walk_does_not_leak_into_another_chats_turn():
+    """A state belongs to the conversation that entered it.
+
+    One walk, started in one chat, delivered its concepts into every other chat's next turn on
+    the profile: the right material on the wrong message chain.
+    """
+    from core import engine, walks
+
+    engine.enter("walk", minutes=5, session="chat-a", platform="discord")
+    walks.get("outer").step(1)
+
+    assert "WALKING" in (engine.inject("chat-a") or "")
+    assert "WALKING" not in (engine.inject("chat-b") or ""), "another chat must not see this walk"
+
+
+def test_a_bystander_cannot_return_someone_elses_state():
+    """`/return` used to end the state no matter who typed it, and only *say* the account stayed
+    with whoever started it."""
+    from core import engine
+
+    engine.enter("walk", minutes=5, session="chat-a", platform="discord")
+
+    line = engine.stop("chat-b")
+    assert "running in the session that started it" in line
+    assert engine.peek(), "the state survives a stranger's /return"
+
+    assert engine.stop("chat-a")
+    assert engine.peek() is None

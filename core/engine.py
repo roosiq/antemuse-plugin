@@ -353,6 +353,12 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
         origin = active.get("origin") or {}
         elsewhere = bool(session_id and origin.get("session_id")
                          and session_id != origin.get("session_id"))
+        if elsewhere:
+            # Typing /return in a chat that is not running the state used to end it anyway and
+            # only *say* the account stayed elsewhere: a bystander could stop somebody else's
+            # walk. Now the state is untouched and the answer says where it lives.
+            return (f"{spec['label']} is running in the session that started it. Nothing was "
+                    f"ended here — /return there to finish it.")
         report = _account(data, active)
         data["residue"].append({**report, "kind": "report", "turns_left": 2})
         data["journal"].append({
@@ -376,9 +382,6 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
                                   time.time() - float(active.get("entered_at") or 0), reason)
     except Exception:
         pass
-    if elsewhere:
-        return (f"{spec['label']} ended in the session that started it; its account stays "
-                f"there. Nothing was rendered here.")
     if reason == "complete":
         return (f"{spec['label']} finished · {report['text']}\n"
                 f"The act is done, so the state is over. Carry what it gave you into the work.")
@@ -522,13 +525,23 @@ def complete_if_dosed() -> bool:
     return True
 
 
-def inject() -> str | None:
-    """The block pre_llm_call adds to this turn's user message."""
+def inject(session: str | None = None) -> str | None:
+    """The block pre_llm_call adds to this turn's user message.
+
+    A state belongs to the conversation that entered it. Without this check, one walk started in
+    one chat delivered its concepts into every other chat's next turn on the profile: the material
+    was right and the message chain it landed on was somebody else's. An empty owner means
+    "nobody in particular" (a CLI with no session id), which still reaches every turn.
+    """
     deliver_if_due()
     with _LOCK:
         data = _load()
         _expire(data)
         active = data.get("active") or {}
+        if active and session:
+            owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
+            if owner and owner != str(session):
+                active = {}          # this turn belongs to another chain
         residue = list(data.get("residue", []))
         # only what THIS state delivered: a doomscroll was reporting the previous
         # walk's WordNet steps as things it had consumed.

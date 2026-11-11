@@ -21,8 +21,7 @@ INT_BOUNDS = {
 }
 BOOL_DEFAULTS = {
     "recommend_enabled": True,
-    "picture_enabled": True,
-    "picture_narrow": False,
+    "suggest_autofollow": False,
 }
 
 _host: Any = None

@@ -81,44 +81,15 @@ def test_a_loop_on_a_new_project_still_recommends_the_unstuck(monkeypatch, tmp_p
     assert got and got["pattern"] == "new project", got
 
 
-def test_entering_a_state_posts_its_picture_into_the_chat(monkeypatch, tmp_path):
-    """The chat is where a state is watched: the picture arrives, not a command to type."""
-    import importlib
-    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path))
-    module = importlib.import_module("__init__")
-
+def test_entering_a_state_posts_nothing_into_the_chat(monkeypatch):
+    """Chat carries no visualization: the picture is the desktop pane, and a state beginning is
+    not a reason to put art into a conversation."""
     posted = []
+    import importlib
+    plugin = importlib.import_module("__init__")
+    monkeypatch.setattr(plugin, "_post", lambda text: posted.append(text) or True)
 
-    class Host:
-        def post_message(self, text):
-            posted.append(text)
+    line = plugin._enter("unstuck")("5", session_id="chat-1", platform="discord")
 
-    class Ctx(Host):
-        def __init__(self):
-            self.commands, self.tools, self.hooks = {}, {}, {}
-
-        def register_command(self, **kw):
-            self.commands[kw.get("name")] = kw
-
-        def register_tool(self, **kw):
-            self.tools[kw["name"]] = kw
-
-        def register_hook(self, name, fn):
-            self.hooks[name] = fn
-
-        def register_auxiliary_task(self, *a, **k):
-            pass
-
-        def register_skill(self, *a, **k):
-            pass
-
-    ctx = Ctx()
-    module.register(ctx)
-    module._HOST = ctx
-    ctx.commands["unstuck"]["handler"]("5")
-
-    assert posted, "no picture was posted"
-    picture = posted[-1]
-    assert "UNSTUCK" not in picture, "the card must stay wordless"
-    assert "direction" not in picture.lower(), "no material may reach the picture"
-    assert len(picture.splitlines()) > 3, "the picture is empty"
+    assert "UNSTUCK" in line.upper() or "unstuck" in line.lower()
+    assert posted == [], "a state beginning posts no picture"

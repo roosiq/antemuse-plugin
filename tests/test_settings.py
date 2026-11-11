@@ -46,8 +46,7 @@ def test_every_declared_setting_has_a_label_a_person_can_read():
 def test_defaults_when_nothing_is_configured():
     settings.bind(Host())
     assert settings.flag("recommend_enabled") is True
-    assert settings.flag("picture_enabled") is True
-    assert settings.flag("picture_narrow") is False
+    assert settings.flag("suggest_autofollow") is False
     assert settings.number("recommend_cooling_minutes") == 45
     assert settings.number("long_stretch_minutes") == 0
     assert settings.number("journal_cap") == 60
@@ -81,9 +80,9 @@ def test_a_wrong_type_falls_back_to_the_default():
 
 
 def test_strings_from_a_config_editor_count_as_booleans():
-    settings.bind(Host({"recommend_enabled": "false", "picture_enabled": "YES"}))
+    settings.bind(Host({"recommend_enabled": "false", "suggest_autofollow": "YES"}))
     assert settings.flag("recommend_enabled") is False
-    assert settings.flag("picture_enabled") is True
+    assert settings.flag("suggest_autofollow") is True
 
 
 def test_disabled_recommendations_say_nothing(monkeypatch):
@@ -106,7 +105,8 @@ def test_the_cooling_window_comes_from_settings():
 
 def test_no_host_means_defaults_and_no_crash():
     settings.bind(None)
-    assert settings.flag("picture_enabled") is True
+    assert settings.flag("recommend_enabled") is True
+    assert settings.flag("suggest_autofollow") is False
     assert settings.number("journal_cap") == 60
 
 
@@ -127,26 +127,25 @@ def test_the_manifest_and_the_code_agree_on_every_default():
             assert spec.get("min") == low and spec.get("max") == high, key
 
 
-def test_turning_the_picture_off_actually_stops_posting_it(monkeypatch):
-    """`picture_enabled` was declared, described and rendered as a toggle, and nothing read it.
-
-    A setting that does nothing is worse than no setting: the user turns it off, the picture keeps
-    arriving, and the form has lied to them.
-    """
+def test_following_a_suggestion_is_off_unless_asked(monkeypatch):
+    """A suggestion is advice. Acting on it unasked would be the plugin entering a state on its
+    own, which is the one thing it must not do by default."""
     import importlib
 
     plugin = importlib.import_module("__init__")
 
-    posted = []
-    monkeypatch.setattr(plugin, "_post", lambda text: posted.append(text) or True)
-    monkeypatch.setattr(plugin.engine, "watch_state", lambda: {"active": True, "key": "walk"})
-    monkeypatch.setattr(plugin.engine, "platform", lambda: "discord")
-    # the card itself is a separate surface; this test is about whether it is asked for at all
-    monkeypatch.setattr("core.surfaces.card", lambda *a, **k: "· · ·")
+    started = []
+    monkeypatch.setattr(plugin.engine, "enter",
+                        lambda key, minutes=None, **kw: started.append(key) or "entered")
+    monkeypatch.setattr(plugin.engine, "peek", lambda: None)
 
-    settings.bind(Host({"picture_enabled": True}))
-    assert plugin._picture() is True and posted
+    advice = "this looks like a walk · same tool failed 3x in a row · /walk"
 
-    posted.clear()
-    settings.bind(Host({"picture_enabled": False}))
-    assert plugin._picture() is False and not posted, "off means no picture"
+    settings.bind(Host({}))
+    assert plugin._follow(advice, "chat-1", "discord") is None
+    assert started == []
+
+    settings.bind(Host({"suggest_autofollow": True}))
+    plugin._follow(advice, "chat-1", "discord")
+    assert started == ["walk"], "on means it follows, and follows the state it named"
+

@@ -131,14 +131,16 @@ hermes config get plugins.entries.antemuse.settings
 | `recommend_enabled` | `true` | whether the recommender may speak at all |
 | `recommend_cooling_minutes` | `45` | how long one recommendation holds (10–240) |
 | `long_stretch_minutes` | `0` | `0` keeps the measured threshold; otherwise 30–360 |
-| `picture_enabled` | `true` | post the state's card in chat on entry |
-| `picture_narrow` | `false` | force the narrow card on a wide client |
+| `suggest_autofollow` | `false` | enter the state a suggestion names, instead of only naming it |
 | `journal_cap` | `60` | entries kept (reduce only, 20–60) |
 
 A setting changes how loud or how long a state is. None of them changes what a state
 *is*: directives, contracts, residue, `/return`, the tool policy default and the
 no-model rule are not configurable. Out-of-range values are clamped to the nearest
 bound and logged once — silently changing your number is worse than telling you.
+
+There is no setting for the picture. It lives in the desktop app's Antemuse pane and
+nowhere else: chat carries no visualization.
 
 ## Layout
 
