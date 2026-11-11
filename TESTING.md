@@ -62,7 +62,7 @@ app's pane. Nothing in a state ever blocks the agent's work unless you ask for `
 ```bash
 cd ~/antemuse-plugin
 tools/test.sh                    # suite in a temp data home
-tools/test.sh --with-renderers   # npm ci, then mount the pane in jsdom
+tools/test.sh --with-renderers   # npm ci in the harness dir, then mount the pane
 hermes plugins validate . --install-deps   # what catalog CI runs
 hermes plugins doctor antemuse
 ```

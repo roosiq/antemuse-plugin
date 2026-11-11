@@ -4,7 +4,7 @@ Mounts the real `desktop/plugin.js` outside the app, so the pane can be checked
 where Hermes Desktop is not installed.
 
 ```bash
-npm ci                                # jsdom, react, react-dom (dev-only)
+npm ci --prefix tools/desktop_harness  # jsdom, react, react-dom (dev-only)
 node tools/desktop_harness/mount.mjs
 ```
 

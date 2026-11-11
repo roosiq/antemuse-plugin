@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 
 if [[ "${1:-}" == "--with-renderers" ]]; then
   shift
-  npm ci --silent
+  npm ci --silent --prefix tools/desktop_harness
   node tools/desktop_harness/mount.mjs
 fi
 
