@@ -1,0 +1,86 @@
+{
+ "model": "openai/gpt-6.1-terra",
+ "seeds": [
+  11
+ ],
+ "conditions": [
+  "N",
+  "walk",
+  "daydream",
+  "doomscroll"
+ ],
+ "aggregate": {
+  "N": {
+   "cells": 2,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.7375,
+   "distinctiveness": 0.3185,
+   "state_words": 0.0,
+   "mean_words": 12.8,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 0
+  },
+  "walk": {
+   "cells": 2,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.737,
+   "distinctiveness": 0.3375,
+   "state_words": 0.0,
+   "mean_words": 13.2,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 0
+  },
+  "daydream": {
+   "cells": 2,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.725,
+   "distinctiveness": 0.3585,
+   "state_words": 0.0,
+   "mean_words": 13.85,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 0
+  },
+  "doomscroll": {
+   "cells": 2,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.732,
+   "distinctiveness": 0.345,
+   "state_words": 0.0,
+   "mean_words": 13.75,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 0
+  }
+ }
+}

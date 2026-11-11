@@ -22,7 +22,16 @@ dist/
 # Research trees: kept on the author's disk, not published with the plugin. Raw model
 # transcripts trip the catalog's install-time security scan, and none of it is loaded at
 # runtime. See docs/spec.md §16 for what the evidence showed.
-experiments/
+#
+# One exception: the idea-states benchmark publishes its report, plots, scripts and the
+# per-model aggregates, because a claim about what a state does to a list should be
+# checkable. The raw transcripts and run logs stay here — they are what the scanner
+# objects to, and the aggregates carry every number the report states.
+experiments/*
+!experiments/idea-states/
+experiments/idea-states/results-*.json
+experiments/idea-states/variation-*.json
+experiments/idea-states/log-*.log
 evaluation/
 tests/evaluation/
 tests/test_shards.py

@@ -1,0 +1,87 @@
+{
+ "model": "deepseek/deepseek-v4.1-flash-1017",
+ "seeds": [
+  11,
+  12
+ ],
+ "conditions": [
+  "N",
+  "walk",
+  "daydream",
+  "doomscroll"
+ ],
+ "aggregate": {
+  "N": {
+   "cells": 4,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.7083,
+   "distinctiveness": 0.2838,
+   "state_words": 0.0,
+   "mean_words": 13.175,
+   "in_ppl": 361.725,
+   "in_surprisal": 5.667,
+   "in_ttr": 0.51,
+   "in_mtld": 137.15,
+   "in_distinct2": 0.899,
+   "in_hapax": 0.724,
+   "in_compression": 0.448,
+   "in_self_overlap": 0.0038,
+   "self_nll": null,
+   "failed": 0
+  },
+  "walk": {
+   "cells": 4,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.7152,
+   "distinctiveness": 0.291,
+   "state_words": 16.75,
+   "mean_words": 13.65,
+   "in_ppl": 471.225,
+   "in_surprisal": 5.9262,
+   "in_ttr": 0.5108,
+   "in_mtld": 145.45,
+   "in_distinct2": 0.9205,
+   "in_hapax": 0.732,
+   "in_compression": 0.4555,
+   "in_self_overlap": 0.0035,
+   "self_nll": null,
+   "failed": 0
+  },
+  "daydream": {
+   "cells": 4,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.6318,
+   "distinctiveness": 0.3912,
+   "state_words": 55.75,
+   "mean_words": 16.95,
+   "in_ppl": 637.1,
+   "in_surprisal": 6.0992,
+   "in_ttr": 0.4193,
+   "in_mtld": 111.275,
+   "in_distinct2": 0.8427,
+   "in_hapax": 0.6883,
+   "in_compression": 0.4193,
+   "in_self_overlap": 0.01,
+   "self_nll": null,
+   "failed": 0
+  },
+  "doomscroll": {
+   "cells": 4,
+   "n_parsed": 63.25,
+   "mean_pairwise": 0.7553,
+   "distinctiveness": 0.3822,
+   "state_words": 34.0,
+   "mean_words": 14.65,
+   "in_ppl": 342.225,
+   "in_surprisal": 5.686,
+   "in_ttr": 0.478,
+   "in_mtld": 124.875,
+   "in_distinct2": 0.8928,
+   "in_hapax": 0.7135,
+   "in_compression": 0.4345,
+   "in_self_overlap": 0.0045,
+   "self_nll": null,
+   "failed": 0
+  }
+ }
+}

@@ -1,0 +1,87 @@
+{
+ "model": "qwen/qwen3.8-max-prime",
+ "seeds": [
+  11,
+  12
+ ],
+ "conditions": [
+  "N",
+  "walk",
+  "daydream",
+  "doomscroll"
+ ],
+ "aggregate": {
+  "N": {
+   "cells": 4,
+   "n_parsed": 43.25,
+   "mean_pairwise": 0.6835,
+   "distinctiveness": 0.316,
+   "state_words": 0.0,
+   "mean_words": 13.85,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 0
+  },
+  "walk": {
+   "cells": 4,
+   "n_parsed": null,
+   "mean_pairwise": null,
+   "distinctiveness": null,
+   "state_words": null,
+   "mean_words": null,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 4
+  },
+  "daydream": {
+   "cells": 4,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.651,
+   "distinctiveness": 0.3343,
+   "state_words": 54.0,
+   "mean_words": 15.2667,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 1
+  },
+  "doomscroll": {
+   "cells": 4,
+   "n_parsed": 50.0,
+   "mean_pairwise": 0.6388,
+   "distinctiveness": 0.3278,
+   "state_words": 219.5,
+   "mean_words": 15.475,
+   "in_ppl": null,
+   "in_surprisal": null,
+   "in_ttr": null,
+   "in_mtld": null,
+   "in_distinct2": null,
+   "in_hapax": null,
+   "in_compression": null,
+   "in_self_overlap": null,
+   "self_nll": null,
+   "failed": 0
+  }
+ }
+}
