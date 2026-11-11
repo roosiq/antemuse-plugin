@@ -2,7 +2,7 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: 7d8b1775529e19b3dbc4247bed98bc4ba0929351
+sha: 8be35891de773cc2005c48fea3576173edf8ddd9
 description: 'Antemuse lets the agent itself take a walk, daydream, dream, doomscroll, or get unstuck.
   A state is a bounded change to behaviour, not a place: it shapes the next replies, decides what residue
   the agent carries when the state ends, and — only when the entry asks with block: true — restricts which
@@ -16,7 +16,7 @@ maintainer: roosiq
 tier: community
 category: general
 docs_url: https://github.com/roosiq/antemuse-plugin#readme
-version: "0.10.0"
+version: "0.10.16"
 requires_hermes: '>=0.21.6'
 platforms:
 - linux
@@ -43,9 +43,9 @@ known_issues:
   a POSIX terminal and prints a still frame elsewhere.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/8be35891de773cc2005c48fea3576173edf8ddd9/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/pane-walk.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/takeover.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8be35891de773cc2005c48fea3576173edf8ddd9/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8be35891de773cc2005c48fea3576173edf8ddd9/docs/screenshots/takeover.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8be35891de773cc2005c48fea3576173edf8ddd9/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8be35891de773cc2005c48fea3576173edf8ddd9/docs/screenshots/blocked-tool.png
