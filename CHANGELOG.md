@@ -3,6 +3,24 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.30 — 2026-11-11
+
+- the account ends where the walk landed (2026-11-11)
+- the picture keeps what the state just did (2026-11-11)
+- bind the quad program before setting its colour (2026-11-11)
+- singularise the unit where every surface reads it (2026-11-11)
+- one dose, reported the same way to the chat and the pane (2026-11-11)
+- version, catalog and pane js agree with what /state reports (2026-11-11)
+- the walk exists in the picture, and the pane draws whoever entered it (2026-11-11)
+- a finished state always reaches the person (2026-11-11)
+- the fixes 0.10.26 shipped without tests get the tests they were missing (2026-11-11)
+- an entry promises its dose, not its ceiling (2026-11-11)
+- the listing counts doses in their own unit, and three picture aliases become one (2026-11-11)
+- the residue cap holds where residue is written (2026-11-11)
+- the dose is counted in the state's own unit, everywhere it is printed (2026-11-11)
+- every ending speaks in the state that ended (2026-11-11)
+- a state answers in its own voice and finishes in the turn it is due (2026-11-11)
+
 ## 0.10.20 — 2026-11-11
 
 - changelog: strip catalog-entry bullets from older sections too (2026-11-11)
