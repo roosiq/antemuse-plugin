@@ -565,9 +565,13 @@ def deliver_if_due() -> int:
         if dose and served >= dose:
             return 0
         drip = str(settings.text("deliver", "dose")).strip().lower() == "drip"
-        if drip and active.get("served_turn") == int(data["work"].get("turns") or 0):
-            return 0          # drip mode: already delivered this turn
-        remaining = 1 if drip else (max(1, dose - served) if dose else 1)
+        if active.get("served_turn") == int(data["work"].get("turns") or 0):
+            return 0          # one helping per turn, whatever the delivery mode
+        # One unit per turn, always. A provider may hand back the whole dose at once (the
+        # walk returns all six hops in one call), and serving that landed the picture
+        # complete in turn one, leaving the pane with nothing to draw for the rest of the
+        # ceiling. The dose is unchanged; only when each unit arrives is.
+        remaining = 1
     provider = sources.PROVIDERS.get(key)
     if provider is None:
         return 0
@@ -580,7 +584,7 @@ def deliver_if_due() -> int:
             got.extend(batch)
             if len(got) >= remaining:
                 break
-        lines = got
+        lines = got[:remaining]
     except Exception as exc:  # a provider failing must not kill the turn
         record("state", f"{key} provider failed · {exc}", event=key)
         with _LOCK:

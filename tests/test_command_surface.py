@@ -144,3 +144,22 @@ def test_no_suggestion_names_a_command_that_does_not_exist():
     for text in texts:
         for verb in re.findall(r"/([a-z_]+)", text):
             assert verb in live, f"suggestion names a command that does not exist: /{verb} in {text!r}"
+
+def test_skill_md_names_only_commands_that_exist():
+    """The agent-facing skill is instructions, so a dead verb there is worse than in the README:
+    a model follows it. 0.10.30 deleted `/states`, `/note` and `/watch` and SKILL.md kept
+    teaching all three.
+
+    Only fenced command listings count. Prose may name a verb to say it does not exist
+    ("there is no /note"), and inline adjectives like "spark/keep" are not verbs.
+    """
+    skill = (ROOT / "SKILL.md").read_text()
+    fenced = re.findall(r"```[a-z]*\n(.*?)```", skill, re.S)
+    named: set[str] = set()
+    for block in fenced:
+        for line in block.splitlines():
+            for verb in re.findall(r"(?:^|\s)/([a-z_]+)(?=[\s\[]|$)", line):
+                named.add(verb)
+    dead = sorted(named - registered_commands())
+    assert not dead, f"SKILL.md teaches commands that are not registered: {dead}"
+    assert named, "the rule found no command listing in SKILL.md — it has gone blind"

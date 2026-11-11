@@ -49,20 +49,17 @@ two inferences cannot argue in the same turn.
 
 What you see depends on where you are standing:
 
-- `antemuse` (the `bin/antemuse` launcher) hands the screen to the takeover:
-  wordless full-screen imagery and live keys.
-- In chat, entering a state posts its card as its own message — one picture, no
-  caption, by design (BR-5). It posts on entry, not continuously.
-- Where the terminal cannot draw, the text frame carries the record instead.
+- In the desktop app, the Antemuse pane draws the picture: the state, the walk's
+  path, the journal. It is the only visual surface.
+- In chat, entering a state posts its account as text — one message, on entry, not
+  continuously.
+- `state(action="status")` prints the record as text: state, clock, contract, closed
+  tools, turns, residue. `state(action="picture")` returns the pane payload. Neither
+  is a slash command — the six slash commands are the state verbs and `/return`.
 
-The text frame still exists for reading state in a place that cannot draw
-(`panel.debug()` in `core/panel.py`): state, clock, contract, closed tools,
-turns, residue, both columns as plain lines.
-
-Two surfaces, one state: the takeover is its own process (the Ink TUI runs
-tools without a tty, so a state cannot draw itself inside an agent tool result),
-and everything else — card, postcard, plain record — is encoded from the same
-state dict.
+There is no terminal takeover: the alt-screen TUI, the ASCII frame, the stills and
+the screensaver were removed in 0.10.30. A terminal gets the same text record the
+chat gets.
 
 ```
 antemuse
@@ -88,7 +85,7 @@ it cannot do it itself, because the running gateway holds the old module until i
 Finally restart the desktop app — or use Capabilities ▸ Plugins ▸ Rescan — so it picks up the
 pane and type `/walk`.
 
-The script installs `pillow` and `nltk` into **Hermes' own interpreter** (found by following its
+The script installs `nltk` into **Hermes' own interpreter** (found by following its
 launcher), downloads the `wordnet` and `framenet_v17` corpora into `~/nltk_data`, registers and
 enables the plugin, and copies the desktop half into `~/.hermes/desktop-plugins/antemuse` — the
 copy the app loads. It is idempotent: running it twice changes nothing.
@@ -102,7 +99,7 @@ hermes plugins enable antemuse
 ```
 
 Once the plugin is listed in the catalog, `hermes plugins install antemuse`
-installs the reviewed pin instead. Python dependencies (`pillow`, `nltk`) are
+installs the reviewed pin instead. Python dependencies (`nltk`) are
 declared in `plugin.yaml`; Hermes prepares them at install time.
 
 ### Building the release
@@ -155,24 +152,15 @@ core/storage.py        the one active record, and the data dir it lives in
 core/walks.py          walks as data: graphs and the rules for moving on them
 core/sources.py        material: WordNet steps, FrameNet frames, memories, feeds
 core/social.py         the live feeds a doomscroll eats
-core/ticker.py         frame timer for the takeover (the state path no longer
-                       waits on a clock: delivery is per turn)
 core/recommend.py      the only place a state is named, from counters
 core/normal.py         the measured ordinary condition (turn shape, stretches)
 core/settings.py       the six settings, read through the host and clamped
-core/panel.py          the printed text frame
-core/photographs.py    terminal images: cells, dissolves, drift
-core/walk_map.py       the walk drawn as a side-scrolling place
-core/backdrop.py       pre-rendered three.js frames, replayed as blocks
-core/surfaces.py       one frame, encoded per client
-core/tui.py            the full-screen takeover (alt screen, truecolor, keys)
 core/collider.py       Collider source strategy (library only; not runtime-wired)
 core/collision.py      collision mechanics (library only; not runtime-wired)
 core/llm.py            bounded auxiliary LLM calls (library only; not runtime-wired)
 core/orchestrator.py   run orchestration (library only; not runtime-wired)
 core/selection.py      selection aids (library only; not runtime-wired)
 core/feedback.py       human feedback plumbing (library only; not runtime-wired)
-core/presenter.py      prepared-artifact presentation (library only; not runtime-wired)
 data/collider/         real Open Collider generated examples, CC BY 4.0,
                        with attribution (library only)
 bin/antemuse           launcher on PATH
@@ -222,7 +210,7 @@ hermes plugins validate . --install-deps --json   # what catalog CI runs
 ```
 
 `tools/test.sh` uses `uvx` with the test dependencies from
-`requirements-test.txt` (`pytest`, `pillow`, `nltk`, `pyyaml`, `fastapi`) and
+`requirements-test.txt` (`pytest`, `nltk`, `pyyaml`, `fastapi`) and
 drops the exported `PYTHONPATH`, which otherwise breaks collection. If you prefer
 your own environment: `pip install -r requirements-test.txt` then
 `ANTEMUSE_STATES_HOME=$(mktemp -d) pytest tests/ -q`.
@@ -266,9 +254,10 @@ What a person should know before installing. Each line names where it happens.
   go under the plugin data dir (`data_dir()`, honouring `ANTEMUSE_STATES_HOME`);
   per-project artifacts go under `<repo>/.antemuse/`. No writes to Hermes config,
   auth, memory or another plugin's files.
-- **Child process.** The full-screen takeover may spawn `node` to rasterise the
-  live scene (`core/tui.py`). It inherits no shell, is not started under approval
-  bypass, and the takeover falls back to cached frames when `node` is absent.
+- **Child process.** `daydream`'s greenfield measurement runs `git rev-list` and
+  `git log` against the operator's project (`core/sources.py`) to count commits and
+  find the first one. It passes an argv list, never a shell, and does nothing else
+  with the repository. No other runtime path spawns a process.
 - **Dev-only tools.** Scripts under `tools/` (frame rendering, pilots, benchmark
   harnesses) make network calls and spawn browsers; they are never imported by
   plugin registration. `tools/gen_frames.py` defaults to an operator-controlled
@@ -292,76 +281,21 @@ What a person should know before installing. Each line names where it happens.
   material is injected only into that conversation's turns, and `/return` from any
   other conversation changes nothing.
 - **Chat.** No pictures, cards or media are posted into a conversation. The
-  picture is the desktop app's Antemuse pane; a terminal gets the full-screen
-  takeover.
-
-## three.js backdrop
-
-The takeover can carry a real 3D animation. WebGL does not run in a terminal, so
-the pipeline is: headless Chromium + swiftshader renders the scene to PNG, the
-PNG is quantised to upper-half blocks (`▀` = two vertical pixels per cell), and
-the takeover replays the cached frames at animation speed.
-
-```bash
-cd ~/antemuse-plugin && python3 tools/render_three.py    # 12 frames, ~0.65 s each
-```
-
-Frames land in `<plugin data>/three_frames/`; `core/backdrop.py` loads
-them at whatever cell size the terminal can afford (44x14 in the takeover, 96x26
-full-screen). Playback is free — pre-built strings, so the clock and spinner keep
-their own timing.
-
-Live WebGL at 60 fps inside a terminal is not a thing: one headless render costs
-~0.65 s. For real images rather than blocks, the same PNGs can go through the
-kitty graphics protocol or sixel where the terminal supports it.
-
-## Generated photographs
-
-`tools/gen_frames.py` renders real images through the configured `SD_SERVER`.
-The default is `http://100.82.186.41:8089`, an operator-controlled tailnet GPU
-host, **not localhost**. Set `SD_SERVER` explicitly to use a different endpoint.
-Generated photographs take priority over the three.js and parsed-walk fallbacks.
-Whether the tailnet default satisfies BR-7's same-machine requirement is OPEN in
-`docs/brd.md` and `docs/requirements.md`.
+  picture is the desktop app's Antemuse pane; a terminal gets the text record.
 
 ## Channel awareness
 
-The card is sized to the client, not to the terminal:
-
-| channel | width (cols) | fence | budget |
-|---|---|---|---|
-| Discord (mobile / unknown) | 40 | yes | 1800 chars |
-| Discord desktop | 56 | yes | 1800 chars |
-| Matrix | 52 | yes | 4000 |
-| Telegram | 40 | yes | 3800 |
-| Slack | 46 | yes | 3800 |
-| plain text / LM | 72 | no | — |
-
-Matrix and Telegram profiles are configured but have not been verified against
-real clients.
-
-The channel is learned from the turn's `platform` (recorded in `pre_llm_call`)
-and `state(card)` picks the plan automatically; `state(card, name="discord_desktop")`
-forces one. Cards are fenced in a code block because a proportional font destroys
-spaced art, and `_shrink` drops art rows from the middle when the message would
-exceed the channel budget.
+The account is text and goes out as an ordinary chat message, so nothing is sized
+per channel any more: the card renderer, its fences and the per-client width table
+were removed with the rest of the art surfaces in 0.10.30. The pane sizes itself to
+its own box in the desktop app.
 
 ## Scenes
 
-Four live scenes, rendered from `tools/scene.html`:
-
-- **walk** — a figure walking away from camera toward a low sun on a perspective grid
-- **daydream** — slow, translucent low-poly blobs drifting past each other
-- **dream** — two coloured spheres merging and separating inside a slow dust field
-- **doomscroll** — feed cards with text bars streaming toward the camera, tilted and accelerating
-
-The generator also retains the retired `dissociate` knot; it is not a fifth live
-state.
-
-```bash
-python3 -m http.server 40813 --bind 127.0.0.1 --directory ~/antemuse-plugin &
-python3 tools/render_three.py          # 5 scenes x 8 frames, ~0.6 s each
-```
+The pane is the renderer. `desktop/plugin.js` is one raw-WebGL file (no three.js, no
+bundled scene graph) that draws the served ground, the walk's hops in order, and the
+journal's labels, and re-reads its own box every frame so it fills whatever space the
+app gives it. The Python side only produces the data it draws.
 
 ## What each state actually does
 
@@ -405,19 +339,11 @@ agent's to say. Spec: `specs/changes/state-return-report/spec.md`.
 
 ## The walk map
 
-`core/walk_map.py` parses the journal into a side-scrolling map: every node is a
-WordNet step that happened, relation colours distinguish climbs, descents, and
-lateral moves, fog marks the unwalked graph, and a person's own word can join the
-path. Its default rendering is wordless.
-
-The map is **not always the takeover image**. Generated photographs have priority
-and return before the map overlay is applied; without photographs, the live
-three.js renderer can own the screen instead. The map remains available through
-the fallback rendering path and through `panel.render()` for a walk or idle state
-without a tty. See `docs/spec.md` §§10.2 and 14 for the current contract and the
-owner decision about this precedence.
-
-When the map is visible, `h`/`l` pan, `0` resets, and `j` adds your own word.
+The pane draws the walk from the journal: every hop is a WordNet step that happened,
+relation colours distinguish climbs, descents and lateral moves, and the unwalked
+graph stays as dim ground. Panning and framing belong to the pane
+(`desktop/plugin.js`); `core/walk_map.py` and every terminal rendering of it were
+removed in 0.10.30.
 
 ## Walks are data
 
@@ -493,13 +419,11 @@ model gets the content.
 - Linux, macOS and Windows. Windows is exercised: the shipped suite runs there (bash- and
   symlink-dependent tests skip by name rather than fail), and `snapshot_path()` renders on a
   machine with none of the usual fonts.
-- `node` and `npm` are optional: with them the terminal shows live scenes; without
-  them the takeover falls back to cached frames and the renderer tests skip.
-- Terminals need truecolor and half-block glyphs for the takeover. Redirected
-  output gets one picture instead of the animation.
-- Surfaces verified: the concept-activation pane in the packaged desktop app (WebGL, drawn
-  from the ledger), the CLI takeover, the chat account, and the PNG card. The pane is the only
-  visualization; chat carries words, not pictures.
+- No `node`, no `npm`, no native libraries: the plugin is pure Python plus one plain
+  JavaScript file (raw WebGL, no vendored scene graph).
+- Surfaces: the concept-activation pane in the packaged desktop app (WebGL, drawn
+  from the ledger) and the chat account. The pane is the only visualization; chat
+  carries words, not pictures, and a terminal gets the same text record.
 
 ## Known limitations
 
@@ -515,8 +439,6 @@ model gets the content.
   state entered with `block: true` closes tools for everything in the profile
   until it ends. Do not block tools in a profile that runs unattended work.
 - **`unstuck` has no art of its own** yet; it renders with the walk scene.
-- **Note and join entry** in the takeover still show a temporary text prompt,
-  which is an unresolved exception to the pictures-only rule (spec §14).
 - **Exploration library** (`spark`, `keep`, collider, selection) is present but
   runtime-gated behind `experimental.enabled`, and makes no quality claim.
 

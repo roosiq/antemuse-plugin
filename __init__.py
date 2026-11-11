@@ -41,7 +41,7 @@ else:  # flat load: this file is or is not on sys.path, but its directory is wha
     from core import (engine, history, options, recall, runtime, session, settings,
                       report, states, walks)  # type: ignore[no-redef]  # noqa: F401
 
-__version__ = "0.10.32"
+__version__ = "0.10.33"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
@@ -480,9 +480,9 @@ def _return(_raw: str, session_id: str | None = None,
 def _state(raw: str) -> str:
     """One "show me" verb, two answers.
 
-    `/state` is the text frame; `/state picture` is the picture — takeover in a
-    terminal, the card in chat. This replaced `/states` and `/watch`, which were the
-    same two answers under two more names, one of them misdescribed as a catalogue.
+    `/state` is the text record; `/state picture` is the pane payload the desktop
+    app draws. This replaced `/states` and `/watch`, which were the same two answers
+    under two more names, one of them misdescribed as a catalogue.
     """
     want = (raw or "").strip().lower()
     if want in ("picture", "image", "frame", "card"):

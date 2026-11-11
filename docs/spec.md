@@ -531,6 +531,10 @@ would receive a single step, so `deliver_if_due()` tops material up at the top o
 every turn: one item per turn while the dose is unfinished (or the
 state has none yet), generate one. On a long-lived gateway the ticker already
 keeps up and this is a no-op. The first turn of a state always gets material.
+A provider that hands back more than one item in a call has the surplus dropped,
+not served: the walk returns all six hops at once, and serving them together landed
+the picture complete in turn one and left the pane motionless for the rest of the
+ceiling. The dose is unchanged; only when each unit arrives is.
 
 ---
 

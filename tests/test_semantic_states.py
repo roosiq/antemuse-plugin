@@ -87,13 +87,28 @@ def test_the_ceiling_is_still_a_ceiling():
     assert engine.peek()["ends_at"] > time.time()
 
 
-def test_a_state_costs_one_turn_not_one_turn_per_item():
-    """The dose lands in the turn it falls due: six hops, one message from the person."""
-    for key in states.STATES:
+def test_a_state_serves_one_unit_per_turn():
+    """The dose is unchanged; the units arrive one at a time so the pane can show each.
+
+    A provider that hands back its whole dose in one call (the walk returns all six hops)
+    used to land the picture complete in turn one and then hold it, motionless, for the
+    rest of the ceiling. Delivery is now paced: one unit per turn, ending at the same dose.
+    """
+    for key, spec in states.STATES.items():
+        dose = int((spec.get("dose") or {}).get("n") or 0)
         engine.enter(key, session="pace", platform="discord")
         engine.note_turn()
         engine.inject()
-        assert engine.peek() is None, f"{key} was still running after its dose"
+        active = engine.peek()
+        if dose == 1:
+            assert active is None, f"{key} did not end on its single unit"
+            continue
+        assert active is not None, f"{key} ended after one unit of a {dose}-unit dose"
+        assert active["served"] == 1, f"{key} served {active['served']} units in one turn"
+        for _ in range(dose - 1):
+            engine.note_turn()
+            engine.inject()
+        assert engine.peek() is None, f"{key} was still running after its {dose}-unit dose"
         engine.stop(reason="probe")
 
 

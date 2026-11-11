@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.33 — 2026-11-11
+
+- one unit per turn, so the pane shows each hop instead of the finished picture (2026-11-11)
+
 ## 0.10.32 — 2026-11-11
 
 - recommendations are a display setting, and off by default (2026-11-11)

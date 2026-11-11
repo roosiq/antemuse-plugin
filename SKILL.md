@@ -16,19 +16,23 @@ A state is a bounded change to how the agent behaves, not a place it goes.
 
 ```
 /walk [minutes]      /daydream      /dream
-/doomscroll          /return        /states
-/note <text>         /watch [seconds]
+/doomscroll          /unstuck       /return
 ```
 
-Agents use `state(action="enter", name="walk")`, `state(action="exit")`,
-`state(action="status")`, `state(action="watch")`, `state(action="list")`.
+That is the whole command surface — six verbs, nothing else. A person's own
+message is journalled as a note automatically while a state runs, so there is no
+`/note`; the recommendation arrives in the turn by itself, so there is no `/watch`.
+
+Agents use the tool instead: `state(action="enter", name="walk")`,
+`state(action="exit")`, `state(action="status")`, `state(action="picture")`,
+`state(action="break")`, `state(action="list")`.
 
 ## The panel
 
-`/states` takes over a terminal with wordless imagery and live keys. `/state`
-prints one wordless image frame. In chat you get one image, no caption. The
-model-facing record remains text. `/note <text>` puts your observation into the
-same state you are both in. `/watch [seconds]` redraws until the state ends.
+The picture lives in the desktop app's Antemuse pane and nowhere else. In chat a
+state posts its account as text, on entry, without media. There is no terminal
+takeover and no image frame: `/state` is not a command, and a terminal reads the
+same text record the chat gets.
 
 ## Taking a break
 
