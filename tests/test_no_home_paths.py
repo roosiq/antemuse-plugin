@@ -6,7 +6,7 @@ everywhere but the author's box and still reported a pass), the pytest interpret
 measured with, and a command in SKILL.md a user could copy and run. Each one worked only on the
 machine it was written on.
 
-Prose is exempt: AGENTS.md records provenance, and specs/ and docs/ describe past work in past
+Prose is exempt: AGENTS.md records provenance, and docs/ holds the catalog screenshots
 tense. Code, tests, scripts, tools and the shipped instructions are not.
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCAN = ("*.py", "*.js", "*.mjs", "*.cjs", "*.sh", "*.md", "*.yaml", "*.yml",
         "*.json", "*.html", "*.css")
 # documentation of what happened, not instructions to a machine
-EXEMPT_DIRS = {".git", "docs", "specs", "experiments", "node_modules", "__pycache__",
+EXEMPT_DIRS = {".git", "docs", "experiments", "node_modules", "__pycache__",
                ".pytest_cache", "dist", "assets"}
 EXEMPT_FILES = {"AGENTS.md"}
 PATTERN = re.compile(r"/home/[a-z0-9_.-]+|C:\\\\Users\\\\[^\\s\"']+", re.I)

@@ -21,7 +21,7 @@ dist/
 
 # Research trees: kept on the author's disk, not published with the plugin. Raw model
 # transcripts trip the catalog's install-time security scan, and none of it is loaded at
-# runtime. See docs/spec.md §16 for what the evidence showed.
+# runtime. `experiments/idea-states/BENCHMARK.md` is what the evidence showed.
 #
 # One exception: the idea-states benchmark publishes its report, plots, scripts and the
 # per-model aggregates, because a claim about what a state does to a list should be
@@ -34,8 +34,4 @@ experiments/idea-states/variation-*.json
 experiments/idea-states/log-*.log
 evaluation/
 tests/evaluation/
-tests/test_shards.py
-tools/e2e.py
-tools/pilot.py
-tools/run_shard.py
-tools/shards.py
+

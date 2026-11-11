@@ -16,5 +16,5 @@ fi
 
 export ANTEMUSE_STATES_HOME="${ANTEMUSE_STATES_HOME:-$(mktemp -d)}"
 exec env -u PYTHONPATH \
-  uvx --with pytest --with pillow --with nltk --with pyyaml --with fastapi --quiet \
+  uvx --with pytest --with nltk --with pyyaml --with fastapi --quiet \
   pytest tests/ -q "$@"

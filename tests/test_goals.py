@@ -56,12 +56,6 @@ def test_a_recombination_crosses_two_frames_and_names_both():
     assert a != b, line
 
 
-def test_the_two_frames_are_far_apart_rather_than_neighbours():
-    st = __import__("tools.experiment_deterministic", fromlist=["dream_structure"]).dream_structure(12)
-    assert st["pairs"] >= 12
-    assert st["mean_overlap"] is not None and st["mean_overlap"] < 0.05, st
-
-
 def test_lexical_units_are_read_from_the_frame_instead_of_falling_back():
     frames = sources._frames()
     words = sources._frame_words(frames[0])

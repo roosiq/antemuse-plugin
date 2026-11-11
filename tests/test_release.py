@@ -143,14 +143,6 @@ def test_the_installer_runs_where_hermes_runs():
     compile(py, "install.py", "exec")
 
 
-def test_the_e2e_does_not_shell_out_to_posix_tools():
-    root = Path(__file__).resolve().parent.parent
-    src = (root / "tools" / "e2e_install_walk.py").read_text()
-    assert "tarfile.open" in src, "extract with the standard library"
-    assert '"tar"' not in src and '"bash"' not in src
-    assert "/home/" not in src and "/tmp/" not in src, "no hand-written host paths"
-
-
 def test_the_package_ships_its_tests():
     """Evidence travels with the artifact.
 

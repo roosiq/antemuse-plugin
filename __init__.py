@@ -11,8 +11,9 @@ Surfaces:
   pre_llm_call         inject the active state into the turn
   pre_tool_call        block tools the state forbids
   transform_llm_output make the state visible on the reply
-  commands             see docs/spec.md §10 and specs/changes/command-surface;
-                       one verb, one name — /state is the text frame, /states the picture
+  commands             see SKILL.md for the six verbs a person types;
+                       one verb, one name — `state(action="status")` is the record, and
+                       the picture is the desktop pane, never a command
   tool                 state(action=…) — twelve actions, defined in the same place
 """
 from __future__ import annotations

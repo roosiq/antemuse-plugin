@@ -1,6 +1,6 @@
 """Where a state starts, and how it stays from starting the same way twice.
 
-The spec (`specs/changes/state-entry`) fixes the mix: 50 % terms from the working
+The mix is fixed: 50 % terms from the working
 project, 30 % from the conversation, 20 % deliberately random — drawn by a deterministic
 hash of (state, entry time, entry counter) so a replayed entry picks the same source.
 Determinism is the point: a live RNG makes a walk unreproducible and its diversity

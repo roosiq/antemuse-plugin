@@ -6,7 +6,7 @@ keeps and says *which* state the shape of the work suggests, with the evidence a
 
     this looks like a walk · same tool failed 3× in a row · /walk 5
 
-Rules that are not negotiable (see `specs/changes/pattern-recommendation`):
+Rules that are not negotiable:
 
 - **Recommend, never enter.** The line is text. Entering is the person's decision.
 - **Measured, never inferred.** Every trigger is a counter: turns, tool failures,

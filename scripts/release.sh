@@ -19,7 +19,6 @@ sed -i.bak -E "s/^version: \"[0-9.]+\"/version: \"$VERSION\"/" plugin.yaml
 sed -i.bak -E "s/__version__ = \"[0-9.]+\"/__version__ = \"$VERSION\"/" __init__.py
 rm -f plugin.yaml.bak __init__.py.bak
 python3 tools/changelog.py
-python3 tools/spec_audit.py >/dev/null
 git add -A && git commit -q -m "$VERSION: release"
 python3 tools/catalog_entry.py
 git add -A && git commit -q -m "catalog entry for $(git rev-parse --short=12 HEAD~1)"

@@ -80,17 +80,6 @@ left="$(find "$STAGE" \( -name '*.pyc' -o -name '__pycache__' -o -name '.antemus
 [[ -z "$left" ]] || die "the staged tree still carries build residue: $left"
 ok "no bytecode or local state in the package"
 
-# The spec is the claim, so it travels with the code that makes it. `spec_audit` compares
-# docs/spec.md's status words against specs/, and a verifier holding the package could not run it
-# at all while both were excluded — "spec_audit 0 drift" was a checkout-only number, the same shape
-# as "987 passed".
-mkdir -p "$STAGE/docs"
-cp -f "$SRC/docs/spec.md" "$STAGE/docs/spec.md"
-if [[ -d "$SRC/specs" ]]; then
-  cp -a "$SRC/specs" "$STAGE/specs"
-  find "$STAGE/specs" -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
-fi
-ok "spec + specs travel with the package"
 
 say "pack"
 tar -C "$OUT" -czf "$OUT/$NAME.tar.gz" "$NAME"

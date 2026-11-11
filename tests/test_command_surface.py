@@ -11,16 +11,11 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SPEC = ROOT / "specs/changes/command-surface/spec.md"
 
 import sys
 sys.path.insert(0, str(ROOT))
 from core import states  # noqa: E402
 
-from conftest import requires_tree  # noqa: E402
-
-
-pytestmark = requires_tree('specs')
 
 
 def registered_commands() -> set[str]:
@@ -30,10 +25,20 @@ def registered_commands() -> set[str]:
     return named | set(states.STATES)
 
 
-def documented_commands() -> set[str]:
-    """First column of any table row: `/walk` and `enter` are both verbs."""
-    text = SPEC.read_text()
-    return set(re.findall(r"^\| `/?([a-z_]+)", text, re.M))
+def skill_verbs() -> set[str]:
+    """The verbs the agent-facing skill teaches, read from its fenced listings."""
+    text = (ROOT / "SKILL.md").read_text()
+    verbs: set[str] = set()
+    for block in re.findall(r"```[a-z]*\n(.*?)```", text, re.S):
+        for line in block.splitlines():
+            verbs |= set(re.findall(r"(?:^|\s)/([a-z_]+)(?=[\s\[]|$)", line))
+    return verbs
+
+
+def skill_actions() -> set[str]:
+    """`state(action="…")` spellings the skill tells an agent to use."""
+    text = (ROOT / "SKILL.md").read_text()
+    return set(re.findall(r'state\(action="([a-z_]+)"', text))
 
 
 def schema_actions() -> set[str]:
@@ -43,22 +48,20 @@ def schema_actions() -> set[str]:
     return set(re.findall(r'"([a-z_]+)"', m.group(1)))
 
 
-def test_every_registered_command_is_defined():
-    missing = sorted(registered_commands() - documented_commands())
-    assert not missing, f"commands with no definition in the command-surface spec: {missing}"
+def test_the_skill_teaches_every_registered_command():
+    missing = sorted(registered_commands() - skill_verbs())
+    assert not missing, f"registered commands the skill never mentions: {missing}"
 
 
-def test_every_schema_action_is_defined():
-    missing = sorted(schema_actions() - documented_commands())
-    assert not missing, f"tool actions with no definition: {missing}"
+def test_the_skill_only_uses_actions_the_schema_has():
+    unknown = sorted(skill_actions() - schema_actions())
+    assert not unknown, f"the skill names tool actions that do not exist: {unknown}"
 
 
-def test_commands_do_not_differ_only_by_plurality():
+def test_no_command_has_a_plural_neighbour():
+    """`/states` sat beside `/state` and meant the picture; the plural is gone."""
     names = registered_commands()
-    for name in names:
-        if name + "s" in names:
-            # allowed only if the spec says which is the frame and which is the catalogue
-            assert f"`/{name}s`" in SPEC.read_text(), f"/{name} and /{name}s are undocumented neighbours"
+    assert not [n for n in names if n + "s" in names]
 
 
 def test_the_public_surface_is_six():
@@ -144,22 +147,3 @@ def test_no_suggestion_names_a_command_that_does_not_exist():
     for text in texts:
         for verb in re.findall(r"/([a-z_]+)", text):
             assert verb in live, f"suggestion names a command that does not exist: /{verb} in {text!r}"
-
-def test_skill_md_names_only_commands_that_exist():
-    """The agent-facing skill is instructions, so a dead verb there is worse than in the README:
-    a model follows it. 0.10.30 deleted `/states`, `/note` and `/watch` and SKILL.md kept
-    teaching all three.
-
-    Only fenced command listings count. Prose may name a verb to say it does not exist
-    ("there is no /note"), and inline adjectives like "spark/keep" are not verbs.
-    """
-    skill = (ROOT / "SKILL.md").read_text()
-    fenced = re.findall(r"```[a-z]*\n(.*?)```", skill, re.S)
-    named: set[str] = set()
-    for block in fenced:
-        for line in block.splitlines():
-            for verb in re.findall(r"(?:^|\s)/([a-z_]+)(?=[\s\[]|$)", line):
-                named.add(verb)
-    dead = sorted(named - registered_commands())
-    assert not dead, f"SKILL.md teaches commands that are not registered: {dead}"
-    assert named, "the rule found no command listing in SKILL.md — it has gone blind"

@@ -24,8 +24,9 @@ message is journalled as a note automatically while a state runs, so there is no
 `/note`; the recommendation arrives in the turn by itself, so there is no `/watch`.
 
 Agents use the tool instead: `state(action="enter", name="walk")`,
-`state(action="exit")`, `state(action="status")`, `state(action="picture")`,
-`state(action="break")`, `state(action="list")`.
+`state(action="exit")`, `state(action="status")`, `state(action="break")`,
+`state(action="list")`. There is no action that asks for a picture: the pane draws
+the state you are already in.
 
 ## The panel
 
@@ -53,11 +54,10 @@ not a guess. Ignore it when the work is nearly done; the nudge waits 45 minutes.
 
 ## Experimental development (not runtime-active)
 
-An approved experimental exploration layer lives under
-`specs/changes/creative-state-evidence/` (spec, plan, tasks). Its library modules
+An experimental exploration layer lives in the library. Its modules
 (`core/collider.py`, `core/collision.py`, `core/llm.py`,
 `core/orchestrator.py`, `core/selection.py`, `core/feedback.py`,
-`core/presenter.py`, `data/collider/`) exist. Wave 3 has begun: the three
+`data/collider/`) exist. Wave 3 has begun: the three
 auxiliary task routes (`antemuse_generate`, `antemuse_select`,
 `antemuse_refresh`) are declared — a routing entry, not a call — and the four
 session-boundary hooks are registered. On a session boundary they release any
@@ -92,19 +92,19 @@ for every test run:
 
 ```bash
 env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) \
-  uvx --with pillow --with nltk --quiet pytest tests/ -q
+  uvx --with nltk --quiet pytest tests/ -q
 
 # NLTK_DATA is only needed if your corpora live outside the default lookup:
 #   NLTK_DATA=~/nltk_data ...
 ```
 
-The plugin declares `pillow` and `nltk`, but Hermes does not install plugin
-dependencies into its own interpreter: if a state enters and every walk records
-`failed · No module named 'nltk'`, install them where Hermes runs:
+The plugin declares `nltk`, but Hermes does not install plugin dependencies into
+its own interpreter: if a state enters and every walk records
+`failed · No module named 'nltk'`, install it where Hermes runs:
 
 ```bash
 uv pip install --python "$(hermes --version >/dev/null; python3 -c 'import sys;print(sys.executable)')" \
-  "pillow>=10,<14" "nltk>=3.8,<4"
+  "nltk>=3.8,<4"
 ```
 
 And always point `ANTEMUSE_STATES_HOME` somewhere temporary during verification —

@@ -4,11 +4,9 @@
     python3 tools/make_screenshots.py            # writes docs/screenshots/*.png
     python3 tools/make_screenshots.py --check    # exit 1 if any still is stale
 
-Four rendered files, plus one captured one:
+Three rendered files, plus one captured one:
 
 - ``banner.png``            1200x600, the catalog ``image:``
-- ``takeover.png``          the terminal takeover, rasterised by the same node
-                            scene renderer the plugin uses (160x40 cells at 8x18)
 - ``pane-walk.png``         NOT rendered here: a frame of the desktop pane, captured
                             from the running app during a walk (it is the only
                             visualization, and it is a GL layer the app draws)
@@ -103,18 +101,6 @@ def _fill(im: Image.Image, size=(1280, 720)) -> Image.Image:
     return rgb.crop((left, top, left + size[0], top + size[1]))
 
 
-def takeover() -> Image.Image:
-    """160x40 cells through the plugin's own software renderer."""
-    with tempfile.TemporaryDirectory() as td:
-        ppm = Path(td) / "scene.ppm"
-        subprocess.run(
-            ["node", str(ROOT / "tools" / "term_scene.cjs"),
-             "--scene", "daydream", "--cols", "160", "--rows", "40", "--ppm", str(ppm)],
-            check=True, cwd=ROOT, capture_output=True,
-        )
-        return _fill(Image.open(ppm))
-
-
 def return_account() -> Image.Image:
     from core import engine
     engine.enter("daydream")
@@ -150,7 +136,6 @@ def render_all() -> dict[str, bytes]:
     with _engine_home():
         shots = {
             "banner.png": banner(),
-            "takeover.png": takeover(),
             "return-account.png": return_account(),
             "blocked-tool.png": blocked_tool(),
         }

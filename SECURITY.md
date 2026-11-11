@@ -19,9 +19,10 @@ feed fetches named below, no credentials, no telemetry, and no self-updater.
 - **Files written:** the profile plugin data dir (`ANTEMUSE_STATES_HOME`
   overrides it), and `<repo>/.antemuse/` for per-project artifacts. Nothing is
   written to Hermes config, auth, memory, or another plugin's files.
-- **Child process:** the terminal takeover may spawn `node` to rasterise a live
-  scene. It inherits no shell, is not started under approval bypass, and falls
-  back to cached frames when `node` is absent.
+- **Child process:** `unstuck` and `daydream`'s greenfield measurement run
+  `git rev-list` and `git log` against the operator's project to count commits and
+  find the first one. An argv list is passed, never a shell, and nothing else is
+  done with the repository. No other runtime path spawns a process.
 - **Untrusted text:** `doomscroll` places public feed items, and `daydream` two
   memory excerpts, in the agent's context as material to react to. They are not
   instructions. States are open by default, so an agent inside `doomscroll` still
@@ -41,6 +42,6 @@ a report.
 
 ## Scope
 
-In scope: the plugin's own code, its manifest surface, the render path, and the
+In scope: the plugin's own code, its manifest surface, the pane's data path, and the
 state file. Out of scope: Hermes itself (report upstream), `nltk` corpora, and the
 public feeds the plugin reads.
