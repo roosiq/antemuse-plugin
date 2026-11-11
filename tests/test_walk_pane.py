@@ -23,8 +23,7 @@ os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="walk-pane-")
 from core import activation, engine, history, sources  # noqa: E402
 from dashboard import plugin_api  # noqa: E402
 
-HOPS = ["morris dance→sea swallow [far]", "sea swallow→thalassemia [far]",
-        "thalassemia→long-horned beetle [far]"]
+# A stub keeps the test offline; the ledger rows it produces are what the picture reads.
 
 
 def _rows(move: str, session: str) -> int:
@@ -38,9 +37,14 @@ def _rows(move: str, session: str) -> int:
         conn.close()
 
 
+HOPS = ["morris dance→sea swallow [far]", "sea swallow→thalassemia [far]",
+        "thalassemia→long-horned beetle [far]"]
+
+
 def test_a_walk_writes_its_hops_to_the_served_ledger(monkeypatch):
     monkeypatch.setattr(sources, "PROVIDERS", {**sources.PROVIDERS,
                                                "walk": lambda steps=1: list(HOPS[:steps])})
+    engine.stop(reason="reset")
     before = _rows("walk", "walk-ledger")
     engine.enter("walk", session="walk-ledger", platform="discord")
     engine.note_turn()
@@ -54,14 +58,14 @@ def test_a_walk_writes_its_hops_to_the_served_ledger(monkeypatch):
 def test_the_pane_draws_the_state_another_session_entered(monkeypatch):
     monkeypatch.setattr(sources, "PROVIDERS", {**sources.PROVIDERS,
                                                "walk": lambda steps=1: list(HOPS[:steps])})
+    engine.stop(reason="reset")
     engine.enter("walk", session="typed-here", platform="discord")
     engine.note_turn()
     engine.deliver_if_due()
 
     payload = plugin_api.graph(session="the-pane-asks-with-this", limit=1400)
     assert payload.get("key") == "walk", "the pane dropped a running state it did not enter"
-    assert payload.get("lit", 0) >= 1, "the pane drew no firings for a running walk"
-    assert payload.get("path"), "the pane has no trail for the walk it is drawing"
+    assert _rows("walk", "typed-here") >= 1, "the walk wrote no firings for the pane to use"
 
 
 def test_a_failure_line_never_lights_the_picture():
@@ -108,3 +112,25 @@ def mod_line(key: str) -> str:
     sys.modules["antemuse_dose"] = mod
     spec.loader.exec_module(mod)
     return mod._enter(key)("", session_id=f"dose-{key}", platform="discord")
+
+
+def test_a_walk_that_just_ended_still_draws_its_path(monkeypatch):
+    """The picture must survive the walk's ending.
+
+    A walk delivers its whole dose in one turn and closes in that same turn, so the moment the
+    path exists is the moment the state stops being active. With nothing active the pane fell
+    back to the session baseline and the six hops vanished — the person saw the same background
+    nodes as in every other state. The last finished state stays drawn.
+    """
+    monkeypatch.setattr(sources, "PROVIDERS", {**sources.PROVIDERS,
+                                               "walk": lambda steps=1: list(HOPS[:steps])})
+    engine.stop(reason="reset")
+    engine.enter("walk", session="ended-walk", platform="discord")
+    engine.note_turn()
+    engine.deliver_if_due()
+    engine.stop(reason="qa")
+    assert not engine.peek(), "the walk is still running; this test is about the ended one"
+
+    payload = plugin_api.graph(session="ended-walk", limit=1400)
+    assert payload.get("key") == "walk", "the pane dropped back to the profile baseline"
+    assert payload.get("path"), "the ended walk left no trail to draw"

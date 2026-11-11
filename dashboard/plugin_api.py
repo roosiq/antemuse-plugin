@@ -178,6 +178,14 @@ def _core_module(name: str):
 _GRAPH_MEMO: Dict[str, Any] = {"key": None, "at": 0.0, "payload": None}
 
 
+def _last_finished(residue: Any) -> Dict[str, Any] | None:
+    """The most recent finished state that left an account, or None."""
+    for entry in reversed(list(residue or [])):
+        if isinstance(entry, dict) and entry.get("kind") == "report" and entry.get("state"):
+            return entry
+    return None
+
+
 @router.get("/graph")
 def graph(session: str = "", limit: int = 1400):
     """The same map the stills draw, as numbers a 3D surface can turn.
@@ -192,7 +200,13 @@ def graph(session: str = "", limit: int = 1400):
     """
     import time as _time
     started = _time.time()
-    engine_state = _core_module("engine").peek() or {}
+    try:
+        _engine = _core_module("engine")
+        _watch = _engine.watch_state() or {}
+        engine_state = _watch.get("active") or _engine.peek() or {}
+        _residue = _watch.get("residue") or []
+    except Exception:  # health: BLE001 -- an older core has no watch_state
+        engine_state, _residue = {}, []
     # The memo must know what state it was drawn for. Entering a walk within three seconds of a
     # poll otherwise served the previous "profile" map, and the pane showed no state at all.
     # ...and it must know whether the ledger has moved. A walk that stepped between two polls
@@ -203,7 +217,8 @@ def graph(session: str = "", limit: int = 1400):
     except Exception:  # health: BLE001 -- no ledger is a fact, not a failure
         stamp = 0
     want = (session, int(limit), str(engine_state.get("key") or ""),
-            float(engine_state.get("entered_at") or 0.0), float(stamp))
+            float(engine_state.get("entered_at") or 0.0), float(stamp),
+            str((_last_finished(_residue) or {}).get("state") or ""))
     if (_GRAPH_MEMO.get("want") == want and _GRAPH_MEMO.get("payload") is not None
             and _time.time() - float(_GRAPH_MEMO.get("at") or 0) < 3.0):
         return _GRAPH_MEMO["payload"]
@@ -215,19 +230,26 @@ def graph(session: str = "", limit: int = 1400):
     # state. Refusing to draw was the wrong guard: the firings below are still scoped to the
     # state's real owner, so nothing from another chat leaks into this picture.
     drawable = bool(active)
-    key = str(active.get("key") or "") if drawable else "profile"
+    # A state that just ended leaves an account, and the pane has to be able to show what it did:
+    # with nothing active it drew the session baseline, so a walk's six hops vanished from the
+    # picture the instant the walk finished — the one moment the person is looking at it. The last
+    # finished state stays drawn until another one starts.
+    recent = None if drawable else _last_finished(_residue)
+    key = str(active.get("key") or "") if drawable else (str(recent.get("state") or "") if recent else "profile")
     # A state entered with no session — from the app, or by a script — records its firings with an
     # empty session. Falling back to the *pane's* session there filtered those firings out, so a
     # running walk served nine concepts and the pane lit two. The owner is empty means everyone.
     if drawable:
         own = str((active.get("origin") or {}).get("session_id") or "")
+    elif recent and recent.get("session"):
+        own = str(recent.get("session") or "")
     else:
         own = str(session or "")
 
     activation = _core_module("activation")
     lit = {}
     try:
-        lit = activation.activations(own, key if drawable else None) or {}
+        lit = activation.activations(own, key if (drawable or recent) else None) or {}
     except Exception:  # health: BLE001 -- no firings is a fact, not a failure
         lit = {}
     # The ground is the busiest `limit` concepts, so a concept the state just served can fall
@@ -237,7 +259,7 @@ def graph(session: str = "", limit: int = 1400):
     # do not say that the walk went A -> B -> C, which is the thing a path is. Servings are the
     # record of that order: each hop serves the concept it lands on.
     path: List[str] = []
-    if drawable and key == "walk":
+    if (drawable or recent) and key == "walk":
         try:
             trail = activation._rows(
                 "SELECT c.label FROM served s JOIN concepts c ON c.id = s.concept_id "
