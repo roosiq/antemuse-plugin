@@ -47,6 +47,17 @@ _FAILURE_WORDS = ("unavailable", "nothing arrived", "no material", "expired befo
                   "not recorded", "provider failed")
 
 
+def _unit_for(n: Any, unit: str) -> str:
+    """One direction, not one directions: every surface prints this string."""
+    try:
+        count = int(n or 0)
+    except Exception:
+        return unit
+    if count == 1 and unit.endswith("s") and unit not in ("turn(s)", "tools"):
+        return unit[:-1]
+    return unit
+
+
 def _is_failure_line(line: str) -> bool:
     """A line that names a failure is not material, and must not light the picture."""
     low = str(line or "").strip().lower()
@@ -335,7 +346,8 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
             # the dose, and the unit it is counted in: "turns" was a lie for walk (hops),
             # daydream (pairs) and the rest, and the pane printed it
             "dose": int((spec.get("dose") or {}).get("n") or spec["turns"]),
-            "unit": (spec.get("dose") or {}).get("unit") or "turn(s)",
+            "unit": _unit_for((spec.get("dose") or {}).get("n"), 
+                              (spec.get("dose") or {}).get("unit") or "turn(s)"),
             "minutes": duration,
             "total_seconds": duration * 60,
             # an experiment arm may run a dose the manifest does not declare; the key is

@@ -92,7 +92,9 @@ def test_every_state_reports_the_same_dose_to_the_chat_and_the_pane():
         want = (spec.get("dose") or {}).get("n") or spec["turns"]
         unit = (spec.get("dose") or {}).get("unit") or "turn(s)"
         assert active.get("dose") == want, f"{key}: pane says {active.get('dose')}, dose is {want}"
-        assert active.get("unit") == unit, f"{key}: pane says {active.get('unit')}, unit is {unit}"
+        singular = unit[:-1] if want == 1 and unit.endswith("s") and unit != "turn(s)" else unit
+        assert active.get("unit") == singular, \
+            f"{key}: pane says {active.get('unit')}, unit is {singular}"
         assert f"{want} {unit}".split()[0] in line, f"{key}: entry line disagrees: {line}"
 
 
