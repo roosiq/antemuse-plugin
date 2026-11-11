@@ -54,23 +54,37 @@ def requires_tree(*names):
         bool(missing), reason=f"needs {', '.join(missing)}: repository-only, not in the package")
 
 
-def needs_bash():
-    """A test that shells out to a bash script cannot run where bash is not installed."""
-    import shutil
+def _runs(name: str) -> bool:
+    """Does `name` actually execute here?
 
+    `shutil.which()` is not enough on Windows: the Store installs stubs under
+    `WindowsApps` that resolve but raise PermissionError (or exit 9009) when run, so a test suite
+    gated on `which` alone still failed with "shell not found" and exit 127. Ask the program.
+    """
+    import shutil
+    import subprocess
+
+    exe = shutil.which(name)
+    if not exe:
+        return False
+    try:
+        return subprocess.run([exe, "--version"], capture_output=True, timeout=20).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def needs_bash():
+    """A test that shells out to a bash script cannot run where bash does not execute."""
     import pytest
 
-    return pytest.mark.skipif(shutil.which("bash") is None,
-                              reason="needs bash on PATH (not installed on stock Windows)")
+    return pytest.mark.skipif(not _runs("bash"),
+                              reason="bash does not execute here (stock Windows has none)")
 
 
 def needs_git():
-    import shutil
-
     import pytest
 
-    return pytest.mark.skipif(shutil.which("git") is None,
-                              reason="needs git on PATH")
+    return pytest.mark.skipif(not _runs("git"), reason="git does not execute here")
 
 
 def needs_symlinks():

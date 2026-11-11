@@ -238,6 +238,25 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 3.5f Every state is entered end to end before it ships
+
+`tools/e2e_states.py` enters each state through `engine.enter()`, spends its dose one model turn at
+a time through `engine.inject()` with `note_turn()` in between — the host's own path — and checks
+what was left behind: a `moves` row naming the state and its ending, `served` rows filed under that
+state's own move key, and no state that ends without saying why.
+
+It found two states recording nothing:
+
+- **dream's invented branch** never called `_note_terms`; only the connection branch did. A dream
+  that invented rather than connected served material with no ledger row, so the pane fell through
+  to the session baseline and painted the conversation instead of the dream. Recording now happens
+  in `dream_recombine()`, so every caller is covered.
+- **unstuck recorded nothing at all.** A direction is that state's material and it was never
+  noted; the pane had nothing of its own to light.
+
+A state with no material must name why ("feed unavailable", "no direction available") — the runner
+reports that as PARTIAL, not a pass and not a failure.
+
 ### 3.5e A claim and a byte are different things
 
 Three fixes were reported in 0.10.11/0.10.12 that the shipped code did not contain, each found by

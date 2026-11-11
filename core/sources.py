@@ -330,6 +330,10 @@ def dream_recombine(steps: int = 1) -> List[str]:
             frame_b=other.name.replace("_", " ").lower(),
             a=words_a[0], b=words_b[1],
             lu=words_a[0], lu_b=words_b[1]) + f" · [{frame.name.lower()} × {other.name.lower()}]")
+    # An invented dream is material served. Nothing recorded it, so the pane fell through to the
+    # session baseline and painted unrelated chatter — the doomscroll failure by another route.
+    for line in out:
+        _note_terms(line, "dream")
     if out and seed_line:
         out[0] = f"[{seed_line}] " + out[0]
     return out
@@ -1064,7 +1068,12 @@ def unstuck_text(steps: int = 1) -> List[str]:
     take = found[:want] or found[:1]
     out: List[str] = []
     for i, (direction, evidence, first) in enumerate(take, start=1):
-        out.append(f"direction {i} · {direction} · because {evidence} · first: {first}")
+        line = f"direction {i} · {direction} · because {evidence} · first: {first}"
+        out.append(line)
+        # The direction is this state's material. Without a ledger row the pane had nothing of its
+        # own to light and fell back to the session baseline — a picture of the conversation, not
+        # of the recommendation.
+        _note_terms(direction, "unstuck")
     try:
         from . import seeding
         seed = seeding.entry("unstuck", when=time.time())

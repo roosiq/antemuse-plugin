@@ -58,23 +58,26 @@ def test_the_projection_is_built_not_committed():
 def test_the_doctor_count_reads_the_number_the_doctor_printed():
     """A regex that matched zero digits once made a perfect install report "registered 0 hooks".
     The counter is a separate, sourced file now, so it can be exercised on its own."""
+    import shlex
     import subprocess
 
     script = ROOT / "scripts" / "doctor_counts.sh"
     line = "  registrations: 1 tool(s), 8 hook(s)"
 
-    def count(what: str) -> str:
-        out = subprocess.run(
-            ["bash", "-c", f'. {script}; doctor_count "$1" {what}', "_", line],
-            capture_output=True, text=True, check=True).stdout
+    def doctor_count(what: str, text: str = line) -> str:
+        # The script goes in on stdin, never as a path interpolated into the command: a WindowsPath
+        # reads `C:\...\doctor_counts.sh` inside bash -c, which bash cannot source.
+        prog = script.read_text() + "\ndoctor_count " + shlex.quote(text) + " " + what + "\n"
+        out = subprocess.run(["bash", "-s"], input=prog, capture_output=True,
+                             text=True, check=True).stdout
         return out.strip()
+
+    count = doctor_count
 
     assert count("tool") == "1"
     assert count("hook") == "8"
     # and it does not invent a number when there is none
-    out = subprocess.run(["bash", "-c", f'. {script}; doctor_count "$1" hook', "_", "nothing here"],
-                         capture_output=True, text=True, check=True).stdout
-    assert out.strip() == ""
+    assert count("hook", "nothing here") == ""
 
 
 def test_the_desktop_half_is_one_file_the_host_can_load():
