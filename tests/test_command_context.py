@@ -57,3 +57,32 @@ def test_the_walk_name_argument_still_works_with_context():
     handler = plugin._enter("walk")
     out = handler("upward", session_id="desk-42", platform="desktop")
     assert "WALKING" in out or "no such walk" in out.lower()
+
+
+def test_return_with_nothing_running_does_not_repeat_the_last_ending():
+    """`/return` handed back the previous account and looked like it had just ended a state
+    the person was never in. The stale ending is only there once a state has closed, so the
+    state has to close first."""
+    plugin._enter("walk")("", session_id="idle", platform="desktop")
+    engine.note_turn()
+    engine.inject(session="idle")          # the dose falls due and the state closes
+    engine.stop(session_id="idle")
+    assert not engine.peek()
+    told = plugin._return("", session_id="idle")
+    assert told == "not in a state.", told
+    assert "WALKING" not in told and "ended" not in told, told
+
+
+def test_entry_line_leads_with_the_dose_not_the_ceiling():
+    """A dream is over after one turn of work, yet the line said "30 min"; an unstuck that
+    owes ONE direction announced three."""
+    lines = {}
+    for key in ("walk", "dream", "unstuck", "daydream", "doomscroll"):
+        engine.stop(reason="look")
+        lines[key] = plugin._enter(key)("", session_id="dose-line", platform="desktop").splitlines()[0]
+    for key, line in lines.items():
+        assert "up to" in line, (key, line)
+        assert "min" not in line.split("up to")[0], (key, line)
+    assert "1 direction" in lines["unstuck"], lines["unstuck"]
+    assert " 1 directions" not in lines["unstuck"], lines["unstuck"]
+    engine.stop(reason="look")
