@@ -88,6 +88,9 @@ def main() -> int:
         return 0 if has else 1
     body = text[len(HEADER):] if text.startswith(HEADER) else text.split("\n\n", 1)[-1]
     body = re.sub(rf"^## {re.escape(ver)}\b.*?(?=^## |\Z)", "", body, flags=re.M | re.S).lstrip()
+    # older sections were generated before catalog commits were excluded; strip them there too,
+    # or a section keeps announcing a sha the package beside it does not pin
+    body = re.sub(r"^- catalog entry for .*\n", "", body, flags=re.M)
     CHANGELOG.write_text(HEADER + section(ver) + body)
     print(f"changelog: {ver} written ({len(section(ver).splitlines())} lines)")
     return 0
