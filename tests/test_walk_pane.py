@@ -74,3 +74,35 @@ def test_a_failure_line_never_lights_the_picture():
     assert eng._is_failure_line("feed unavailable · no network")
     assert not eng._is_failure_line("morris dance→sea swallow [far]")
     assert _rows("walk", "fail-line") == before
+
+
+def test_every_state_reports_the_same_dose_to_the_chat_and_the_pane():
+    """/state, the entry line and the pane must agree on the dose and its unit.
+
+    An unstuck owes one direction. The entry line said so while /state said three, because the
+    active record stored spec["turns"] — three — beside a unit of "directions".
+    """
+    from core import states
+
+    for key, spec in states.STATES.items():
+        engine.stop(reason="dose")
+        line = mod_line(key)
+        engine.enter(key, session=f"dose-{key}", platform="discord")
+        active = (plugin_api.state(session=f"dose-{key}") or {}).get("active") or {}
+        want = (spec.get("dose") or {}).get("n") or spec["turns"]
+        unit = (spec.get("dose") or {}).get("unit") or "turn(s)"
+        assert active.get("dose") == want, f"{key}: pane says {active.get('dose')}, dose is {want}"
+        assert active.get("unit") == unit, f"{key}: pane says {active.get('unit')}, unit is {unit}"
+        assert f"{want} {unit}".split()[0] in line, f"{key}: entry line disagrees: {line}"
+
+
+def mod_line(key: str) -> str:
+    import importlib.util
+    from pathlib import Path
+    repo = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("antemuse_dose", repo / "__init__.py",
+                                                  submodule_search_locations=[str(repo)])
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["antemuse_dose"] = mod
+    spec.loader.exec_module(mod)
+    return mod._enter(key)("", session_id=f"dose-{key}", platform="discord")

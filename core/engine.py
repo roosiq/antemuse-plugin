@@ -334,7 +334,7 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
             "turns_left": spec["turns"],
             # the dose, and the unit it is counted in: "turns" was a lie for walk (hops),
             # daydream (pairs) and the rest, and the pane printed it
-            "dose": int(spec["turns"]),
+            "dose": int((spec.get("dose") or {}).get("n") or spec["turns"]),
             "unit": (spec.get("dose") or {}).get("unit") or "turn(s)",
             "minutes": duration,
             "total_seconds": duration * 60,

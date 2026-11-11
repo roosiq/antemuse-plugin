@@ -109,6 +109,7 @@ def project(
         "total_seconds": int(active.get("total_seconds") or 0),
         "turns_left": int(active.get("turns_left") or 0),
         # the dose in the state's own unit, so a pane can say "2 pairs" instead of "2 turns"
+        # the state's own count, never spec["turns"]: an unstuck owes one direction, not three
         "dose": int(active.get("dose") or active.get("turns_left") or 0),
         "unit": str(active.get("unit") or "turn(s)"),
         "dose_left": _dose_left(active),
