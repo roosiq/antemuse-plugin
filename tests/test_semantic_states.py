@@ -33,11 +33,11 @@ def test_every_state_declares_a_dose():
 def test_the_dose_ends_the_state_without_a_command():
     """A doomscroll is three feed items; after the third there is nothing to wait for."""
     engine.enter("doomscroll", 30)
-    for _ in range(4):
-        engine.note_turn()
-        engine.deliver_if_due()
-        if engine.peek() is None:
-            break
+    engine.note_turn()
+    engine.deliver_if_due()      # the first unit, at entry
+    _backdate(30)                # everything the rest of the dose could still owe
+    engine.deliver_if_due()
+    engine.note_turn()           # the turn that consumes the last unit closes the state
     assert engine.peek() is None, "the state outlived its dose"
 
 
@@ -69,64 +69,52 @@ def test_an_expiry_reports_how_much_of_the_dose_was_delivered():
     assert int(m.group(1)) < 3, text
 
 
-def test_the_same_dose_costs_the_same_turns_at_any_speed():
-    """Slow turns must not buy fewer items: delivery is per turn, not per second."""
-    engine.enter("doomscroll", 30)
-    served = []
+def _backdate(seconds: float) -> None:
+    """Age the running state, so a test can hand the clock several seconds at once."""
+    data = engine._load()
+    data["active"]["entered_at"] = float(data["active"]["entered_at"]) - seconds
+    engine._save(data)
+
+
+def test_the_first_unit_lands_as_soon_as_the_state_exists():
+    """A dose is an act, not an appointment: the first unit does not wait for a turn."""
+    engine.enter("walk", session="pace", platform="discord")
+    assert engine.deliver_if_due() == 1
+
+
+def test_a_state_drains_its_dose_as_fast_as_the_clock_allows():
+    """One unit a second, starting now: five seconds banked is six units of a six-hop walk.
+
+    This is the walk's whole point. Paced per turn it needed six of the person's messages,
+    the three-minute ceiling arrived first, and the state ended at five of six — the clock
+    was doing the ending. Paced by the clock it takes six seconds, and it ends on its dose.
+    """
+    engine.enter("walk", session="pace", platform="discord")
+    assert engine.deliver_if_due() == 1
+    _backdate(5)
+    assert engine.deliver_if_due() == 5, "five banked seconds bought one unit"
+    active = engine.peek()
+    assert active is not None and active["served"] == 6, active
+    # A full dose still waits for the turn that used it, or the material would never reach one,
+    # and that turn closes the state on its own.
+    engine.note_turn()
+    assert engine.peek() is None, "a full dose must end the state on the turn that used it"
+
+
+def test_a_turn_buys_no_extra_units():
+    """Turns are the work, not the meter: the second a state is asked twice, it buys one unit."""
+    engine.enter("doomscroll", 30, session="pace", platform="discord")
+    assert engine.deliver_if_due() >= 1
+    served = engine.peek()["served"]
     for _ in range(3):
         engine.note_turn()
-        served.append(engine.deliver_if_due())
-        if engine.peek() is None:
-            break
-    assert served[0] >= 1, "the first turn got nothing"
-    assert sum(served) >= 3 or engine.peek() is None
+    assert engine.deliver_if_due() == 0, "three turns unlocked a unit"
+    assert engine.peek()["served"] == served
 
 
 def test_the_ceiling_is_still_a_ceiling():
     engine.enter("walk", 3)
     assert engine.peek()["ends_at"] > time.time()
-
-
-def test_a_state_serves_one_unit_per_turn():
-    """The dose is unchanged; the units arrive one at a time so the pane can show each.
-
-    A provider that hands back its whole dose in one call (the walk returns all six hops)
-    used to land the picture complete in turn one and then hold it, motionless, for the
-    rest of the ceiling. Delivery is now paced: one unit per turn, ending at the same dose.
-    """
-    for key, spec in states.STATES.items():
-        dose = int((spec.get("dose") or {}).get("n") or 0)
-        engine.enter(key, session="pace", platform="discord")
-        engine.note_turn()
-        engine.inject()
-        active = engine.peek()
-        if dose == 1:
-            assert active is None, f"{key} did not end on its single unit"
-            continue
-        assert active is not None, f"{key} ended after one unit of a {dose}-unit dose"
-        assert active["served"] == 1, f"{key} served {active['served']} units in one turn"
-        for _ in range(dose - 1):
-            engine.note_turn()
-            engine.inject()
-        assert engine.peek() is None, f"{key} was still running after its {dose}-unit dose"
-        engine.stop(reason="probe")
-
-
-def test_drip_is_still_available_and_still_delivers_the_same_dose(monkeypatch):
-    """A setting may change how long a state is; it may not change what a state is."""
-    from core import settings
-
-    from core import sources
-
-    monkeypatch.setattr(settings, "_raw", lambda key, default=None: "drip" if key == "deliver" else default)
-    monkeypatch.setitem(sources.PROVIDERS, "dream", lambda n=1: ["a joining line"] * n)
-    engine.enter("dream", session="drip", platform="discord")
-    engine.note_turn()
-    first = engine.deliver_if_due()
-    assert engine.deliver_if_due() == 0, "drip: one delivery per turn"
-    engine.note_turn()
-    second = engine.deliver_if_due()
-    assert first == 1 and second == 1, (first, second)
 
 
 def test_a_directive_never_promises_material_its_state_does_not_feed():

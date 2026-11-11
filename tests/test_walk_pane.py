@@ -16,6 +16,7 @@ These tests read the ledger and the pane payload, not the state's own counters.
 import os
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="walk-pane-")
@@ -134,3 +135,78 @@ def test_a_walk_that_just_ended_still_draws_its_path(monkeypatch):
     payload = plugin_api.graph(session="ended-walk", limit=1400)
     assert payload.get("key") == "walk", "the pane dropped back to the profile baseline"
     assert payload.get("path"), "the ended walk left no trail to draw"
+
+
+def test_a_walk_entered_with_no_session_still_lights_its_own_hops():
+    """The app and scripts enter a state with an empty origin session.
+
+    Entered from the desktop or by a capture script, a walk records `origin.session_id` as ""
+    while its servings are written against the conversation that took the turn. The pane scoped
+    the picture to the recorded origin — "" — so it lit one stale empty-session concept and drew
+    a trail nobody walked, while the walk's own six hops stayed dark. The owner the picture
+    draws is the session the ledger says fired, origin or no origin.
+    """
+    engine.stop(reason="reset")
+    engine.enter("walk", session="walk-origin-blank", platform="desktop")
+    data = engine._load()
+    data["active"]["origin"]["session_id"] = ""
+    engine._save(data)
+    assert not (engine.peek() or {}).get("origin", {}).get("session_id"), "the origin is not blank"
+    history.notice("porbeagle", move="walk", session="turn-took-it", at=time.time())
+
+    payload = plugin_api.graph(session="", limit=1400)
+    lit = [n["l"] for n in payload["nodes"] if n["w"] > 0.05]
+    assert payload["key"] == "walk", payload["key"]
+    assert "porbeagle" in lit, f"the walk's own hop is not lit: {lit}"
+    assert "porbeagle" in (payload.get("path") or []), payload.get("path")
+
+
+def test_an_empty_pane_lights_nothing():
+    """No state and no session: the pane said "no state" over one lit, day-old concept.
+
+    A state entered from a script writes its servings against an empty session. With nothing
+    running and no session to scope by, `activations("")` returned the newest of those — an
+    ancient hop — and because every weight is normalised against the brightest row in the same
+    set, that lone stale row became 1.0 and the floor never dropped it. The empty pane draws the
+    ground with nothing lit: a dark picture, not a blank one.
+    """
+    engine.stop(reason="reset")
+    history.notice("porbeagle", move="walk", session="", at=time.time() - 86400)
+    # The stale serving must really be readable, or the assertion below proves nothing.
+    assert activation.activations("", None), "no empty-session serving was written"
+
+    payload = plugin_api.graph(session="", limit=1400)
+    assert payload["key"] == "profile", payload["key"]
+    assert payload["lit"] == 0, [n["l"] for n in payload["nodes"] if n["w"] > 0.05]
+    assert all(n["w"] == 0 for n in payload["nodes"])
+    assert payload["nodes"], "the ground is still drawn: a dark picture, not a blank one"
+
+
+def test_a_state_entered_from_a_chat_lights_the_pane(monkeypatch):
+    """A /walk typed in a chat has a real owner; that is the normal entry path.
+
+    `watch_state()` hands the pane a whitelisted slice of the active record, and `origin` and
+    `entered_at` were not in it. `graph()` reads exactly those two, so a chat-entered walk —
+    the ordinary way one is entered — drew a map with nothing lit, and its trail query ran with
+    a window of 0.0, which is every walk ever recorded rather than this one. The trail is the
+    discriminator: an older walk in the ledger must not appear in a picture of this one.
+    """
+    monkeypatch.setattr(sources, "PROVIDERS", {**sources.PROVIDERS,
+                                               "walk": lambda steps=1: list(HOPS[:steps])})
+    engine.stop(reason="reset")
+    # An earlier walk by the same conversation: without `entered_at` the trail window is 0.0
+    # and this row joins the picture of the walk being drawn now.
+    history.notice("leopard", move="walk", session="local-REALCHAT", at=time.time() - 900)
+
+    engine.enter("walk", session="local-REALCHAT", platform="discord")
+    engine.note_turn()
+    engine.deliver_if_due()
+    assert engine.peek(), "the walk should still be running with a dose left"
+
+    body = plugin_api.graph(session="pane-x", limit=1400)
+    lit = [n for n in body["nodes"] if n["w"] > 0.05]
+    assert lit, "a chat-entered walk that served a concept must light it"
+    path = body.get("path") or []
+    spoke = HOPS[0].split("\u2192")[0].strip().split()[0]
+    assert spoke in path, f"the trail is not this walk's: {path}"
+    assert "leopard" not in path, f"the trail spans earlier walks too: {path}"

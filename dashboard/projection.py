@@ -98,6 +98,14 @@ def project(
     }
     active = watch.get("active")
     if not active:
+        # An idle pane still has a story: a state that ended left an account, and the map goes on
+        # drawing that state's firings while they decay. Without this the corner said "no state"
+        # over a picture of a walk that had just finished, which reads as a pane lighting concepts
+        # for no reason. Only the state's name travels — the account's own words stay in the chat.
+        for entry in reversed(residue):
+            if isinstance(entry, dict) and entry.get("kind") == "report" and entry.get("state"):
+                payload["last"] = {"state": str(entry["state"])}
+                break
         return payload
     payload["active"] = {
         "key": str(active.get("key") or ""),

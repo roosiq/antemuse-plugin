@@ -3,6 +3,27 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.38 — 2026-11-11
+
+- change: delivery is paced by the clock — one unit a second from the moment the state exists —
+  so the dose ends a state, not the ceiling. Per-turn pacing needed one of the person's messages
+  per hop, a six-hop walk ran out of minutes first, and it expired at five of six. The pane's
+  poll drives delivery while nobody is typing. The `deliver = "drip"` setting is gone: a setting
+  may change how long a state is, never what a state is, and there was nothing left for it to do.
+- fix: a walk entered from a chat now draws. `watch_state()` whitelists the active record and
+  left out `origin` and `entered_at`, the two fields `graph()` reads; the pane lit nothing and
+  its trail spanned every walk ever recorded. Both are already persisted — nothing new computed.
+- fix: a state entered with no origin session (the app, a capture script) now lights the hops the
+  ledger says fired, instead of one stale empty-session concept and a trail nobody walked.
+- fix: an idle pane is not a dead end — it names the last state that ended and the one line that
+  starts another, and with no state at all it names that same line. It used to say "no state"
+  over a map still drawing that state's decaying firings.
+- fix: drop the dead `peek()` fallback in `graph()`; a stripped `active` is truthy, so it never
+  ran, and it made the shape mismatch invisible.
+- test: `test_a_state_entered_from_a_chat_lights_the_pane`,
+  `test_a_state_drains_its_dose_as_fast_as_the_clock_allows` and
+  `test_a_turn_buys_no_extra_units` — all three fail against 0.10.37's engine, all three pass here.
+
 ## 0.10.37 — 2026-11-11
 
 - chore: the plugin root is Python; the pane harness owns its npm manifest (2026-11-11)

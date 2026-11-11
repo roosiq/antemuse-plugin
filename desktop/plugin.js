@@ -34,6 +34,9 @@ const ID = 'antemuse'
 // Fast enough that a baked frame is not stale when it lands: the slowest state,
 // dream, holds a frame four seconds, so polling under a second never skips one.
 const POLL_MS = 900
+// A run of misses before the pane says so: three polls, under three seconds. Short enough that a
+// real outage is named almost at once, long enough that a gateway restart does not blank a state.
+const MISSES_BEFORE_ERROR = 3
 
 // A monospace glyph cell is about 0.6 advances wide by one line tall. Both the
 // requested grid and the font that fills it come from these two numbers, so the
@@ -45,6 +48,14 @@ const PROBE_FONT = 10
 const copy = {
   pane: 'Antemuse',
   idle: 'no state',
+  // The empty pane is a dead end without this: a person who opens it and finds a dark map has
+  // nothing to act on. One command, not five — the label above this line already says there is
+  // no state, so the note says how to get one.
+  start: '/walk starts one',
+  // Written into the corner the moment a poll fails after a run of failures. Deliberately not
+  // "backend unavailable": the backend did answer, it refused, and saying which is the whole
+  // difference between looking at the plugin and looking at your session.
+  reconnecting: 'reconnecting',
   unavailable: 'backend unavailable',
   unreachable: 'the plugin backend is not mounted',
   signin: 'sign-in required',
@@ -115,16 +126,25 @@ export function situation(payload, error) {
 export function viewModel(payload, error) {
   const active = (payload && payload.active) || null
   const frame = (payload && payload.frame) || {}
+  // What an idle pane is actually looking at. "no state" alone left the corner saying nothing
+  // about a map that was still drawing the last state's firings, and nothing about how to start
+  // one; the note answers whichever of those applies.
+  const last = (payload && payload.last) || null
   return {
     situation: situation(payload, error),
     // One honest string, not a category plus a footnote: the label is what a person reads at
     // 11px in a corner, and "backend unavailable" for an expired session sends them looking at
-    // the server instead of at their sign-in.
-    label: error ? whyFailed(error) : active ? String(active.label || '') : copy.idle,
-    note: '',
-    clock: active ? clock(active.seconds_left) : '',
-    counts: counts(payload),
-    contract: active ? String(active.contract || '') : '',
+    // the server instead of at their sign-in. Before the first answer there is nothing to name —
+    // the pane used to print "no state" for a question it had not asked yet.
+    label: error ? whyFailed(error) : active ? String(active.label || '') : (payload ? copy.idle : ''),
+    note: error || active ? '' : (last && last.state ? `${last.state} ended · /walk again` : copy.start),
+    // A count is a claim about now. Under a failed poll it is a claim about the last time the
+    // pane could see, printed beside an error — the screenshot that says "the backend did not
+    // answer · 1:31 left" is the pane contradicting itself. Nothing is counted when the answer
+    // is missing.
+    clock: active && !error ? clock(active.seconds_left) : '',
+    counts: error ? '' : counts(payload),
+    contract: active && !error ? String(active.contract || '') : '',
     lines: Array.isArray(frame.lines) ? frame.lines : [],
     residue: (payload && payload.residue && payload.residue.count) || 0
   }
@@ -135,6 +155,11 @@ export function viewModel(payload, error) {
 function useStatePayload(ctx, cells) {
   const [payload, setPayload] = useState(null)
   const [error, setError] = useState(null)
+  // One failed poll is not a broken backend. The gateway drops a request while it is restarting,
+  // and the pane used to answer that single miss by throwing away the words and the counts of a
+  // state that was still running — so a 3-second hiccup replaced a live walk with "the backend
+  // did not answer". The error is only surfaced after a run of misses, and one answer clears it.
+  const misses = useRef(0)
   // The grid is part of the request, so a resize must re-ask rather than stretch
   // an old frame: the server renders at the size it is told.
   const query = cells ? `?cols=${cells.cols}&rows=${cells.rows}&fit=cover` : ''
@@ -142,8 +167,17 @@ function useStatePayload(ctx, cells) {
     let alive = true
     const read = () => {
       ctx.rest('/state' + query).then(
-        (data) => { if (alive) { setPayload(data); setError(null) } },
-        (err) => { if (alive) setError(String((err && err.message) || err || 'unreachable')) }
+        (data) => {
+          if (!alive) return
+          misses.current = 0
+          setPayload(data)
+          setError(null)
+        },
+        (err) => {
+          if (!alive) return
+          misses.current += 1
+          if (misses.current >= MISSES_BEFORE_ERROR) setError(String((err && err.message) || err || 'unreachable'))
+        }
       )
     }
     read()
@@ -1379,7 +1413,12 @@ function StateView({ ctx }) {
       jsxs('div', {
         style: {
           position: 'absolute', left: 12, bottom: 10, fontSize: '11px', lineHeight: 1.35,
-          opacity: 0.5, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '1px',
+          // Behind a running state these words are furniture and stay faint. With nothing
+          // running — or nothing answering — they are the only thing on the pane, so they have
+          // to be readable: an empty pane that whispers "no state" is indistinguishable from a
+          // pane that failed to load.
+          opacity: vm.situation === 'active' ? 0.5 : 0.78,
+          pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '1px',
           color: '#9aa6b2', letterSpacing: '0.02em'
         },
         children: [

@@ -654,3 +654,61 @@ def test_the_pane_sizes_a_dot_by_volume_and_colours_it_by_activation():
     # the falloff is bounded, or the wide shot crushes every dot to a pixel and volume cannot show
     assert "(9.0 / max(2.5, p.w))" in js
     assert "vW = aW" in js, "colour still comes from activation"
+
+
+def test_an_idle_pane_names_the_state_that_just_ended():
+    """The corner said "no state" over a map still drawing a walk's firings.
+
+    A state that finishes leaves a report in the residue and its firings keep decaying in the
+    ledger, so the pane draws that picture for a few more minutes. With nothing naming it, the
+    lights looked like the empty pane inventing concepts. The state's name is enough.
+    """
+    payload = project({"active": None, "journal": [],
+                       "residue": [{"kind": "report", "state": "walk",
+                                    "text": "walk 3m · 6 hop(s)", "turns_left": 2}]})
+    assert payload["last"] == {"state": "walk"}
+    # the account's own words stay in the chat: a surface that prints counts and names does not
+    # print what the state said
+    assert "6 hop" not in json.dumps(payload)
+
+
+def test_an_idle_pane_with_no_account_has_no_last_state():
+    payload = project({"active": None, "journal": [], "residue": [{"kind": "walk"}]})
+    assert "last" not in payload
+
+
+def test_the_empty_pane_says_what_starts_one():
+    """A dark map with "no state" in the corner is a dead end: nothing to read, nothing to do."""
+    import subprocess
+
+    import pytest
+
+    root = Path(__file__).resolve().parents[1]
+    js = (root / "desktop" / "plugin.js").read_text()
+    copy_src = js[js.index("const copy = {"):js.index("}", js.index("const copy = {")) + 1]
+    start = js.index("export function whyFailed(err) {")
+    end = js.index("\n}\n", js.index("export function viewModel(")) + 3
+    fns = js[start:end].replace("export function", "function")
+    harness = copy_src + "\n" + fns + """
+const idleAlone = viewModel({active: null, residue: {count: 0, kinds: []}}, null)
+const idleAfter = viewModel({active: null, last: {state: 'walk'}, residue: {count: 1, kinds: ['report']}}, null)
+const running = viewModel({active: {key: 'walk', label: 'WALKING', seconds_left: 145, dose: 6,
+  unit: 'hops', served: 3, tools: {mode: 'all'}, contract: 'work continues'}, residue: {count: 0, kinds: []}}, null)
+const failed = viewModel(null, new Error('404 Not Found'))
+console.log([idleAlone.note, idleAfter.note, running.note, failed.note].join('|'))
+"""
+    path = root / "tests" / "_empty_pane_probe.mjs"
+    path.write_text(harness)
+    try:
+        done = subprocess.run(["node", str(path)], capture_output=True, text=True, timeout=60)
+    except FileNotFoundError:
+        path.unlink(missing_ok=True)
+        pytest.skip("node is not installed here")
+    path.unlink(missing_ok=True)
+    assert done.returncode == 0, done.stderr
+    assert done.stdout.strip() == (
+        # One command, not a menu: the label above the note already says there is no state, and
+        # the copy's own comment gives that as the reason. The ended case names the state and
+        # the one line that starts another.
+        "/walk starts one|walk ended · /walk again||"
+    ), done.stdout

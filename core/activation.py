@@ -17,9 +17,9 @@ import math
 import time
 from typing import Any, Dict, List, Optional
 
-#: A concept that was served two turns ago is at half the weight of one served now. Expressed in
-#: seconds of real time rather than turns, because a state's cadence is per turn but its clock
-#: is not under our control.
+#: A concept served three minutes ago is at half the weight of one served now. Expressed in
+#: seconds of real time because delivery is paced by the same clock — one unit a second — so the
+#: decay and the cadence can never disagree about how much time has passed.
 HALF_LIFE_S = 180.0
 FLOOR = 0.25
 

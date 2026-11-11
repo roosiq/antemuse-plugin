@@ -60,11 +60,13 @@ def test_a_state_that_finishes_its_dose_records_a_different_ending(monkeypatch):
     """The dose ending is not the expiry ending and must not be labelled as one."""
     monkeypatch.setattr(social, "pick", lambda steps=1: FEED[:steps])
     engine.enter("doomscroll", session="moves-dose", platform="discord")
-    for _ in range(3):
-        engine.note_turn()
-        engine.tick()
-        engine.deliver_if_due()
-        engine.complete_if_dosed()
+    engine.note_turn()
+    engine.deliver_if_due()               # the first unit, at entry
+    data = engine._load()
+    data["active"]["entered_at"] = float(data["active"]["entered_at"]) - 30
+    engine._save(data)                    # everything the rest of the dose could still owe
+    engine.deliver_if_due()
+    engine.complete_if_dosed()
 
     assert engine.peek() is None, "the dose should have ended the state"
     rows = _moves("doomscroll")

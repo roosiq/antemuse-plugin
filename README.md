@@ -5,12 +5,13 @@ The agent can take a **walk**, **daydream**, **dream**, **doomscroll**, or get
 direction. You can take the same state beside it, and the desktop app's pane shows it
 happening.
 
-A state is an **act with a dose**, not a duration. A walk is six turns of work with the
-frame elsewhere; a daydream is two memory pairs confronted with whether they join; a
-doomscroll is three feed items; a dream is two recombinations that land; an unstuck is
-one direction named. The state ends when the dose is delivered — so a fast model
-finishes sooner and a slow one is not cut short. Minutes are a ceiling, and an expiry
-says how much of the dose arrived.
+A state is an **act with a dose**, not a duration. A walk is six hops with the frame
+elsewhere; a daydream is two memory pairs confronted with whether they join; a doomscroll is
+three feed items; a dream is two recombinations that land; an unstuck is one direction named.
+The units arrive one a second from the moment the state exists, so a six-hop walk is served in
+about six seconds and closes on the turn that uses it — the dose ends the state, not the clock.
+Minutes are a stall guard for a state nobody is turning over, and an expiry says how much of
+the dose arrived.
 
 A state is a bounded change to behaviour, not a place:
 

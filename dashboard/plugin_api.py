@@ -178,6 +178,24 @@ def _core_module(name: str):
 _GRAPH_MEMO: Dict[str, Any] = {"key": None, "at": 0.0, "payload": None}
 
 
+def _firing_session(move: str, since: float) -> str:
+    """The session that wrote the newest serving for `move` since `since`, or "".
+
+    A state entered from the desktop app or by a capture script records no origin session, while
+    its servings are written against the conversation that took the turn. Asking the ledger who
+    actually fired is the only answer that matches the picture to the state.
+    """
+    if not move:
+        return ""
+    try:
+        rows = _core_module("activation")._rows(
+            "SELECT session FROM served WHERE move = ? AND at >= ? ORDER BY at DESC LIMIT 1",
+            (move, float(since or 0.0)))
+    except Exception:  # health: BLE001 -- no ledger is a fact, not a failure
+        return ""
+    return str(rows[0][0] or "") if rows else ""
+
+
 def _last_finished(residue: Any) -> Dict[str, Any] | None:
     """The most recent finished state that left an account, or None."""
     for entry in reversed(list(residue or [])):
@@ -203,7 +221,11 @@ def graph(session: str = "", limit: int = 1400):
     try:
         _engine = _core_module("engine")
         _watch = _engine.watch_state() or {}
-        engine_state = _watch.get("active") or _engine.peek() or {}
+        # `watch_state()` is the one shape the pane draws from. It used to fall back to
+        # `peek()` here, but that dict is a *different* shape — and the fallback was dead
+        # anyway, because a stripped `active` is still truthy. A dead fallback that looks
+        # like a safety net is how `origin`/`entered_at` stayed missing for so long.
+        engine_state = _watch.get("active") or {}
         _residue = _watch.get("residue") or []
     except Exception:  # health: BLE001 -- an older core has no watch_state
         engine_state, _residue = {}, []
@@ -241,6 +263,12 @@ def graph(session: str = "", limit: int = 1400):
     # running walk served nine concepts and the pane lit two. The owner is empty means everyone.
     if drawable:
         own = str((active.get("origin") or {}).get("session_id") or "")
+        # A state entered from the app or by a capture script records no origin session, while
+        # its servings are written against the conversation that took the turn. Scoped to an
+        # empty origin the picture lit one stale empty-session concept and drew a trail nobody
+        # walked, while the walk's own hops stayed dark. Draw what the ledger says fired.
+        if not own:
+            own = _firing_session(key, float(active.get("entered_at") or 0.0))
     elif recent and recent.get("session"):
         own = str(recent.get("session") or "")
     else:
@@ -248,10 +276,18 @@ def graph(session: str = "", limit: int = 1400):
 
     activation = _core_module("activation")
     lit = {}
-    try:
-        lit = activation.activations(own, key if (drawable or recent) else None) or {}
-    except Exception:  # health: BLE001 -- no firings is a fact, not a failure
+    # An empty pane is empty. With nothing running and no session given, `own` is "" and
+    # `activations("")` reads every serving ever recorded against an empty session — which is how
+    # a walk entered by a script a day earlier kept one concept lit, forever, in a pane whose own
+    # label said "no state". A conversation that does not exist has fired nothing, so nothing is
+    # lit; the ground still draws, the picture is just dark.
+    if not (drawable or recent) and not str(session or ""):
         lit = {}
+    else:
+        try:
+            lit = activation.activations(own, key if (drawable or recent) else None) or {}
+        except Exception:  # health: BLE001 -- no firings is a fact, not a failure
+            lit = {}
     # The ground is the busiest `limit` concepts, so a concept the state just served can fall
     # outside it — and then it had nothing to light: the walk served three concepts per hop and
     # the map drew none of them. Whatever is firing is always part of the picture.
@@ -353,6 +389,13 @@ def state(request: Request = None, session: str | None = None,
     first successful poll. ``cols``/``rows``/``fit``/``busy``/``stills`` are still accepted so a
     pane built against the old shape is not answered with a 422; they change nothing.
     """
+    # A poll is a second of the state's life. Delivery is paced by the clock, and the pane is
+    # the only thing asking while nobody is typing, so the hops land here (one a second) rather
+    # than waiting for the next turn to notice that time passed.
+    try:
+        plugin().core.engine.deliver_if_due()
+    except Exception:  # health: BLE001 -- a failed hop must not blank the pane
+        pass
     proj = projection()
     watch = plugin().core.engine.watch_state()
     payload = proj.project(watch, None)

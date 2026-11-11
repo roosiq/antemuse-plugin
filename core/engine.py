@@ -398,7 +398,8 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         data["work"] = {"turns": 0, "tools": 0, "fails": 0, "started_at": now_break}
         data["offered_at"] = 0.0
         _save(data)
-    # no ticker: delivery is per turn now, so a wall clock cannot decide the dose
+    # no ticker: delivery is driven by the turn and by the pane's poll (`deliver_if_due`), so a
+    # background thread would only race them for the state lock
     note = ""
     if previous and previous["key"] != spec_key:
         note = f" (left {previous['key']}; no residue kept)"
@@ -541,14 +542,15 @@ def _last_material(key: str, data: Dict[str, Any]) -> float:
 def deliver_if_due() -> int:
     """Deliver the rest of the dose now, so a state is as short as its material allows.
 
-    Two pacings came before this one. A clock first: a step every N seconds, which made the dose
-    a function of model speed. Then one item per turn, which made a six-hop walk take six of the
-    person's messages — a walk that expires at 2 of 6 because nobody talks that fast. The dose is
-    the act, and the act is cheap locally (six hops resolve in about three seconds), so there is
-    no reason to spread it across turns: drain it in the turn it falls due.
+    Two pacings came before this one, and both were wrong in the same direction: they let the
+    clock decide the dose. A step every N seconds made the dose a function of model speed. One
+    item per turn made a six-hop walk take six of the person's messages, so the ceiling ended it
+    at five of six.
 
-    `antemuse.deliver = "drip"` restores one item per turn. A setting may change how long a state
-    is; it may not change what a state is, and both pacings deliver the same dose.
+    This pacing is the one the act implies: a unit a second, at most, starting the moment the
+    state exists. Six hops take six seconds because six hops are six seconds of work, and a
+    state ends on its dose rather than on the clock. Minutes remain a stall guard for a state
+    nobody is turning over, not the length of the act.
     """
     from . import sources
     from . import settings
@@ -564,14 +566,24 @@ def deliver_if_due() -> int:
         served = int(active.get("served") or 0)
         if dose and served >= dose:
             return 0
-        drip = str(settings.text("deliver", "dose")).strip().lower() == "drip"
-        if active.get("served_turn") == int(data["work"].get("turns") or 0):
-            return 0          # one helping per turn, whatever the delivery mode
-        # One unit per turn, always. A provider may hand back the whole dose at once (the
-        # walk returns all six hops in one call), and serving that landed the picture
-        # complete in turn one, leaving the pane with nothing to draw for the rest of the
-        # ceiling. The dose is unchanged; only when each unit arrives is.
-        remaining = 1
+        # One unit per second, and every unit the clock has earned since the state was
+        # entered. The dose is the act, so a state is as short as its material allows —
+        # six hops take six seconds, not six of the person's messages.
+        #
+        # Pacing this per turn is what made walks time-bounded: a six-hop walk needed six
+        # turns, the three-minute ceiling arrived first, and the state ended at five of six.
+        # The clock was doing the ending, which is the one thing a dose exists to prevent.
+        # The first unit lands as soon as the state exists; each further unit unlocks a
+        # second later; a call that finds several seconds banked serves all of them.
+        elapsed = time.time() - float(active.get("entered_at") or time.time())
+        # Units the state is *entitled* to by now: one at entry, one a second after. The
+        # count is cumulative, so a second call inside the same second buys nothing.
+        entitled = 1 + int(max(0.0, elapsed) // 1.0)
+        if dose:
+            entitled = min(dose, entitled)
+        remaining = max(0, entitled - served)
+        if remaining <= 0:
+            return 0
     provider = sources.PROVIDERS.get(key)
     if provider is None:
         return 0
@@ -617,7 +629,6 @@ def deliver_if_due() -> int:
         active = data.get("active") or {}
         if active.get("key") == key:
             active["served"] = int(active.get("served") or 0) + len(lines)
-            active["served_turn"] = int(data["work"].get("turns") or 0)
             active["started"] = active.get("started") or time.time()
         data["active"] = active
         _save(data)
@@ -1010,6 +1021,13 @@ def watch_state() -> Dict[str, Any]:
             "unit": active.get("unit") or (spec.get("dose") or {}).get("unit") or "turn(s)",
             "served": int(active.get("served") or 0),
             "tools": spec["tools"],
+            # The pane's graph() reads exactly these two: `origin.session_id` picks the owner
+            # whose servings are lit, and `entered_at` windows the trail to this walk. Neither
+            # is computed here — both are already in the record — but leaving them out of this
+            # whitelist made a chat-entered walk draw nothing: `own` fell back to the firings
+            # query with a 0.0 window, and the trail spanned every walk ever recorded.
+            "origin": dict(active.get("origin") or {}),
+            "entered_at": active.get("entered_at"),
         }
         if active.get("options"):
             out["active"]["options"] = dict(active["options"])

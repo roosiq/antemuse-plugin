@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 import os
 import shutil
 import sys
@@ -29,6 +30,9 @@ sys.path.insert(0, str(ROOT))
 
 STATES = ["walk", "daydream", "doomscroll", "dream", "unstuck"]
 MAX_TURNS = 14
+# Delivery is paced by the clock (one unit a second), so the turns have to be a second
+# apart or the runner measures a state that was never given time to do anything.
+TURN_GAP = 1.1
 
 
 def _fresh_home() -> str:
@@ -90,6 +94,7 @@ def run_state(key: str) -> dict:
     served_total = 0
     blocks = []
     for turn in range(MAX_TURNS):
+        time.sleep(TURN_GAP)               # a turn is a second of the state's life
         engine.note_turn()                 # what the host does before each model turn
         block = engine.inject("e2e")
         data = engine._load() or {}

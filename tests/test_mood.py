@@ -159,9 +159,23 @@ def test_the_walk_keeps_its_dose_but_runs_fast():
     assert spec["minutes"] <= 3
 
 
-def test_the_dose_arrives_in_the_turn_it_falls_due():
-    """The act is short; spreading it over six of the person's messages was the defect."""
+def _age_state(seconds: float) -> None:
+    """Hand the running state N seconds, so a test does not have to sleep for them."""
+    data = engine._load()
+    data["active"]["entered_at"] = float(data["active"]["entered_at"]) - seconds
+    engine._save(data)
+
+
+def test_the_dose_arrives_at_the_dose_and_stops():
+    """The act is short; spreading it over six of the person's messages was the defect.
+
+    Delivery is paced by the clock now — one unit a second — so what this pins is the
+    ceiling on the dose: once the state has served what it promised, nothing more arrives,
+    however much time passes after that.
+    """
     engine.enter("dream", 10)
     engine.note_turn()
-    assert engine.deliver_if_due() >= 1, "the turn that is due gets the material"
-    assert engine.deliver_if_due() == 0, "and the dose is spent, so nothing more arrives"
+    assert engine.deliver_if_due() >= 1, "the state that is due gets its material"
+    _age_state(120)                        # everything the dose could still owe
+    engine.deliver_if_due()
+    assert engine.deliver_if_due() == 0, "a spent dose keeps arriving"

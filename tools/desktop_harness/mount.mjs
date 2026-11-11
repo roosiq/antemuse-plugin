@@ -99,6 +99,7 @@ const PAYLOAD = {
 
 function makeCtx(state) {
   const calls = { rest: [], intervals: [] }
+  let stateCalls = 0
   const contributions = []
   const pages = []
   const ctx = {
@@ -107,7 +108,15 @@ function makeCtx(state) {
     setInterval: (fn, ms) => { calls.intervals.push({ fn, ms }); return () => {} },
     rest: async (path) => {
       calls.rest.push(path)
-      if (state.error) throw new Error(state.error)
+      // `failAfter` answers the first N /state reads, then fails: the pane has to behave on the
+      // second poll, not only on a backend that was never there.
+      if (path.startsWith('/state')) {
+        stateCalls += 1
+        if (state.failAfter !== undefined && stateCalls > state.failAfter) {
+          throw new Error(state.error || 'unreachable')
+        }
+      }
+      if (state.failAfter === undefined && state.error) throw new Error(state.error)
       return state.payload
     },
     navigate: () => {},
@@ -161,6 +170,14 @@ assert.equal(helpers.clock(-5), '0:00')
 assert.equal(helpers.viewModel(PAYLOAD, null).counts, '2:59 left · 2 turn(s) · no tools · 2 carried')
 assert.equal(helpers.viewModel(null, new Error('x')).label, 'backend unavailable')
 assert.equal(helpers.viewModel({ active: null }, null).situation, 'idle')
+// The empty pane says what to do about it, and an ended state says which one ended.
+assert.equal(helpers.viewModel({ active: null }, null).note, '/walk starts one')
+assert.equal(helpers.viewModel({ active: null, last: { state: 'walk' } }, null).note, 'walk ended · /walk again')
+// A failed answer is not a claim about now: no clock, no counts, no contract beside an error.
+const failed = helpers.viewModel(PAYLOAD, new Error('503'))
+assert.equal(failed.counts, '', 'stale counts must not sit under an error')
+assert.equal(failed.clock, '')
+assert.equal(failed.contract, '')
 
 // ---- an active state, mounted ----------------------------------------------
 
@@ -219,10 +236,35 @@ await act(async () => { idle.node.unmount() })
 
 resetBody()
 const broken = await mountWith({ error: 'connection refused' })
-assert.match(document.body.textContent, /backend unavailable/)
+// A single miss is a hiccup, not an outage: the pane keeps saying what it last knew. The poll
+// clock is fired here the way the host would, until the run of misses is long enough to name.
+const blink = broken.calls.intervals.find((i) => i.ms === 900)
+await act(async () => { blink.fn() })
+assert.notEqual(document.querySelector('[data-antemuse-state]').getAttribute('data-antemuse-state'), 'unavailable',
+  'one failed poll must not replace the pane with an error')
+await act(async () => { blink.fn() })
+await act(async () => { blink.fn() })
+await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
 assert.match(document.body.textContent, /backend unavailable/)
 assert.equal(document.querySelector('[data-antemuse-state]').getAttribute('data-antemuse-state'), 'unavailable')
 await act(async () => { broken.node.unmount() })
+
+// ---- a state that had a picture, then lost the backend ----------------------
+
+resetBody()
+const lost = await mountWith({ payload: PAYLOAD })
+await act(async () => { lost.node.unmount() })
+resetBody()
+const lostAgain = await mountWith({ payload: PAYLOAD, error: 'the backend did not answer', failAfter: 2 })
+const lostTicks = lostAgain.calls.intervals.find((i) => i.ms === 900)
+assert.match(document.body.textContent, /2:59 left/, 'the pane starts with a live state')
+await act(async () => { for (let i = 0; i < 3; i++) lostTicks.fn() })
+await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+const lostText = document.body.textContent
+assert.match(lostText, /the backend did not answer/)
+assert.doesNotMatch(lostText, /left ·/, 'the pane must not print a countdown beside a failed answer')
+assert.doesNotMatch(lostText, /join only if it holds/, 'nor a contract from the payload it could not refresh')
+await act(async () => { lostAgain.node.unmount() })
 
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
