@@ -311,6 +311,10 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
             "entered_at": now,
             "ends_at": now + duration * 60,
             "turns_left": spec["turns"],
+            # the dose, and the unit it is counted in: "turns" was a lie for walk (hops),
+            # daydream (pairs) and the rest, and the pane printed it
+            "dose": int(spec["turns"]),
+            "unit": (spec.get("dose") or {}).get("unit") or "turn(s)",
             "minutes": duration,
             "total_seconds": duration * 60,
             # an experiment arm may run a dose the manifest does not declare; the key is
@@ -780,7 +784,7 @@ def status() -> str:
         spec = states.STATES[active["key"]]
         left = max(0, int((active["ends_at"] - time.time()) / 60))
         lines = [
-            f"{spec['label']} · {left} min left · {active['turns_left']} turn(s)",
+            f"{spec['label']} · {left} min left · {_dose_left(active)} {active.get('unit') or 'turn(s)'}",
             f"  {spec['contract']}",
             f"  {spec['directive']}",
         ]
@@ -862,6 +866,19 @@ def _journal_window(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     return mine[-12:]
 
 
+def _dose_left(active):
+    """How much of the dose is still owed, in the unit the state counts in.
+
+    ``turns_left`` was the only number the pane had, so a daydream that owed two *pairs* said
+    "2 turns left" and a walk that owed six *hops* said "6 turns left". The unit is part of
+    what a state is, so the number has to be in it.
+    """
+    dose = int(active.get("dose") or active.get("turns_left") or 0)
+    unit = active.get("unit") or "turn(s)"
+    served = int(active.get("served") or 0) if unit != "turn(s)" else int(active.get("turns") or 0)
+    return max(0, dose - served)
+
+
 def status_line() -> str:
     """What is running, in words. One line, no picture.
 
@@ -908,6 +925,10 @@ def watch_state() -> Dict[str, Any]:
             "seconds_left": max(0, int(active["ends_at"] - time.time())),
             "total_seconds": active.get("total_seconds") or active["minutes"] * 60,
             "turns_left": active["turns_left"],
+            # the dose in its own unit: the pane prints this, not turns_left
+            "dose": int(active.get("dose") or spec["turns"]),
+            "unit": active.get("unit") or (spec.get("dose") or {}).get("unit") or "turn(s)",
+            "served": int(active.get("served") or 0),
             "tools": spec["tools"],
         }
         if active.get("options"):

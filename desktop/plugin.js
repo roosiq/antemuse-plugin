@@ -81,13 +81,20 @@ export function clock(seconds) {
   return `${m}:${rest}`
 }
 
+function doseLeft(active) {
+  const dose = Number(active.dose || active.turns_left || 0)
+  const served = Number(active.served || 0)
+  return Math.max(0, dose - served)
+}
+
 /** One line of counts under the frame — no prose, no adjectives. */
 export function counts(payload) {
   const active = payload && payload.active
   if (!active) return ''
   const bits = [
     `${clock(active.seconds_left)} left`,
-    `${active.turns_left} turn${active.turns_left === 1 ? '' : 's'}`
+    // the dose in the state's own unit (hops, pairs, items, recombinations), not "turns"
+    `${doseLeft(active)} ${active.unit || 'turn(s)'}`
   ]
   const tools = active.tools || {}
   if (tools.mode === 'none') bits.push('no tools')

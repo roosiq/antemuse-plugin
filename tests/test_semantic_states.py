@@ -203,3 +203,26 @@ def test_every_ending_speaks_in_the_state_that_ended(tmp_path, monkeypatch):
              "dream": "dream", "unstuck": "recommendation"}
     for key, word in named.items():
         assert word in states.after(key).lower(), (key, word)
+
+
+def test_the_pane_counts_the_dose_in_the_states_own_unit(tmp_path, monkeypatch):
+    """A daydream owes two *pairs*, a walk six *hops*. Both used to be printed as "turns".
+
+    The pane had only ``turns_left`` to draw from, so it said "2 turns left" for a state whose
+    dose is pairs, and the entry line said "6 turn(s)" for one counted in hops. The unit is part
+    of what the state is; the number has to be in it.
+    """
+    from core import engine, states
+    from dashboard import projection
+
+    for key, unit in (("walk", "hops"), ("daydream", "pairs"),
+                      ("doomscroll", "items"), ("dream", "recombinations")):
+        engine.stop(reason="unit")
+        engine.enter(key, session=f"unit-{key}", platform="discord")
+        line = engine.status_line()
+        assert f"{states.STATES[key]['dose']['n']} {unit}" in line, (key, line)
+        assert "turn(s)" not in line, (key, line)
+        active = projection.project(engine.watch_state())["active"]
+        assert active["unit"] == unit, (key, active)
+        assert active["dose_left"] == states.STATES[key]["dose"]["n"], (key, active)
+        engine.stop(reason="unit")
