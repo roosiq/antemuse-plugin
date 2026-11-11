@@ -18,6 +18,13 @@ together; the catalog entry is generated from the manifest at release time.
 - fix: an idle pane is not a dead end — it names the last state that ended and the one line that
   starts another, and with no state at all it names that same line. It used to say "no state"
   over a map still drawing that state's decaying firings.
+- fix: the empty pane is honest about what it does not know. Before the first answer it names
+  nothing instead of "no state", the corner is readable rather than 50 % grey, and a failed
+  answer prints no clock, counts or contract — the pane was shipping a status line that read
+  "the backend did not answer · 1:31 left".
+- fix: one dropped poll no longer blanks a running state. The pane names a failure after three
+  consecutive misses (under three seconds) and any answer clears it; a gateway restart used to
+  replace a live walk with an error for every request it dropped.
 - fix: drop the dead `peek()` fallback in `graph()`; a stripped `active` is truthy, so it never
   ran, and it made the shape mismatch invisible.
 - test: `test_a_state_entered_from_a_chat_lights_the_pane`,
