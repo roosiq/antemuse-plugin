@@ -43,6 +43,16 @@ def _load() -> Dict[str, Any]:
     return data
 
 
+def _cap_residue(data: dict) -> None:
+    """Hold the residue at three entries *at the moment it is written*.
+
+    The trim used to live only in note_turn(), so a burst of endings between two turns left the
+    store with as many reports as had ended — nine in one straight-line run — while every reader
+    of the store trusted a cap of three. The cap belongs on the write, not on the turn.
+    """
+    data["residue"] = (data.get("residue") or [])[-3:]
+
+
 def _save(data: Dict[str, Any]) -> None:
     path = storage.data_dir() / FILE
     tmp = path.with_suffix(".tmp")
@@ -146,6 +156,7 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
             report = {**report, "text": f"{report['text']} (expired before its dose: {served} of {dose})"}
         data["residue"].append({**report, "kind": "report", "turns_left": 2,
                                 "session": (active.get("origin") or {}).get("session_id") or ""})
+        _cap_residue(data)
         data.setdefault("journal", []).append({
             "who": "state", "state": active["key"], "event": "report",
             "text": report["text"], "at": now,
@@ -408,6 +419,7 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
         report = _account(data, active)
         data["residue"].append({**report, "kind": "report", "turns_left": 2,
                                 "session": (active.get("origin") or {}).get("session_id") or ""})
+        _cap_residue(data)
         data["journal"].append({
             "who": "state", "state": active["key"], "event": "report",
             "text": report["text"], "at": time.time(), "reason": reason,

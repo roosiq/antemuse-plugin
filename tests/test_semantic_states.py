@@ -226,3 +226,22 @@ def test_the_pane_counts_the_dose_in_the_states_own_unit(tmp_path, monkeypatch):
         assert active["unit"] == unit, (key, active)
         assert active["dose_left"] == states.STATES[key]["dose"]["n"], (key, active)
         engine.stop(reason="unit")
+
+
+def test_residue_cap_holds_when_endings_arrive_between_turns(tmp_path, monkeypatch):
+    """The cap is on the write, not on the turn.
+
+    The trim lived only in note_turn(), so a straight-line run that entered and ended eight
+    states without a turn in between left nine residue entries in the store while every reader
+    trusted a cap of three.
+    """
+    from core import engine
+
+    engine.stop(reason="cap")
+    for _ in range(8):
+        engine.enter("walk", session="cap-probe", platform="discord")
+        engine.stop(reason="cap")
+    stored = engine._load().get("residue") or []
+    shown = engine.watch_state()["residue"]
+    assert len(stored) <= 3, len(stored)
+    assert len(shown) <= 3, len(shown)
