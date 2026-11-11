@@ -177,7 +177,7 @@ tests/                 pytest suite
 
 ```bash
 tools/test.sh                    # suite in a temp data home
-tools/test.sh --with-renderers   # npm ci first, so the pane renderer tests run
+tools/test.sh --with-renderers   # npm ci, then mount the pane in jsdom
 hermes plugins doctor antemuse
 hermes plugins validate . --install-deps   # what catalog CI runs
 ```
@@ -327,11 +327,12 @@ What a person should know before installing. Each line names where it happens.
 
 - Hermes Agent **0.21.6 or newer**; developed and verified against **0.23.1**.
 - Python 3.11+ (Hermes's own runtime is enough).
-- Linux and macOS. Windows is not verified: the suite has bash- and symlink-dependent tests
-  that skip by name rather than fail, so a green run there would not mean much.
+- Linux and macOS are the verified platforms. On Windows the installer and runtime are pure
+  Python and the plugin loads; the suite's bash- and symlink-dependent tests skip there by
+  name, and the pane is unverified.
 - No `node`, no `npm`, no native libraries at runtime: the plugin is pure Python plus one
   plain JavaScript file for the pane (raw WebGL, no vendored scene graph). `npm ci` is
-  needed only to run the pane renderer tests.
+  needed only to run the pane harness (`tools/desktop_harness/mount.mjs`).
 - Surfaces: the pane in the packaged desktop app, and the chat account. The pane is the only
   visualization.
 

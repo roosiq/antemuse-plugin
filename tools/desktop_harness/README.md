@@ -4,14 +4,14 @@ Mounts the real `desktop/plugin.js` outside the app, so the pane can be checked
 where Hermes Desktop is not installed.
 
 ```bash
-./tools/desktop_harness/setup.sh      # symlink react/react-dom/jsdom from the app checkout
+npm ci                                # jsdom, react, react-dom (dev-only)
 node tools/desktop_harness/mount.mjs
 ```
 
-`setup.sh` reads `HERMES_APP_NODE_MODULES`, defaulting to
-`~/.hermes/hermes-agent/node_modules`. It installs nothing: it links the
-three packages and writes a `@hermes/plugin-sdk` stub beside the harness, because
-`plugin.js` imports only constants from that alias.
+The harness provisions itself: it writes the `@hermes/plugin-sdk` stub beside
+itself, because `plugin.js` imports only constants from that alias, and creates
+its `.work/` copy of the plugin so bare imports resolve. `tools/test.sh
+--with-renderers` runs both steps.
 
 What the mount proves: the plugin registers a pane, a status chip and a palette
 command (never a pane alone, which would disable the plugin when the pane closed);

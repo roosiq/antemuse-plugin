@@ -6,7 +6,7 @@ What to run, and what each check actually proves.
 
 - Hermes Agent **0.21.6 or newer** (`hermes --version`).
 - Python 3.11+ (Hermes's own runtime is fine).
-- Optional: `node` + `npm`, only for the pane renderer tests. Nothing at runtime needs them.
+- Optional: `node` + `npm`, only for the pane harness. Nothing at runtime needs them.
 - Linux or macOS. Windows is unverified.
 
 ## Install from a tarball
@@ -62,7 +62,7 @@ app's pane. Nothing in a state ever blocks the agent's work unless you ask for `
 ```bash
 cd ~/antemuse-plugin
 tools/test.sh                    # suite in a temp data home
-tools/test.sh --with-renderers   # npm ci first, so the pane renderer tests run too
+tools/test.sh --with-renderers   # npm ci, then mount the pane in jsdom
 hermes plugins validate . --install-deps   # what catalog CI runs
 hermes plugins doctor antemuse
 ```
@@ -76,9 +76,13 @@ has one stochastic case, so treat a lone failure as worth a second run before be
 | command | what a green result means |
 |---|---|
 | `tools/test.sh` | the shipped code does what the tests name, in a temp data home, with no model calls |
-| `tools/test.sh --with-renderers` | the pane's JavaScript still parses and draws into a headless DOM |
+| `tools/test.sh --with-renderers` | the pane's JavaScript mounts in jsdom and 12 properties hold: registration, settings page, helpers, DOM text, frame, aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean |
 | `hermes plugins doctor antemuse` | the host can discover, parse, import and register the plugin: 1 tool, 8 hooks |
 | `hermes plugins validate .` | the manifest, declared capabilities, dependency bounds, desktop surface and safety scan all hold |
+
+Validate a **clone or the packed tarball**, not your working tree. `experiments/` and
+`evaluation/` are gitignored, so a local checkout keeps raw model transcripts the install
+scanner rightly refuses; a clone has none of them and is what catalog CI reads.
 | `tar -tzf … \| grep -E 'pyc\|\.antemuse'` | the package carries no bytecode and no local state |
 
 ## Where it writes

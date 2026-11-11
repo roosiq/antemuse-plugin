@@ -26,8 +26,8 @@ desktop pane. The repository root **is** the plugin root — `plugin.yaml`, `__i
 ## Run the suite
 
 ```bash
-tools/test.sh                    # temp data home, pane renderer tests skipped
-tools/test.sh --with-renderers   # npm ci first, so the renderer tests run too
+tools/test.sh                    # temp data home, pane harness skipped
+tools/test.sh --with-renderers   # npm ci, then mount the pane in jsdom
 hermes plugins doctor antemuse
 hermes plugins validate . --install-deps   # what catalog CI runs
 ```

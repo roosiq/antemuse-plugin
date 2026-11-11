@@ -6,20 +6,9 @@ version: "0.10.35"
 author: Antemuse
 homepage: https://antemuse.com
 license: MIT
-tags: [state, cognition, workflow, terminal, creativity]
+tags: [state, cognition, workflow, creativity]
 platforms: [linux, macos, windows]
-description: >
-  Antemuse lets the agent itself take a walk, daydream, dream, doomscroll, or get
-  unstuck. A state is a bounded change to behaviour, not a place: it shapes the
-  next replies, decides what residue the agent carries when the state ends, and —
-  only when the entry asks with block: true — restricts which tools may run. By
-  default a state does not interrupt the work it happens inside. A state is an act
-  with a dose (six turns of work, two memory pairs, three feed items, two
-  recombinations, one direction), not a duration: it ends when the dose is done,
-  minutes are only a ceiling, and an expiry says how much of the dose arrived.
-  Walks step through WordNet (117k synsets, named relations) and dreams recombine
-  FrameNet roles (1,221 frames); daydreams draw on stored memories, doomscrolls on
-  live feeds. No model calls, no scoring on the state path.
+description: "The agent takes a walk, daydreams, dreams, doomscrolls, or gets unstuck: a bounded change to how it works, with a dose rather than a duration. Walks step through WordNet, dreams recombine FrameNet roles, daydreams draw on stored memories, doomscrolls on live feeds. No model calls on the state path."
 requires_hermes: ">=0.21.6"
 python_dependencies:
   - "nltk>=3.8,<4"

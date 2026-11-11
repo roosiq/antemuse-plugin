@@ -2,7 +2,7 @@
 # One command to run the suite the way CI and reviewers do.
 #
 #   tools/test.sh                    # suite, temp data dir, no renderer deps
-#   tools/test.sh --with-renderers   # npm ci first, so the 7 renderer tests run
+#   tools/test.sh --with-renderers   # npm ci, then mount the pane in jsdom
 #   tools/test.sh tests/test_states.py -q
 #
 # PYTHONPATH is dropped because the host exports it and it breaks collection.
@@ -12,6 +12,7 @@ cd "$(dirname "$0")/.."
 if [[ "${1:-}" == "--with-renderers" ]]; then
   shift
   npm ci --silent
+  node tools/desktop_harness/mount.mjs
 fi
 
 export ANTEMUSE_STATES_HOME="${ANTEMUSE_STATES_HOME:-$(mktemp -d)}"

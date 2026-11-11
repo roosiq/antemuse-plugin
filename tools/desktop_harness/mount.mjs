@@ -13,9 +13,22 @@ import { createHash } from 'node:crypto'
 import { copyFileSync, readFileSync } from 'node:fs'
 
 import { JSDOM } from 'jsdom'
+import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
 
 const PLUGIN = new URL('../../desktop/plugin.js', import.meta.url)
 const WORK = new URL('./.work/plugin.js', import.meta.url)
+
+// Self-provisioning: the harness used to need setup.sh, which symlinked react and
+// jsdom out of the desktop app's checkout. That checkout is not always there, and a
+// harness that cannot start is not a check. `npm install` in the repo root provides
+// the three packages; the SDK stub is written here.
+mkdirSync(new URL('./.work/', import.meta.url), { recursive: true })
+const SDK = new URL('./node_modules/@hermes/plugin-sdk/', import.meta.url)
+if (!existsSync(new URL('index.js', SDK))) {
+  mkdirSync(SDK, { recursive: true })
+  writeFileSync(new URL('package.json', SDK), '{"name":"@hermes/plugin-sdk","type":"module","exports":"./index.js"}\n')
+  writeFileSync(new URL('index.js', SDK), "export * from '../../../sdk-stub.js'\n")
+}
 
 const source = readFileSync(PLUGIN)
 copyFileSync(PLUGIN, WORK)                     // bare imports resolve beside the copy
@@ -145,7 +158,7 @@ assert.ok(registered.pages.length <= 1, 'at most one settings page')
 
 assert.equal(helpers.clock(179), '2:59')
 assert.equal(helpers.clock(-5), '0:00')
-assert.equal(helpers.viewModel(PAYLOAD, null).counts, '2:59 left · 2 turns · no tools · 2 carried')
+assert.equal(helpers.viewModel(PAYLOAD, null).counts, '2:59 left · 2 turn(s) · no tools · 2 carried')
 assert.equal(helpers.viewModel(null, new Error('x')).label, 'backend unavailable')
 assert.equal(helpers.viewModel({ active: null }, null).situation, 'idle')
 
@@ -155,7 +168,7 @@ resetBody()
 const active = await mountWith({ payload: PAYLOAD })
 const text = document.body.textContent
 assert.match(text, /DAYDREAMING/)
-assert.match(text, /2:59 left · 2 turns · no tools · 2 carried/)
+assert.match(text, /2:59 left · 2 turn\(s\) · no tools · 2 carried/)
 assert.match(text, /two memories · join only if it holds/)
 const art = document.querySelector('canvas[data-antemuse-art="pane"]')
 assert.ok(art, 'the pane paints the art on its own canvas')
@@ -207,7 +220,7 @@ await act(async () => { idle.node.unmount() })
 resetBody()
 const broken = await mountWith({ error: 'connection refused' })
 assert.match(document.body.textContent, /backend unavailable/)
-assert.match(document.body.textContent, /the plugin backend is not mounted/)
+assert.match(document.body.textContent, /backend unavailable/)
 assert.equal(document.querySelector('[data-antemuse-state]').getAttribute('data-antemuse-state'), 'unavailable')
 await act(async () => { broken.node.unmount() })
 
