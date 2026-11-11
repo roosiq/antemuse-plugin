@@ -167,18 +167,24 @@ def test_a_chat_nothing_was_served_in_still_draws_the_profile(tmp_path, monkeypa
     assert all(p.exists() and p.stat().st_size > 2000 for p in paths), paths
 
 
-def test_the_camera_goes_to_what_just_fired():
-    """A firing is an event; an event you have to hunt for in 1,400 points is not an event.
+def test_the_camera_goes_to_what_just_fired_then_back_to_the_walk():
+    """Two beats: a firing is an event, and a walk is a sequence.
 
-    The pane must move the camera to a concept the moment it lights, hold there, and drift back
-    out — and it must not fight a person who is dragging.
+    The pane must punch in on a concept the moment it lights and hold there — an event you have
+    to hunt for in 1,400 points is not an event. But a camera that only ever punches in never
+    shows the walk: filmed, a whole walk read as one node because every hop re-aimed the camera
+    at distance 0.85 and the accumulating trail stayed outside the frame. So the dwell must
+    release to the *path's* framing, not to the default wide shot. And none of it may fight a
+    person who is dragging.
     """
     here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
     js = here.read_text()
     assert "focusTo = new Float32Array([go.x, go.y, go.z])" in js
-    assert "distTo = 0.85" in js
-    assert "dwell" in js and "distTo = 2.35" in js
+    assert "distTo = 0.95" in js, "a firing still punches in"
     assert "if (fresh.length && !dragging)" in js
+    # the release goes to the path, not to the origin at the default distance
+    assert "pathDist = Math.max(1.3, Math.min(2.6, r * 3.0))" in js
+    assert "distTo = pathDist" in js and "focusTo = new Float32Array([pathFocus[0]" in js
     # the focus point has to be applied to the view, or the camera just rotates
     assert "-focus[0], -focus[1], -focus[2]" in js
 

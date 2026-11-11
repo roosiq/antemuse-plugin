@@ -79,16 +79,28 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     mins = max(1, int(round((ended - started) / 60)))
     trail: List[str] = []
     for e in steps:
-        step = STEP_RE.match(str(e.get("text") or ""))
+        text = str(e.get("text") or "")
+        step = STEP_RE.match(text)
         if step:
             head = f"{step.group('a')}→{step.group('b')} [{step.group('rel')}]"
         else:
-            # dead ends say "brachial vein · only way back"; keep the node
-            node = str(e.get("text") or "").split(" · ")[0]
-            head = " ".join(node.split()[:6]).rstrip(",.;:· ")
+            # The event word only — never the material beside it. A daydream step reads
+            # "JOINED · <memory A> ↔ <memory B> · shared: … · possibility", and quoting the pair
+            # put the person's own memory text into the chat: the account is a report of what the
+            # state did, not a second copy of the injection. The walk's steps are safe because
+            # they are WordNet concepts; everything else carries user material, so it is counted,
+            # not quoted.
+            parts = [x.strip() for x in text.split(" · ") if x.strip()]
+            head = (parts[0] if parts else "")[:40].rstrip(",.;:· ")
         if head and head not in trail:
             trail.append(head)
     body = " → ".join(trail[:5]) if trail else "nothing arrived"
+    # A bare event word ("JOINED") says a thing happened but not how much of it; the tally is the
+    # part of the account that is safe to state.
+    for mark in ("JOINED", "adjacent"):
+        n = sum(1 for e in steps if str(e.get("text") or "").startswith(mark))
+        if n:
+            body = f"{body} · {mark.lower()} ×{n}"
     return {
         "state": key,
         "text": f"{key} {mins}m · {len(steps)} step(s) · {body[:180]}",
@@ -110,7 +122,8 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
         if dose and served < dose:
             # an expiry is an unfinished act, and it says so
             report = {**report, "text": f"{report['text']} (expired before its dose: {served} of {dose})"}
-        data["residue"].append({**report, "kind": "report", "turns_left": 2})
+        data["residue"].append({**report, "kind": "report", "turns_left": 2,
+                                "session": (active.get("origin") or {}).get("session_id") or ""})
         data.setdefault("journal", []).append({
             "who": "state", "state": active["key"], "event": "report",
             "text": report["text"], "at": now,
@@ -360,7 +373,8 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
             return (f"{spec['label']} is running in the session that started it. Nothing was "
                     f"ended here — /return there to finish it.")
         report = _account(data, active)
-        data["residue"].append({**report, "kind": "report", "turns_left": 2})
+        data["residue"].append({**report, "kind": "report", "turns_left": 2,
+                                "session": (active.get("origin") or {}).get("session_id") or ""})
         data["journal"].append({
             "who": "state", "state": active["key"], "event": "report",
             "text": report["text"], "at": time.time(), "reason": reason,
@@ -494,6 +508,42 @@ def _dose_of(spec: dict, active: dict) -> tuple[int, str]:
     if override and os.environ.get("ANTEMUSE_EXPERIMENT") == "1":
         n = int(override)
     return n, unit
+
+
+def unreported(session: str = "") -> Dict[str, Any] | None:
+    """The account of a state that ended, if the chat it belongs to has not heard it yet.
+
+    A state ends on its own — dose delivered, clock run out — and until now the account only
+    existed as residue for the agent to read or as the answer to `/return`. The person who
+    watched the walk had to ask what it did. This is the fact the plugin can state without an
+    LLM: what ran, how long, how many steps, and what arrived.
+    """
+    with _LOCK:
+        data = _load()
+        for entry in reversed(data.get("residue") or []):
+            if entry.get("kind") != "report" or entry.get("told"):
+                continue
+            owner = str(entry.get("session") or "")
+            # A state belongs to the conversation that entered it; a bystander chat gets
+            # nothing, the same rule `inject` and `stop` already enforce.
+            if owner and session and owner != session:
+                return None
+            return {"text": str(entry.get("text") or ""), "state": str(entry.get("state") or "")}
+        return None
+
+
+def mark_reported(session: str = "") -> None:
+    """Say that the newest account has been spoken. A report is said once, not every turn."""
+    with _LOCK:
+        data = _load()
+        for entry in reversed(data.get("residue") or []):
+            if entry.get("kind") == "report" and not entry.get("told"):
+                owner = str(entry.get("session") or "")
+                if owner and session and owner != session:
+                    return
+                entry["told"] = True
+                _save(data)
+                return
 
 
 def complete_if_dosed() -> bool:

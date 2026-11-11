@@ -278,6 +278,25 @@ Expiry and `/return` produce the same account. Expiry is not a silent path.
 Ending appends a report to `residue` (`kind: "report"`, `turns_left: 2`) and a
 `report` event to the journal, clears the active record, and stops the ticker.
 
+**The account is spoken.** A state that ends is announced in the conversation that entered it,
+once: `WALKING ended · walk 1m · 5 step(s) · big brown bat→department of homeland security [hypernym]
+→ …`. The plugin states the facts it holds — what ran, how long, how many steps, what arrived —
+so the person who watched the pane does not have to ask what it was watching; it is not the
+agent's prose and costs no model turn. Three rules:
+
+- **once.** The report is marked told when posted. `/return` marks it too, because the command's
+  own answer already showed it; the next turn does not repeat it.
+- **in the chat that entered the state.** The report carries the owning session. A bystander
+  conversation hears nothing, the same rule `inject()` and `stop()` already follow.
+- **facts, never the injection.** The account names steps and material. It never prints the
+  block the state added to the model's turn, and it never quotes the material itself: a walk's
+  steps are WordNet concepts, so the trail is safe to print, but a daydream step carries the
+  person's own memory text beside its event word — those are counted (`JOINED · joined ×2`), not
+  quoted. A report that reads back the injection is a second copy of it in a place anyone can see.
+
+A report that cannot be posted (no host message channel) stays untold rather than being lost:
+the residue entry is still there for the agent to read.
+
 ### 5.4 Process restart
 
 Registration calls `settle()`: expire a state whose clock ran out, leave a live

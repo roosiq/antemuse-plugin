@@ -334,6 +334,9 @@ function createGraph3D(el, doc, ctx, host, win) {
   // close, `dwell` until when — then it drifts back out to the whole space.
   let focus = new Float32Array([0, 0, 0]), focusTo = new Float32Array([0, 0, 0])
   let distTo = 2.35, dwell = 0, wasLit = {}
+  let pathLabels = []   // the walk's own order, as labels
+  let pathFocus = new Float32Array([0, 0, 0])   // where the whole path sits
+  let pathDist = 2.35                            // how far back it needs the camera
 
   const norm = (raw) => {
     // Centre and scale once, so the camera only ever has to frame a unit cloud.
@@ -377,15 +380,17 @@ function createGraph3D(el, doc, ctx, host, win) {
 
   const upload = (raw, trail, links) => {
     const next = norm(raw)
+    // Label -> index for this upload: the path branch and the camera both need it.
+    upload.byLabel = {}
+    next.forEach((n, i) => { upload.byLabel[String(n.l).toLowerCase()] = i })
+    pathLabels = trail || []
     const id = raw.length + '|' + (raw[0] ? raw[0].l : '') + '|' + (raw[raw.length - 1] ? raw[raw.length - 1].l : '')
     // The walk's own order. The firings are a set; the path is a sequence, and drawing it needs
     // the sequence, so it is rebuilt whenever either the ground or the trail changes.
     const pathKey = (trail || []).join('>')
     if (id !== sig || pathKey !== (upload.pathKey || '')) {
       upload.pathKey = pathKey
-      const byLabel = {}
-      next.forEach((n, i) => { byLabel[String(n.l).toLowerCase()] = i })
-      const idx = (trail || []).map((l) => byLabel[String(l).toLowerCase()]).filter((i) => i !== undefined)
+      const idx = (trail || []).map((l) => upload.byLabel[String(l).toLowerCase()]).filter((i) => i !== undefined)
       pathPos = new Float32Array(Math.max(0, idx.length - 1) * 6)
       pathA = new Float32Array(Math.max(0, idx.length - 1) * 2)
       for (let k = 0; k + 1 < idx.length; k++) {
@@ -398,6 +403,19 @@ function createGraph3D(el, doc, ctx, host, win) {
       if (pathPos.length) {
         gl.bindBuffer(gl.ARRAY_BUFFER, pathBuf)
         gl.bufferData(gl.ARRAY_BUFFER, pathPos, gl.STATIC_DRAW)
+        // Where the camera should sit so the walk — every hop so far — is in frame.
+        let cx = 0, cy = 0, cz = 0
+        for (const i of idx) { cx += next[i].x; cy += next[i].y; cz += next[i].z }
+        cx /= idx.length; cy /= idx.length; cz /= idx.length
+        let r = 0
+        for (const i of idx) {
+          r = Math.max(r, Math.hypot(next[i].x - cx, next[i].y - cy, next[i].z - cz))
+        }
+        pathFocus = new Float32Array([cx, cy, cz])
+        pathDist = Math.max(1.3, Math.min(2.6, r * 3.0))
+      } else {
+        pathFocus = new Float32Array([0, 0, 0])
+        pathDist = 2.35
       }
     }
     // Anything that was dark last time and is lit now is a firing worth going to look at.
@@ -409,11 +427,13 @@ function createGraph3D(el, doc, ctx, host, win) {
       wasLit[key] = lit
     }
     if (fresh.length && !dragging) {
-      // The strongest firing is the newest: weight decays with time since it was served.
+      // Two beats, in this order. A hop lands: punch in on it, close, because that is the
+      // event. The dwell expires: pull back to the *path*, not to the default wide shot,
+      // because a walk is the sequence and a camera that stays punched in never shows it.
       const go = fresh.reduce((a, b) => ((b.w || 0) > (a.w || 0) ? b : a), fresh[0])
       focusTo = new Float32Array([go.x, go.y, go.z])
-      distTo = 0.85
-      dwell = (win.performance && performance.now ? performance.now() : Date.now()) + 4500
+      distTo = 0.95
+      dwell = (win.performance && performance.now ? performance.now() : Date.now()) + 1800
     }
     if (id !== sig || (links || []).length !== (upload.linkN || -1)) {
       sig = id
@@ -610,7 +630,12 @@ function createGraph3D(el, doc, ctx, host, win) {
     if (stopped) return
     rafId = win.requestAnimationFrame ? win.requestAnimationFrame(loop) : win.setTimeout(() => loop(Date.now()), 16)
     if (!dragging && ts && idleAt && ts - idleAt > 2600) yaw += 0.00022 * (ts - (loop.lastTs || ts))
-    if (dwell && ts && ts > dwell) { dwell = 0; distTo = 2.35; focusTo = new Float32Array([0, 0, 0]) }
+    if (dwell && ts && ts > dwell) {
+      dwell = 0
+      // Back out to the whole walk when there is one; the origin only when there is not.
+      distTo = pathDist
+      focusTo = new Float32Array([pathFocus[0], pathFocus[1], pathFocus[2]])
+    }
     // Ease toward the target rather than cutting: the cloud should carry you there.
     for (let i = 0; i < 3; i++) focus[i] += (focusTo[i] - focus[i]) * 0.08
     dist += (distTo - dist) * 0.07

@@ -41,7 +41,7 @@ else:  # flat load: this file is or is not on sys.path, but its directory is wha
     from core import (engine, history, options, panel, recall, runtime, session, settings,
                       states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
 
-__version__ = "0.10.0"
+__version__ = "0.10.1"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
@@ -351,6 +351,15 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
                           origin=engine.current_origin()) or "",
     ]
     block = "\n\n".join(part for part in parts if part)
+    # A state that ended has an account, and the person who watched it should not have to ask
+    # for it. Posted once, into the conversation that entered the state — a bystander chat gets
+    # nothing, and the line is the plugin's own facts, not the agent's prose, so it costs no
+    # model turn and cannot drift from what actually ran.
+    done = engine.unreported(session_id or engine.current_session())
+    if done and done.get("text"):
+        label = (states.STATES.get(done.get("state") or "") or {}).get("label") or done.get("state") or "state"
+        if _post(f"{label} ended · {done['text']}"):
+            engine.mark_reported(session_id or engine.current_session())
     # A recommendation is the one thing worth pushing as its own message: it arrives
     # once per 45 minutes, and waiting for someone to type a command would defeat it.
     global _LAST_UPDATE
@@ -418,7 +427,12 @@ def _enter(key: str, minutes: int | None = None):
 def _return(_raw: str, session_id: str | None = None,
             session_key: str | None = None, **_ignored: object) -> str:
     # /return ends the state of the chat that asked, not of whichever chat was remembered.
-    return engine.stop(session_id or session_key or engine.current_session())
+    who = session_id or session_key or engine.current_session()
+    answer = engine.stop(who)
+    # The person just read the account in the command's own answer; saying it again on the
+    # next turn would be the plugin repeating itself.
+    engine.mark_reported(who)
+    return answer
 
 
 def _state(raw: str) -> str:

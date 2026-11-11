@@ -538,3 +538,50 @@ def test_a_bystander_cannot_return_someone_elses_state():
 
     assert engine.stop("chat-a")
     assert engine.peek() is None
+
+
+def test_a_state_that_ends_has_an_account_the_chat_has_not_heard():
+    """The plugin can state what ran without asking a model to remember it."""
+    engine.enter("walk", session="CHAT-A", platform="discord")
+    engine.note_turn()
+    assert engine.unreported("CHAT-A") is None, "nothing has ended yet"
+    engine.stop("CHAT-A")
+    said = engine.unreported("CHAT-A")
+    assert said and said["state"] == "walk"
+    assert "step(s)" in said["text"]
+
+
+def test_an_account_is_spoken_once():
+    """A report is said once; the turn after it must not repeat the same line."""
+    engine.enter("walk", session="CHAT-A", platform="discord")
+    engine.note_turn()
+    engine.stop("CHAT-A")
+    assert engine.unreported("CHAT-A")
+    engine.mark_reported("CHAT-A")
+    assert engine.unreported("CHAT-A") is None
+
+
+def test_another_chat_does_not_hear_the_account():
+    """A bystander chat gets nothing: the state belonged to the conversation that entered it."""
+    engine.enter("walk", session="CHAT-A", platform="discord")
+    engine.note_turn()
+    engine.stop("CHAT-A")
+    assert engine.unreported("CHAT-B") is None
+    assert engine.unreported("CHAT-A")
+
+
+def test_the_account_never_quotes_the_material_it_was_given():
+    """The account reports what the state did, not the text the state injected.
+
+    A daydream step carries the person's own memory text beside the event word; putting the
+    pair into the chat would make the report a second copy of the injection in a place the
+    person can read.
+    """
+    engine.enter("daydream", session="CHAT-A", platform="discord")
+    engine.record("state", "JOINED · my private memory line ↔ another private line · shared: x · y")
+    engine.note_turn()
+    engine.stop("CHAT-A")
+    said = engine.unreported("CHAT-A")
+    assert said, "the account exists"
+    assert "private memory line" not in said["text"], said["text"]
+    assert "↔" not in said["text"], said["text"]

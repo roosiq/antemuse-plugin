@@ -93,3 +93,25 @@ def test_entering_a_state_posts_nothing_into_the_chat(monkeypatch):
 
     assert "UNSTUCK" in line.upper() or "unstuck" in line.lower()
     assert posted == [], "a state beginning posts no picture"
+
+
+def test_a_state_that_ends_is_reported_into_the_chat(monkeypatch):
+    """After a state, the agent says what it did — once, in the chat that entered it."""
+    import importlib
+    from core import engine
+
+    plugin = importlib.import_module("__init__")
+    posted = []
+    monkeypatch.setattr(plugin, "_post", lambda text: posted.append(text) or True)
+
+    plugin._enter("walk")("", session_id="chat-1", platform="discord")
+    engine.note_turn()
+    engine.stop("chat-1")
+
+    plugin._pre_llm_call(prompt="hi", session_id="chat-1", platform="discord")
+    assert len(posted) == 1, posted
+    assert "ended" in posted[0] and "step(s)" in posted[0]
+
+    # the next turn is not a second announcement
+    plugin._pre_llm_call(prompt="hi again", session_id="chat-1", platform="discord")
+    assert len(posted) == 1, posted
