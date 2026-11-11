@@ -245,3 +245,48 @@ def test_residue_cap_holds_when_endings_arrive_between_turns(tmp_path, monkeypat
     shown = engine.watch_state()["residue"]
     assert len(stored) <= 3, len(stored)
     assert len(shown) <= 3, len(shown)
+
+
+def test_a_finished_state_reaches_the_person_even_when_the_model_ignores_it(tmp_path):
+    """The account must land in the chat, not only in the model's context.
+
+    The plugin hands the model the facts and asks it to say them. A model that answers the
+    person's actual question instead left the walk with no post-walk message at all: the state
+    ended and the conversation simply moved on. When the reply carries none of the report's
+    numbers, the plugin appends the line itself.
+    """
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    repo = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("antemuse_t", repo / "__init__.py",
+                                                 submodule_search_locations=[str(repo)])
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["antemuse_t"] = mod
+    spec.loader.exec_module(mod)
+
+    from core import engine
+
+    engine.stop(reason="qa")
+    engine.enter("walk", session="post-walk", platform="cli")
+    engine.note_turn()
+    engine.inject(session="post-walk")
+    ending = engine.stop(reason="qa")
+    mod._PENDING_REPORT = ("post-walk", "walk")
+
+    silent = mod._transform(response_text="Sure — the build is green.", session_id="post-walk")
+    assert silent and silent.startswith("Sure — the build is green."), silent
+    assert "— " in silent and "step" in silent, silent
+
+    # a model that does say the facts is not double-printed
+    engine.stop(reason="qa")
+    engine.enter("walk", session="post-walk-2", platform="cli")
+    engine.note_turn()
+    engine.inject(session="post-walk-2")
+    engine.stop(reason="qa")
+    facts = engine.unreported("post-walk-2") or {}
+    assert facts.get("text"), "no report to test against"
+    mod._PENDING_REPORT = ("post-walk-2", "walk")
+    said = mod._transform(response_text=facts["text"], session_id="post-walk-2")
+    assert said is None or said.count("— ") <= 1, said

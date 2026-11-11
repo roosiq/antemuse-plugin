@@ -385,14 +385,28 @@ def _pre_tool_call(tool_name: str = "", **kwargs: Any) -> Dict[str, Any] | None:
 
 
 def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> str | None:
+    original = response_text
+    appended = False
     # The model was asked to say what the finished state did. It is only counted as said when
     # the turn actually has words in it; a turn that produced nothing leaves the report untold
     # so the next turn offers it again rather than the account vanishing.
     global _PENDING_REPORT
     if response_text and _PENDING_REPORT:
-        who, _state = _PENDING_REPORT
+        who, state_key = _PENDING_REPORT
         now = session_id or engine.current_session()
         if not who or not now or who == now:
+            # The model was handed the facts and asked to say them. Sometimes it answers the
+            # person's actual question instead and the account never reaches them — the state
+            # ends and the chat simply moves on. If the reply carries none of the report's own
+            # facts, the plugin says the line itself rather than letting it vanish.
+            facts = engine.unreported(who or now) or {}
+            text = str(facts.get("text") or "")
+            numbers = [w for w in text.replace("(", " ").replace(")", " ").split()
+                       if any(ch.isdigit() for ch in w)]
+            said = bool(text) and any(n in response_text for n in numbers[:4])
+            if not said and text:
+                response_text = f"{response_text}\n\n— {text.splitlines()[0]}"
+                appended = True
             engine.mark_reported(who or now)
             _PENDING_REPORT = None
     if response_text:
@@ -400,6 +414,8 @@ def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> 
     if engine.peek():
         engine.record("agent", response_text)   # the page shows both sides
     out = engine.annotate(response_text)
+    if out is None and appended:
+        out = response_text          # the appended account must survive an idle state
     # The person's account of any run this turn. Counts, never candidates.
     # The hook's own session id wins: on a host multiplexing chats over one
     # platform, the remembered session can already belong to the next turn.
@@ -407,7 +423,7 @@ def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> 
     if account:
         base = out or response_text
         out = f"{base}\n\n— {account}"
-    return out if out and out != response_text else None
+    return out if out and out != original else None
 
 
 # --------------------------------------------------------------- commands
