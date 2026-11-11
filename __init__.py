@@ -35,13 +35,13 @@ _as_package = bool(__package__) and getattr(sys.modules.get(__package__), "__pat
 
 if _as_package:
     from .core import (engine, history, options, panel, recall, runtime, session, settings,
-                       states, surfaces, tui, walks)  # noqa: F401
+                       report, states, surfaces, tui, walks)  # noqa: F401
 else:  # flat load: this file is or is not on sys.path, but its directory is what `core` needs
     sys.path.insert(0, str(_here))
     from core import (engine, history, options, panel, recall, runtime, session, settings,
-                      states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
+                      report, states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
 
-__version__ = "0.10.1"
+__version__ = "0.10.2"
 
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
@@ -279,6 +279,7 @@ def _person_text(kwargs: Dict[str, Any]) -> str:
 #: syncs 95, so an update that has to be typed is an update that may not be reachable.
 _HOST: Any = None
 _LAST_UPDATE = ""
+_PENDING_REPORT: tuple[str, str] | None = None
 
 
 def _follow(advice: str, session_id: str, platform: str) -> str | None:
@@ -352,14 +353,15 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
     ]
     block = "\n\n".join(part for part in parts if part)
     # A state that ended has an account, and the person who watched it should not have to ask
-    # for it. Posted once, into the conversation that entered the state — a bystander chat gets
-    # nothing, and the line is the plugin's own facts, not the agent's prose, so it costs no
-    # model turn and cannot drift from what actually ran.
+    # for it. The plugin supplies the facts; the *model* says them, in the house voice, in the
+    # turn it was already going to take — a mechanical sentence from the plugin reads like a
+    # log line, and this is a product that speaks to a person.
     done = engine.unreported(session_id or engine.current_session())
     if done and done.get("text"):
-        label = (states.STATES.get(done.get("state") or "") or {}).get("label") or done.get("state") or "state"
-        if _post(f"{label} ended · {done['text']}"):
-            engine.mark_reported(session_id or engine.current_session())
+        label = (states.STATES.get(done.get("state") or "") or {}).get("label") or done.get("state") or ""
+        block = (block + "\n\n" + report.directive(done, label)).strip()
+        global _PENDING_REPORT
+        _PENDING_REPORT = (session_id or engine.current_session(), done.get("state") or "")
     # A recommendation is the one thing worth pushing as its own message: it arrives
     # once per 45 minutes, and waiting for someone to type a command would defeat it.
     global _LAST_UPDATE
@@ -384,6 +386,16 @@ def _pre_tool_call(tool_name: str = "", **kwargs: Any) -> Dict[str, Any] | None:
 
 
 def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> str | None:
+    # The model was asked to say what the finished state did. It is only counted as said when
+    # the turn actually has words in it; a turn that produced nothing leaves the report untold
+    # so the next turn offers it again rather than the account vanishing.
+    global _PENDING_REPORT
+    if response_text and _PENDING_REPORT:
+        who, _state = _PENDING_REPORT
+        now = session_id or engine.current_session()
+        if not who or not now or who == now:
+            engine.mark_reported(who or now)
+            _PENDING_REPORT = None
     if response_text:
         recall.remember(response_text, "agent")
     if engine.peek():

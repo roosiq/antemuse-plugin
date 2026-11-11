@@ -278,14 +278,19 @@ Expiry and `/return` produce the same account. Expiry is not a silent path.
 Ending appends a report to `residue` (`kind: "report"`, `turns_left: 2`) and a
 `report` event to the journal, clears the active record, and stops the ticker.
 
-**The account is spoken.** A state that ends is announced in the conversation that entered it,
-once: `WALKING ended · walk 1m · 5 step(s) · big brown bat→department of homeland security [hypernym]
-→ …`. The plugin states the facts it holds — what ran, how long, how many steps, what arrived —
-so the person who watched the pane does not have to ask what it was watching; it is not the
-agent's prose and costs no model turn. Three rules:
+**The model says what happened.** A state that ends is announced in the conversation that
+entered it, once, and the sentence is the model's:
+`WALKING ended · the agent walked for a minute and made five hops · agent→razorback [far] →
+razorback→radiotherapy [far] → …`. The plugin never writes it. A mechanical line posted by the
+plugin reads like a log entry, and this is a product that speaks to a person — so the plugin
+hands over the facts it holds (what ran, how long, how many steps, what arrived) and the voice it
+should be said in (`core/report.py`), and the model speaks in the turn it was already going to
+take. It is marked said only when that turn has words: a turn that produced nothing leaves the
+report untold and the next turn offers it again. Three rules:
 
-- **once.** The report is marked told when posted. `/return` marks it too, because the command's
-  own answer already showed it; the next turn does not repeat it.
+- **once.** The report is marked told when the model's turn comes back with words. `/return`
+  marks it too, because the command's own answer already showed it; the next turn does not
+  repeat it.
 - **in the chat that entered the state.** The report carries the owning session. A bystander
   conversation hears nothing, the same rule `inject()` and `stop()` already follow.
 - **facts, never the injection.** The account names steps and material. It never prints the

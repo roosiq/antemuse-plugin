@@ -95,8 +95,13 @@ def test_entering_a_state_posts_nothing_into_the_chat(monkeypatch):
     assert posted == [], "a state beginning posts no picture"
 
 
-def test_a_state_that_ends_is_reported_into_the_chat(monkeypatch):
-    """After a state, the agent says what it did — once, in the chat that entered it."""
+def test_a_finished_state_is_handed_to_the_model_to_say(monkeypatch):
+    """The plugin supplies the facts; the model says them in the house voice.
+
+    A mechanical line posted by the plugin reads like a log entry. The person is owed a sentence,
+    and the only thing in the system that can write one is the model — in the turn it was
+    already going to take.
+    """
     import importlib
     from core import engine
 
@@ -108,10 +113,32 @@ def test_a_state_that_ends_is_reported_into_the_chat(monkeypatch):
     engine.note_turn()
     engine.stop("chat-1")
 
-    plugin._pre_llm_call(prompt="hi", session_id="chat-1", platform="discord")
-    assert len(posted) == 1, posted
-    assert "ended" in posted[0] and "step(s)" in posted[0]
+    block = plugin._pre_llm_call(prompt="hi", session_id="chat-1", platform="discord") or ""
+    assert "[ANTEMUSE REPORT]" in block
+    assert "step(s)" in block, "the facts travel with the request"
+    assert "The agent in the third person" in block, "the voice travels too"
+    assert posted == [], "the plugin does not write the sentence itself"
 
-    # the next turn is not a second announcement
-    plugin._pre_llm_call(prompt="hi again", session_id="chat-1", platform="discord")
-    assert len(posted) == 1, posted
+    # It is only counted as said once the model has actually said something.
+    assert engine.unreported("chat-1")
+    plugin._transform(response_text="WALKING ended · the agent walked 1m · 2 step(s) · a → b",
+                      session_id="chat-1")
+    assert engine.unreported("chat-1") is None
+
+    # And the next turn does not ask again.
+    again = plugin._pre_llm_call(prompt="hi again", session_id="chat-1", platform="discord") or ""
+    assert "[ANTEMUSE REPORT]" not in again
+
+
+def test_another_chat_is_not_asked_to_report(monkeypatch):
+    """The state belonged to one conversation; a bystander turn does not narrate it."""
+    import importlib
+    from core import engine
+
+    plugin = importlib.import_module("__init__")
+    plugin._enter("walk")("", session_id="chat-1", platform="discord")
+    engine.note_turn()
+    engine.stop("chat-1")
+
+    block = plugin._pre_llm_call(prompt="hi", session_id="chat-2", platform="discord") or ""
+    assert "[ANTEMUSE REPORT]" not in block
