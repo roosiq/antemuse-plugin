@@ -17,6 +17,7 @@ STATES: Dict[str, Dict] = {
         # the dose is turns worked with the frame elsewhere; the walk supplies nothing
         "dose": {"unit": "hops", "n": 6},
         "waiting": "taking a stroll · walking the graph",
+        "after": ('the walk is over and the frame you were in is gone. Do not resume the approach you were taking. First: state the goal in one line. Then: name the approach you were stuck in and why it was the obvious one. Then: take a different first step from the one you would have taken, and work from there. The path you walked is scenery, not a hint.'),
         "cadence": 9,
         "tools": None,
         "scene": "walk",
@@ -45,6 +46,7 @@ STATES: Dict[str, Dict] = {
         "turns": 2,
         "dose": {"unit": "pairs", "n": 2},
         "waiting": "staring out of the window · letting two memories meet",
+        "after": ('the daydream is over. In one line: the two things that surfaced and what they touched — then the possibility, if it still holds. If they did not join, say what the gap was. Then get back to the work you were doing.'),
         "cadence": 10,
         "tools": [],
         "scene": "daydream",
@@ -64,6 +66,7 @@ STATES: Dict[str, Dict] = {
         "turns": 3,
         "dose": {"unit": "items", "n": 3},
         "waiting": "scrolling · looking for stupidity and comedy",
+        "after": ('the scroll is over. In one line: whether anything was worth keeping — usually nothing, and that is the point. Do not turn it into a plan or a lesson. Then get back to work.'),
         "cadence": 6,
         "tools": ["web_search", "web_extract", "read_file", "search_files", "browser_exec"],
         "scene": "doomscroll",
@@ -83,6 +86,7 @@ STATES: Dict[str, Dict] = {
         "turns": 3,
         "dose": {"unit": "directions", "n": 1},
         "waiting": "thinking back over what you have done",
+        "after": ('the recommendation stands. Restate it in one line with the first move, then take that move. If the history and the gap did not support a recommendation, say so plainly instead of inventing one.'),
         "cadence": 20,
         # Read the empty project, change nothing. A trailhead that can edit is a
         # scaffold generator, and that is a different tool.
@@ -107,6 +111,7 @@ STATES: Dict[str, Dict] = {
         "turns": 2,
         "dose": {"unit": "recombinations", "n": 2},
         "waiting": "asleep · letting the day's projects touch",
+        "after": ('the dream is over. In one line: the connection you found across projects — both sides and what they share — and whether it is worth acting on now or only noting. Then get back to work.'),
         "cadence": 40,
         "tools": [],
         "scene": "dream",
@@ -147,6 +152,18 @@ def resolve(name: str) -> str | None:
     key = (name or "").strip().lower().replace(" ", "_")
     key = ALIASES.get(key, key)
     return key if key in STATES else None
+
+
+def after(key: str) -> str:
+    """What the model is told once the state is over — in that state's voice, not a walk's.
+
+    Every ending handed the model the walk's paragraph ("the walk is over", "the path you walked is
+    scenery", "name the approach you were stuck in"), whatever state had just ended, so a daydream
+    came back sounding like a walk. The closing instruction belongs to the state that closed.
+    """
+    spec = STATES.get(key) or {}
+    return str(spec.get("after")
+               or "the state is over. Say in one line what it did, then get back to work.")
 
 
 def waiting(key: str) -> str:

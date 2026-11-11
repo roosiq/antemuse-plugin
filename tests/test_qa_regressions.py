@@ -21,25 +21,6 @@ def _surfaces():
     return surfaces
 
 
-def test_a_fresh_install_still_gets_a_picture(tmp_path, monkeypatch):
-    """No baked bank yet: the card must fall back to the frame shipped with the repo."""
-    monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path / "empty-home"))
-    (tmp_path / "empty-home").mkdir()
-    surfaces = _surfaces()
-    rows = surfaces.art(cols=44, rows=10, scene="daydream")
-    assert rows, "no art at all"
-    assert any(ch not in " ." for ch in "".join(rows)), "art is blank"
-
-
-def test_the_takeover_has_an_entry_point():
-    """`python3 -m core.tui` is documented in README and TESTING; it must run."""
-    proc = subprocess.run([sys.executable, "-m", "core.tui"], cwd=ROOT,
-                          capture_output=True, text=True, timeout=30,
-                          env=dict(os.environ, ANTEMUSE_NO_SCAN="1"))
-    assert proc.returncode == 0, proc.stderr[-400:]
-    assert "Traceback" not in proc.stderr
-
-
 def test_a_mistyped_tool_action_says_so(tmp_path, monkeypatch):
     monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path / "home"))
     monkeypatch.setenv("ANTEMUSE_NO_SCAN", "1")

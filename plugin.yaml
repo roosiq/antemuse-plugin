@@ -22,7 +22,6 @@ description: >
   live feeds. No model calls, no scoring on the state path.
 requires_hermes: ">=0.21.6"
 python_dependencies:
-  - "pillow>=10,<14"
   - "nltk>=3.8,<4"
 # Settings the Hermes desktop app renders as a form (Settings ▸ Plugins ▸ Antemuse,
 # from this schema) and writes to plugins.entries.antemuse.settings.<key>.

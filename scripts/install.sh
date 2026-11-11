@@ -3,7 +3,7 @@
 #
 # One command, no root, idempotent. It puts every piece in the place Hermes actually reads from:
 #
-#   1. the Python dependencies the plugin declares (pillow, nltk),
+#   1. the Python dependency the plugin declares (nltk),
 #   2. the NLTK corpora walks and dreams need (wordnet, framenet),
 #   3. the plugin itself, registered and enabled,
 #   4. the desktop half, copied into the one directory the desktop app loads,
@@ -87,8 +87,8 @@ fi
 [[ -x "$HERMES_PY" ]] || die "no usable Python interpreter"
 
 # --------------------------------------------------------------- 1. dependencies
-say "1. python dependencies (pillow, nltk)"
-if "$HERMES_PY" -c 'import PIL, nltk' >/dev/null 2>&1; then
+say "1. python dependencies (nltk)"
+if "$HERMES_PY" -c 'import nltk' >/dev/null 2>&1; then
   ok "already importable"
 else
   # The documented path: Hermes installs what plugin.yaml declares, into its own environment.
@@ -96,11 +96,11 @@ else
     ok "installed via 'hermes plugins validate --install-deps'"
   else
     warn "'hermes plugins validate --install-deps' did not complete; installing directly"
-    run "$HERMES_PY" -m pip install --quiet "pillow>=10,<14" "nltk>=3.8,<4" \
-      || die "could not install pillow/nltk into $HERMES_PY"
+    run "$HERMES_PY" -m pip install --quiet "nltk>=3.8,<4" \
+      || die "could not install nltk into $HERMES_PY"
     ok "installed into $HERMES_PY"
   fi
-  "$HERMES_PY" -c 'import PIL, nltk' 2>/dev/null || [[ $DRY -eq 1 ]] || die "pillow/nltk still not importable — install them into $HERMES_PY by hand"
+  "$HERMES_PY" -c 'import nltk' 2>/dev/null || [[ $DRY -eq 1 ]] || die "nltk still not importable — install it into $HERMES_PY by hand"
 fi
 
 # ------------------------------------------------------------------- 2. corpora

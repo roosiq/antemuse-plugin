@@ -42,26 +42,6 @@ class _Ctx:
         return default
 
 
-def test_the_takeover_module_loads_without_termios(monkeypatch):
-    real_import = builtins.__import__
-
-    def no_posix(name, *args, **kwargs):
-        if name in ("termios", "tty"):
-            raise ImportError(f"No module named {name!r}")
-        return real_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", no_posix)
-    monkeypatch.delitem(sys.modules, "termios", raising=False)
-    monkeypatch.delitem(sys.modules, "tty", raising=False)
-    monkeypatch.delitem(sys.modules, "core.tui", raising=False)
-
-    tui = importlib.import_module("core.tui")
-    assert tui.POSIX_TTY is False
-    # and the fallback is the text frame, not a crash
-    out = tui.run()
-    assert isinstance(out, str) and out
-
-
 def test_the_plugin_registers_a_tool_and_its_hooks(monkeypatch):
     """The whole surface, loaded the way the host loads it."""
     monkeypatch.delitem(sys.modules, "antemuse", raising=False)

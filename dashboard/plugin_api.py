@@ -1,21 +1,14 @@
 """Antemuse desktop backend — mounted at ``/api/plugins/antemuse/``.
 
-One route, ``GET /state``, so a pane can show what a turn is governed by while it
-is running. The payload is counts, names and glyphs; its shape lives in
-``projection.py``, which is pure and tested without a server.
+Two routes: ``GET /graph`` (the map as numbers) and ``GET /state`` (what a turn is governed by).
 
-Deliberately absent: the state's ``directive`` (that is model-facing), any goal,
+There is one renderer and it is the pane: ``desktop/plugin.js`` draws the concept activation graph
+from ``/graph`` in raw WebGL. This module sends numbers and counts, never pictures, never glyphs —
+the baked stills, the ASCII frame and the ambient screensaver are gone, and with them Pillow,
+Playwright, node and a browser download.
+
+Deliberately absent from the payload: the state's ``directive`` (that is model-facing), any goal,
 any journal text, any candidate text.
-
-Rendering happens here, not in the plugin's JavaScript, so there is exactly one
-renderer of these scenes: the same ``surfaces.art`` the CLI draws, served as
-text. The desktop half displays it and does not sample images, so the
-fourth-renderer problem recorded in ``specs/changes/desktop-surfaces/spec.md``
-does not arise.
-
-The Hermes web server imports this file and mounts ``router`` at
-``/api/plugins/<name>/``; it does so only while the plugin is in
-``plugins.enabled``.
 """
 from __future__ import annotations
 
@@ -27,7 +20,6 @@ import time
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import FileResponse
 
 router = APIRouter()
 
@@ -178,7 +170,7 @@ _LOADED_VERSION = _plugin_version()
 
 
 def _core_module(name: str):
-    """One submodule of `core` (`core.activation_stills`), loaded the same way either time."""
+    """One submodule of `core` (`core.atlas`), loaded the same way either time."""
     import importlib
     return importlib.import_module(_core().__name__ + "." + name)
 
@@ -231,7 +223,6 @@ def graph(session: str = "", limit: int = 1400):
     else:
         own = str(session or "")
 
-    activation_stills = _core_module("activation_stills")
     activation = _core_module("activation")
     lit = {}
     try:
@@ -269,11 +260,12 @@ def graph(session: str = "", limit: int = 1400):
         volume = {}
     top = max(volume.values()) if volume else 1
 
-    ground = activation_stills._all_labels(int(max(120, min(limit, 2400))))
+    atlas = _core_module("atlas")
+    ground = atlas._all_labels(int(max(120, min(limit, 2400))))
     # Whatever the surface has to draw must be on it: firings and the trail are drawn, so they
     # join the ground even when they are not among its busiest concepts.
     labels = sorted(set(ground) | set(lit) | set(path))
-    pos = activation_stills.positions(labels) if labels else {}
+    pos = atlas.positions(labels) if labels else {}
     nodes = []
     for label, xyz in pos.items():
         slot = lit.get(label) or {}
@@ -323,188 +315,30 @@ def graph(session: str = "", limit: int = 1400):
 
 @router.get("/state")
 # The request is injected by FastAPI and optional so the route can be called directly in tests.
-def state(request: Request = None, cols: int | None = None, rows: int | None = None, fit: str = "contain",
-          busy: bool = False, session: str | None = None,
+def state(request: Request = None, session: str | None = None,
           with_graph: int = Query(0, alias="graph"),
-          stills: int = Query(1)) -> Dict[str, Any]:
-    """The current state, as counts and a served frame.
+          stills: int = Query(1), cols: int | None = None, rows: int | None = None,
+          fit: str = "contain", busy: bool = False) -> Dict[str, Any]:
+    """What is running, as counts — and, with ``?graph=1``, the map as numbers.
 
-    ``?busy=1`` says a turn is in flight, which changes only the ambient scene:
-    between states the pane paints ``work`` instead of ``idle``.
+    ``?session=`` scopes the *map* to one conversation: a state is entered per profile, so a chat
+    that did not enter it gets no map borrowed from another.
 
-    ``?session=`` scopes the *art* to one conversation. A state is entered per
-    profile, so if the active state belongs to another chat the layer must not
-    borrow it: that chat gets its ambient scene instead. The counts stay
-    profile-level — they are what the engine holds, not what one chat owns.
-
-    ``?stills=0`` skips the picture. Rendering a frame is ~1.9s of image work; a surface that only
-    wants numbers should not pay for a JPEG it never shows, and a poll that pays for one is what
-    times out under load.
-
-    ``?graph=1`` adds the map as numbers under ``graph``. It is a parameter of the one route the
-    pane already calls, not a second route: a router is mounted when the host process boots, so
-    every new path is a gateway restart waiting to happen, and the pane needs its data not to
-    depend on when the host was last started.
-
-    ``?cols=&rows=`` lets a surface ask for the grid its own pixel box can hold.
-    The numbers are clamped to the projection's envelope and echoed back in the
-    payload, so a caller can tell what it got rather than assume what it asked for.
+    The picture comes from ``/graph`` and is drawn by the pane (``desktop/plugin.js``, raw WebGL).
+    This route used to also render a glyph grid, three JPEG stills and an ambient screensaver —
+    three renderers for one picture, each with its own dependency, all hidden by the pane on its
+    first successful poll. ``cols``/``rows``/``fit``/``busy``/``stills`` are still accepted so a
+    pane built against the old shape is not answered with a 422; they change nothing.
     """
     proj = projection()
-    width, height = proj.grid(cols, rows)
-    watch = plugin().core.panel.engine_state()
-    active = watch.get("active") or {}
-    lines: List[str] = []
-    # Whose state is this? A per-profile state entered in one chat must not paint
-    # itself behind a different chat just because both share a profile.
-    belongs_here = True
-    if active and session:
-        origin = active.get("origin") or {}
-        owner = origin.get("session_id") if isinstance(origin, dict) else None
-        belongs_here = owner in (None, "") or owner == session
-
-    if active and belongs_here:
-        try:
-            lines = plugin().core.surfaces.art(
-                cols=width, rows=height,
-                index=frame_index(str(active.get("key") or ""), frames=8),
-                scene=str(active.get("key") or ""),
-                fit="cover" if fit == "cover" else "contain",
-                pane=fit == "cover",
-                # dither buys the pane its gradients; on a card it buys a block
-                dither=fit == "cover",
-                gamma=1.0,
-            )
-        except Exception:  # health: BLE001 -- a missing frame is not a broken state
-            lines = []
-    if not lines:
-        # Between states the agent still exists, so the pane is never blank:
-        # `work` while a turn is in flight, `idle` when nothing is running.
-        scene_name = "work" if busy else "idle"
-        try:
-            lines = plugin().core.screensaver.frame(scene_name, width, height)
-        except Exception:  # health: BLE001 -- art is never worth a 500
-            lines = []
-    payload = proj.project(watch, lines, cols=width, rows=height)
-
-    # The pane draws images. When a state is live and the ledger has servings for it, serve the
-    # activation stills and let the surface paint those instead of the baked art. An empty list
-    # means "nothing is firing" and the surface keeps its baked scene.
-    payload["stills"] = []
-    payload["files"] = []
-    payload["still_note"] = ""
-    # Which build of this file answered: the pane and the app can disagree about that, and the
-    # field is how you tell instead of guessing.
+    watch = plugin().core.engine.watch_state()
+    payload = proj.project(watch, None)
+    payload["picture"] = "pane"
+    payload["plugin"] = _LOADED_VERSION          # the build this process actually loaded
     payload["server"] = f"{Path(__file__).stat().st_mtime_ns}"
-    # the version THIS PROCESS loaded, captured at import: a gateway that started before a
-    # fix says its own old number instead of leaving "is it stale?" to be guessed
-    payload["plugin"] = _LOADED_VERSION
-    if active and not belongs_here:
-        # Named, not silent: a pane asking about another chat's state gets its ambient scene, and
-        # whoever wonders why can find out.
-        payload["still_note"] = "state belongs to another chat"
-    # The map is the pane's whole surface, not a decoration that appears only while a state runs:
-    # with no state (or one belonging to another chat) it draws the profile's recent firings on
-    # the ledger's concept space. An empty pane shows the app's own artwork, which is not ours to
-    # show — and that is exactly what "I still see the wrong viz" was.
-    if not stills:
-        # Numbers only: no JPEG, no post-processing, no frame rotation. This is the path a 3D
-        # surface polls, and it must stay cheap enough not to time out while a turn is running.
-        if with_graph:
-            try:
-                payload["graph"] = graph(session=str(session or ""), limit=1400)
-            except Exception as exc:  # health: BLE001 -- no map is not a broken state
-                payload["graph"] = {"nodes": [], "lit": 0, "error": f"{type(exc).__name__}: {exc}"[:160]}
-        return payload
-    drawable = bool(active and belongs_here)
-    key = str(active.get("key") or "") if drawable else "profile"
-    own = ((active.get("origin") or {}).get("session_id") if drawable else session) or session or ""
-    try:
-        activation_stills = _core_module("activation_stills")
-        try:
-            paths = activation_stills.fresh(move=key, session=str(own))
-        except OSError:
-            # The frame set was rotated away under us. One forced redraw is cheaper than telling
-            # the person their picture failed when it did not.
-            paths = activation_stills.stills(move=key, session=str(own))
-        payload["stills"] = [f"/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
-        payload["files"] = [p.as_uri() for p in paths]
-        # Three ways to reach the same picture, because the pane's surface decides which one
-        # works: absolute HTTP URLs (a remote desktop, where the files are on the host and not on
-        # the computer showing the pane), which the pane cannot fetch from a file:// page but the
-        # gateway serves anyway, and the router-relative paths the pane reaches over ctx.rest.
-        base = str(request.base_url).rstrip("/") if request is not None else ""
-        payload["files_http"] = ([f"{base}/api/plugins/antemuse/art/{key}/{p.name}" for p in paths]
-                                 if base else [])
-        payload["stills_b64"] = [f"/art_b64/{key}/{p.name}" for p in paths]
-        if not paths:
-            payload["still_note"] = f"nothing firing in {key}" if drawable else "nothing firing yet"
-    except Exception as exc:  # health: BLE001 -- a missing picture is not a broken state
-        payload["stills"] = []
-        payload["files"] = []
-        payload["files_http"] = []
-        payload["stills_b64"] = []
-        payload["still_note"] = f"picture failed: {type(exc).__name__}: {exc}"[:160]
     if with_graph:
         try:
             payload["graph"] = graph(session=str(session or ""), limit=1400)
         except Exception as exc:  # health: BLE001 -- no map is not a broken state
             payload["graph"] = {"nodes": [], "lit": 0, "error": f"{type(exc).__name__}: {exc}"[:160]}
     return payload
-
-
-def _still_path(name: str, filename: str):
-    """Where a still actually is, for this machine.
-
-    `stills()` draws into `<state>/base/` and only promotes them to `<state>/` when the three.js
-    post-process succeeds. Without playwright there is no post-process, so the stamped files stay in
-    `base/` — and this route used to look only at `<state>/`, 404ing every URL `/state` had just
-    advertised. The pane then fell through its legs to nothing, which is what "the wrong viz" was
-    on a machine without the bake step.
-    """
-    storage = _core_module("storage")
-    root = storage.data_dir() / "activation" / name
-    for candidate in (root / filename, root / "base" / filename):
-        if candidate.is_file():
-            return candidate
-    return None
-
-
-@router.get("/art/{name}/{filename}")
-def art(name: str, filename: str):
-    """Serve one activation still. Only files this plugin wrote are reachable: the name and the
-    filename are matched against the state directory, never joined from user input."""
-    safe_name = "".join(ch for ch in name if ch.isalnum() or ch in "-_")
-    safe_file = "".join(ch for ch in filename if ch.isalnum() or ch in "-_.")
-    if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
-        raise HTTPException(status_code=404, detail="not found")
-    try:
-        path = _still_path(safe_name, safe_file)
-    except Exception:
-        path = None
-    if path is None:
-        raise HTTPException(status_code=404, detail="not found")
-    return FileResponse(str(path), media_type="image/jpeg")
-
-
-@router.get("/art_b64/{name}/{filename}")
-def art_b64(name: str, filename: str):
-    """The same still, carried as base64 instead of bytes.
-
-    A desktop pane is a file:// page: an <img> pointed at this route reaches it with no cookie and
-    no host path, which is fine on the machine that has the files and useless on a remote desktop.
-    The pane already talks to this router over the gateway RPC, so the bytes can travel that way.
-    """
-    safe_name = "".join(ch for ch in name if ch.isalnum() or ch in "-_")
-    safe_file = "".join(ch for ch in filename if ch.isalnum() or ch in "-_.")
-    if not safe_name or not safe_file or not safe_file.endswith(".jpg"):
-        raise HTTPException(status_code=404, detail="not found")
-    try:
-        path = _still_path(safe_name, safe_file)
-    except Exception:
-        path = None
-    if path is None:
-        raise HTTPException(status_code=404, detail="not found")
-    import base64
-    return {"type": "image/jpeg",
-            "data": base64.b64encode(path.read_bytes()).decode("ascii")}

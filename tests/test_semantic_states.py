@@ -177,3 +177,29 @@ def test_every_state_has_a_mask_that_matches_its_move():
     wants = {"walk": "walk", "daydream": "memor", "doomscroll": "scroll", "unstuck": "done", "dream": "asleep"}
     for key, needle in wants.items():
         assert needle in states.waiting(key).lower(), (key, states.waiting(key))
+
+
+def test_every_ending_speaks_in_the_state_that_ended(tmp_path, monkeypatch):
+    """A daydream must not come back sounding like a walk.
+
+    The closing block used to be one constant paragraph — the walk's — handed to the model after
+    any state, so a daydream's summary arrived in walk language ("the path you walked is scenery",
+    "name the approach you were stuck in"). The instruction now belongs to the state that closed.
+    """
+    from core import states
+
+    for key in ("walk", "daydream", "doomscroll", "dream", "unstuck"):
+        text = states.after(key)
+        assert text and len(text) > 40, key
+        if key != "walk":
+            assert "the walk is over" not in text, key
+            assert "path you walked" not in text, key
+
+    # every state carries its own, and no two are the same paragraph
+    assert len({states.after(k) for k in states.STATES}) == len(states.STATES)
+
+    # the block the model actually receives names the state that closed, not another one
+    named = {"walk": "walk", "daydream": "daydream", "doomscroll": "scroll",
+             "dream": "dream", "unstuck": "recommendation"}
+    for key, word in named.items():
+        assert word in states.after(key).lower(), (key, word)

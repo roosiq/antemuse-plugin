@@ -122,16 +122,3 @@ def test_a_state_with_no_servings_says_so(tmp_path):
     assert result.returncode == 1
     assert "nothing recorded" in result.stdout or "no state servings" in result.stdout
 
-
-def test_a_palette_is_a_mood_and_never_information():
-    """Same geometry, different ink: the palette changes the ground colour only."""
-    from PIL import Image
-    from core import activation_stills as S
-
-    pos = {"a": [10.0, 10.0], "b": [60.0, 40.0]}
-    active = {"a": {"weight": 1.0, "rank": 0}, "b": {"weight": 0.4, "rank": 1}}
-    amber = S.frame_image(pos, [("a", "b")], active, 80, 60, palette="amber")
-    nous = S.frame_image(pos, [("a", "b")], active, 80, 60, palette="nous")
-    assert amber.getpixel((78, 58)) == S.PALETTES["amber"]["ground"]
-    assert nous.getpixel((78, 58)) == S.PALETTES["nous"]["ground"]
-    assert amber.size == nous.size

@@ -345,7 +345,8 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
     note = ""
     if previous and previous["key"] != spec_key:
         note = f" (left {previous['key']}; no residue kept)"
-    return f"{spec['label']} · {duration:g} min · {spec['turns']} turn(s) · {spec['contract']}{note}"
+    return (f"{spec['label']} · {duration:g} min · {spec['turns']} "
+            f"{(spec.get('dose') or {}).get('unit') or 'turn(s)'} · {spec['contract']}{note}")
 
 
 def current_session() -> str:
@@ -667,10 +668,12 @@ def inject(session: str | None = None) -> str | None:
     lines: List[str] = []
     if active:
         spec = states.STATES[active["key"]]
+        dose, unit = _dose_of(spec, active)
         left = max(0, int((active["ends_at"] - time.time()) / 60))
         tool_rule = _tool_rule(_effective_tools(active))
         lines += [
-            f"[STATE: {spec['label']} · {left} min left · {active['turns_left']} turn(s)]",
+            f"[STATE: {spec['label']} · {left} min left · "
+            f"{max(0, dose - int(active.get('served') or 0))}/{dose} {unit} left]",
             spec["directive"],
             tool_rule,
         ]
@@ -682,16 +685,12 @@ def inject(session: str | None = None) -> str | None:
             lines.append(f"  · {e.get('text', '')}")
     if reports:
         lines.append("")
-        if any(r.get("state") == "walk" for r in reports):
-            lines.append(
-                "[YOU JUST CAME BACK — the walk is over and the frame you were in is gone. "
-                "Do not resume the approach you were taking. First: state the goal in one line. "
-                "Then: name the approach you were stuck in and why it was the obvious one. "
-                "Then: take a different first step from the one you would have taken, and work "
-                "from there. The path you walked is scenery, not a hint.]")
-        else:
-            lines.append("[YOU JUST CAME BACK — three lines, then back to work: where the walk went, "
-                         "what it touched in what you were doing, and what happens next]")
+        # The closing instruction belongs to the state that just closed. It used to be the walk's
+        # paragraph for every state, so a daydream ended with "the walk is over" and came back
+        # sounding like a walk.
+        closed = [r.get("state") for r in reports if r.get("state")]
+        key_closed = closed[0] if len(set(closed)) == 1 else (closed[-1] if closed else "")
+        lines.append(f"[YOU JUST CAME BACK — {states.after(key_closed)}]")
         for r in reports:
             lines.append(f"  · {r.get('text', '')}")
     for r in residue:
@@ -861,6 +860,23 @@ def _journal_window(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     # recent tail rather than nothing at all.
     mine = [e for e in journal if e.get("session") == session] if session else journal
     return mine[-12:]
+
+
+def status_line() -> str:
+    """What is running, in words. One line, no picture.
+
+    `/state` used to draw the panel: a grid of shaded cells the person had to read as a
+    picture. There is one picture and it is the pane, so the text answer is a sentence.
+    """
+    active = peek()
+    if not active:
+        return "no state running"
+    spec = states.STATES[active["key"]]
+    left = max(0, int((active["ends_at"] - time.time()) / 60))
+    served = int(active.get("served") or 0)
+    dose = int((spec.get("dose") or {}).get("n") or 0)
+    unit = str((spec.get("dose") or {}).get("unit") or "")
+    return f"{active['key']} · {left} min left · {served}/{dose} {unit} · {spec['contract']}"
 
 
 def watch_state() -> Dict[str, Any]:

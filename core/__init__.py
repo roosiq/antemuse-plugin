@@ -1,19 +1,20 @@
-"""Antemuse internals: the states, the engine that holds one, and what draws it.
+"""Antemuse internals: the states, the engine that holds one, and the record it leaves.
 
-  states      the five cognitive states and what each one costs
-  engine      one active state per profile: enter, tick, policy, residue
+  states      the five cognitive states, what each one costs and how it is spoken
+  engine      one active state per profile: enter, deliver, policy, residue
   storage     where that record lives on disk
+  history     the concept ledger: what was met, beside what, and when
+  activation  what is firing now, derived from the ledger and never authoritative
   walks       walks are data, not code: a graph plus rules for moving on it
   sources     where a state's material comes from (WordNet, FrameNet, memory, feeds)
-  social      the live feeds a doomscroll eats
-  ticker      the timer that delivers material while a state runs
-  panel       one text frame the person can watch and take part in
-  photographs the terminal image path: cells, dissolves, drift
-  walk_map    the walk drawn as a side-scrolling place
-  backdrop    optional pre-rendered three.js frames, replayed as blocks
-  surfaces    the same frame encoded per client (terminal, chat, text, image)
-  screensaver the ambient scenes: ribbons on a black field, in the ramp
-  tui         the full-screen takeover
-"""
+  social      the live feed a doomscroll eats
+  report      the facts an ending hands the model, so it can say what happened
+  projection  the join between the ledger and the dashboard's numbers
+  settings    the few numbers a host may tune
 
-from . import screensaver  # noqa: E402,F401  the ambient renderer
+There is one picture and it is the desktop pane: `desktop/plugin.js` draws the concept
+activation graph from `/graph` in raw WebGL. The plugin keeps no second renderer — no
+terminal takeover, no photo scenes, no ASCII card, no baked stills.
+
+Nothing here reads a message body at runtime except the ledgers' own ids and hashes.
+"""

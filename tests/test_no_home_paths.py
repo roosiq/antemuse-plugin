@@ -53,9 +53,3 @@ def test_the_pane_has_no_fallback_to_one_machine():
     assert "/home/" not in js
     assert "return []" in js[js.index("const liveStills"):][:900]
 
-
-def test_the_surface_tests_do_not_copy_from_a_fixed_bank():
-    """They skipped 3 tests wherever the bank was absent — a pass that tested less."""
-    src = (ROOT / "tests" / "test_surfaces.py").read_text()
-    assert "/home/" not in src
-    assert "_draw_frames" in src, "with no bank the fixture must draw one, not skip"

@@ -34,12 +34,12 @@ _here = _Path(__file__).resolve().parent
 _as_package = bool(__package__) and getattr(sys.modules.get(__package__), "__path__", None) is not None
 
 if _as_package:
-    from .core import (engine, history, options, panel, recall, runtime, session, settings,
-                       report, states, surfaces, tui, walks)  # noqa: F401
+    from .core import (engine, history, options, recall, runtime, session, settings,
+                       report, states, walks)  # noqa: F401
 else:  # flat load: this file is or is not on sys.path, but its directory is what `core` needs
     sys.path.insert(0, str(_here))
-    from core import (engine, history, options, panel, recall, runtime, session, settings,
-                      report, states, surfaces, tui, walks)  # type: ignore[no-redef]  # noqa: F401
+    from core import (engine, history, options, recall, runtime, session, settings,
+                      report, states, walks)  # type: ignore[no-redef]  # noqa: F401
 
 __version__ = "0.10.20"
 
@@ -211,13 +211,12 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
     if action == "exit":
         return engine.stop()
     if action == "list":
-        return states.palette() + "\n\n" + panel.render(engine.watch_state())
-    if action == "watch":
-        return tui.run()
-    if action in ("card", "image"):
-        return _pane_only()
+        return states.palette()
     if action in ("status", ""):
-        return panel.render(engine.watch_state())
+        return engine.status_line()
+    if action in ("card", "image", "watch"):
+        # the old spellings of "show me a picture"; there is one picture, in the pane
+        return _pane_only()
     # An unrecognised action used to fall through to the status picture, so a caller
     # that mistyped got art instead of an answer. Say what exists.
     return ("no such action: " + repr(action) + ". try: enter, exit, status, list, break, "
@@ -467,11 +466,9 @@ def _state(raw: str) -> str:
     """
     want = (raw or "").strip().lower()
     if want in ("picture", "image", "frame", "card"):
-        if sys.stdout.isatty():
-            return tui.run()      # a terminal is not chat: the takeover draws nothing into it
         return _pane_only()
     if want in ("", "text", "frame-text"):
-        return panel.render(engine.watch_state())
+        return engine.status_line()
     return "usage: /state  ·  /state picture"
 
 
@@ -510,7 +507,7 @@ def _note(raw: str) -> str:
     if not engine.peek():
         return "no state running — /walk first, then /note what you notice."
     engine.record("person", text)
-    return panel.render(engine.watch_state())
+    return f"noted · {engine.status_line()}"
 
 
 def _spark_handler(ctx: Any):

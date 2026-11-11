@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-PROBE = "import PIL, nltk"
+PROBE = "import nltk"
 
 
 def _installer():
@@ -30,7 +30,7 @@ def _installer():
 
 
 def _deps(monkeypatch, mod, probes, validate=True, pip=True):
-    """probes: what `import PIL, nltk` answers, in order. Returns the commands that ran."""
+    """probes: what `import nltk` answers, in order. Returns the commands that ran."""
     answers = list(probes)
     calls = []
 

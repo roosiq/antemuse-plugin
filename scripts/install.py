@@ -114,9 +114,13 @@ def clear_pane_dir(path: Path) -> list:
 
 
 def ensure_deps(py: str, dry: bool) -> None:
-    """Step 1: pillow and nltk where the *plugin* imports them, not merely where Hermes does."""
-    say("1. python dependencies (pillow, nltk)")
-    has = run([py, "-c", "import PIL, nltk"], dry, quiet=True)
+    """Step 1: nltk where the *plugin* imports it, not merely where Hermes does.
+
+    Pillow used to be here for the baked stills. The pane draws the graph itself, so the picture
+    costs no image library at all and the dependency is gone.
+    """
+    say("1. python dependencies (nltk)")
+    has = run([py, "-c", "import nltk"], dry, quiet=True)
     if has:
         ok("already importable")
         return
@@ -129,13 +133,12 @@ def ensure_deps(py: str, dry: bool) -> None:
              "interpreter, so re-checking " + py)
     else:
         warn("'hermes plugins validate --install-deps' did not complete")
-    if not run([py, "-c", "import PIL, nltk"], dry, quiet=True):
-        if not run([py, "-m", "pip", "install", "--quiet", "pillow>=10,<14", "nltk>=3.8,<4"],
-                   dry):
-            die(f"could not install pillow/nltk into {py}")
+    if not run([py, "-c", "import nltk"], dry, quiet=True):
+        if not run([py, "-m", "pip", "install", "--quiet", "nltk>=3.8,<4"], dry):
+            die(f"could not install nltk into {py}")
         ok(f"installed into {py}")
-    if not run([py, "-c", "import PIL, nltk"], dry, quiet=True):
-        die(f"pillow/nltk are still not importable in {py}, which is the interpreter the "
+    if not run([py, "-c", "import nltk"], dry, quiet=True):
+        die(f"nltk is still not importable in {py}, which is the interpreter the "
             f"plugin's hooks run on. Set HERMES_PY to that interpreter and re-run.")
 
 

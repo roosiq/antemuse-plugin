@@ -394,28 +394,6 @@ def test_unstuck_survives_entry_and_returns_its_account():
     assert answer != "not in a state.", "a finished state still owes its account"
     assert "UNSTUCK finished" in answer, answer
 
-def test_a_frame_rotated_away_mid_read_does_not_break_the_payload():
-    """Two requests overlap: the pane polls while it also fetches a URL.
-
-    A stat race on a frame the other request had just rotated away used to raise
-    FileNotFoundError out of `fresh()`, and the pane reported "picture failed" while a perfectly
-    good frame was already on screen.
-    """
-    from core import activation_stills
-
-    dest = pathlib.Path(tempfile.mkdtemp(prefix="still-race-")) / "activation" / "profile"
-    dest.mkdir(parents=True)
-    stamped = dest / "f0-1794321466-post.jpg"
-    stamped.write_bytes(b"jpeg")
-    # the rotating request deletes it after we listed the directory
-    stale = dest / "f1-1794321000-post.jpg"
-    stale.write_bytes(b"jpeg")
-    stale.unlink()
-    paths = activation_stills.fresh(move="profile", session="", dest=dest)
-    assert paths, "a vanished sibling must not take the set down"
-    assert all(p.exists() for p in paths)
-
-
 def test_the_payload_names_the_version_it_loaded():
     """Staleness was guessed from mtimes and guessed wrong twice."""
     import importlib.util
@@ -428,59 +406,6 @@ def test_the_payload_names_the_version_it_loaded():
     assert payload.get("plugin"), payload.keys()
     assert payload["plugin"][0].isdigit(), payload["plugin"]
 
-
-
-def test_a_failed_bake_is_still_a_picture_and_is_not_redrawn_every_call(tmp_path, monkeypatch):
-    """When post-processing cannot run, the plain frames in base/ are the picture.
-
-    fresh() only looked for stamped frames in dest/, so a failed bake read as "no picture yet":
-    every request redrew and relaunched the browser. The live gateway logged 13,495 failed bakes in
-    three hours this way. A fallback frame must satisfy the cache like any other.
-    """
-    from core import activation_stills
-
-    calls = []
-    real = activation_stills.stills
-
-    def counting(*a, **k):
-        calls.append(1)
-        return real(*a, **k)
-
-    monkeypatch.setattr(activation_stills, "_postprocess", lambda drawn: [])
-    monkeypatch.setattr(activation_stills, "stills", counting)
-    dest = tmp_path / "activation" / "profile"
-    first = activation_stills.fresh(move="profile", dest=dest)
-    second = activation_stills.fresh(move="profile", dest=dest)
-    assert first and all(p.parent.name == "base" for p in first)
-    assert second == first
-    assert len(calls) == 1, f"redrew {len(calls)} times for two calls"
-
-
-def test_overlapping_requests_render_the_set_once(tmp_path, monkeypatch):
-    """Two requests that both find the set stale must not both render it."""
-    import threading
-    import time as _t
-
-    from core import activation_stills
-
-    calls = []
-
-    def slow_post(drawn):
-        calls.append(1)
-        _t.sleep(0.3)
-        return []
-
-    monkeypatch.setattr(activation_stills, "_postprocess", slow_post)
-    dest = tmp_path / "activation" / "profile"
-    out = []
-    threads = [threading.Thread(target=lambda: out.append(activation_stills.fresh(move="profile", dest=dest)))
-               for _ in range(4)]
-    for th in threads:
-        th.start()
-    for th in threads:
-        th.join()
-    assert len(calls) == 1, f"{len(calls)} renders for 4 overlapping requests"
-    assert all(o == out[0] for o in out)
 
 
 def test_a_state_entered_by_command_files_its_work_under_itself():
@@ -504,7 +429,7 @@ def test_a_young_ledger_still_has_a_space_to_walk_in():
     A walk over three dots is not a space, so a small ledger borrows the rest of the picture from
     the same projection, keeping every concept it does have.
     """
-    from core import activation_stills
+    from core import atlas as activation_stills
 
     labels = activation_stills._all_labels(1200)
     assert len(labels) > 600, f"a first run needs structure, got {len(labels)}"
