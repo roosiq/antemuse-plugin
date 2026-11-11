@@ -2,7 +2,7 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: b91c8d1f49c70bba3a276be23f5312853d05c6f3
+sha: 7d8b1775529e19b3dbc4247bed98bc4ba0929351
 description: 'Antemuse lets the agent itself take a walk, daydream, dream, doomscroll, or get unstuck.
   A state is a bounded change to behaviour, not a place: it shapes the next replies, decides what residue
   the agent carries when the state ends, and — only when the entry asks with block: true — restricts which
@@ -16,11 +16,12 @@ maintainer: roosiq
 tier: community
 category: general
 docs_url: https://github.com/roosiq/antemuse-plugin#readme
-version: "0.9.1"
+version: "0.10.0"
 requires_hermes: '>=0.21.6'
 platforms:
 - linux
 - macos
+- windows
 capabilities:
   provides_tools:
   - state
@@ -36,15 +37,15 @@ capabilities:
   provides_middleware: []
   requires_env: []
 known_issues:
-- Desktop dock pane is built but not confirmed rendering inside the packaged app; the terminal takeover
-  is the verified surface.
-- 'State is profile-wide, not per-session: a state started in one chat is visible to the whole profile
-  until it ends or expires.'
+- The picture is the desktop app's Antemuse pane only; chat carries no visualization, and a terminal gets
+  the full-screen takeover.
+- 'Windows: the installer and runtime are pure Python and the suite passes on Linux; the takeover needs
+  a POSIX terminal and prints a still frame elsewhere.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/b91c8d1f49c70bba3a276be23f5312853d05c6f3/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/b91c8d1f49c70bba3a276be23f5312853d05c6f3/docs/screenshots/takeover.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/b91c8d1f49c70bba3a276be23f5312853d05c6f3/docs/screenshots/chat-card.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/b91c8d1f49c70bba3a276be23f5312853d05c6f3/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/b91c8d1f49c70bba3a276be23f5312853d05c6f3/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/takeover.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/7d8b1775529e19b3dbc4247bed98bc4ba0929351/docs/screenshots/blocked-tool.png

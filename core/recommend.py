@@ -154,15 +154,29 @@ def _wall(work: Dict[str, Any]) -> Optional[str]:
 
 def _rut(entries: List[Dict[str, Any]], active: Optional[Dict[str, Any]],
          now: float) -> Optional[Dict[str, str]]:
-    """Two entries of the same state inside ten minutes, or the same twice in a row."""
+    """Two entries of the same state inside ten minutes, or the same twice in a row.
+
+    The running state is already the last entry, so the comparison is with the one before
+    it. Comparing with the last entry compared the state with itself: a first-ever walk was
+    told it was in a rut, and every walk since carried that line.
+    """
     current = (active or {}).get("key")
-    keys = [str(e.get("key") or "") for e in entries[-2:]]
-    times = [float(e.get("at") or 0) for e in entries[-2:]]
-    if current and keys and keys[-1] == current:
-        if len(times) >= 2 and now - times[-2] <= RUT_SECONDS:
-            return {"state": _other(current, keys), "evidence": f"just chose {current} again"}
-        return {"state": _other(current, keys), "evidence": f"the last state was {current} too"}
-    return None
+    if not current:
+        return None
+    entered = float((active or {}).get("entered_at") or 0)
+    history = list(entries)
+    if history and str(history[-1].get("key") or "") == current \
+            and abs(float(history[-1].get("at") or 0) - entered) < 1.0:
+        history = history[:-1]          # that entry is this state, not a previous one
+    if not history:
+        return None
+    previous = history[-1]
+    if str(previous.get("key") or "") != current:
+        return None
+    keys = [str(e.get("key") or "") for e in history[-2:]] + [current]
+    if entered - float(previous.get("at") or 0) <= RUT_SECONDS:
+        return {"state": _other(current, keys), "evidence": f"just chose {current} again"}
+    return {"state": _other(current, keys), "evidence": f"the last state was {current} too"}
 
 
 def _other(current: str, keys: List[str]) -> str:

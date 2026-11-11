@@ -105,3 +105,29 @@ def test_a_successful_tool_clears_the_streak(monkeypatch, tmp_path):
     engine.note_tool(False)
     engine.note_tool(True)
     assert "this looks like a walk" not in (engine.inject() or "")
+
+
+def test_a_first_walk_is_not_a_rut():
+    """The running state is already the newest entry; comparing with it compared the state
+    with itself, so a first-ever walk was told it was in a rut."""
+    from core import recommend
+    now = 1_000_000.0
+    active = {"key": "walk", "entered_at": now}
+    assert recommend._rut([{"key": "walk", "at": now}], active, now + 5) is None
+
+
+def test_walk_after_walk_is_still_a_rut():
+    from core import recommend
+    now = 1_000_000.0
+    active = {"key": "walk", "entered_at": now}
+    entries = [{"key": "walk", "at": now - 120}, {"key": "walk", "at": now}]
+    rut = recommend._rut(entries, active, now + 5)
+    assert rut and rut["evidence"] == "just chose walk again"
+
+
+def test_a_different_previous_state_is_not_a_rut():
+    from core import recommend
+    now = 1_000_000.0
+    active = {"key": "walk", "entered_at": now}
+    entries = [{"key": "dream", "at": now - 120}, {"key": "walk", "at": now}]
+    assert recommend._rut(entries, active, now + 5) is None

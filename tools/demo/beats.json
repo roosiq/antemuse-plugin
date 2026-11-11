@@ -1,12 +1,52 @@
 [
-  {"start": 0.0, "end": 6.0, "kind": "caption", "text": "3 hours in. Same failing test."},
-  {"start": 6.0, "end": 14.0, "kind": "caption", "text": "The plugin watches the work: minutes, turns, failed calls."},
-  {"start": 14.0, "end": 24.0, "kind": "caption", "text": "A state is a contract, not a mood."},
-  {"start": 24.0, "end": 32.0, "kind": "caption", "text": "Not a prompt. The tool call never runs."},
-  {"start": 32.0, "end": 46.0, "kind": "caption", "text": "What the person sees. No words, by design."},
-  {"start": 46.0, "end": 58.0, "kind": "caption", "text": "It comes back with an account."},
-  {"start": 58.0, "end": 68.0, "kind": "caption", "text": "Then the work continues."},
-  {"start": 68.0, "end": 76.0, "kind": "caption", "text": "16 checks green. 906 tests."},
-  {"start": 76.0, "end": 84.0, "kind": "title", "kicker": "Hermes plugin hackathon",
-   "head": "antemuse", "sub": "github.com/roosiq/antemuse-plugin"}
+ {
+  "start": 0.0,
+  "end": 6.0,
+  "kind": "caption",
+  "text": "Your agent, mid-task."
+ },
+ {
+  "start": 6.0,
+  "end": 14.0,
+  "kind": "caption",
+  "text": "/walk — it keeps working."
+ },
+ {
+  "start": 14.0,
+  "end": 32.0,
+  "kind": "caption",
+  "text": "Each hop lands far from the task — still on a path back to it."
+ },
+ {
+  "start": 32.0,
+  "end": 46.0,
+  "kind": "caption",
+  "text": "What it passes goes into this conversation, and no other."
+ },
+ {
+  "start": 46.0,
+  "end": 56.0,
+  "kind": "caption",
+  "text": "It comes back with where it went."
+ },
+ {
+  "start": 56.0,
+  "end": 66.0,
+  "kind": "caption",
+  "text": "In a terminal, the whole screen."
+ },
+ {
+  "start": 66.0,
+  "end": 74.0,
+  "kind": "caption",
+  "text": "It suggests. It starts nothing unless you say so."
+ },
+ {
+  "start": 74.0,
+  "end": 82.0,
+  "kind": "title",
+  "kicker": "Hermes plugin hackathon",
+  "head": "antemuse",
+  "sub": "github.com/roosiq/antemuse-plugin"
+ }
 ]

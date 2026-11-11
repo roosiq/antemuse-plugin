@@ -1,193 +1,159 @@
-# Demo — production plan
+# Demo — production plan (v2)
 
-Status: planning 2026-11-08. Nothing recorded yet.
-Artifact: one public X post, video **strictly under 90 seconds**, showing the
-plugin working, tagging `@NousResearch`. Target: **80 s, 1280×720, H.264 MP4**.
+Status: **planned 2026-11-10, nothing recorded.** Supersedes v1 (2026-11-08). v1 was
+built around the chat card and a terminal-only take. Since 0.9.36 chat carries no
+visualization and the desktop pane is the picture, so the take moves into Hermes
+Desktop with one short terminal beat. v1's verified terminal rig and its two
+isolation traps are kept below. Task ids H40–H45 in [`tasks.md`](tasks.md).
 
-Companion to [`plan.md`](plan.md) W4. Task ids H40–H45 in [`tasks.md`](tasks.md).
+Artifact: one public X post, video **strictly under 90 s**, showing the plugin
+running, tagging `@NousResearch`. Target **82 s**, 1280×720, H.264, yuv420p,
+faststart. Form closes **2026-11-11 17:00 EST**.
 
-## 1. The one claim the video makes
+## 1. The claim, in one sentence
 
-> A Hermes state is not a mood in a prompt. The host enforces it: tools stop
-> working, the reply changes shape, the person sees a picture, and when it ends
-> the agent comes back with an account and keeps working.
+> A walk is a state the agent takes while it works: distant concepts arrive in
+> *this* conversation, you watch them light up on the map, and when it ends the
+> agent comes back with where it went.
 
-Everything in the cut serves that sentence. The video does **not** claim the
-agent gets more creative — `docs/spec.md` §16 has no evidence for it and §18
-forbids the claim.
+Not claimed anywhere (picture, caption, post): that the agent becomes more
+creative, better or faster, or that outputs improve. `docs/spec.md` §16 has no
+evidence for it and §18 forbids the claim. Banned words in captions and post:
+*creative, better, improves, smarter, boost, benchmark, score*.
 
-## 2. Viewing conditions drive the design
+## 2. Viewing conditions
 
-- Watched on a phone, muted, at ~390 px wide. Therefore: **burned-in captions**,
-  large type, one idea per shot, no voiceover, no cursor-hunting.
-- X autoplays silently, so sound is optional; if added, it must not carry meaning.
-- Terminal text on a phone is the main legibility risk. Mitigation: 18–20 px mono,
-  dark background, ≤ 100 columns, and captions that state the point so the
-  terminal text is evidence rather than the message.
+Watched on a phone, muted, about 390 px wide:
 
-## 3. Story beats and shot list (84 s)
+- burned-in captions, one idea per shot; no voiceover; sound never carries meaning;
+- the pane is the hero: large, centred, given time to breathe;
+- chat text is evidence, not the message. The caption states the point.
 
-State used in the video: **daydream**, entered from the `state` tool with
-`block: true`. That detail is load-bearing: since the `non-blocking-states`
-change, states are **open by default** — `/daydream` alone does not close
-anything, and `allow:` is refused without `block: true`. The refusal only exists
-when the entry asks for it, and showing the host enforce an explicit request is
-both truthful and the stronger beat.
+## 3. Shot list (82 s)
 
-Exact strings below were produced by the real plugin on 2026-11-08 in a temp
-state home; they are the words the video must show.
+Surface: **Hermes Desktop**, chat left, Antemuse pane right, one window. Shot 6
+is the only terminal beat. Strings in column 4 were produced by the real plugin
+at 0.10.0 on 2026-11-10; the take must show the plugin's own words.
 
-| t | action on screen | the line it produces | caption |
-|---|---|---|---|
-| 0:00–0:06 | a real failing test scrolls to its red line | `1 failed, 3 passed` (real output) | **3 hours in. Same failing test.** |
-| 0:06–0:14 | the person asks whether to stop; the agent records the mood with `state(action="mood", feeling="stuck")` and then calls `state(action="break")` | the break view: the counters, then one named recommendation with its reason (capture the exact string at the shoot) | **The plugin watches the work — minutes, turns, failed calls.** |
-| 0:14–0:24 | the request: "daydream, and close the tools" → the agent calls `state(action="enter", name="daydream", block=true)` | `DAYDREAMING · 3 min · 2 turn(s) · two memories · what they touch · one possibility` | **A state is a contract, not a mood.** |
-| 0:24–0:32 | the agent tries to run `ls` | `the agent is dreaming; no tools in this state. /return to come back.` | **Not a prompt. The tool call never runs.** |
-| 0:32–0:46 | `python3 -m core.tui` takeover: wordless art, live clock, key legend; hold, let it breathe | `DAYDREAMING · 2:41` + scene | **What the person sees. No words, by design.** |
-| 0:46–0:58 | `/return` | `DAYDREAMING ended · daydream 1m · 2 step(s)` + `Summarise it in three lines — where it went, what it touched — then get back to work.` | **It comes back with an account.** |
-| 0:58–1:08 | the next reply, carrying the marker, then the edit resumes | `— daydreaming, 2 min left · /return to come back` | **Then the work continues.** |
-| 1:08–1:16 | `hermes plugins validate` output and the test tail | `16/16 checks ok · warnings: []` / `906 passed, 1 skipped` | **16 checks green. 906 tests.** |
-| 1:16–1:20 | end card | repo URL + catalog PR number | **antemuse · github.com/roosiq/antemuse-plugin** |
+| # | t | on screen | real string it must show | caption |
+|---|---|---|---|---|
+| 1 | 0:00–0:06 | Desktop, a real task mid-conversation (§4). The pane shows the whole concept space, dim. | pane chip `no state` | **Your agent, mid-task.** |
+| 2 | 0:06–0:14 | Type `/walk`. Reply line appears; the chip flips. | `WALKING · 3 min · 6 turn(s) · work continues · distant concepts, still a path back to the task` | **/walk — it keeps working.** |
+| 3 | 0:14–0:32 | Hold on the pane, no cuts. Hops land as warm points, the trail draws, edges to lit nodes go warm. Two or three hops. | lit labels (WordNet terms) | **Each hop lands far from the task — still on a path back to it.** |
+| 4 | 0:32–0:46 | The next real question. The reply works the task, using a hop only where it bears on it. Marker ends the reply. | `— walking, 2 min left · /return to come back` | **What it passes goes into this conversation, and no other.** |
+| 5 | 0:46–0:56 | `/return`. The account appears; the pane goes back to the whole space. | `WALKING ended · walk 1m · N step(s) · <from>→<to> [far]` then `The frame you were in is gone. State the goal, name the approach you were stuck in, then take a different first step.` | **It comes back with where it went.** |
+| 6 | 0:56–1:06 | Terminal: `/state picture` → full-screen takeover, live scene, about 6 s, exit. | takeover frame, no words | **In a terminal, the whole screen.** |
+| 7 | 1:06–1:14 | Settings ▸ Plugins ▸ Antemuse: five settings; hover *Follow suggestions automatically* (off). | the five labels | **It suggests. It starts nothing unless you say so.** |
+| 8 | 1:14–1:22 | End card on black: wordmark, repo URL, catalog PR number. | `github.com/roosiq/antemuse-plugin` · `hermes-agent#NNNN` | **antemuse — a Hermes plugin** |
 
-Nothing is speed-ramped across a failure. Cuts happen on solves and on idle waits;
-if a cut hides a wait, the caption says so (`40 s later`).
+8 s of headroom. A take that runs past 86 s is re-cut, never sped up. A cut that
+hides a wait is captioned `(20 s later)`; nothing is speed-ramped across a hop.
 
-## 4. Preconditions for each shot
+**Dropped from v1, and why.** The *blocked tool call* is real but opt-in
+(`block: true`); it explains a setting rather than showing a state, and it stays
+in the catalog screenshots. *Validator and test counts* belong to the reviewer and
+go in the PR body; on a phone they are noise. The *chat card* no longer exists.
 
-- **Failing test** — use a real failing test in a scratch repo, not the plugin's
-  suite. It must actually fail on camera and pass or be abandoned later.
-- **The break view** — there is no `/break` command. The agent calls the `state`
-  tool: `action="mood", feeling="stuck"` records how the work feels, then
-  `action="break"` returns the counters and one named recommendation with its
-  reason. Both are visible in the transcript as the agent's decision, which is the
-  honest way to show the plugin watching.
-- **Blocked tool** — the entry must pass `block: true`; `/daydream` on its own
-  leaves every tool open. In the running session the agent calls
-  `state(action="enter", name="daydream", block=true)`, which is visible in the
-  transcript as the decision, then attempts a non-control tool (`ls` the repo)
-  and the host refuses it. The `state` tool stays exempt by design; do not show
-  that as a loophole.
-- **Material in the account** — daydream cadence is 10 s, so give it 20 s before
-  `/return`; otherwise the account honestly reads `nothing arrived` and the beat
-  is weaker.
-- **Validator and test tail** — run on the exact freeze commit, not the working
-  tree, and show the real numbers. If the count changes before the pin, re-shoot
-  this beat rather than editing the number.
+## 4. The task in the frame
 
-## 5. Toolchain — what captures, what draws
+The walk needs a real task to walk from, or the hops have no anchor and shot 4
+is fake. Use one a viewer follows in two seconds:
 
-| job | tool | state | why this one |
-|---|---|---|---|
-| record the screen | `Xvfb` + `xterm` + `ffmpeg -f x11grab` | **verified** 2026-11-08 | no window manager or GPU capture needed; 1280×720/30 fps, H.264 via `libopenh264`, 3 s ≈ 37 KB |
-| show keystrokes | `screenkey` with `-M` | **verified** | real X key events in an amber pill (top-right); mouse buttons fade in the same pill |
-| show the pointer | `x11grab -draw_mouse 1` | **verified** | the real pointer is in the recording; `tools/demo/mouse.py` moves it on an eased path with an overshoot |
-| drive the session | `tools/demo/human_type.py --via xdotool` | **verified** | real X key events (tmux send-keys produces none, so the overlay stays empty) |
-| one-command rig | `tools/demo/capture.sh start\|record\|stop` | **verified** | display, terminal, overlay, focus and recording in one place |
-| captions and cards | `tools/demo/overlays.py` (Pillow) → PNG per beat | **built + tested** | text lives in `beats.json`, not in an escaped ffmpeg string; brand palette enforced |
-| composite | `ffmpeg overlay` with `enable='between(t,a,b)'` | **tested** | one filter graph, no editor, re-renders in seconds |
-| optional desktop capture | OBS Studio (`dnf`, 5.1 MiB) | not installed | only worth it if the demo moves to the real desktop app; adds a GUI dependency |
-| optional hand edit | Kdenlive / Shotcut | not installed | only if a human editor takes over the cut |
-| generated stills | local SD at `:8089` | **not running** | the takeover already carries Meshy art; do not add a second art pipeline |
+> "Name this function — it merges two sorted lists and drops duplicates."
 
-Not used, deliberately: OBS (headless Xvfb is enough), drawtext (quoting and
-wrapping are the failure mode), screen-studio GUIs, AI avatars.
+with a six-line Python function pasted in. **Do not script the agent's reply.**
+Take the reply it gives. If no hop bears on the work, the reply ignores them
+honestly and the caption still holds. Re-take rather than edit.
 
-Palette and type come from `docs/brand.md`: ground `#0e0c0b`, amber `#f2b25a`,
-teal `#4fa89c`, Liberation Mono. Captions are 34 px, one or two lines, on a warm
-near-black band with an amber rule — the same grammar as the takeover, so the
-overlay does not look bolted on.
+## 5. Preconditions
 
-## 5.1 The human, honestly
+Each of these is a reason a take has failed before.
 
-The human is carried by what a hand does on screen, not by a face:
+- **Version on camera = the pin.** The pane polls `/api/plugins/antemuse/state`.
+  Before rolling, check `plugin:` in the payload equals the manifest version. A
+  gateway still holding old modules is the commonest wrong-picture cause; restart
+  it from a shell outside the gateway.
+- **The ground has structure.** Use the real profile, or run
+  `python scripts/install.py` (first-ledger scan) in the demo home. Idle, the pane
+  should show ≥ 1,000 points.
+- **Hops land on camera.** Walk hops are paced by turns, not a timer. Before shot
+  3, confirm with `state(action="status")` that a hop lands per turn, and send the
+  shot-4 question only after two or three have lit. If none lights in 20 s, stop:
+  the take is wrong, not the claim.
+- **No accidental rut line.** Fixed in 0.10.0: `recommend._rut` compared the
+  running state with itself, so every walk said *this looks like a rut*. The real
+  rut line still fires if the profile's previous state was a walk, so enter and
+  `/return` a different state first.
+- **Nothing private in frame.** Fresh session title, session sidebar hidden, no
+  memory text, no paths with a username, no other plugins' chips.
+- **Takeover beat.** Truecolor terminal, about 160×45, font ≥ 18 px, `node` on
+  PATH. Without `node` it shows cached frames; check it animates before rolling.
 
-- **Visible keystrokes.** `screenkey` renders the last ~1.4 s of real X key events
-  in an amber pill at the top right, including a mouse icon on click. Verified in
-  a take: the pill mirrors the typed text while the terminal is still filling in.
-- **Visible pointer.** `ffmpeg x11grab` records the real pointer (`-draw_mouse 1`),
-  and `tools/demo/mouse.py` moves it along an eased path with a 2 px overshoot
-  before settling. Clicks are real `xdotool click 1` events, so the pill shows them.
-- **Human pace.** `human_type.py --via xdotool` types at 45–145 ms per character,
-  pauses longer at spaces and punctuation, and inserts one seeded typo in the
-  middle of a word that is noticed and backspaced.
-- **A real task.** A scratch repository with a test that genuinely fails, and a
-  real `hermes` session working on it. No mock terminal, no pre-baked output.
-- **A real reason.** The session starts from the person's own words ("I've been
-  on this three hours"), not from a command list.
+### Isolation (kept from v1)
 
-Known limit, measured: xterm draws its pointer from the core cursor font, so
-`XCURSOR_SIZE` does not enlarge it — the I-beam stays ~24 px. It is captured and
-it moves, but it is small. Two ways to make it larger, if wanted: an overlay ring
-burned at the recorded click coordinates (post, deterministic), or a GTK terminal
-that honours Xcursor sizing (adds menu bar and scrollbar chrome). The plan ships
-the honest small pointer plus the keystroke pill, and treats a burned-in ring as
-an optional polish pass, not a default.
+- **Trap 1: the live gateway runs the code it loaded.** Never infer demo behaviour
+  from the agent you are talking to. Rehearse in a fresh process on the pin.
+- **Trap 2: a state in the live profile reaches real work.** Since 0.9.36 a state
+  reaches only the conversation that entered it, so this is contained, but
+  rehearse in a throwaway `HERMES_HOME` anyway. `/return` from that conversation,
+  or `state(action="exit")`, is the way out.
 
-No voiceover: X autoplay is muted. If a voice is wanted, Ryan records 20–30 s on a
-phone; no TTS, and no AI avatar.
+## 6. Capture and edit
 
-## 5.2 Filter graph, exactly
+| job | tool | state |
+|---|---|---|
+| desktop capture | **open decision.** The host session is Wayland, so `x11grab` cannot see the app, and no recorder is installed. Options: OBS Studio with PipeWire capture (`dnf install obs-studio`), or `gpu-screen-recorder`. GNOME's built-in recorder caps at 30 s, too short for one take. | decide before 11-11 morning |
+| terminal capture (shot 6) | `Xvfb` + `xterm` + `ffmpeg -f x11grab`, via `tools/demo/capture.sh start\|record\|stop` | **verified** 2026-11-08 |
+| keystrokes | `screenkey -M` in the terminal; typed by hand in Desktop | verified for the terminal |
+| captions and cards | `tools/demo/overlays.py render` → one PNG per beat, from `tools/demo/beats.json` | built + tested; `beats.json` updated to §3 |
+| composite | `ffmpeg` overlay chain from `overlays.py filter`, `enable='between(t,a,b)'` per card | tested |
+| encode | `-c:v libopenh264 -b:v 6M -pix_fmt yuv420p -movflags +faststart -vf scale=1280:720` | tested |
+| measure | `ffprobe -v error -show_entries format=duration -of csv=p=0 demo.mp4` | — |
 
 ```bash
-python3 tools/demo/overlays.py render          # writes tools/demo/out/beat_NN.png
+python3 tools/demo/overlays.py render          # tools/demo/out/beat_NN.png
 GRAPH=$(python3 tools/demo/overlays.py filter)
 INPUTS=""; for f in tools/demo/out/beat_*.png; do INPUTS="$INPUTS -loop 1 -i $f"; done
-ffmpeg -i take.mp4 $INPUTS -filter_complex "$GRAPH" -map "[v9]" \
-  -c:v libopenh264 -b:v 6M -pix_fmt yuv420p -movflags +faststart demo.mp4
+ffmpeg -i take.mp4 $INPUTS -filter_complex "$GRAPH" -map "[v8]" \
+  -c:v libopenh264 -b:v 6M -pix_fmt yuv420p -movflags +faststart -vf scale=1280:720 demo.mp4
 ```
 
-The chain overlays each card only inside its window, so one render covers all
-nine beats; `beats.json` is the single source of timing and copy.
+Palette and type from `docs/brand.md`: ground `#0e0c0b`, amber `#f2b25a`, teal
+`#4fa89c`, Liberation Mono. Captions 34 px, one or two lines, warm near-black band
+with an amber rule. Hard cuts only. No transitions, zooms or fake glow.
 
-## 6. Isolation and stale code — two traps found while planning
+## 7. The post
 
-**Trap 1: the live gateway runs old code.** This planning session was interrupted
-twice by `the agent is daydreaming; no tools in this state`, while the current
-`core/engine.py` only blocks when the entry passes `block: true` (the
-`non-blocking-states` change). The gateway process still holds the module it
-loaded at startup. Consequence: never infer demo behaviour from what the live
-agent does, and run every rehearsal in a **fresh** process on the pinned commit.
+> antemuse — a Hermes plugin that lets your agent take a walk while it works.
+> Distant concepts land in the conversation, you watch them light up on the map,
+> and it comes back with where it went.
+>
+> github.com/roosiq/antemuse-plugin @NousResearch
 
-**Trap 2: a state entered in the live profile stops real work.** It happened to
-this session mid-planning. Rehearse under a throwaway `HERMES_HOME` or a copy of
-the plugin install, and prove isolation by reading the live `/state` before and
-after. `ANTEMUSE_STATES_HOME` isolates the *state file*; it does not isolate the
-plugin module the gateway already has in memory.
+No performance claim.
 
-If the live agent does get caught, `state(action="exit")` is exempt from the
-block; `/return` from the operator is the other way out.
+## 8. Acceptance (fill in after recording)
 
-## 7. Edit and encode
+| # | check | target | measured |
+|---|---|---|---|
+| D1 | duration (`ffprobe`) | 78–86 s, strictly < 90.0 | — |
+| D2 | every on-screen string reproducible by repeating the commands; no edited output | yes | — |
+| D3 | captions legible at 390 px wide | yes | — |
+| D4 | plugin version in payload during the take | = pin | — |
+| D5 | hops lit on camera in shot 3 | ≥ 2 | — |
+| D6 | banned words in captions and post | 0 | — |
+| D7 | private text in frame | none | — |
+| D8 | post public, plays logged out, tags `@NousResearch`; repo URL resolves | yes | — |
+| D9 | Ryan signs off on a phone-size watch before posting | yes | — |
 
-- Captions: generated as PNGs by `tools/demo/overlays.py` from `beats.json`
-  (Liberation Mono 34 px, paper `#f7f3ee` on ground `#0e0c0b` at 91%, amber rule),
-  composited by the ffmpeg chain in §5.2. Wrapping is measured in pixels, so no
-  caption spills off a phone.
-- Cuts: hard cuts only. No transitions, no zoom moves, no fake terminal glow.
-- Encode: `-c:v libopenh264 -b:v 6M -pix_fmt yuv420p -movflags +faststart`,
-  1280×720, 30 fps, no audio stream (or silence).
-- Target: 80 s, < 12 MB. X limit is far above that; legibility is the constraint.
+## 9. Fallbacks
 
-## 8. Acceptance for the demo artifact
-
-- D1. `ffprobe` duration **< 90.0** and > 70.0 (no accidental truncation).
-- D2. Every terminal line is reproducible by running the same commands; no
-  invented output, no edited numbers.
-- D3. Captions readable at 390 px wide; terminal text at least readable at 720 px.
-- D4. The blocked-tool shot shows the refusal, not a description of it.
-- D5. No claim of creativity improvement anywhere in the video, caption or post.
-- D6. The post tags `@NousResearch`, the video plays logged out, and the repo URL
-  in the end card resolves.
-- D7. Ryan signs off on the phone-size watch before posting.
-
-## 9. Risks
-
-| risk | mitigation |
-|---|---|
-| A blocked state interrupts the recording session | record under an isolated profile; `state(action="exit")` as the escape |
-| Model latency makes a take 3 minutes of waiting | cut on the solve, not on the typing; caption any skipped wait |
-| Daydream expires (3 min) mid-take | `/daydream` immediately before the blocked-tool beat, re-enter on retakes |
-| Feed material missing for the account | daydream reads local memory files, not the network |
-| Text illegible on a phone | captions carry the meaning; 18 px mono minimum; test at 390 px |
-| X rejects the file | H.264 MP4, 30 fps, yuv420p, faststart, no audio |
-| The concurrent art lane changes visuals mid-shoot | shoot after the freeze commit (`tasks.md` H25) |
+- **Pane does not paint in the app:** record the full-window `/antemuse` route
+  instead of the dock (same renderer, more room). If that fails too, use the
+  in-page capture that made `docs/screenshots/pane-walk.png`, and say in the post
+  that it is a pane render. Never present a render as a screen recording.
+- **Shot-4 reply is weak or off-task:** re-take. After two failures, cut shot 4
+  to 6 s on the marker line alone and give the time to shot 3.
+- **Takeover misbehaves:** drop shot 6 and extend shot 3 by 6 s. The video stands
+  without it.
+- **Model latency:** cut on the solve, not the typing; caption the skipped wait.
