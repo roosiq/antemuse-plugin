@@ -95,3 +95,42 @@ def test_per_turn_delivery_beats_the_old_clock():
     engine.note_turn()
     second = engine.deliver_if_due()
     assert first >= 1 and second >= 1, (first, second)
+
+
+def test_a_directive_never_promises_material_its_state_does_not_feed():
+    """A directive and the arrival policy are one contract, checked as one.
+
+    walk's directive said "each line says how many hops it went" while `feeds: False` suppressed
+    the arrival block entirely: the model was told to use lines it could never receive, and the
+    only way to obey was to invent a hop. Every other state feeds, so every other directive may
+    speak about what arrives. This asserts the two halves agree, for every state, without naming
+    any state in particular.
+    """
+    from core import states
+
+    # "no material will arrive" is the opposite of a promise, so a bare substring search would
+    # read the honest sentence as the dishonest one
+    import re
+
+    promise = re.compile(r"(?<!no )(?<!no concepts )(what arrives|each line|concepts will arrive)")
+    # the detector has to catch the sentence that was actually shipped, or this test is a no-op
+    old = ("what arrives are concepts far from the task that are still on a path from it: "
+           "each line says how many hops it went")
+    assert promise.findall(old), "the detector does not catch the old directive"
+    for key, spec in states.STATES.items():
+        feeds = bool(spec.get("feeds", True))
+        directive = str(spec.get("directive") or "").lower()
+        claims = promise.findall(directive)
+        # one direction only: a state may feed without advertising it, but a state that does not
+        # feed must never tell the model to expect material
+        if not feeds:
+            assert not claims, f"{key} does not feed but its directive promises {claims}"
+
+
+def test_a_walk_tells_the_model_it_is_getting_nothing():
+    from core import engine, states
+
+    assert states.STATES["walk"]["feeds"] is False
+    text = str(states.STATES["walk"]["directive"]).lower()
+    assert "no material" in text, "a subtractive state must say so, or the model invents a hop"
+    assert "scenery" in text

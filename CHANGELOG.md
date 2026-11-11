@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.17 — 2026-11-11
+
+- catalog entry for 8be3589 (0.10.16), shipped with the package (2026-11-10)
+
 ## 0.10.16 — 2026-11-10
 
 - No commits since the last entry.

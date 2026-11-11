@@ -24,15 +24,18 @@ STATES: Dict[str, Dict] = {
         # working turn — it takes the frame away and makes you come back different.
         "feeds": False,
         "restart": True,
+        # The directive this replaces promised material — "each line says how many hops it went" —
+        # while `feeds: False` suppresses the arrival block. The model was told to use lines it
+        # would never receive, so obeying it meant inventing a hop. A walk supplies nothing; that
+        # is the mechanism, not a gap in it.
         "directive": (
             "You are walking while you work. Keep the task moving and answer what you were asked. "
-            "What arrives are concepts far from the task that are still on a path from it: each "
-            "line says how many hops it went and which concept of the task it started from. If "
-            "something you pass bears on the work, use it — that is the point of going out. If it "
-            "does not, keep working and keep walking. Do not describe the walk for its own sake "
-            "and do not pad a reply with it. "
+            "The walk supplies no material: the path you walked is scenery, not a hint, and no "
+            "concepts will arrive in this turn. Do not invent a hop, do not offer the walk as "
+            "evidence, and do not describe it for its own sake. What the walk changes shows up "
+            "later, in what you come back willing to do. "
         ),
-        "contract": "work continues · distant concepts, still a path back to the task",
+        "contract": "work continues · the frame is elsewhere · different on return",
         "residue": "walked: distant concepts taken while the work carried on",
     },
     "daydream": {
