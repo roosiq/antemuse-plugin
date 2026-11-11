@@ -26,6 +26,7 @@ router = APIRouter()
 ROOT = Path(__file__).resolve().parents[1]
 _HERE = Path(__file__).resolve().parent
 _MODULE = "antemuse_desktop_backend"
+_CORE_NAME = "antemuse_core"
 _PROJECTION = "antemuse_desktop_projection"
 _load_lock = threading.Lock()
 
@@ -85,9 +86,7 @@ def _core():
     Three shapes reach this file and each broke the one before it:
 
     * `<plugin>.dashboard.plugin_api` (the tests) -> `from .. import core`.
-    * flat with the plugin root on sys.path -> `import core`.
-    * a router file loaded as a bare module with nothing on sys.path (the gateway) -> neither
-      works, and the ImportError was swallowed into an empty `stills` with a blank note, which is
+    * a router file loaded as a bare module with nothing on sys.path (the gateway) -> that fails, and the ImportError was swallowed into an empty `stills` with a blank note, which is
       why the pane showed nothing for four rounds. It is also why every such fix needs a gateway
       restart to take effect: the module is imported once, at startup.
 
@@ -116,34 +115,32 @@ def _core():
         except (AttributeError, OSError, TypeError):
             return False
 
-    known = sys.modules.get("core")
+    # Loaded under a private name, never as `core`. Writing the bare name into `sys.modules`
+    # claims a generic word in the host process: another plugin that ships its own `core` would
+    # then get this one from a plain `import core`, which is the cross-plugin breakage the
+    # catalog's no-runtime-override rule exists to prevent. The private name also means this
+    # module cannot be handed someone else's package by whatever imported first.
+    known = sys.modules.get(_CORE_NAME)
     if known is not None and _inside(known):
         return known
-
-    try:
-        import core as flat_pkg  # flat, with the plugin root on sys.path
-        if _inside(flat_pkg):
-            return flat_pkg
-    except Exception:
-        pass
 
     import importlib.util
 
     package_dir = root / "core"
     spec = importlib.util.spec_from_file_location(
-        "core", package_dir / "__init__.py", submodule_search_locations=[str(package_dir)]
+        _CORE_NAME, package_dir / "__init__.py", submodule_search_locations=[str(package_dir)]
     )
     if spec is None or spec.loader is None:
         raise ImportError(f"no importable core package at {package_dir}")
     module = importlib.util.module_from_spec(spec)
-    sys.modules["core"] = module
+    sys.modules[_CORE_NAME] = module
     try:
         spec.loader.exec_module(module)
     except BaseException:
         if known is not None:
-            sys.modules["core"] = known
+            sys.modules[_CORE_NAME] = known
         else:
-            sys.modules.pop("core", None)
+            sys.modules.pop(_CORE_NAME, None)
         raise
     return module
 
