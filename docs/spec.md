@@ -238,6 +238,25 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 3.5a A state that serves material records it
+
+Every state recorded what it served — daydream and dream through `_note_terms`, walk through its
+own step — except doomscroll, whose provider returned feed text and recorded nothing. The ledger
+therefore held no `move='doomscroll'` rows, `activations(..., "doomscroll")` came back empty, and
+the stills fell through to the **session baseline**: the pane painted unrelated chatter instead of
+the material, and nothing about the picture said so. A wrong picture is worse than an empty one.
+
+Three rules came out of it:
+
+- **the serving path records** — `scroll_text` notes the post's own words (not the feed name, not
+  the handle, not the `[n skipped as work]` note, which is the state talking about itself), and a
+  `feed unavailable` line is a failure, so it records nothing;
+- **a failed write says so** — `_note_terms` keeps its fail-open behaviour but records a named
+  event (`served terms not recorded · RuntimeError: …`) instead of `pass`. Silence is how this
+  survived a release;
+- **the state counter is not evidence** — `served` increments on delivery whether or not the
+  ledger write worked, so tests read the ledger and the activation, never the counter.
+
 ### 9.6b The web must not bury the dots
 
 "How can we allow for better navigation of the graph" became "it's really hard to find the dots

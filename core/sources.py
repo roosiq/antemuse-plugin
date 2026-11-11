@@ -423,8 +423,16 @@ def _note_terms(text: str, move: str, limit: int = 6) -> None:
         session = str(origin.get("session_id") or "")
         for term in history.extract(text, limit=limit):
             history.notice(term, move=move, session=session)
-    except Exception:
-        pass
+    except Exception as exc:
+        # Swallowing this silently is what let a state serve material for a release without ever
+        # writing a row: the picture fell back to the session baseline and looked fine. A ledger
+        # failure must not break the turn, but it must say so.
+        try:
+            from . import engine
+            engine.record("state", f"served terms not recorded · {type(exc).__name__}: "
+                                   f"{str(exc).splitlines()[0][:80]}", event="history")
+        except Exception:
+            pass
 
 
 def _pair_pool(pool: List[str]) -> List[str]:
@@ -831,8 +839,37 @@ def walk_text(steps: int = 1) -> List[str]:
 
 
 def scroll_text(steps: int = 1) -> List[str]:
+    """Doomscroll's material — and its ledger rows.
+
+    Every other state recorded what it served (`_note_terms` in daydream and dream, `build_step`
+    for walk); doomscroll did not, so its servings never reached the ledger, `activations(...,
+    "doomscroll")` came back empty, and the stills fell through to the *session baseline* and
+    painted unrelated chatter. The picture was not empty — it was painting the wrong thing,
+    which is worse, because nothing about it said so.
+    """
     from . import social
-    return social.pick(steps)
+    lines = social.pick(steps)
+    for line in lines:
+        body = _scroll_body(line)
+        if not body:
+            continue
+        _note_terms(body, "doomscroll")
+    return lines
+
+
+def _scroll_body(line: str) -> str:
+    """The post's own words, without the source name, the handle, or the skip note.
+
+    `social.pick` returns "source · @author · text · [n skipped as work]". The source name is a
+    feed and a handle is a name; neither is a concept this state served, and the skip note is
+    the state talking about itself. Only the text is material.
+    """
+    text = str(line or "")
+    if text.startswith("feed unavailable"):
+        return ""                     # a failure served nothing; it is not a serving
+    parts = [p for p in text.split(" · ") if p.strip()]
+    kept = [p for p in parts[1:] if not p.startswith("@") and not p.startswith("[")]
+    return " · ".join(kept) or (parts[-1] if parts else "")
 
 
 # ----------------------------------------------------------------- greenfield
