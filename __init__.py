@@ -429,11 +429,22 @@ def _enter(key: str, minutes: int | None = None):
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
             line = engine.enter(key, minutes, walk=arg, **where)
-            return line + "\n" + states.palette()
+            return line + "\n" + _waiting_for(key, line)
         override = int(arg) if arg.isdigit() else minutes
         line = engine.enter(key, override, **where)
-        return line + "\n" + states.palette()
+        return line + "\n" + _waiting_for(key, line)
     return handler
+
+
+def _waiting_for(key: str, entered: str) -> str:
+    """The line under a state's entry: what is happening, in the state's voice.
+
+    Nothing is added when the entry failed (`cannot enter …`), because a waiting line would be a
+    promise the plugin has already said it cannot keep.
+    """
+    if entered.startswith("cannot enter") or entered.startswith("no such state"):
+        return ""
+    return states.waiting(key if key in states.STATES else states.resolve(key) or key)
 
 
 def _return(_raw: str, session_id: str | None = None,

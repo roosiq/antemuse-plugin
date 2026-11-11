@@ -74,16 +74,12 @@ def test_a_state_that_finishes_its_dose_records_a_different_ending(monkeypatch):
 
 
 def test_one_row_per_state_not_one_per_turn(monkeypatch):
-    """A turn is not an ending. Three turns of a state that then expires: one row."""
+    """A turn is not an ending. A state that spanned three turns writes one row, not three."""
     monkeypatch.setattr(social, "pick", lambda steps=1: FEED[:steps])
-    before = len(_moves("walk"))
-    engine.enter("walk", session="moves-turns", platform="discord")
+    before = len(_moves("dream"))
+    engine.enter("dream", session="moves-turns", platform="discord")
     for _ in range(3):
         engine.note_turn()
         engine.tick()
-        engine.deliver_if_due()
-    data = engine._load()
-    data["active"]["ends_at"] = time.time() - 1
-    engine._save(data)
-    engine.tick()
-    assert len(_moves("walk")) - before == 1
+        engine.inject()
+    assert len(_moves("dream")) - before == 1

@@ -57,6 +57,12 @@ def flag(key: str) -> bool:
     return default
 
 
+def text(key: str, default: str = "") -> str:
+    """A plain string setting. Unknown keys fall back — a typo in config is not a crash."""
+    value = _raw(key, default)
+    return str(value) if isinstance(value, (str, int, float)) else default
+
+
 def number(key: str) -> int:
     default, low, high = INT_BOUNDS[key]
     value = _raw(key, default)

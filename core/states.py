@@ -15,7 +15,8 @@ STATES: Dict[str, Dict] = {
         "minutes": 3,
         "turns": 6,
         # the dose is turns worked with the frame elsewhere; the walk supplies nothing
-        "dose": {"unit": "turns", "n": 6},
+        "dose": {"unit": "hops", "n": 6},
+        "waiting": "taking a stroll · walking the graph",
         "cadence": 9,
         "tools": None,
         "scene": "walk",
@@ -43,6 +44,7 @@ STATES: Dict[str, Dict] = {
         "minutes": 3,
         "turns": 2,
         "dose": {"unit": "pairs", "n": 2},
+        "waiting": "staring out of the window · letting two memories meet",
         "cadence": 10,
         "tools": [],
         "scene": "daydream",
@@ -61,6 +63,7 @@ STATES: Dict[str, Dict] = {
         "minutes": 8,
         "turns": 3,
         "dose": {"unit": "items", "n": 3},
+        "waiting": "scrolling · looking for stupidity and comedy",
         "cadence": 6,
         "tools": ["web_search", "web_extract", "read_file", "search_files", "browser_exec"],
         "scene": "doomscroll",
@@ -79,6 +82,7 @@ STATES: Dict[str, Dict] = {
         "minutes": 5,
         "turns": 3,
         "dose": {"unit": "directions", "n": 1},
+        "waiting": "thinking back over what you have done",
         "cadence": 20,
         # Read the empty project, change nothing. A trailhead that can edit is a
         # scaffold generator, and that is a different tool.
@@ -102,6 +106,7 @@ STATES: Dict[str, Dict] = {
         "minutes": 30,
         "turns": 2,
         "dose": {"unit": "recombinations", "n": 2},
+        "waiting": "asleep · letting the day's projects touch",
         "cadence": 40,
         "tools": [],
         "scene": "dream",
@@ -142,6 +147,17 @@ def resolve(name: str) -> str | None:
     key = (name or "").strip().lower().replace(" ", "_")
     key = ALIASES.get(key, key)
     return key if key in STATES else None
+
+
+def waiting(key: str) -> str:
+    """The line a person sees while the state runs — the shape of a waiting message.
+
+    A state command used to answer with the whole palette: five states, their ceilings, doses,
+    tool policies and a legend. That is a listing, not a reply, and it tells the person what they
+    already asked for. What they want to know while it runs is that something is happening.
+    """
+    spec = STATES.get(key) or {}
+    return str(spec.get("waiting") or f"{key} running")
 
 
 def palette() -> str:

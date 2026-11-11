@@ -473,14 +473,20 @@ def _last_material(key: str, data: Dict[str, Any]) -> float:
 
 
 def deliver_if_due() -> int:
-    """One item per turn, until the dose is delivered.
+    """Deliver the rest of the dose now, so a state is as short as its material allows.
 
-    Delivery used to be paced by a clock: a step every N seconds. That made the dose a
-    function of how fast the model happened to be — a fast model finished the state and
-    sat in it, a slow one was cut off mid-move. Now the dose is counted in items and a
-    turn is the unit: the same act costs the same number of turns for every model.
+    Two pacings came before this one. A clock first: a step every N seconds, which made the dose
+    a function of model speed. Then one item per turn, which made a six-hop walk take six of the
+    person's messages — a walk that expires at 2 of 6 because nobody talks that fast. The dose is
+    the act, and the act is cheap locally (six hops resolve in about three seconds), so there is
+    no reason to spread it across turns: drain it in the turn it falls due.
+
+    `antemuse.deliver = "drip"` restores one item per turn. A setting may change how long a state
+    is; it may not change what a state is, and both pacings deliver the same dose.
     """
     from . import sources
+    from . import settings
+
     with _LOCK:
         data = _load()
         active = data.get("active") or {}
@@ -492,13 +498,23 @@ def deliver_if_due() -> int:
         served = int(active.get("served") or 0)
         if dose and served >= dose:
             return 0
-        if active.get("served_turn") == int(data["work"].get("turns") or 0):
-            return 0          # already delivered this turn: one item per turn, never two
+        drip = str(settings.text("deliver", "dose")).strip().lower() == "drip"
+        if drip and active.get("served_turn") == int(data["work"].get("turns") or 0):
+            return 0          # drip mode: already delivered this turn
+        remaining = 1 if drip else (max(1, dose - served) if dose else 1)
     provider = sources.PROVIDERS.get(key)
     if provider is None:
         return 0
+    got: list[str] = []
     try:
-        lines = provider(1)
+        for _ in range(min(remaining, 12)):        # bounded: a provider that never fills stops
+            batch = provider(1)
+            if not batch:
+                break
+            got.extend(batch)
+            if len(got) >= remaining:
+                break
+        lines = got
     except Exception as exc:  # a provider failing must not kill the turn
         record("state", f"{key} provider failed · {exc}", event=key)
         with _LOCK:
@@ -520,7 +536,6 @@ def deliver_if_due() -> int:
             active["started"] = active.get("started") or time.time()
         data["active"] = active
         _save(data)
-    complete_if_dosed()
     return len(lines)
 
 
@@ -684,6 +699,11 @@ def inject(session: str | None = None) -> str | None:
     if nudge:
         lines.append("")
         lines.append(advice["line"])
+    # Close a spent state here, not in deliver_if_due: the turn that consumed the last item has
+    # already been handed its block above, so there is nothing left to owe it. Ending inside the
+    # delivery call would clear `active` before the block was built and the person would watch a
+    # state that printed a line and changed nothing.
+    complete_if_dosed()
     return "\n".join(lines)
 
 

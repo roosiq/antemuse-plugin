@@ -87,14 +87,31 @@ def test_the_ceiling_is_still_a_ceiling():
     assert engine.peek()["ends_at"] > time.time()
 
 
-def test_per_turn_delivery_beats_the_old_clock():
-    """Two turns in the same second still get two items: the old code returned 0."""
-    engine.enter("daydream", 10)
+def test_a_state_costs_one_turn_not_one_turn_per_item():
+    """The dose lands in the turn it falls due: six hops, one message from the person."""
+    for key in states.STATES:
+        engine.enter(key, session="pace", platform="discord")
+        engine.note_turn()
+        engine.inject()
+        assert engine.peek() is None, f"{key} was still running after its dose"
+        engine.stop(reason="probe")
+
+
+def test_drip_is_still_available_and_still_delivers_the_same_dose(monkeypatch):
+    """A setting may change how long a state is; it may not change what a state is."""
+    from core import settings
+
+    from core import sources
+
+    monkeypatch.setattr(settings, "_raw", lambda key, default=None: "drip" if key == "deliver" else default)
+    monkeypatch.setitem(sources.PROVIDERS, "dream", lambda n=1: ["a joining line"] * n)
+    engine.enter("dream", session="drip", platform="discord")
     engine.note_turn()
     first = engine.deliver_if_due()
+    assert engine.deliver_if_due() == 0, "drip: one delivery per turn"
     engine.note_turn()
     second = engine.deliver_if_due()
-    assert first >= 1 and second >= 1, (first, second)
+    assert first == 1 and second == 1, (first, second)
 
 
 def test_a_directive_never_promises_material_its_state_does_not_feed():
@@ -134,3 +151,29 @@ def test_a_walk_tells_the_model_it_is_getting_nothing():
     text = str(states.STATES["walk"]["directive"]).lower()
     assert "no material" in text, "a subtractive state must say so, or the model invents a hop"
     assert "scenery" in text
+
+
+def test_a_state_command_answers_with_a_waiting_line_not_the_palette():
+    """`/walk` used to answer with five states, their ceilings, doses, tool policies and a legend.
+
+    That is a listing, not a reply: the person asked for a walk and got the menu back. What belongs
+    under the entry line is one sentence in the state's own voice — the shape of a waiting message.
+    """
+    from core import states
+
+    card = states.palette()
+    assert "AGENT STATES" in card, "the listing still exists for /break and /states"
+    for key in states.STATES:
+        line = states.waiting(key)
+        assert line and "\n" not in line, key
+        assert line != key, f"{key} needs words of its own"
+        assert states.waiting(key) not in card, "the waiting line is not a menu row"
+
+
+def test_every_state_has_a_mask_that_matches_its_move():
+    """One word per state, checked for the thing it actually does — not for being pretty."""
+    from core import states
+
+    wants = {"walk": "walk", "daydream": "memor", "doomscroll": "scroll", "unstuck": "done", "dream": "asleep"}
+    for key, needle in wants.items():
+        assert needle in states.waiting(key).lower(), (key, states.waiting(key))

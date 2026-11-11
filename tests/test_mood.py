@@ -141,10 +141,9 @@ def test_the_walk_keeps_its_dose_but_runs_fast():
     assert spec["minutes"] <= 3
 
 
-def test_material_arrives_once_per_turn_not_once_per_second():
+def test_the_dose_arrives_in_the_turn_it_falls_due():
+    """The act is short; spreading it over six of the person's messages was the defect."""
     engine.enter("dream", 10)
     engine.note_turn()
-    assert engine.deliver_if_due() >= 1, "the first turn of a state gets material"
-    assert engine.deliver_if_due() == 0, "one item per turn, never two"
-    engine.note_turn()
-    assert engine.deliver_if_due() >= 1, "the next turn gets the next item"
+    assert engine.deliver_if_due() >= 1, "the turn that is due gets the material"
+    assert engine.deliver_if_due() == 0, "and the dose is spent, so nothing more arrives"

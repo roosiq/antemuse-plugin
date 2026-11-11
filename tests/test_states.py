@@ -247,8 +247,8 @@ def test_a_turn_brings_material_that_the_dead_thread_missed():
     real = sources.PROVIDERS
     sources.PROVIDERS = Fake.PROVIDERS
     try:
-        assert eng.deliver_if_due() == 1, "the first turn of a state gets material"
-        assert eng.deliver_if_due() == 0, "not due twice in a row"
+        assert eng.deliver_if_due() >= 1, "the first turn of a state gets material"
+        assert eng.deliver_if_due() == 0, "the dose is spent; not due twice in a row"
         text = engine.inject() or ""
         assert "salt (n) → brine (n)" in text
     finally:
