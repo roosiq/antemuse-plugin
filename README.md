@@ -490,14 +490,16 @@ model gets the content.
 
 - Hermes Agent **0.21.6 or newer**; developed and verified against 0.22.5.
 - Python 3.11+ (Hermes's own runtime is enough).
-- Linux and macOS. Windows is untested.
+- Linux, macOS and Windows. Windows is exercised: the shipped suite runs there (bash- and
+  symlink-dependent tests skip by name rather than fail), and `snapshot_path()` renders on a
+  machine with none of the usual fonts.
 - `node` and `npm` are optional: with them the terminal shows live scenes; without
   them the takeover falls back to cached frames and the renderer tests skip.
 - Terminals need truecolor and half-block glyphs for the takeover. Redirected
   output gets one picture instead of the animation.
-- Surfaces verified in this build: the CLI takeover, the chat card, the text
-  record, and the PNG card. The desktop dock pane is built but not confirmed
-  inside the packaged app.
+- Surfaces verified: the concept-activation pane in the packaged desktop app (WebGL, drawn
+  from the ledger), the CLI takeover, the chat account, and the PNG card. The pane is the only
+  visualization; chat carries words, not pictures.
 
 ## Known limitations
 

@@ -36,11 +36,11 @@ if command -v rsync >/dev/null 2>&1; then
   rsync -a \
     --exclude .git --exclude node_modules --exclude __pycache__ --exclude .pytest_cache \
     --exclude .venv --exclude experiments --exclude evaluation --exclude specs --exclude site \
-    --exclude docs --exclude plugin-catalog --exclude dist --exclude .post-staging \
+    --exclude docs --exclude dist --exclude .post-staging --exclude .antemuse \
     "$SRC"/ "$STAGE"/
 else
   cp -a "$SRC" "$STAGE"
-  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,docs,plugin-catalog,dist}
+  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,docs,dist,.antemuse}
   find "$STAGE" -name __pycache__ -prune -exec rm -rf {} +
 fi
 # The pane is the only thing the desktop loads. The baked scenes were deleted from the renderer
@@ -68,6 +68,17 @@ hermes plugins validate "$STAGE" >/tmp/antemuse-validate.log 2>&1 || {
   die "the packed tree failed validation — see above"
 }
 ok "validation passed"
+
+# Validation imports the package, and importing writes bytecode into the staged tree — 104 .pyc
+# reached 0.10.15 this way, plus the walk cursor the plugin kept in the working directory. The
+# exclusions above cannot help: these files did not exist when rsync ran. Prune after the gate,
+# then assert, so "the artifact is what the script built" is checkable rather than assumed.
+find "$STAGE" -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
+find "$STAGE" -name '*.pyc' -delete 2>/dev/null || true
+rm -rf "$STAGE/.pytest_cache" "$STAGE/.antemuse"
+left="$(find "$STAGE" \( -name '*.pyc' -o -name '__pycache__' -o -name '.antemuse' \) | head -5)"
+[[ -z "$left" ]] || die "the staged tree still carries build residue: $left"
+ok "no bytecode or local state in the package"
 
 say "pack"
 tar -C "$OUT" -czf "$OUT/$NAME.tar.gz" "$NAME"

@@ -324,12 +324,17 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         if options:
             data["active"]["options"] = dict(options)
         now_break = now
+        # The gap is measured to the break before THIS one. Reading breaks[-1] after the append
+        # measured the break against itself: the delta was always 0.0, observe_stretch dropped
+        # every sample at its `<= 0` floor, and the footer said "no baseline yet" forever.
+        before = list(data.get("breaks") or [])
+        last = float(before[-1]) if before else float(
+            data.get("work", {}).get("started_at") or now)
+        gap = (now - last) / 60.0
         data.setdefault("breaks", []).append(now_break)
         if not previous:
             from . import normal
-            last = float(data["breaks"][-1]) if data.get("breaks") else float(
-                data["work"].get("started_at") or now)
-            normal.observe_stretch((now - last) / 60.0)
+            normal.observe_stretch(gap)
         entries = [e for e in (data.get("entries") or []) if isinstance(e, dict)][-7:]
         entries.append({"key": spec_key, "at": now_break})
         data["entries"] = entries

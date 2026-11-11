@@ -161,3 +161,35 @@ def test_the_package_ships_its_tests():
     build = (ROOT / "scripts" / "build-release.sh").read_text()
     assert "--exclude tests" not in build
     assert ",tests," not in build and ",tests}" not in build
+
+
+def test_the_build_prunes_what_validation_leaves_inside_the_stage():
+    """A source lock, not a proof of the artifact.
+
+    0.10.15 shipped 104 .pyc files and a walk cursor, and the exclusions could not catch them:
+    `hermes plugins validate` imports the staged package, which writes __pycache__ into the stage
+    *after* the copy. The prune has to happen after the gate. What this test can assert here is
+    that the build still does that — the artifact itself is checked by building it.
+    """
+    script = (ROOT / "scripts" / "build-release.sh").read_text()
+    gate = script.index("hermes plugins validate")
+    # rindex: the fallback branch has the same command earlier, before the gate
+    prune = script.rindex('find "$STAGE" -name __pycache__ -prune -exec rm -rf')
+    assert prune > gate, "the prune must come after validation, or it prunes a clean tree"
+    assert 'die "the staged tree still carries build residue' in script, \
+        "the build must fail rather than ship residue"
+    for junk in (".pytest_cache", ".antemuse"):
+        assert junk in script, f"{junk} is not excluded from the package"
+
+
+def test_the_catalog_entry_travels_with_what_it_describes():
+    """The submission artifact cannot be missing from the submission."""
+    entry = ROOT / "plugin-catalog" / "antemuse.yaml"
+    assert entry.exists(), "no catalog entry: the catalog PR would have nothing to copy"
+    import yaml
+
+    held = yaml.safe_load(entry.read_text())
+    manifest = yaml.safe_load((ROOT / "plugin.yaml").read_text())
+    assert held["version"] == manifest["version"], (held["version"], manifest["version"])
+    assert len(str(held["sha"])) == 40, held["sha"]
+    assert held["platforms"] == manifest["platforms"], (held["platforms"], manifest["platforms"])

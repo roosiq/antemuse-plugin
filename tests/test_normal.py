@@ -90,3 +90,32 @@ def test_a_state_turn_does_not_enter_the_baseline(monkeypatch, tmp_path):
     engine.stop("")
     engine.note_turn()
     assert normal.stats()["turns"] == before + 1
+
+
+def test_entering_after_a_gap_records_the_stretch(monkeypatch):
+    """The measurement has to happen on the path a person actually takes.
+
+    Every existing test called observe_stretch() directly. In the real entry the gap was computed
+    from `breaks[-1]` *after* appending the new break, so it was always 0.0, the floor dropped it,
+    and the footer said "no baseline yet" after eighteen states. This goes through enter().
+    """
+    import time
+
+    from core import engine, normal
+
+    data = engine._load()
+    three_hours_ago = time.time() - 3 * 3600
+    data["work"]["started_at"] = three_hours_ago
+    data["breaks"] = [three_hours_ago]
+    data["entries"] = []
+    data["active"] = None
+    data["baseline"] = {}
+    engine._save(data)
+
+    before = normal.stats().get("stretches") or 0
+    engine.enter("daydream")
+    after = normal.stats().get("stretches") or 0
+    assert after == before + 1, (before, after)
+    recorded = normal._load().get("stretches") or []
+    assert max(recorded) > 60, f"a three-hour gap was recorded as {max(recorded)} minutes"
+    engine.stop(reason="returned")
