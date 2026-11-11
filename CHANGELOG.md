@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.31 — 2026-11-11
+
+- nothing that ships imports a module the package dropped (2026-11-11)
+
 ## 0.10.30 — 2026-11-11
 
 - the account ends where the walk landed (2026-11-11)
