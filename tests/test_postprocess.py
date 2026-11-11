@@ -6,8 +6,12 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, str(ROOT))
+
+pytest.importorskip("playwright", reason="no browser automation installed")
 
 _PAGE = ROOT / "tools" / "activation_post.html"
 

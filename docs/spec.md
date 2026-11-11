@@ -238,6 +238,26 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 3.5e A claim and a byte are different things
+
+Three fixes were reported in 0.10.11/0.10.12 that the shipped code did not contain, each found by
+running the artifact on a second machine:
+
+- **seeding was never fixed.** `random_term()` still drew from the global RNG: the edit had been
+  written against text that no longer matched, so it silently changed nothing while the summary
+  said otherwise. It is now `random.Random(seed)` keyed by `(state, when, counter)`, and the test
+  that "proved" determinism is re-pointed at a random-tier salt — `counter=3` resolves to
+  `project`, so the old test never reached the branch it claimed to protect.
+- **`%-d` was glibc-only.** `session_label` used `strftime("%b %-d %H:%M")`, which raises on
+  Windows; the `except` swallowed it and every session silently fell back to a raw id. The day is
+  formatted explicitly now, with no platform branch.
+- **environment failures are skipped, not triaged per release.** bash-script and symlink tests
+  gate on `shutil.which("bash")` and a real symlink probe; the browser tests `importorskip`
+  playwright. A Windows run should fail only for code.
+
+Rule: a release note names what was *run*, not what was intended. Rewriting a file is not evidence
+that the string matched the file; the check is the behavior on the packed tree.
+
 ### 3.5d The shipped suite must run from the shipped package
 
 Shipping `tests/` without the trees they read was half a policy: the package collected 693 test

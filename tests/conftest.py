@@ -52,3 +52,42 @@ def requires_tree(*names):
     missing = [n for n in names if not (root / n).exists()]
     return pytest.mark.skipif(
         bool(missing), reason=f"needs {', '.join(missing)}: repository-only, not in the package")
+
+
+def needs_bash():
+    """A test that shells out to a bash script cannot run where bash is not installed."""
+    import shutil
+
+    import pytest
+
+    return pytest.mark.skipif(shutil.which("bash") is None,
+                              reason="needs bash on PATH (not installed on stock Windows)")
+
+
+def needs_git():
+    import shutil
+
+    import pytest
+
+    return pytest.mark.skipif(shutil.which("git") is None,
+                              reason="needs git on PATH")
+
+
+def needs_symlinks():
+    """Windows refuses symlinks without Developer Mode or an elevated shell (WinError 1314)."""
+    import sys
+    import tempfile
+    from pathlib import Path as _Path
+
+    import pytest
+
+    if not sys.platform.startswith("win"):
+        return pytest.mark.skipif(False, reason="")
+    ok = True
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            (_Path(tmp) / "a").write_text("x")
+            (_Path(tmp) / "b").symlink_to(_Path(tmp) / "a")
+    except (OSError, NotImplementedError):
+        ok = False
+    return pytest.mark.skipif(not ok, reason="symlinks need Developer Mode on Windows")

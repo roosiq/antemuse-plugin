@@ -136,8 +136,13 @@ def conversation_terms(limit: int = 16) -> List[str]:
     return seen
 
 
-def random_term() -> str:
-    """One WordNet lemma, unrelated to the project on purpose."""
+def random_term(seed: str = "") -> str:
+    """One WordNet lemma, unrelated to the project on purpose — and the same one on a replay.
+
+    This used the global RNG, so the random share of the mix was the only part of an entry a
+    replay could not reproduce, in the module whose docstring says determinism is the point. It
+    carries its own RNG keyed by (state, when, counter).
+    """
     try:
         import random
 
@@ -145,7 +150,8 @@ def random_term() -> str:
         names = list(wn.all_lemma_names())
         if not names:
             return ""
-        synsets = wn.synsets(random.choice(names))
+        rng = random.Random(seed) if seed else random
+        synsets = wn.synsets(rng.choice(names))
         return synsets[0].lemma_names()[0].replace("_", " ") if synsets else ""
     except Exception:
         return ""
@@ -177,14 +183,14 @@ def _order(state: str) -> List[str]:
     return declared + rest
 
 
-def _pool(source: str, goal: str, limit: int) -> List[str]:
+def _pool(source: str, goal: str, limit: int, seed: str = "") -> List[str]:
     if source == "memory":
         return memory_terms(limit)
     if source == "project":
         return project_terms(goal, limit)
     if source == "conversation":
         return conversation_terms(limit)
-    return [random_term()]
+    return [random_term(seed)]
 
 
 def entry(state: str, *, when: float, counter: int = 0, exclude: Sequence[str] = (),
@@ -199,7 +205,7 @@ def entry(state: str, *, when: float, counter: int = 0, exclude: Sequence[str] =
     order = [tier] + [s for s in _order(state) if s != tier]
     used = {t.lower() for t in exclude}
     for source in order:
-        pool: Iterable[str] = _pool(source, goal, 48)
+        pool: Iterable[str] = _pool(source, goal, 48, f"{state}|{int(when)}|{counter}")
         for term in pool:
             if term and term.lower() not in used:
                 return {"source": source, "term": term}
@@ -218,7 +224,7 @@ def candidates(state: str, *, when: float, counter: int = 0, exclude: Sequence[s
     used = {t.lower() for t in exclude}
     out: List[Dict[str, str]] = []
     for source in order:
-        pool: Iterable[str] = _pool(source, goal, limit * 4)
+        pool: Iterable[str] = _pool(source, goal, limit * 4, f"{state}|{int(when)}|{counter}")
         for term in pool:
             if not term or term.lower() in used:
                 continue

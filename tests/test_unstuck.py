@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import subprocess
+
+from conftest import needs_git  # noqa: E402
 import sys
 from pathlib import Path
 
@@ -9,6 +11,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from core import recommend, sources, states  # noqa: E402
+
+
+pytestmark = needs_git()
 
 
 def _repo(path: Path, commits: int = 0, spec: bool = False) -> Path:

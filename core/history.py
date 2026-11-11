@@ -239,7 +239,11 @@ def session_label(session: str) -> str:
         return "session"
     for fmt, width in (("%Y%m%d_%H%M%S", 15), ("%Y-%m-%d", 10)):
         try:
-            return _dt.datetime.strptime(raw[:width], fmt).strftime("%b %-d %H:%M")
+            when = _dt.datetime.strptime(raw[:width], fmt)
+            # "%b %-d" is a glibc extension: on Windows strftime raises "Invalid format string",
+            # the except below swallows it, and the label silently falls back to a raw id. The day
+            # is formatted by hand instead, so there is no platform branch to get wrong.
+            return f"{when:%b} {when.day} {when:%H:%M}"
         except Exception:
             continue
     if raw.startswith("local-"):

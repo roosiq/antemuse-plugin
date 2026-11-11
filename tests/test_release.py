@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from conftest import needs_bash  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -52,6 +54,7 @@ def test_the_projection_is_built_not_committed():
 
 
 
+@needs_bash()
 def test_the_doctor_count_reads_the_number_the_doctor_printed():
     """A regex that matched zero digits once made a perfect install report "registered 0 hooks".
     The counter is a separate, sourced file now, so it can be exercised on its own."""

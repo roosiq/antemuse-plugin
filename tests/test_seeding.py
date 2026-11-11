@@ -103,3 +103,30 @@ def test_dream_mix_is_memory_first_not_project():
     total = sum(counts.values()) or 1
     assert 100 * counts["memory"] / total >= 50, counts
     assert 100 * counts["project"] / total <= 32, counts
+
+
+def _random_counter(state="walk", when=1_700_000_000):
+    """A counter whose salt lands on the random tier — the one the old test never reached.
+
+    `test_the_same_entry_replays_the_same_seed` used counter=3, which resolves to `project`. It
+    passed while `random_term()` still drew from the global RNG, because that branch never ran.
+    """
+    for counter in range(200):
+        if seeding._tier(state, when, counter) == "random":
+            return counter
+    raise AssertionError("no salt reaches the random tier")
+
+
+def test_a_random_tier_entry_replays_the_same_term():
+    counter = _random_counter()
+    first = seeding.entry("walk", when=1_700_000_000, counter=counter)
+    assert first["source"] == "random", first
+    second = seeding.entry("walk", when=1_700_000_000, counter=counter)
+    assert first == second, (first, second)
+
+
+def test_the_random_term_is_a_function_of_its_seed():
+    a = [seeding.random_term("walk|1700000000|7") for _ in range(3)]
+    assert len(set(a)) == 1, a
+    b = [seeding.random_term("walk|1700000000|8") for _ in range(3)]
+    assert len(set(b)) == 1, b

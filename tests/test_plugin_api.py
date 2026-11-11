@@ -16,6 +16,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import needs_symlinks  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD = ROOT / "dashboard"
 
@@ -421,6 +423,7 @@ def test_the_map_is_drawn_when_no_state_is_running(monkeypatch, tmp_path):
     assert payload["stills"], payload.get("still_note")
 
 
+@needs_symlinks()
 def test_the_router_finds_core_when_the_host_imports_it_as_a_package(monkeypatch, tmp_path):
     """The host imports this router as `<plugin>.dashboard.plugin_api`, and a bare `from core
     import ...` raises ImportError there — swallowed, it told the pane "nothing firing" while the
