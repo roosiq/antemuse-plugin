@@ -7,7 +7,46 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core import recommend  # noqa: E402
+import pytest  # noqa: E402
+
+from core import recommend, settings  # noqa: E402
+
+
+class Host:
+    """The host surface `settings` reads, with only the keys these tests need."""
+
+    def __init__(self, values=None):
+        self.values = values or {}
+
+    def get_config(self, key, default=None):
+        return self.values.get(key, default)
+
+
+@pytest.fixture(autouse=True)
+def _display_on(request):
+    """Recommendations are off by default, so the pattern tests switch display on.
+
+    The two tests that are *about* the switch opt out by name.
+    """
+    if "default" in request.node.name or "switch" in request.node.name:
+        yield
+        return
+    settings.bind(Host({"show_recommendations": True}))
+    yield
+
+
+def test_recommendations_are_not_shown_by_default():
+    settings.bind(Host())
+    assert settings.flag("show_recommendations") is False
+    assert recommend.suggest({"work": {"turns": 8, "streak": 3}}) is None
+
+
+def test_the_switch_is_the_only_thing_between_measure_and_speech():
+    settings.bind(Host({"show_recommendations": False, "recommend_enabled": True}))
+    assert recommend.suggest({"work": {"turns": 8, "streak": 3}}) is None
+    settings.bind(Host({"show_recommendations": True}))
+    got = recommend.suggest({"work": {"turns": 8, "streak": 3}})
+    assert got and got["pattern"] == "loop"
 
 
 def test_a_fresh_work_gets_silence():

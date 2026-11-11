@@ -198,6 +198,10 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     from . import settings
     if not settings.flag("recommend_enabled"):
         return None
+    # A recommendation that is measured but never displayed is noise with a cost:
+    # both readers here (the /break line and the injected nudge) speak to someone.
+    if not settings.flag("show_recommendations"):
+        return None
 
     now = now if now is not None else time.time()
     work = data.get("work") or {}

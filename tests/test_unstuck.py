@@ -10,10 +10,28 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core import recommend, sources, states  # noqa: E402
+import pytest  # noqa: E402
+
+from core import recommend, settings, sources, states  # noqa: E402
 
 
 pytestmark = needs_git()
+
+class _Host:
+    """The host surface settings reads; display is on, because these tests are about speech."""
+
+    def __init__(self, values=None):
+        self.values = values or {}
+
+    def get_config(self, key, default=None):
+        return self.values.get(key, default)
+
+
+@pytest.fixture(autouse=True)
+def _recommendations_visible():
+    settings.bind(_Host({"show_recommendations": True}))
+    yield
+
 
 
 def _repo(path: Path, commits: int = 0, spec: bool = False) -> Path:

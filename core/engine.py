@@ -296,9 +296,13 @@ def take_break(choice: str | None = None) -> str:
             return f"no such state. try: {', '.join(states.STATES)}"
         return enter(wanted)
     advice = recommend_line = None
-    from . import recommend
+    from . import recommend, settings
     advice = recommend.suggest({**data_for_advice(), "minutes": view["minutes"],
                                 "feeling": view["feeling"]})
+    # With recommendations hidden there is no suggestion to print and no placeholder
+    # sentence to stand in for one: the mood line and the menu are the whole answer.
+    if not settings.flag("show_recommendations"):
+        return mood.line(view) + "\n" + states.palette()
     recommend_line = advice["line"] if advice else "nothing measured yet that names a state"
     return mood.line(view) + "\n" + recommend_line + "\n" + states.palette()
 

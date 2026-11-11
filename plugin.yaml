@@ -2,7 +2,7 @@ name: antemuse
 label: Antemuse
 kind: standalone
 manifest_version: 2
-version: "0.10.31"
+version: "0.10.32"
 author: Antemuse
 homepage: https://antemuse.com
 license: MIT
@@ -34,6 +34,15 @@ config_schema:
     description: >-
       Let the plugin suggest a state when the shape of the work has a name (a loop,
       a data wall, a long stretch). Off means silence: nothing is suggested, ever.
+  show_recommendations:
+    type: bool
+    default: false
+    label: Show recommendations
+    description: >-
+      Display a suggested state when the shape of the work has a name (a loop, a
+      data wall, a long stretch). Off by default: states are measured either way,
+      but nothing is suggested to the person and nothing is offered to the agent.
+      /break still works and still names no state unless this is on.
   recommend_cooling_minutes:
     type: int
     default: 45

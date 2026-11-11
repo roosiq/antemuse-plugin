@@ -87,10 +87,18 @@ def test_strings_from_a_config_editor_count_as_booleans():
 
 def test_disabled_recommendations_say_nothing(monkeypatch):
     from core import recommend
-    settings.bind(Host({"recommend_enabled": False}))
+    settings.bind(Host({"recommend_enabled": False, "show_recommendations": True}))
     assert recommend.suggest({"work": {"turns": 999, "streak": 9}}) is None
-    settings.bind(Host())
+    settings.bind(Host({"show_recommendations": True}))
     assert recommend.suggest({"work": {"turns": 999, "streak": 9}}) is not None
+
+
+def test_hidden_recommendations_say_nothing_even_when_measured(monkeypatch):
+    """Measuring a state is not the same as telling someone about it."""
+    from core import recommend
+    settings.bind(Host({"recommend_enabled": True}))
+    assert settings.flag("show_recommendations") is False
+    assert recommend.suggest({"work": {"turns": 999, "streak": 9}}) is None
 
 
 def test_the_cooling_window_comes_from_settings():

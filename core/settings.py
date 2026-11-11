@@ -21,6 +21,9 @@ INT_BOUNDS = {
 }
 BOOL_DEFAULTS = {
     "recommend_enabled": True,
+    # Recommendations are measured either way; this decides whether they are ever
+    # shown. Off by default: the plugin observes, it does not tell the person what to do.
+    "show_recommendations": False,
     "suggest_autofollow": False,
 }
 

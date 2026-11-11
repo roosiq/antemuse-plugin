@@ -10,11 +10,29 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("NLTK_DATA", os.path.expanduser("~/nltk_data"))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="mood-test-")
 
-from core import engine, mood, states  # noqa: E402
+import pytest  # noqa: E402
+
+from core import engine, mood, settings, states  # noqa: E402
 
 
 def setup_function(_):
     engine.clear()
+
+class _Host:
+    """The host surface settings reads; display is on, because these tests are about speech."""
+
+    def __init__(self, values=None):
+        self.values = values or {}
+
+    def get_config(self, key, default=None):
+        return self.values.get(key, default)
+
+
+@pytest.fixture(autouse=True)
+def _recommendations_visible():
+    settings.bind(_Host({"show_recommendations": True}))
+    yield
+
 
 
 def _age_the_break(minutes: float, turns: int = 0, fails: int = 0) -> None:
