@@ -5,6 +5,10 @@
 # they are evidence, not runtime, they are 13 MB of someone else's prose, and the install-time
 # security scanner correctly treats arbitrary model output in a plugin as untrusted text.
 #
+# The tests travel with the package on purpose: a claim about behaviour is only checkable by
+# whoever has the artifact, and an independent verifier should be able to run the same tests on
+# the same bytes rather than take a report's word for it.
+#
 #   usage:  ./scripts/build-release.sh [--out DIR]
 #
 # The build validates the packed tree with the same gate a catalog reviewer runs, so a package
@@ -32,11 +36,11 @@ if command -v rsync >/dev/null 2>&1; then
   rsync -a \
     --exclude .git --exclude node_modules --exclude __pycache__ --exclude .pytest_cache \
     --exclude .venv --exclude experiments --exclude evaluation --exclude specs --exclude site \
-    --exclude docs --exclude tests --exclude plugin-catalog --exclude dist --exclude .post-staging \
+    --exclude docs --exclude plugin-catalog --exclude dist --exclude .post-staging \
     "$SRC"/ "$STAGE"/
 else
   cp -a "$SRC" "$STAGE"
-  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,docs,tests,plugin-catalog,dist}
+  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,docs,plugin-catalog,dist}
   find "$STAGE" -name __pycache__ -prune -exec rm -rf {} +
 fi
 # The pane is the only thing the desktop loads. The baked scenes were deleted from the renderer

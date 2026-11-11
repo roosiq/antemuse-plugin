@@ -238,6 +238,20 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 3.5c An upgrade must land where a fresh install lands
+
+The packed tree was clean and a fresh home installed clean, while an *upgrade* home stayed dirty:
+`install.py`'s copy writes over the old tree with `dirs_exist_ok=True` and never deletes, so
+`plugins/antemuse/desktop/` kept an older release's `art/`, `vendor/`, `scene3d.js` and
+`plugin.truncated.bak`. That directory is the app reconciler's **source** (`fs.cp(source.dir,
+staged, {recursive:true})`), so the pane dir stayed clean only because the marker's mtime happened
+to be newer than the source — a coincidence, not a fix. Step 3 now sweeps the package's desktop
+half with the same rule the destination uses.
+
+Tests ship in the package, deliberately: a claim about behaviour is only checkable by whoever holds
+the artifact, and `build-release.sh` used to exclude `tests/`, which left an independent verifier
+able to reproduce behaviour by hand but unable to run the same tests on the same bytes.
+
 ### 3.5b Every ending writes its row, and only what runs ships
 
 Two more of the same shape, found by reading the ledger rather than trusting the release notes.

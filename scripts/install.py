@@ -193,6 +193,14 @@ def main() -> int:
     copytree(SRC, plugin_dir, dry)
     if not dry and not (plugin_dir / "plugin.yaml").exists():
         die("plugin.yaml missing after copy")
+    # On an upgrade this directory is the app's *source*: its reconciler does
+    # fs.cp(source.dir, staged, {recursive:true}) into desktop-plugins/, so anything an older
+    # release left here comes back into the pane dir on the next republish. copytree writes over
+    # but never deletes, so the extras have to be swept here, not only at the destination.
+    stale = clear_pane_dir(plugin_dir / "desktop")
+    if stale:
+        ok(f"swept {len(stale)} file(s) from the package's desktop half: "
+           + ", ".join(sorted(stale)[:6]) + ("…" if len(stale) > 6 else ""))
     ok(str(plugin_dir))
 
     say("3b. register and enable")

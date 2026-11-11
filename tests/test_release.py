@@ -26,8 +26,9 @@ def test_the_installer_puts_the_dependencies_where_hermes_reads():
 
 def test_the_release_ships_runtime_only():
     text = (ROOT / "scripts" / "build-release.sh").read_text()
-    for excluded in ("--exclude experiments", "--exclude evaluation", "--exclude tests"):
+    for excluded in ("--exclude experiments", "--exclude evaluation"):
         assert excluded in text, excluded
+    # tests/ is not excluded: see test_the_package_ships_its_tests
     # A package that cannot be installed is never produced.
     assert "plugins validate" in text
 
@@ -132,3 +133,15 @@ def test_the_e2e_does_not_shell_out_to_posix_tools():
     assert "tarfile.open" in src, "extract with the standard library"
     assert '"tar"' not in src and '"bash"' not in src
     assert "/home/" not in src and "/tmp/" not in src, "no hand-written host paths"
+
+
+def test_the_package_ships_its_tests():
+    """Evidence travels with the artifact.
+
+    The packer used to exclude `tests/`, so an independent verifier on another machine could not
+    check any behavioural claim — the fixes had to be reproduced by hand against the engine. That
+    is a decision, not a side effect, and this pins it.
+    """
+    build = (ROOT / "scripts" / "build-release.sh").read_text()
+    assert "--exclude tests" not in build
+    assert ",tests," not in build and ",tests}" not in build
