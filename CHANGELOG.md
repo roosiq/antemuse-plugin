@@ -3,17 +3,19 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.20 — 2026-11-11
+
+- changelog: strip catalog-entry bullets from older sections too (2026-11-11)
+
 ## 0.10.19 — 2026-11-11
 
 - release mechanics: one script, and a changelog that cannot name a sha it does not pin (2026-11-11)
 
 ## 0.10.18 — 2026-11-11
 
-- catalog entry for 0.10.17 (2026-11-11)
 
 ## 0.10.17 — 2026-11-11
 
-- catalog entry for 8be3589 (0.10.16), shipped with the package (2026-11-10)
 
 ## 0.10.16 — 2026-11-10
 
