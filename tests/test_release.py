@@ -88,9 +88,20 @@ def test_the_installer_does_not_take_ownership_of_the_app_s_directory():
     assert '"package"' in install_step
 
 
-def test_the_package_carries_no_baked_scenes():
-    build = (ROOT / "scripts" / "build-release.sh").read_text()
-    assert "desktop/art" in build
+def test_the_desktop_half_is_one_file():
+    """`desktop/` shipped 1.9 MB of dead bytes: a three.js vendor tree, a scene3d.js nobody
+    imported, a plugin.truncated.bak, and a baked art/ folder the pane never reads.
+
+    `install.py` copied the whole directory into `plugins/antemuse/`, and the app's own
+    reconciler does `fs.cp(source.dir, staged, {recursive:true})` — so the junk was copied twice
+    and clearing the destination was pointless while the source stayed dirty. What ships is what
+    gets re-materialized, so the source has to be one file.
+    """
+    desktop = ROOT / "desktop"
+    assert [p.name for p in desktop.iterdir()] == ["plugin.js"], \
+        f"desktop/ carries more than the pane: {sorted(p.name for p in desktop.iterdir())}"
+    size = (desktop / "plugin.js").stat().st_size
+    assert size < 200_000, f"the pane is {size} bytes; that is not a single file's worth"
 
 
 def test_the_installer_runs_where_hermes_runs():

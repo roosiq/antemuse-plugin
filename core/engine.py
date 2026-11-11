@@ -108,6 +108,28 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _record_finish(active: Dict[str, Any], ending: str, served: int | None = None) -> None:
+    """Write the one `moves` row a finished state leaves.
+
+    `mark_move` existed with no caller for a release; it was then wired into `stop()` only. A
+    state that ended by expiry — time-out or dose-exhausted, which is the common ending — still
+    left nothing, so `moves` stayed empty and looked like the writer was broken. Both endings go
+    through here now.
+    """
+    try:
+        from . import history
+        history.mark_move(str(active.get("key") or ""),
+                          float(active.get("started") or 0), time.time(), ending,
+                          int(served if served is not None else (active.get("served") or 0)))
+    except Exception as exc:
+        try:
+            from . import history
+            history._note_failure(f"move not recorded · {type(exc).__name__}: "
+                                  f"{str(exc).splitlines()[0][:70]}")
+        except Exception:
+            pass
+
+
 def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     active = data.get("active")
     if not active:
@@ -139,6 +161,7 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
         # the expiry must reach disk: the caller holds a copy, and an unsaved expiry
         # means the state silently outlives its ceiling
         _save(data)
+        _record_finish(active, "expired", served)
         return True
     return False
 
@@ -388,14 +411,7 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
         data["journal"] = data["journal"][-cap:]
         data["active"] = None
         _save(data)
-        # The moves table was created, and its writer written, and then never called: every run
-        # of a state left no trace of having happened. One row per finished state, written where
-        # every ending passes through.
-        try:
-            history.mark_move(active["key"], float(active.get("started") or 0),
-                              time.time(), reason, int(active.get("served") or 0))
-        except Exception:
-            pass
+        _record_finish(active, reason)
     try:
         from . import normal
         # turns-to-dose and seconds-to-dose, per state: the measurement that makes

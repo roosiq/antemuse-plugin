@@ -238,6 +238,28 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 3.5b Every ending writes its row, and only what runs ships
+
+Two more of the same shape, found by reading the ledger rather than trusting the release notes.
+
+**A `moves` row per ending, not per `/return`.** `mark_move` had no caller for a release, then was
+wired into `stop()` only. A state that ends by expiry — time-out or dose-exhausted, the common
+ending — never passes through `stop()`, so the table stayed empty and the honest reading of that
+was "no state has ended yet", which was false. Both endings now go through `engine._record_finish`:
+`stop()` passes its reason, `_expire()` passes `expired` with the dose count it already computed.
+
+**What ships is what gets re-materialized.** `desktop/` carried 1.9 MB of dead bytes — a three.js
+vendor tree, a `scene3d.js` nothing imported, a `plugin.truncated.bak`, and a baked `art/` folder
+the pane never read. `install.py` copied the directory into `plugins/antemuse/`, and the app's own
+reconciler runs `fs.cp(source.dir, staged, {recursive: true})`, so cleaning the *destination* was
+defeated by a dirty *source* a minute later. Two rules follow:
+
+- `desktop/` is one file, `plugin.js`, and a test says so;
+- releases are packed with `scripts/build-release.sh`, never `git archive`. The script strips what
+  the checkout may keep, bundles the WordNet projection the repository cannot hold, and validates
+  the packed tree with the catalog gate. `git archive` bypasses all three — which is how 1.9 MB of
+  dead bytes reached an install, and how an earlier tarball could ship without the projection.
+
 ### 3.5a A state that serves material records it
 
 Every state recorded what it served — daydream and dream through `_note_terms`, walk through its
