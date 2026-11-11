@@ -160,3 +160,17 @@ def test_the_snapshot_ignores_the_working_directory(monkeypatch):
 def test_the_card_reads_frames_from_the_directory_it_writes_to():
     from core import storage
     assert surfaces._frames_dir().parent == storage.data_dir()
+
+
+def test_the_card_draws_on_a_machine_with_none_of_these_fonts(monkeypatch):
+    """The card is drawn on the user's machine, not on the one this was written on.
+
+    `snapshot_path` used to open a hardcoded `/usr/share/fonts/...` path, so `state action="image"`
+    raised `OSError: cannot open resource` on Windows and both snapshot tests failed there. Here
+    every candidate is made to fail, which is what a Windows box looked like.
+    """
+    from core import surfaces
+
+    monkeypatch.setattr(surfaces, "_FONT_CANDIDATES", ("/nope/not-a-font.ttf", "C:/nope/x.ttf"))
+    path = surfaces.snapshot_path({"active": None, "journal": [], "residue": []})
+    assert path.exists() and path.stat().st_size > 0

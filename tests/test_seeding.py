@@ -8,8 +8,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from core import seeding  # noqa: E402
+from conftest import requires_tree  # noqa: E402
 
 
+@requires_tree('.git')
 def test_the_project_vocabulary_comes_from_the_repository():
     terms = seeding.project_terms()
     assert terms, "no project terms — the seeding would fall to conversation only"

@@ -9,7 +9,12 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+from conftest import requires_tree  # noqa: E402
+
+
 ROOT = Path(__file__).resolve().parent.parent
+
+pytestmark = requires_tree('site', 'docs')
 
 
 def load():

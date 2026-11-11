@@ -17,6 +17,11 @@ import sys
 sys.path.insert(0, str(ROOT))
 from core import states  # noqa: E402
 
+from conftest import requires_tree  # noqa: E402
+
+
+pytestmark = requires_tree('specs')
+
 
 def registered_commands() -> set[str]:
     src = (ROOT / "__init__.py").read_text()

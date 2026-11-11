@@ -11,7 +11,12 @@ import importlib.util
 import sys
 from pathlib import Path
 
+from conftest import requires_tree  # noqa: E402
+
+
 ROOT = Path(__file__).resolve().parent.parent
+
+pytestmark = requires_tree('specs')
 
 
 def audit():

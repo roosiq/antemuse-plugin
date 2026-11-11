@@ -35,3 +35,20 @@ def _no_automatic_scan(monkeypatch):
     """
     monkeypatch.setenv("ANTEMUSE_NO_SCAN", "1")
     yield
+
+
+def requires_tree(*names):
+    """Skip a test that reads a repository-only tree, naming the reason.
+
+    `installable package` and `author's checkout` are different artifacts on purpose: docs, specs,
+    site and .git are not packed. A test that needs them must say so, because a collection error or
+    an unexplained failure in the shipped tree makes the shipped tests worthless.
+    """
+    import pathlib
+
+    import pytest
+
+    root = pathlib.Path(__file__).resolve().parent.parent
+    missing = [n for n in names if not (root / n).exists()]
+    return pytest.mark.skipif(
+        bool(missing), reason=f"needs {', '.join(missing)}: repository-only, not in the package")

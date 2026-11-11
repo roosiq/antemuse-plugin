@@ -80,6 +80,12 @@ def test_no_retired_name_appears_anywhere():
             continue
         if path.suffix in {".png", ".jpg", ".jpeg", ".zip", ".pyc", ".ico"}:
             continue
+        # The WordNet projection is a generated artifact: 117k lemma labels, and one of them is a
+        # word this project retired. It is data, not our prose, and the packaged tree carries it
+        # by design — so the scan exempts it by name rather than passing only on a checkout that
+        # happens not to have it.
+        if path.parent == pathlib.Path(ROOT) / "assets" / "projection":
+            continue
         try:
             text = path.read_text(encoding="utf-8", errors="ignore").lower()
         except Exception:
