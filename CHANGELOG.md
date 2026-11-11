@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.39 — 2026-11-11
+
+- states: remove the clock, end on the act, and say so when it ends (2026-11-11)
+- changelog: the empty pane is honest about a failed poll (2026-11-11)
+
 ## 0.10.38 — 2026-11-11
 
 - change: delivery is paced by the clock — one unit a second from the moment the state exists —
