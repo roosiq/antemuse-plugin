@@ -98,11 +98,14 @@ def test_a_dream_connection_names_a_task_on_each_side_across_projects(monkeypatc
     assert "shared:" in lines[0] or "through:" in lines[0], lines[0]
 
 
-def test_a_thin_day_says_so_and_invents_instead(monkeypatch):
+def test_a_thin_day_invents_instead_and_labels_it(monkeypatch):
+    """An empty day still returns two joined things, and says the join is invented."""
     monkeypatch.setattr(sources, "_day_window", lambda hours: ({}, 168))
     lines = sources.day_connections(2)
-    assert lines[0].startswith("note · no connection today"), lines[0]
-    assert any("invented · " in l for l in lines[1:]), lines
+    assert lines, "a dream over an empty day is still a dream"
+    assert all(line.strip() for line in lines), lines
+    assert "no connection" not in " ".join(lines), lines
+    assert any("inventing instead · " in l for l in lines), lines
 
 
 def test_no_shared_work_is_reported_rather_than_papered_over(monkeypatch):
@@ -110,7 +113,11 @@ def test_no_shared_work_is_reported_rather_than_papered_over(monkeypatch):
              "b": {"subjects": ["bravo yankee"], "files": [], "words": {"bravo", "yankee"}}}
     monkeypatch.setattr(sources, "_day_window", lambda hours: (terms, 24))
     we_have = sources.day_connections(1)
-    assert "no connection" in we_have[0] or "connection ·" in we_have[0], we_have
+    assert we_have and we_have[0].strip(), we_have
+    assert "no connection" not in we_have[0], we_have
+    # Weak is allowed; unlabelled weak is not. Either a named rung or a labelled invention.
+    assert ("connection ·" in we_have[0] or "a word both use" in we_have[0]
+            or "through" in we_have[0] or "inventing instead" in we_have[0]), we_have
 
 
 # ------------------------------------------------------------------- unstuck

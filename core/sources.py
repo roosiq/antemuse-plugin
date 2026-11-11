@@ -427,6 +427,47 @@ def _note_terms(text: str, move: str, limit: int = 6) -> None:
         pass
 
 
+def _pair_pool(pool: List[str]) -> List[str]:
+    """Two things to look at, whatever is available: memory, then what was just said."""
+    out = [t for t in pool if str(t or "").strip()]
+    if len(out) >= 2:
+        return out[:6]
+    try:
+        said = recall.recent(2) or []
+    except Exception:
+        said = []
+    for item in said:
+        text = str(item or "").strip()
+        if text and text not in out:
+            out.append(text)
+        if len(out) >= 2:
+            break
+    return out[:6]
+
+
+def _graph_pair() -> List[str]:
+    """No memory and nothing said: join two concepts the ledger already holds.
+
+    Still an honest join — the two concepts are real, what they have in common is real — and it
+    says where the pair came from so nobody mistakes it for a memory.
+    """
+    labels: List[str] = []
+    try:
+        from . import history
+        for row in history.circling(days=30, min_sessions=1, limit=2):
+            label = str(row.get("label") or "").strip()
+            if label and label not in labels:
+                labels.append(label)
+    except Exception:
+        pass
+    if len(labels) >= 2:
+        a, b = labels[0], labels[1]
+        return [f"JOINED · {a} ↔ {b} · both have come up in recent work · "
+                f"{possibility(a, b, set())} · drawn from the concept ledger, not from memory"]
+    return ["framenet unavailable · nothing to join: no memory, nothing said, and the ledger "
+            "has no pair"]
+
+
 def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
     """Bring two memories back and say whether the connection is worth joining.
 
@@ -439,13 +480,13 @@ def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
     """
     pool = memory_pool()
     if len(pool) < 2:
-        provider = memory_provider()
-        if recall.recent(1):
-            return ["only one thing to remember so far · a join needs two"]
-        if provider in ("unknown", "builtin"):
-            return ["no memories yet · nothing said in this conversation, and no built-in MEMORY.md"]
-        return [f"no memories yet · nothing said in this conversation · memory provider is "
-                f"'{provider}', which this state cannot read (built-in MEMORY.md only)"]
+        # A daydream joins two things. If only one memory exists, the last thing said is the
+        # second thing; if there is no memory at all, the two most recent concepts from the
+        # ledger are. It says which of those it used — but it does not answer "nothing", which
+        # is the one answer a state entered to make connections must never give.
+        pool = _pair_pool(pool)
+        if len(pool) < 2:
+            return _graph_pair()
 
     words = {text: _words(text) for text in pool}
     # a shared "state" or "plugin" is not a connection: it is the same project talking.
@@ -591,6 +632,52 @@ def _window_note(used: int) -> str:
             f"{'' if used < 168 else ', and a week is as far back as this looks'})")
 
 
+def _within_subject_pair(terms: Dict[str, Any]) -> tuple | None:
+    """Two pieces of the same project's work that share a word.
+
+    Used when only one project was active. A dream over one project still joins two of its
+    parts — "nothing happened" is not a dream, it is the state declining to do its job.
+    """
+    for name in sorted(terms):
+        subjects = [str(x) for x in (terms[name].get("subjects") or []) if str(x).strip()]
+        words = [_words(x) for x in subjects]
+        for i in range(len(subjects)):
+            for j in range(i + 1, len(subjects)):
+                shared = sorted(words[i] & words[j])
+                if shared:
+                    return (name, subjects[i], subjects[j], shared[:3])
+    return None
+
+
+def _weak_pairs(terms: Dict[str, Any], n_projects: int) -> List[tuple]:
+    """The rungs below "distinctive": a word both projects use, then a chain through a third.
+
+    Weak is still a connection, and it says which kind it is, so the person can weigh it. The
+    old build stopped at "no connection today", which reads as the state failing.
+    """
+    names = sorted(terms)
+    out: List[tuple] = []
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            shared = terms[a]["words"] & terms[b]["words"]
+            if shared:
+                out.append((float(len(shared)), a, b,
+                            [f"a word both use: {w}" for w in sorted(shared)[:2]]))
+    if out:
+        out.sort(key=lambda row: row[0], reverse=True)
+        return out
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            for c in names:
+                if c in (a, b):
+                    continue
+                mid = sorted((terms[a]["words"] & terms[c]["words"]) |
+                             (terms[b]["words"] & terms[c]["words"]))
+                if mid:
+                    out.append((0.5, a, b, [f"through {c}: {', '.join(mid[:2])}"]))
+    return out
+
+
 def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
     """Connections between the day's tasks, across projects.
 
@@ -603,9 +690,21 @@ def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
     note = _window_note(used)
     n_projects = len(terms)
     if n_projects < 2:
+        # One project is still something to connect: the connection is between two of its own
+        # pieces of work, or, failing that, invented and labelled. A dream that answers
+        # "nothing" has not dreamt — the person asked it to join things, so it joins things.
+        inside = _within_subject_pair(terms)
+        if inside:
+            name, sa, sb, shared = inside
+            form = RNG.choice(CONNECTION_FORMS)
+            _note_terms(sa + " " + sb, "dream")
+            return [f"connection · {name}: {sa[:50]} ↔ {name}: {sb[:50]} · "
+                    f"shared: {', '.join(shared)} · {form.format(a=name, b=name)}{note}"] + \
+                   [f"inventing instead · {x}" for x in dream_recombine(max(0, steps - 1))]
         invented = dream_recombine(steps)
-        why = f"only {n_projects} project{'s' if n_projects != 1 else ''} had commits in {used}h"
-        return [f"note · no connection today ({why}) · inventing instead"] + invented[:max(1, steps - 1)]
+        return ([f"inventing instead · {invented[0]}" if invented else
+                 "inventing instead · two things the day touched, joined in a way that never "
+                 "happened"] + invented[1:max(1, steps)])
 
     # document = project, not commit: a word in every project is boilerplate, a word in two
     # of them is what the connection is made of
@@ -624,6 +723,12 @@ def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
             if shared:
                 pairs.append((float(len(shared)), a, b, sorted(shared)[:3]))
     pairs.sort(key=lambda row: row[0], reverse=True)
+    if not pairs:
+        # Nothing distinctive was shared. Weaken deliberately and say which rung it came from:
+        # a word two projects both use, or two projects that reach each other through a third.
+        # The old build said "no connection today" and stopped; that reads as the state failing
+        # at the one thing it was entered to do.
+        pairs = _weak_pairs(terms, n_projects)
 
     out: List[str] = []
     try:
@@ -637,12 +742,10 @@ def day_connections(steps: int = 1, hours: int = 24) -> List[str]:
 
     for n in range(steps):
         if not pairs:
-            if n == 0:
-                out.append("no connection today · the day's commits share nothing distinctive "
-                           "across projects, and saying so is the finding" + note)
-                continue
             invented = dream_recombine(1)
-            out.append("inventing instead · " + (invented[0] if invented else "nothing to invent"))
+            out.append(("inventing instead · " + invented[0]) if invented else
+                       "inventing instead · two of the day's tasks, joined in a way that never "
+                       "happened")
             continue
         score, a, b, bridged = pairs.pop(0)
         form = RNG.choice(CONNECTION_FORMS)

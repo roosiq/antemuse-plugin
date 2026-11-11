@@ -39,16 +39,24 @@ def test_hermes_home_is_resolved_not_assumed(monkeypatch, tmp_path):
     assert storage.data_dir() == tmp_path / "profile-home" / "plugin-data" / "antemuse"
 
 
-def test_memory_limitation_is_named_not_hidden(monkeypatch):
-    from core import recall, sources
+def test_a_daydream_with_no_memory_still_joins_and_says_where_it_got_the_pair(monkeypatch):
+    """No memory and nothing said is not an answer: the pair comes from the concepts the
+    ledger already holds, and the line says so."""
+    from core import history, recall, sources
     monkeypatch.setattr(recall, "recent", lambda *a, **k: [])
     monkeypatch.setattr(sources, "memories", lambda: [])
     monkeypatch.setattr(sources, "memory_provider", lambda: "hindsight")
+    monkeypatch.setattr(history, "circling",
+                        lambda **k: [{"label": "the shipper lane", "sessions": 2},
+                                     {"label": "the walk pane", "sessions": 2}])
     line = sources.memory_pairs()[0]
-    assert "hindsight" in line and "cannot read" in line, line
+    assert "↔" in line, line
+    assert "concept ledger, not from memory" in line, line
+    assert "no memories" not in line and "cannot read" not in line, line
 
-    monkeypatch.setattr(sources, "memory_provider", lambda: "builtin")
-    assert "nothing said in this conversation" in sources.memory_pairs()[0]
+    monkeypatch.setattr(history, "circling", lambda **k: [])
+    empty = sources.memory_pairs()[0]
+    assert "nothing to join" in empty, empty
 
 
 def test_daydream_material_survives_an_external_memory_provider(monkeypatch, tmp_path):

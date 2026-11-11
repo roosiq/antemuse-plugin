@@ -48,12 +48,19 @@ def test_a_thin_day_looks_further_back_and_says_which_window(monkeypatch):
     assert "window: 7 days" in line, line
 
 
-def test_one_project_is_not_a_connection(monkeypatch):
-    terms = {"antemuse": {"subjects": ["docs"], "files": [], "words": {"specs"}}}
+def test_one_project_still_joins_two_of_its_own_pieces(monkeypatch):
+    """A dream over a single project is a dream over two of its pieces, not a refusal.
+
+    The old build answered "no connection today · only 1 project", which is the state
+    declaring it cannot do the one thing it was entered to do.
+    """
+    terms = {"antemuse": {"subjects": ["ship the walk pane", "ship the dream pane"],
+                          "files": [], "words": {"ship", "pane", "walk", "dream"}}}
     monkeypatch.setattr(sources, "_day_window", lambda hours: (terms, 168))
     line = sources.day_connections(1)[0]
-    assert line.startswith("note · no connection today"), line
-    assert "only 1 project" in line
+    assert line.startswith("connection · antemuse:"), line
+    assert "↔" in line, line
+    assert "no connection" not in line, line
 
 
 # -------------------------------------------------------------------- walk

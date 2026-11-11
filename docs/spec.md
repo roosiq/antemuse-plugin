@@ -229,6 +229,25 @@ templates into something that never existed, e.g. "a {frame} missing its {agent}
 so every {patient} has to stand in for it". No tools. Thirty minutes, long
 dissolves; this is the state whose texture is duration.
 
+### 4.4b A move that joins never answers "nothing"
+
+Daydream and dream exist to put two things together. An answer of "no connection today" or
+"no memories yet" is the state declining the one act it was entered for, so neither may return
+empty material. Both walk a ladder and say which rung they used:
+
+**Daydream.** Two memories; with only one, the last thing said is the second thing; with none,
+the two concepts the ledger has kept returning to. A pair drawn from the ledger says so
+(`drawn from the concept ledger, not from memory`), so it is never mistaken for a memory.
+
+**Dream.** Two projects sharing a distinctive word (a `connection`); failing that, a word both
+projects use (`a word both use`); failing that, two projects reaching each other through a third
+(`through <project>`); a single active project joins two of its own pieces of work; and only when
+nothing at all is there does it invent, labelled `inventing instead`. Reaching further back
+already says how far (`window: N days`) — a widened window is disclosed, never silent.
+
+The rule is about *material*, not about honesty: weak joins are labelled weak and invented joins
+are labelled invented. What is forbidden is the empty answer.
+
 ### 4.5 Aliases
 
 `dissociate`, `dscroll`, `take-a-walk`, `walking`, `nap`, `sleep`, `scroll`
