@@ -122,7 +122,18 @@ def test_outer_hops_are_farther_than_wander_hops(cursor):
     #   n=16  outer 0.044 (sd 0.004)  wander 0.264 (sd 0.076)  -> held 94%
     #   n=64  outer 0.043 (sd 0.003)  wander 0.253 (sd 0.043)  -> held 100%
     # The property is real; the estimate needed more steps. No runtime change.
-    def mean_similarity(name, n=64, seed="hand"):
+    def mean_similarity(name, n=64, seed="hand", restarts=3):
+        """Median of a few restarts.
+
+        The walk's neighbour choice is a SystemRandom, so a single draw cannot be seeded and
+        occasionally lands inside one tight cluster — that run measures the cluster, not the
+        walk, and flipped this test about one time in three. The property is about the typical
+        hop; the median of three restarts estimates that without touching the walk.
+        """
+        runs = sorted(_one(name, n, seed) for _ in range(restarts))
+        return runs[len(runs) // 2]
+
+    def _one(name, n=64, seed="hand"):
         cursor.write_text(json.dumps({name: {"node": wn.synsets(seed)[0].name(), "prev": "", "at": 0}}))
         walk = walks.GraphWalk({"name": name, **walks.BUILTIN[name]}, cursor)
         sims = []
@@ -136,7 +147,7 @@ def test_outer_hops_are_farther_than_wander_hops(cursor):
             v = a[0].path_similarity(b[0])
             sims.append(0.0 if v is None else v)
         if len(sims) < 3:                      # a dead-end start yields no pairs
-            return mean_similarity(name, n, seed="river")
+            return _one(name, n, seed="river")
         return statistics.mean(sims)
 
     assert mean_similarity("outer") + 0.1 < mean_similarity("wander")

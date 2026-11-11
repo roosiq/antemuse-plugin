@@ -216,6 +216,41 @@ def test_connections_carry_the_activation():
     js = here.read_text()
     assert "livePos" in js and "liveBuf" in js and "liveABuf" in js
     assert "const real = (links || [])" in js
-    assert "gl.uniform3f(lColor, 1.0, 0.66, 0.34)" in js
+    assert "gl.uniform3f(qColor, 1.0, 0.66, 0.34)" in js, "activation edges keep their own colour"
     assert "proximity is not provenance" in js
     assert "upload.liveN = live.length" in js
+    # Carried activation is drawn as segments with per-vertex alpha, through the quad program.
+    assert "segQuads(livePos, liveA, 0.3, 2.0 * dpr, MVP)" in js
+
+
+def test_edges_are_quads_not_hairlines():
+    """gl.LINES is one device pixel wide and ANGLE pins it there: relations vanished.
+
+    A relation you cannot see is not drawn, so every edge class is expanded into camera-facing
+    quads at a width in device pixels.
+    """
+    here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
+    js = here.read_text()
+    assert "const VS_QUAD" in js and "quadProg" in js
+    assert "segQuads(edgePos, null, 0.26, 1.5 * dpr, MVP)" in js
+    assert "segQuads(pathPos, pathA, 0.8, 2.4 * dpr, MVP)" in js
+    # no edge class may fall back to lines
+    assert "gl.drawArrays(gl.LINES" not in js, "an edge class still draws as a hairline"
+
+
+def test_a_click_goes_to_the_node_and_holds():
+    """The camera used to be owned entirely by whatever fired last.
+
+    Navigation means: clicking a node takes the camera there and it stays while you look;
+    empty space returns to the whole walk; `f` fits; the idle drift does not fight either.
+    """
+    here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
+    js = here.read_text()
+    assert "const gotoNode = (i) => {" in js
+    assert "dwell = now() + 1e9" in js, "a held view must not be released by the dwell timer"
+    assert "const fit = () => {" in js
+    assert "if (i == null) { fit(); return }" in js, "empty space means show me the walk"
+    assert "!dragging && !navLock" in js, "idle drift must not fight a held view"
+    assert "canvas.addEventListener('keydown', onKey)" in js
+    for key in ("arrowleft", "arrowup", "'f'", "escape"):
+        assert key in js, key

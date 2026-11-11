@@ -319,6 +319,19 @@ function createGraph3D(el, doc, ctx, host, win) {
   const lPos = loc(lineProg, 'aPos'), lA = loc(lineProg, 'aA'), lMVP = uni(lineProg, 'uMVP')
   const lColor = uni(lineProg, 'uColor')
 
+  // Thick segments. gl.LINES has no usable width — ANGLE/D3D pins it to one device pixel — so a
+  // relation drawn as a line is a hairline that aliases in and out of existence as the camera
+  // turns, and some of them simply do not appear. Each segment is expanded into a camera-facing
+  // quad in clip space instead, at a width in device pixels we choose.
+  const VS_QUAD = 'attribute vec2 aPos; attribute float aA; varying float vA;' +
+    'void main(){ gl_Position = vec4(aPos, 0.0, 1.0); vA = aA; }'
+  let quadProg = null
+  try { quadProg = link(VS_QUAD, FS_LINE) } catch (e) { quadProg = null }
+  const qPos = quadProg ? loc(quadProg, 'aPos') : null
+  const qA = quadProg ? loc(quadProg, 'aA') : null
+  const qColor = quadProg ? uni(quadProg, 'uColor') : null
+  const quadBuf = gl.createBuffer(), quadABuf = gl.createBuffer()
+
   const pointBuf = gl.createBuffer(), lineBuf = gl.createBuffer(), pathBuf = gl.createBuffer(),
     liveBuf = gl.createBuffer(), liveABuf = gl.createBuffer()
   let nodes = [], nodePos = new Float32Array(0), nodeW = new Float32Array(0), edges = []
@@ -337,6 +350,10 @@ function createGraph3D(el, doc, ctx, host, win) {
   let pathLabels = []   // the walk's own order, as labels
   let pathFocus = new Float32Array([0, 0, 0])   // where the whole path sits
   let pathDist = 2.35                            // how far back it needs the camera
+  // Navigation. The automatic camera answers "what just fired"; these answer "what is that, and
+  // what is it attached to", which a point cloud will not answer by spinning on its own.
+  let navLock = false          // the camera is being held by a person, not by an event
+  let pressX = 0, pressY = 0, pressMoved = false
 
   const norm = (raw) => {
     // Centre and scale once, so the camera only ever has to frame a unit cloud.
@@ -566,6 +583,53 @@ function createGraph3D(el, doc, ctx, host, win) {
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
   }
 
+  // One segment -> two triangles, in pixels, then back to clip space.
+  const segQuads = (posArr, alphaArr, flatA, widthPx, MVP) => {
+    const n = posArr.length / 6
+    const W = canvas.width, H = canvas.height
+    const px = new Float32Array(n * 12), pa = new Float32Array(n * 6)
+    let k = 0, ka = 0
+    for (let i = 0; i < n; i++) {
+      const o = i * 6
+      const ax = posArr[o], ay = posArr[o + 1], az = posArr[o + 2]
+      const bx = posArr[o + 3], by = posArr[o + 4], bz = posArr[o + 5]
+      const cwA = MVP[3] * ax + MVP[7] * ay + MVP[11] * az + MVP[15]
+      const cwB = MVP[3] * bx + MVP[7] * by + MVP[11] * bz + MVP[15]
+      if (cwA <= 0.02 || cwB <= 0.02) continue
+      const cxA = MVP[0] * ax + MVP[4] * ay + MVP[8] * az + MVP[12]
+      const cyA = MVP[1] * ax + MVP[5] * ay + MVP[9] * az + MVP[13]
+      const cxB = MVP[0] * bx + MVP[4] * by + MVP[8] * bz + MVP[12]
+      const cyB = MVP[1] * bx + MVP[5] * by + MVP[9] * bz + MVP[13]
+      const x0 = ((cxA / cwA) * 0.5 + 0.5) * W, y0 = (1 - ((cyA / cwA) * 0.5 + 0.5)) * H
+      const x1 = ((cxB / cwB) * 0.5 + 0.5) * W, y1 = (1 - ((cyB / cwB) * 0.5 + 0.5)) * H
+      const dx = x1 - x0, dy = y1 - y0
+      const len = Math.hypot(dx, dy)
+      if (len < 0.35) continue
+      const hw = Math.max(0.55, widthPx * 0.5)
+      const nx = (-dy / len) * hw, ny = (dx / len) * hw
+      const a = alphaArr ? alphaArr[i * 2] : flatA
+      const v = [x0 + nx, y0 + ny, x0 - nx, y0 - ny, x1 + nx, y1 + ny,
+                 x0 - nx, y0 - ny, x1 - nx, y1 - ny, x1 + nx, y1 + ny]
+      for (let j = 0; j < 12; j += 2) {
+        px[k++] = ((v[j] / W) * 2) - 1
+        px[k++] = 1 - ((v[j + 1] / H) * 2)
+      }
+      for (let j = 0; j < 6; j++) pa[ka++] = a
+    }
+    if (!k) return 0
+    gl.useProgram(quadProg)
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, px.subarray(0, k), gl.DYNAMIC_DRAW)
+    gl.enableVertexAttribArray(qPos)
+    gl.vertexAttribPointer(qPos, 2, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadABuf)
+    gl.bufferData(gl.ARRAY_BUFFER, pa.subarray(0, ka), gl.DYNAMIC_DRAW)
+    gl.enableVertexAttribArray(qA)
+    gl.vertexAttribPointer(qA, 1, gl.FLOAT, false, 0, 0)
+    gl.drawArrays(gl.TRIANGLES, 0, k / 2)
+    return k / 2
+  }
+
   const draw = () => {
     if (stopped) return
     resize()
@@ -576,39 +640,20 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
     const MVP = mvpNow()
-    gl.useProgram(lineProg)
-    gl.uniformMatrix4fv(lMVP, false, MVP)
-    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf)
-    gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
-    gl.disableVertexAttribArray(lA)
-    gl.vertexAttrib1f(lA, 0.26)
-    gl.uniform3f(lColor, 0.58, 0.62, 0.80)
-    gl.drawArrays(gl.LINES, 0, edgePos.length / 3)
-    // Connections carrying activation. Drawn before the walk's trail so the route stays on top.
-    if (livePos.length) {
-      gl.useProgram(lineProg)
-      gl.uniformMatrix4fv(lMVP, false, MVP)
-      gl.bindBuffer(gl.ARRAY_BUFFER, liveBuf)
-      gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
-      gl.bindBuffer(gl.ARRAY_BUFFER, liveABuf)
-      gl.enableVertexAttribArray(lA); gl.vertexAttribPointer(lA, 1, gl.FLOAT, false, 0, 0)
-      gl.uniform3f(lColor, 1.0, 0.66, 0.34)
-      gl.drawArrays(gl.LINES, 0, livePos.length / 3)
-      gl.disableVertexAttribArray(lA)
-      gl.vertexAttrib1f(lA, 0.26)
-      gl.uniform3f(lColor, 0.58, 0.62, 0.80)
+    const dpr = win.devicePixelRatio || 1
+    // Edges are quads, not lines: a hairline is not a relation you can see.
+    if (quadProg && edgePos.length) {
+      gl.uniform3f(qColor, 0.58, 0.62, 0.80)
+      segQuads(edgePos, null, 0.26, 1.5 * dpr, MVP)
     }
-    // The trail: same line program, warm colour by drawing it three times with a pixel-ish
-    // offset so it reads as a route rather than as more of the same mesh.
-    if (pathPos.length) {
-      gl.useProgram(lineProg)
-      gl.uniformMatrix4fv(lMVP, false, MVP)
-      gl.bindBuffer(gl.ARRAY_BUFFER, pathBuf)
-      gl.enableVertexAttribArray(lPos); gl.vertexAttribPointer(lPos, 3, gl.FLOAT, false, 0, 0)
-      gl.enableVertexAttribArray(lA); gl.vertexAttribPointer(lA, 1, gl.FLOAT, false, 0, 0)
-      gl.uniform3f(lColor, 1.0, 0.80, 0.42)
-      gl.drawArrays(gl.LINES, 0, pathPos.length / 3)
-      gl.disableVertexAttribArray(lA)
+    // Connections carrying activation, then the trail on top of them.
+    if (quadProg && livePos.length) {
+      gl.uniform3f(qColor, 1.0, 0.66, 0.34)
+      segQuads(livePos, liveA, 0.3, 2.0 * dpr, MVP)
+    }
+    if (quadProg && pathPos.length) {
+      gl.uniform3f(qColor, 1.0, 0.80, 0.42)
+      segQuads(pathPos, pathA, 0.8, 2.4 * dpr, MVP)
     }
     gl.useProgram(pointProg)
     gl.uniformMatrix4fv(pMVP, false, MVP)
@@ -629,7 +674,7 @@ function createGraph3D(el, doc, ctx, host, win) {
   const loop = (ts) => {
     if (stopped) return
     rafId = win.requestAnimationFrame ? win.requestAnimationFrame(loop) : win.setTimeout(() => loop(Date.now()), 16)
-    if (!dragging && ts && idleAt && ts - idleAt > 2600) yaw += 0.00022 * (ts - (loop.lastTs || ts))
+    if (!dragging && !navLock && ts && idleAt && ts - idleAt > 2600) yaw += 0.00022 * (ts - (loop.lastTs || ts))
     if (dwell && ts && ts > dwell) {
       dwell = 0
       // Back out to the whole walk when there is one; the origin only when there is not.
@@ -722,13 +767,51 @@ function createGraph3D(el, doc, ctx, host, win) {
     ev[what] = (ev[what] || 0) + 1
     report({ ev })
   }
-  const onDown = (e) => { bump('down'); dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.style.cursor = 'grabbing'; idleAt = 0 }
+  const now = () => (win.performance && performance.now ? performance.now() : Date.now())
+  const at = (i) => {
+    if (i == null || !nodes[i]) return null
+    return new Float32Array([nodePos[i * 3], nodePos[i * 3 + 1], nodePos[i * 3 + 2]])
+  }
+  // Go to a node and stay there. This is the navigation the graph was missing: the cloud has one
+  // camera and it was owned entirely by whatever fired last.
+  const gotoNode = (i) => {
+    const f = at(i)
+    if (!f) return false
+    focusTo = f
+    distTo = 0.95
+    navLock = true
+    dwell = now() + 1e9          // held until the person lets go of it
+    pinned = nodes[i].l
+    idleAt = now()
+    report({ pinned, nav: 'node' })
+    return true
+  }
+  // Back to the whole walk, which is the view the pane is for.
+  const fit = () => {
+    dwell = 0
+    navLock = false
+    distTo = pathDist
+    focusTo = new Float32Array([pathFocus[0], pathFocus[1], pathFocus[2]])
+    pinned = null
+    tip.style.opacity = '0'
+    idleAt = now()
+    report({ pinned, nav: 'fit' })
+  }
+  const onDown = (e) => {
+    bump('down')
+    dragging = true; lastX = e.clientX; lastY = e.clientY
+    pressX = e.clientX; pressY = e.clientY; pressMoved = false
+    canvas.style.cursor = 'grabbing'; idleAt = 0
+    if (canvas.focus) canvas.focus()
+  }
   const onMove = (e) => {
     bump('move')
     if (dragging) {
+      if (Math.hypot(e.clientX - pressX, e.clientY - pressY) > 4) pressMoved = true
       yaw -= (e.clientX - lastX) * 0.006
       pitch = Math.max(-1.35, Math.min(1.35, pitch - (e.clientY - lastY) * 0.006))
       lastX = e.clientX; lastY = e.clientY
+      idleAt = now()
       return
     }
     const r = canvas.getBoundingClientRect()
@@ -738,14 +821,28 @@ function createGraph3D(el, doc, ctx, host, win) {
     canvas.style.cursor = i == null ? 'grab' : 'pointer'
   }
   const onUp = (e) => {
-    const moved = dragging
-    dragging = false; canvas.style.cursor = 'grab'; idleAt = performance.now ? performance.now() : Date.now()
-    if (!moved) return
+    dragging = false; canvas.style.cursor = 'grab'; idleAt = now()
+    if (pressMoved) { pressMoved = false; return }   // that was an orbit, not a click
     const r = canvas.getBoundingClientRect()
-    const i = pick((e.clientX - r.left) * (win.devicePixelRatio || 1), (e.clientY - r.top) * (win.devicePixelRatio || 1))
-    pinned = i == null ? null : nodes[i].l
-    report({ pinned })
-    if (pinned) showTip(i, e.clientX - r.left, e.clientY - r.top)
+    const i = pick((e.clientX - r.left) * (win.devicePixelRatio || 1),
+                   (e.clientY - r.top) * (win.devicePixelRatio || 1))
+    if (i == null) { fit(); return }                  // empty space means "show me the walk"
+    if (gotoNode(i)) showTip(i, e.clientX - r.left, e.clientY - r.top)
+  }
+
+  // Keys, because a pane you can only navigate by dragging is a pane you cannot navigate.
+  const onKey = (e) => {
+    const k = String(e.key || '').toLowerCase()
+    idleAt = now()
+    if (k === 'arrowleft') { yaw += 0.12; navLock = true } else if (k === 'arrowright') { yaw -= 0.12; navLock = true }
+    else if (k === 'arrowup') { pitch = Math.max(-1.35, pitch - 0.08); navLock = true } else if (k === 'arrowdown') { pitch = Math.min(1.35, pitch + 0.08); navLock = true }
+    else if (k === '+' || k === '=') { dist = Math.max(1.15, dist * 0.88) }
+    else if (k === '-' || k === '_') { dist = Math.min(7.5, dist * 1.12) }
+    else if (k === 'f') { fit() }
+    else if (k === 'escape') { fit() }
+    else return
+    e.preventDefault()
+    report({ yaw: +yaw.toFixed(3), pitch: +pitch.toFixed(3), dist: +dist.toFixed(3) })
   }
   const onWheel = (e) => {
     bump('wheel')
@@ -766,6 +863,9 @@ function createGraph3D(el, doc, ctx, host, win) {
   doc.addEventListener('pointerup', gUp, true)
   doc.addEventListener('pointerleave', gLeave, true)
   doc.addEventListener('wheel', gWheel, { capture: true, passive: false })
+  canvas.tabIndex = 0
+  canvas.setAttribute('aria-label', 'concept map: drag to orbit, click a node to go to it, f to fit')
+  canvas.addEventListener('keydown', onKey)
 
   // ---- data -------------------------------------------------------------------
   // Preview aids, same convention as `antemuse:scene`, never on by themselves: a pasted

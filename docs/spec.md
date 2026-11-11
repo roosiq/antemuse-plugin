@@ -238,6 +238,22 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 9.6a The pane is navigable
+
+Two defects made the map hard to read and hard to use, both in the pane rather than in the data.
+
+**Edges are drawn as quads.** `gl.LINES` is one device pixel wide and ANGLE/D3D pins it there, so
+a relation was a hairline that aliased in and out as the camera turned — some simply never
+appeared. Every edge class (ground, carried activation, the walk's own trail) is expanded into
+camera-facing quads in clip space at a width in device pixels. A relation you cannot see is not
+drawn.
+
+**The camera has a person in it.** It used to be owned entirely by whatever fired last: the only
+way to look at something was to wait for it to light. Clicking a node now takes the camera to it
+and holds while you look — the dwell timer does not release a held view — and clicking empty space
+returns to the whole walk. `f` fits, arrows orbit, `+`/`-` zoom, `Escape` clears, and the idle
+drift stops while a view is held. Navigation is client-side: no route, no payload, no restart.
+
 ### 3.4b A ledger write either happens or says why
 
 A ledger failure must never break a turn, so the write path records the failure as an event
