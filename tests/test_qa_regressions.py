@@ -15,12 +15,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def _surfaces():
-    sys.path.insert(0, str(ROOT))
-    from core import surfaces
-    return surfaces
-
-
 def test_a_mistyped_tool_action_says_so(tmp_path, monkeypatch):
     monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path / "home"))
     monkeypatch.setenv("ANTEMUSE_NO_SCAN", "1")

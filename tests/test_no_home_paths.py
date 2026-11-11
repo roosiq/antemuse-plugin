@@ -16,7 +16,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-SCAN = ("*.py", "*.js", "*.sh", "*.md", "*.yaml", "*.yml", "*.json")
+SCAN = ("*.py", "*.js", "*.mjs", "*.cjs", "*.sh", "*.md", "*.yaml", "*.yml",
+        "*.json", "*.html", "*.css")
 # documentation of what happened, not instructions to a machine
 EXEMPT_DIRS = {".git", "docs", "specs", "experiments", "node_modules", "__pycache__",
                ".pytest_cache", "dist", "assets"}
