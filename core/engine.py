@@ -43,6 +43,16 @@ def _load() -> Dict[str, Any]:
     return data
 
 
+_FAILURE_WORDS = ("unavailable", "nothing arrived", "no material", "expired before its dose",
+                  "not recorded", "provider failed")
+
+
+def _is_failure_line(line: str) -> bool:
+    """A line that names a failure is not material, and must not light the picture."""
+    low = str(line or "").strip().lower()
+    return any(word in low for word in _FAILURE_WORDS)
+
+
 def _cap_residue(data: dict) -> None:
     """Hold the residue at three entries *at the moment it is written*.
 
@@ -551,6 +561,21 @@ def deliver_if_due() -> int:
         return 1
     for line in lines:
         record("state", line, event=key)
+    # What the state just served is also what the picture lights. Daydream and the rest record
+    # their terms through their providers; the built-in walk never did, so a walk served six hops
+    # and the pane lit none of them — and its trail query, which reads exactly these rows, found
+    # nothing to draw. Writing them here covers every provider once.
+    owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
+    try:
+        from . import history
+        for line in lines:
+            if _is_failure_line(line):
+                continue          # "feed unavailable" is a failure, not material
+            for term in history.extract(line, limit=6):
+                history.notice(term, move=key, session=owner)
+    except Exception as exc:  # a ledger failure must not break the turn, but it must say so
+        record("state", f"served terms not recorded · {type(exc).__name__}: "
+                        f"{str(exc).splitlines()[0][:80]}", event="history")
     with _LOCK:
         data = _load()
         active = data.get("active") or {}

@@ -208,12 +208,13 @@ def graph(session: str = "", limit: int = 1400):
             and _time.time() - float(_GRAPH_MEMO.get("at") or 0) < 3.0):
         return _GRAPH_MEMO["payload"]
     active = engine_state or {}
-    belongs_here = True
-    if active and session:
-        origin = active.get("origin") or {}
-        owner = origin.get("session_id") if isinstance(origin, dict) else None
-        belongs_here = owner in (None, "") or owner == session
-    drawable = bool(active and belongs_here)
+    # There is one active state per profile, and the pane is the picture of it. It used to refuse
+    # to draw a state entered by another session — but a state entered from a slash command is
+    # recorded against the surface that typed it, which is not the session the pane asks about,
+    # so the pane fell back to the profile baseline and showed the same background nodes in every
+    # state. Refusing to draw was the wrong guard: the firings below are still scoped to the
+    # state's real owner, so nothing from another chat leaks into this picture.
+    drawable = bool(active)
     key = str(active.get("key") or "") if drawable else "profile"
     # A state entered with no session — from the app, or by a script — records its firings with an
     # empty session. Falling back to the *pane's* session there filtered those firings out, so a
