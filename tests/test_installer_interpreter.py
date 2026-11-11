@@ -122,3 +122,28 @@ def test_a_real_download_failure_points_at_the_downloader(monkeypatch):
 
     assert "nltk.downloader" in seen[0], seen[0]
     assert "network" not in seen[0].lower(), seen[0]
+
+
+def test_the_pane_dir_is_cleared_of_older_releases(tmp_path):
+    """Third release in a row shipping stale bytes beside the new pane.
+
+    The app owns `desktop-plugins/antemuse/`; 0.9.x left a scene3d.js, a vendor/, an art/ tree and
+    a plugin.truncated.bak there. Copying plugin.js beside them looks like a clean install and is
+    not one.
+    """
+    mod = _installer()
+    pane = tmp_path / "desktop-plugins" / "antemuse"
+    (pane / "vendor" / "react").mkdir(parents=True)
+    (pane / "art").mkdir()
+    (pane / "scene3d.js").write_text("// old\n")
+    (pane / "plugin.truncated.bak").write_text("old bytes\n")
+    (pane / "plugin.js").write_text("// current\n")
+    (pane / ".hermes-package.json").write_text('{"package": "antemuse"}')
+
+    gone = mod.clear_pane_dir(pane)
+
+    assert sorted(gone) == ["art", "plugin.truncated.bak", "scene3d.js", "vendor"], gone
+    assert (pane / "plugin.js").exists(), "the pane itself must survive"
+    assert (pane / ".hermes-package.json").exists(), "the app's marker must survive"
+    assert [c.name for c in pane.iterdir()] and sorted(c.name for c in pane.iterdir()) == \
+        [".hermes-package.json", "plugin.js"]

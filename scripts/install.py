@@ -89,6 +89,30 @@ def hermes_python() -> str:
     return sys.executable
 
 
+PANE_KEEP = {"plugin.js", ".hermes-package.json"}
+
+
+def clear_pane_dir(path: Path) -> list:
+    """Remove everything in the pane directory that is not the pane or the app's own marker.
+
+    The app owns this directory, and older releases left a scene3d.js, a vendor/, an art/ tree and
+    a plugin.truncated.bak in it. Copying the new pane beside them recreates the stale-copy trap:
+    the file that matters is fresh and the bytes next to it are not. Only those two names belong.
+    """
+    gone = []
+    if not path.exists():
+        return gone
+    for child in sorted(path.iterdir()):
+        if child.name in PANE_KEEP:
+            continue
+        try:
+            shutil.rmtree(child) if child.is_dir() else child.unlink()
+            gone.append(child.name)
+        except OSError as exc:
+            warn(f"could not clear {child.name} from the pane dir ({exc})")
+    return gone
+
+
 def ensure_deps(py: str, dry: bool) -> None:
     """Step 1: pillow and nltk where the *plugin* imports them, not merely where Hermes does."""
     say("1. python dependencies (pillow, nltk)")
@@ -187,11 +211,24 @@ def main() -> int:
 
     # ------------------------------------------------------------ 4. desktop half
     say("4. desktop half (the pane the app loads)")
+    removed: list[str] = []
     desktop_dir = home / "desktop-plugins" / "antemuse"
     if not dry:
         desktop_dir.mkdir(parents=True, exist_ok=True)
+        # The app owns this directory and 0.9.x left things in it: a scene3d.js, a vendor/, an
+        # art/ tree, a plugin.truncated.bak. Copying the new pane beside them is the same trap as
+        # every stale-copy round before this one — old bytes sitting next to the file that
+        # matters. Only the pane and the app's own marker belong here, so anything else goes.
+        removed = clear_pane_dir(desktop_dir)
         shutil.copy2(SRC / "desktop" / "plugin.js", desktop_dir / "plugin.js")
+        if removed:
+            ok(f"cleared {len(removed)} file(s) left by an older release: "
+               + ", ".join(removed[:6]) + ("…" if len(removed) > 6 else ""))
     else:
+        stale = [c.name for c in desktop_dir.iterdir() if c.name not in PANE_KEEP] \
+            if desktop_dir.exists() else []
+        if stale:
+            print(f"  would clear from {desktop_dir}: {', '.join(sorted(stale)[:6])}")
         print(f"  would copy desktop/plugin.js -> {desktop_dir}")
     marker = desktop_dir / ".hermes-package.json"
     if not dry and marker.exists() and '"package"' not in marker.read_text():
@@ -203,6 +240,7 @@ def main() -> int:
     # default home. Refreshing one leaves the app on the previous pane.
     default_desktop = Path.home() / ".hermes" / "desktop-plugins" / "antemuse"
     if default_desktop != desktop_dir and default_desktop.exists() and not dry:
+        clear_pane_dir(default_desktop)
         shutil.copy2(SRC / "desktop" / "plugin.js", default_desktop / "plugin.js")
         ok(f"also refreshed {default_desktop / 'plugin.js'} (a second copy the app may read)")
 

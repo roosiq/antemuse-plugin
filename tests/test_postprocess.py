@@ -220,29 +220,32 @@ def test_connections_carry_the_activation():
     assert "proximity is not provenance" in js
     assert "upload.liveN = live.length" in js
     # Carried activation is drawn as segments with per-vertex alpha, through the quad program.
-    assert "segQuads(livePos, liveA, 0.3, 2.0 * dpr, MVP)" in js
+    assert "segQuads(livePos, liveA, 0.3, 1.9 * dpr, MVP, 0, true)" in js
 
 
-def test_edges_are_quads_not_hairlines():
-    """gl.LINES is one device pixel wide and ANGLE pins it there: relations vanished.
+def test_the_source_draws_no_edge_as_a_hairline():
+    """A source lock, not a rendering proof.
 
-    A relation you cannot see is not drawn, so every edge class is expanded into camera-facing
-    quads at a width in device pixels.
+    gl.LINES is one device pixel wide and ANGLE pins it there, so relations vanished. This
+    asserts the pane's source no longer contains a line draw for any edge class. It cannot tell
+    you that quads reach the framebuffer — that is `tools/pane_pixels.py`, which counts pixels in
+    a real browser. A lock catching "someone reverted the pipeline", nothing more.
     """
     here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
     js = here.read_text()
     assert "const VS_QUAD" in js and "quadProg" in js
-    assert "segQuads(edgePos, null, 0.26, 1.5 * dpr, MVP)" in js
-    assert "segQuads(pathPos, pathA, 0.8, 2.4 * dpr, MVP)" in js
+    assert "segQuads(edgePos, null, 0.22, 1.25 * dpr, MVP, trim, true, cull * dpr)" in js
+    assert "segQuads(pathPos, pathA, 0.8, 2.4 * dpr, MVP, 0, false)" in js
     # no edge class may fall back to lines
     assert "gl.drawArrays(gl.LINES" not in js, "an edge class still draws as a hairline"
 
 
-def test_a_click_goes_to_the_node_and_holds():
-    """The camera used to be owned entirely by whatever fired last.
+def test_the_source_wires_click_to_focus_and_f_to_fit():
+    """Also a source lock. The behaviour is measured in `tools/pane_pixels.py`.
 
-    Navigation means: clicking a node takes the camera there and it stays while you look;
-    empty space returns to the whole walk; `f` fits; the idle drift does not fight either.
+    Navigation means: clicking a node takes the camera there and stays while you look; empty
+    space returns to the whole walk; `f` fits; idle drift does not fight either. Asserting the
+    source contains those wires keeps the shapes honest; it does not prove the camera moved.
     """
     here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
     js = here.read_text()
@@ -254,3 +257,21 @@ def test_a_click_goes_to_the_node_and_holds():
     assert "canvas.addEventListener('keydown', onKey)" in js
     for key in ("arrowleft", "arrowup", "'f'", "escape"):
         assert key in js, key
+
+
+def test_the_web_does_not_bury_the_dots():
+    """The complaint was "hard to find the dots with these lines" — so the web is thinned.
+
+    Measured with tools/pane_pixels.py against the previous pane on the same payload:
+    edge ink 715,949 px² -> 194,120 px² (73% less), 585 of 2,398 segments culled as
+    unreadably long, and the ends trimmed so no edge lands on a node.
+    """
+    here = Path(__file__).resolve().parent.parent / "desktop" / "plugin.js"
+    js = here.read_text()
+    assert "const trim = dist < 1.55 ? 0 : 0.10" in js, "trim must be a zoom-dependent policy"
+    assert "const cull = dist < 1.55 ? 520 : 210" in js, "long streaks are culled at the wide view"
+    assert "if (cullPx && len > cullPx) { segQuads.culled++; return }" in js
+    assert "segQuads.ink += (len" in js, "clutter must be counted, not judged by eye"
+    # the dots themselves: bigger, and never hidden behind an edge
+    assert "gl.uniform1f(pSize, 1.35)" in js
+    assert "gl.depthMask(false)" in js and "gl.depthMask(true)" in js

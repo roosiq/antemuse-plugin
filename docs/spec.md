@@ -238,6 +238,31 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 9.6b The web must not bury the dots
+
+"How can we allow for better navigation of the graph" became "it's really hard to find the dots
+with these lines" — the picture was spending seven times more ink on connections than on the
+concepts being connected.
+
+Read from the literature, not guessed: *partial edge drawing* removes part of an edge to cut
+clutter; *edge bundling* collapses fans into strands; classical readability criteria are crossings,
+area and angular resolution; and 3D costs path-tracing accuracy unless motion carries it, which is
+why the walk's trail is drawn as its own class rather than inferred from the cloud.
+
+What the pane does now, with the numbers that produced it (same payload, same pane, measured by
+`tools/pane_pixels.py` against the previous pane):
+
+- **ends trimmed** — a fraction of each edge is cut at both ends so no ink lands on a node. Stubs
+  at the ends were tried first and made it worse: they pile ink exactly where the dots are.
+- **long streaks culled** — a segment spanning most of the pane crosses everything and lands
+  nowhere; 210 px at the wide view, 520 px up close, and the cull count is reported.
+- **dots on top** — nodes drawn larger, with depth writes off, so an edge can never hide one.
+- **counted, not judged** — edge ink is accumulated as stroke area each frame (`ink` in the pane's
+  probe). 715,949 px² → 194,120 px², a 73% reduction, 585 of 2,398 segments culled.
+
+A screenshot's pixel classes are not a usable metric here: node halos are the same blue as edges, so
+a class count moves when node size changes. Stroke area is.
+
 ### 9.6a The pane is navigable
 
 Two defects made the map hard to read and hard to use, both in the pane rather than in the data.

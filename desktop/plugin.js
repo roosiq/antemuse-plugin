@@ -470,6 +470,8 @@ function createGraph3D(el, doc, ctx, host, win) {
       let maxW = 1
       for (const e of real) if (e[2] > maxW) maxW = e[2]
       if (real.length) {
+        // Strength first: at the wide view the picture shows the web's spine, not every strand.
+        // 700 of 2,400 was the difference between a texture and a structure in the ink count.
         edges = real.map((e) => [e[0], e[1]])
         edgePos = new Float32Array(edges.length * 6)
         edgeA = new Float32Array(edges.length * 2)
@@ -584,11 +586,36 @@ function createGraph3D(el, doc, ctx, host, win) {
   }
 
   // One segment -> two triangles, in pixels, then back to clip space.
-  const segQuads = (posArr, alphaArr, flatA, widthPx, MVP) => {
+  //
+  // `trim` cuts a fraction off each end, so the ink stops short of the node instead of landing on
+  // it. (Partial edge drawing — stubs at the ends — was the first attempt and made this worse:
+  // it piles ink exactly where the dots are. Here the ends are the things being erased.)
+  // `fade` dims a segment with its distance from the camera, so near structure reads first.
+  const segQuads = (posArr, alphaArr, flatA, widthPx, MVP, trim, fade, cullPx) => {
     const n = posArr.length / 6
     const W = canvas.width, H = canvas.height
-    const px = new Float32Array(n * 12), pa = new Float32Array(n * 6)
+    const px = new Float32Array(n * 24), pa = new Float32Array(n * 12)
     let k = 0, ka = 0
+    const put = (x0, y0, x1, y1, a) => {
+      const dx = x1 - x0, dy = y1 - y0
+      const len = Math.hypot(dx, dy)
+      if (len < 0.35) return
+      // A segment longer than this is a streak across the pane, not a readable relation: it
+      // crosses everything and lands nowhere useful. Short segments are the local structure.
+      const hw = Math.max(0.55, widthPx * 0.5)
+      if (cullPx && len > cullPx) { segQuads.culled++; return }
+      // Ink laid down, in square pixels of stroke: the number that says whether the web is
+      // burying the dots, independent of how a screenshot happens to be classified.
+      segQuads.ink += (len - (trim ? len * Math.min(0.42, trim) * 2 : 0)) * hw * 2
+      const nx = (-dy / len) * hw, ny = (dx / len) * hw
+      const v = [x0 + nx, y0 + ny, x0 - nx, y0 - ny, x1 + nx, y1 + ny,
+                 x0 - nx, y0 - ny, x1 - nx, y1 - ny, x1 + nx, y1 + ny]
+      for (let j = 0; j < 12; j += 2) {
+        px[k++] = ((v[j] / W) * 2) - 1
+        px[k++] = 1 - ((v[j + 1] / H) * 2)
+      }
+      for (let j = 0; j < 6; j++) pa[ka++] = a
+    }
     for (let i = 0; i < n; i++) {
       const o = i * 6
       const ax = posArr[o], ay = posArr[o + 1], az = posArr[o + 2]
@@ -602,19 +629,15 @@ function createGraph3D(el, doc, ctx, host, win) {
       const cyB = MVP[1] * bx + MVP[5] * by + MVP[9] * bz + MVP[13]
       const x0 = ((cxA / cwA) * 0.5 + 0.5) * W, y0 = (1 - ((cyA / cwA) * 0.5 + 0.5)) * H
       const x1 = ((cxB / cwB) * 0.5 + 0.5) * W, y1 = (1 - ((cyB / cwB) * 0.5 + 0.5)) * H
-      const dx = x1 - x0, dy = y1 - y0
-      const len = Math.hypot(dx, dy)
-      if (len < 0.35) continue
-      const hw = Math.max(0.55, widthPx * 0.5)
-      const nx = (-dy / len) * hw, ny = (dx / len) * hw
-      const a = alphaArr ? alphaArr[i * 2] : flatA
-      const v = [x0 + nx, y0 + ny, x0 - nx, y0 - ny, x1 + nx, y1 + ny,
-                 x0 - nx, y0 - ny, x1 - nx, y1 - ny, x1 + nx, y1 + ny]
-      for (let j = 0; j < 12; j += 2) {
-        px[k++] = ((v[j] / W) * 2) - 1
-        px[k++] = 1 - ((v[j + 1] / H) * 2)
+      let a = alphaArr ? alphaArr[i * 2] : flatA
+      if (fade) {
+        const depth = (cwA + cwB) * 0.5
+        a *= Math.max(0.28, Math.min(1, 1.55 - depth * 0.42))
       }
-      for (let j = 0; j < 6; j++) pa[ka++] = a
+      if (!trim || trim <= 0) { put(x0, y0, x1, y1, a); continue }
+      const f = Math.min(0.42, trim)
+      put(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f,
+          x1 + (x0 - x1) * f, y1 + (y0 - y1) * f, a)
     }
     if (!k) return 0
     gl.useProgram(quadProg)
@@ -641,33 +664,46 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
     const MVP = mvpNow()
     const dpr = win.devicePixelRatio || 1
-    // Edges are quads, not lines: a hairline is not a relation you can see.
+    // Edges are quads, not lines: a hairline is not a relation you can see. The web is drawn
+    // trimmed, so no edge lands on a node, and only its strongest part is drawn at all — a full
+    // 2,400-edge web is a picture of the web, not of the concepts. Zooming in restores untrimmed
+    // edges and the full strength set for what you are looking at.
+    segQuads.ink = 0; segQuads.culled = 0
+    const trim = dist < 1.55 ? 0 : 0.10
+    const cull = dist < 1.55 ? 520 : 210
     if (quadProg && edgePos.length) {
       gl.uniform3f(qColor, 0.58, 0.62, 0.80)
-      segQuads(edgePos, null, 0.26, 1.5 * dpr, MVP)
+      segQuads(edgePos, null, 0.22, 1.25 * dpr, MVP, trim, true, cull * dpr)
     }
-    // Connections carrying activation, then the trail on top of them.
+    // Connections carrying activation, then the trail on top of them. These stay whole: they are
+    // the answer, not the texture.
     if (quadProg && livePos.length) {
       gl.uniform3f(qColor, 1.0, 0.66, 0.34)
-      segQuads(livePos, liveA, 0.3, 2.0 * dpr, MVP)
+      segQuads(livePos, liveA, 0.3, 1.9 * dpr, MVP, 0, true)
     }
     if (quadProg && pathPos.length) {
       gl.uniform3f(qColor, 1.0, 0.80, 0.42)
-      segQuads(pathPos, pathA, 0.8, 2.4 * dpr, MVP)
+      segQuads(pathPos, pathA, 0.8, 2.4 * dpr, MVP, 0, false)
     }
     gl.useProgram(pointProg)
     gl.uniformMatrix4fv(pMVP, false, MVP)
     gl.uniform1f(pDpr, win.devicePixelRatio || 1)
-    gl.uniform1f(pSize, 1.0)
+    // Slightly larger, and never hidden behind an edge: a picture whose dots cannot be found has
+    // failed at the one thing it is for.
+    gl.uniform1f(pSize, 1.35)
+    gl.depthMask(false)
     gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf)
     gl.enableVertexAttribArray(pPos); gl.vertexAttribPointer(pPos, 3, gl.FLOAT, false, 0, 0)
     gl.bindBuffer(gl.ARRAY_BUFFER, upload.wBuf || pointBuf)
     gl.enableVertexAttribArray(pW); gl.vertexAttribPointer(pW, 1, gl.FLOAT, false, 0, 0)
     gl.drawArrays(gl.POINTS, 0, nodePos.length / 3)
+    gl.depthMask(true)
     frames++
     placeLabels(MVP)
     report({ frames, yaw: +yaw.toFixed(3), pitch: +pitch.toFixed(3), dist: +dist.toFixed(3),
-      hover: hovered, pinned, labels: placeLabels.k || 0, litN: placeLabels.lit || 0, liveN: upload.liveN || 0, linksN: upload.linkN || 0 })
+      hover: hovered, pinned, labels: placeLabels.k || 0, litN: placeLabels.lit || 0,
+      liveN: upload.liveN || 0, linksN: upload.linkN || 0,
+      ink: Math.round(segQuads.ink || 0), culled: segQuads.culled || 0 })
   }
 
   let rafId = 0
