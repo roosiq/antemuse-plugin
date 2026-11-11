@@ -12,7 +12,7 @@ import threading
 import time
 from typing import Any, Dict, List
 
-from . import states, storage
+from . import history, states, storage
 
 FILE = "state.json"
 
@@ -388,6 +388,14 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
         data["journal"] = data["journal"][-cap:]
         data["active"] = None
         _save(data)
+        # The moves table was created, and its writer written, and then never called: every run
+        # of a state left no trace of having happened. One row per finished state, written where
+        # every ending passes through.
+        try:
+            history.mark_move(active["key"], float(active.get("started") or 0),
+                              time.time(), reason, int(active.get("served") or 0))
+        except Exception:
+            pass
     try:
         from . import normal
         # turns-to-dose and seconds-to-dose, per state: the measurement that makes
@@ -488,8 +496,9 @@ def deliver_if_due() -> int:
         if active.get("key") == key:
             active["served"] = int(active.get("served") or 0) + len(lines)
             active["served_turn"] = int(data["work"].get("turns") or 0)
-            data["active"] = active
-            _save(data)
+            active["started"] = active.get("started") or time.time()
+        data["active"] = active
+        _save(data)
     complete_if_dosed()
     return len(lines)
 

@@ -238,6 +238,21 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 3.4b A ledger write either happens or says why
+
+A ledger failure must never break a turn, so the write path records the failure as an event
+instead of raising. That is the right trade, and it hid a `NameError` inside `_prune` for a
+release: every served concept inserted its row and then crashed at the prune step, so the picture
+lit and the ledger looked healthy while the run recorded nothing. Two consequences, both tested:
+
+- the prune step runs on the write path, so it is exercised directly, not just inferred from
+  rows that happened to insert first;
+- a run's own record is asserted after a full `enter → turn → deliver → stop` cycle — served and
+  concept rows, no `concept write failed` event in the journal, and one `moves` row for the run.
+
+`moves` is written where every ending passes through. It was created, given a writer, and never
+called, leaving no trace that any state had ever run.
+
 ### 4.4b A move that joins never answers "nothing"
 
 Daydream and dream exist to put two things together. An answer of "no connection today" or

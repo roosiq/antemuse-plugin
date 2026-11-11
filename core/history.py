@@ -415,7 +415,7 @@ def _prune(conn: sqlite3.Connection, now: float) -> None:
                  (MAX_CONCEPTS,))
     conn.execute("""DELETE FROM appearances WHERE rowid IN (
                       SELECT rowid FROM appearances ORDER BY at DESC LIMIT -1 OFFSET ?)""",
-                 (CAP_SERVED * 2,))
+                 (MAX_SERVED * 2,))
     conn.execute("""DELETE FROM served WHERE rowid IN (
                       SELECT rowid FROM served ORDER BY at DESC LIMIT -1 OFFSET ?)""",
                  (MAX_SERVED,))
