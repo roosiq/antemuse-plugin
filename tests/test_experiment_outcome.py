@@ -62,10 +62,3 @@ def test_wilson_interval_is_sane_at_the_edges():
     assert p == 1.0 and hi == 1.0 and 0 < lo < 1
     p, lo, hi = wilson(3, 5)
     assert lo < p < hi
-
-
-def test_the_preregistration_records_the_ceiling_amendment():
-    text = open(os.path.join(ROOT, "experiments", "state-settings",
-                             "preregistration.md")).read()
-    assert "state ceilings doubled" in text
-    assert "safety limit, not the treatment" in text

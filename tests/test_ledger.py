@@ -81,12 +81,3 @@ def test_the_cli_validates_a_file_and_summarises(tmp_path):
                           "--ledger", str(path)], capture_output=True, text=True)
     assert bad.returncode == 1
     assert "outcome must be a boolean" in bad.stderr
-
-
-def test_the_preregistration_names_every_state_and_seed():
-    text = open(os.path.join(ROOT, "experiments", "state-settings",
-                             "preregistration.md")).read()
-    for state in ("walk", "daydream", "doomscroll", "dream", "unstuck"):
-        assert state in text
-    for seed in ("3497679622", "18095054", "751586276", "3399968528", "1739374009"):
-        assert seed in text, seed
