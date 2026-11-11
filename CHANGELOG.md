@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.41 — 2026-11-11
+
+- dashboard: load the plugin's core under a private name, never as 'core' (2026-11-11)
+
 ## 0.10.40 — 2026-11-11
 
 - docs: the raw experiment transcripts are published, at their own repository (2026-11-11)
