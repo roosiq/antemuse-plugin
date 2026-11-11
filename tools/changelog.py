@@ -61,6 +61,11 @@ def section(ver: str) -> str:
     for _sha, date, subject in rows:
         if boundary_subject and subject.startswith(boundary_subject):
             break
+        # Release mechanics are not changes, and a line naming a sha the package does not pin is
+        # worse than no line: 0.10.17's changelog announced "catalog entry for 8be3589" while the
+        # entry inside it pinned c3910612.
+        if re.match(r"^catalog entry for ", subject):
+            continue
         subject = re.sub(r"^\d+\.\d+\.\d+:\s*", "", subject).strip()
         if subject:
             kept.append(f"- {subject} ({date})")
