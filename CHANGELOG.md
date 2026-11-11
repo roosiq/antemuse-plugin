@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.37 — 2026-11-11
+
+- chore: the plugin root is Python; the pane harness owns its npm manifest (2026-11-11)
+
 ## 0.10.36 — 2026-11-11
 
 - fix: the pane harness runs again — real deps, self-provisioning, assertions that match the pane (2026-11-11)
