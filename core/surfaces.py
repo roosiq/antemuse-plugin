@@ -247,15 +247,40 @@ def record(state: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+#: Where a monospace font may live, per platform. The card is drawn on the user's machine, not on
+#: this one: a hardcoded /usr/share path made `state action="image"` raise OSError on Windows and
+#: every snapshot test fail there. The last resort is Pillow's own bitmap font, which is ugly and
+#: always present — an ugly card beats a crash.
+_FONT_CANDIDATES = (
+    "/usr/share/fonts/google-noto-vf/NotoSansMono[wdth,wght].ttf",
+    "/usr/share/fonts/google-noto-vf/NotoSans[wght].ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+    "/usr/share/fonts/dejavu/DejaVuSansMono.ttf",
+    "/System/Library/Fonts/Menlo.ttc",
+    "/System/Library/Fonts/Supplemental/Courier New.ttf",
+    "C:/Windows/Fonts/consola.ttf",
+    "C:/Windows/Fonts/cour.ttf",
+    "DejaVuSansMono.ttf",
+)
+
+
+def _mono_font(size: int):
+    from PIL import ImageFont
+
+    for candidate in _FONT_CANDIDATES:
+        try:
+            return ImageFont.truetype(candidate, size)
+        except OSError:
+            continue          # not on this machine; try the next, and never assume a platform
+    return ImageFont.load_default()
+
+
 def snapshot_path(state: Dict[str, Any], name: str = "discord") -> Path:
     """A PNG of the same card, for clients that render text in a proportional font."""
     from PIL import ImageDraw, ImageFont
 
     text = card(state, name)
-    font_path = "/usr/share/fonts/google-noto-vf/NotoSansMono[wdth,wght].ttf"
-    if not Path(font_path).exists():
-        font_path = "/usr/share/fonts/google-noto-vf/NotoSans[wght].ttf"
-    font = ImageFont.truetype(font_path, 18)
+    font = _mono_font(18)
     pad, lh = 28, 26
     lines = text.splitlines()
     wpx = pad * 2 + max(len(l) for l in lines) * 11

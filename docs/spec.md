@@ -238,6 +238,28 @@ so `install.py` re-probes and installs into that interpreter itself when the pro
 A failure names the cause it established: a module that is not importable is reported as such,
 with the interpreter named, and only a genuine download error points at the downloader.
 
+### 3.5d The shipped suite must run from the shipped package
+
+Shipping `tests/` without the trees they read was half a policy: the package collected 693 test
+functions, then died at collection on `tests/test_shards.py` (`evaluation/` is research evidence
+and is not packed), and several tests read `site/`, `docs/` or `specs/`, which the packer also
+strips. "The tests ship" is only worth saying if `pytest tests` runs on the artifact.
+
+Three defects came out of actually running it there:
+
+- **determinism** — `seeding.random_term()` used the global RNG, so the random share of an entry's
+  mix was the one part a replay could not reproduce, in the module whose docstring says determinism
+  is the point. It carries its own RNG keyed by `(state, when, counter)` now.
+- **a font on every platform** — `surfaces.snapshot_path` hardcoded a Linux font path, so
+  `state action="image"` raised `OSError` on Windows and the snapshot tests failed there. The
+  candidates are per-platform and the last resort is Pillow's own bitmap font: an ugly card beats
+  a crash.
+- **a test that asserted the opposite of the policy** — the projection test required the asset to
+  be *absent*, which is true of a checkout and false of the package, so it failed on the artifact
+  while the packer was doing the right thing. The rule is direction-dependent and so is the test.
+
+Tests that genuinely need repo-only trees now skip with a reason instead of erroring at collection.
+
 ### 3.5c An upgrade must land where a fresh install lands
 
 The packed tree was clean and a fresh home installed clean, while an *upgrade* home stayed dirty:

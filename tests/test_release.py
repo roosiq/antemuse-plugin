@@ -33,13 +33,23 @@ def test_the_release_ships_runtime_only():
     assert "plugins validate" in text
 
 
-def test_the_projection_ships_from_the_cache_not_from_the_repository():
-    """It holds 117k WordNet labels, so it cannot live in the tree (the retired-name rule forbids
-    those words), but a package without it draws a plain circle instead of the semantic map."""
+def test_the_projection_is_built_not_committed():
+    """It holds 117k WordNet labels, so it cannot live in the repository (the retired-name rule
+    forbids those words) — but a package without it draws a plain circle instead of the map.
+
+    The earlier form of this test asserted the file does not exist, which was true of a checkout
+    and false of the packed tree: on the shipped artifact it failed while the packer was doing
+    exactly the right thing. The rule is direction-dependent, so the test is too.
+    """
     build = (ROOT / "scripts" / "build-release.sh").read_text()
     assert "assets/projection" in build
-    assert "wordnet.proj.json" in build
-    assert not (ROOT / "assets" / "projection" / "wordnet.proj.json").exists()
+
+    shipped = (ROOT / "assets" / "projection" / "wordnet.proj.json").exists()
+    if (ROOT / ".git").exists():
+        assert not shipped, "the projection must not be committed: build it into the package"
+    else:
+        assert shipped, "this tree is a package and must carry the projection"
+
 
 
 def test_the_doctor_count_reads_the_number_the_doctor_printed():
