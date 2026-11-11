@@ -256,6 +256,19 @@ def graph(session: str = "", limit: int = 1400):
         except Exception:  # health: BLE001 -- no trail is a fact, not a failure
             path = []
 
+    # How much has been said about each concept: appearances across the ledger, not activation.
+    # Size answers "is this a thing we keep coming back to"; colour answers "is it firing now".
+    volume: Dict[str, int] = {}
+    try:
+        for label, n in activation._rows(
+                "SELECT c.label, COUNT(*) FROM appearances a JOIN concepts c ON c.id = a.concept_id "
+                "GROUP BY a.concept_id") or []:
+            if label:
+                volume[str(label)] = int(n)
+    except Exception:  # health: BLE001 -- no counts is a fact, not a failure
+        volume = {}
+    top = max(volume.values()) if volume else 1
+
     ground = activation_stills._all_labels(int(max(120, min(limit, 2400))))
     # Whatever the surface has to draw must be on it: firings and the trail are drawn, so they
     # join the ground even when they are not among its busiest concepts.
@@ -268,8 +281,10 @@ def graph(session: str = "", limit: int = 1400):
             w = max(0.0, min(1.0, float(slot.get("weight", 0.0))))
         except (TypeError, ValueError):
             w = 0.0
+        # sqrt: a concept met 400 times is not 400 times bigger than one met once
+        v = (float(volume.get(label, 0)) / top) ** 0.5 if top else 0.0
         nodes.append({"l": label, "x": float(xyz[0]), "y": float(xyz[1]), "z": float(xyz[2]),
-                      "w": w})
+                      "w": w, "v": round(v, 4)})
     nodes.sort(key=lambda n: n["w"])  # brightest last: a stable draw order across polls
     # The relations this graph actually has. The pane used to draw k-nearest neighbours in the
     # projection, which is geometry, not connection — so an edge could light up only if the two

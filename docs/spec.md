@@ -315,6 +315,22 @@ Three rules came out of it:
 - **the state counter is not evidence** — `served` increments on delivery whether or not the
   ledger write worked, so tests read the ledger and the activation, never the counter.
 
+### 9.6c Size is volume, colour is activation
+
+Two different questions were being answered by one channel. Dot size came from the activation
+weight, so a concept the user returns to constantly was drawn exactly like one met once — the
+picture could not show what had been talked about, only what was firing at that moment.
+
+- **size = volume.** `graph()` now sends `v`, appearances across the ledger for that concept,
+  sqrt-scaled against the busiest concept on the map: a concept met 400 times is not 400 times
+  bigger. The split is wide in practice — of 1,349 nodes on this ledger, 49 sit above 0.5 and 465
+  above 0.2.
+- **colour = activation**, unchanged: warm when firing, cool when quiet.
+- **the distance falloff is bounded.** Volume was encoded correctly and still invisible: the old
+  `2.4 / p.w` term crushed every dot to one or two pixels at the wide shot, which is exactly the
+  shot where you judge the whole map. Measured by connected-component area on the real pane, the
+  largest dot went from 22 px to 516 px and the size range became legible.
+
 ### 9.6b The web must not bury the dots
 
 "How can we allow for better navigation of the graph" became "it's really hard to find the dots

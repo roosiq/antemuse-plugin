@@ -835,3 +835,56 @@ def test_a_new_serving_is_not_hidden_by_the_memo():
 
     second = client.get("/api/plugins/antemuse/state?graph=1&stills=0").json()["graph"]["lit"]
     assert second > first, "a serving between polls must show up on the next poll"
+
+
+def test_a_node_carries_how_often_it_was_met():
+    """Size is volume, colour is activation — two different questions.
+
+    The pane drew every dot at the activation weight, so a concept the user keeps returning to was
+    drawn exactly like one seen once. `v` is appearances across the ledger, sqrt-scaled: a concept
+    met 400 times is not 400 times bigger.
+    """
+    from dashboard import plugin_api
+
+    # Take labels the map actually shows (the ground is the ledger's busiest concepts), then give
+    # two of them very different histories. Seeding arbitrary words proves nothing: they are not on
+    # the map, so their volume never reaches a node.
+    first = plugin_api.graph(limit=200)
+    labels = [n["l"] for n in (first.get("nodes") or [])][:40]
+    assert len(labels) >= 2, "the map is empty"
+
+    from core import history
+    conn = history._connect()
+    assert conn is not None
+    with conn:
+        for label, times in ((labels[0], 40), (labels[1], 1)):
+            cur = conn.execute(
+                "INSERT OR IGNORE INTO concepts(kind,key,label,first_seen,last_seen,times) "
+                "VALUES('term',?,?,0,0,?)", (label, label, times))
+            cid = cur.lastrowid or conn.execute(
+                "SELECT id FROM concepts WHERE key = ?", (label,)).fetchone()[0]
+            for i in range(times):
+                conn.execute("INSERT INTO appearances(concept_id, source, ref, at) "
+                             "VALUES(?,?,?,0)", (cid, "message", f"v{i}"))
+            conn.execute("INSERT INTO served(concept_id, move, session, at) VALUES(?,?,?,0)",
+                         (cid, "walk", "volume-test"))
+    conn.close()
+    plugin_api._GRAPH_MEMO.clear()      # the payload is memoised per state and ledger stamp
+
+    payload = plugin_api.graph(limit=200)
+    by_label = {n["l"]: n for n in payload["nodes"]}
+    heavy, light = by_label[labels[0]], by_label[labels[1]]
+    assert "v" in heavy and "v" in light, "every node must say how often it was met"
+    assert 0.0 <= float(light["v"]) < float(heavy["v"]) <= 1.0, (heavy["v"], light["v"])
+    assert float(heavy["v"]) == pytest.approx(1.0, abs=0.01), heavy["v"]
+    assert all(0.0 <= float(n["v"]) <= 1.0 for n in payload["nodes"])
+
+
+def test_the_pane_sizes_a_dot_by_volume_and_colours_it_by_activation():
+    js = (Path(__file__).resolve().parent.parent / "desktop" / "plugin.js").read_text()
+    assert "attribute float aV" in js, "the pane must receive volume"
+    assert "gl_PointSize = (2.2 + 6.5*aV) * (1.0 + 0.7*aW)" in js, \
+        "size must come from volume, with activation as a modest multiplier"
+    # the falloff is bounded, or the wide shot crushes every dot to a pixel and volume cannot show
+    assert "(9.0 / max(2.5, p.w))" in js
+    assert "vW = aW" in js, "colour still comes from activation"

@@ -272,10 +272,17 @@ function createGraph3D(el, doc, ctx, host, win) {
     return d
   }
 
-  const VS_POINT = 'attribute vec3 aPos; attribute float aW; uniform mat4 uMVP; uniform float uDpr;' +
-    'uniform float uSize; varying float vW;' +
+  // Size is how much has been said about a concept; colour is whether it is firing now. Two
+  // questions, two channels: a dot you keep returning to stays big while quiet, and a dot that
+  // fires without history glows instead of shouting.
+  const VS_POINT = 'attribute vec3 aPos; attribute float aW; attribute float aV;' +
+    'uniform mat4 uMVP; uniform float uDpr; uniform float uSize; varying float vW;' +
     'void main(){ vec4 p = uMVP * vec4(aPos,1.0); gl_Position = p;' +
-    'gl_PointSize = (2.3 + 6.0*aW) * uDpr * uSize * (2.4 / max(0.45, p.w)); vW = aW; }'
+    // The distance term is bounded: at the wide shot the old falloff crushed every dot to a
+    // pixel or two, so volume had nothing to show itself in. Perspective still applies, but a dot
+    // stays a dot.
+    'gl_PointSize = (2.2 + 6.5*aV) * (1.0 + 0.7*aW) * uDpr * uSize * (9.0 / max(2.5, p.w));' +
+    'vW = aW; }'
   const FS_POINT = 'precision mediump float; varying float vW;' +
     'void main(){ vec2 d = gl_PointCoord - vec2(0.5); float r = length(d)*2.0;' +
     'if (r > 1.0) discard; float core = smoothstep(1.0, 0.18, r);' +
@@ -314,7 +321,7 @@ function createGraph3D(el, doc, ctx, host, win) {
   }
   const loc = (prog, name) => gl.getAttribLocation(prog, name)
   const uni = (prog, name) => gl.getUniformLocation(prog, name)
-  const pPos = loc(pointProg, 'aPos'), pW = loc(pointProg, 'aW')
+  const pPos = loc(pointProg, 'aPos'), pW = loc(pointProg, 'aW'), pV = loc(pointProg, 'aV')
   const pMVP = uni(pointProg, 'uMVP'), pDpr = uni(pointProg, 'uDpr'), pSize = uni(pointProg, 'uSize')
   const lPos = loc(lineProg, 'aPos'), lA = loc(lineProg, 'aA'), lMVP = uni(lineProg, 'uMVP')
   const lColor = uni(lineProg, 'uColor')
@@ -334,7 +341,8 @@ function createGraph3D(el, doc, ctx, host, win) {
 
   const pointBuf = gl.createBuffer(), lineBuf = gl.createBuffer(), pathBuf = gl.createBuffer(),
     liveBuf = gl.createBuffer(), liveABuf = gl.createBuffer()
-  let nodes = [], nodePos = new Float32Array(0), nodeW = new Float32Array(0), edges = []
+  let nodes = [], nodePos = new Float32Array(0), nodeW = new Float32Array(0),
+    nodeV = new Float32Array(0), edges = []
   let edgePos = new Float32Array(0), edgeA = new Float32Array(0)
   let pathPos = new Float32Array(0), pathA = new Float32Array(0)
   let livePos = new Float32Array(0), liveA = new Float32Array(0)
@@ -539,11 +547,15 @@ function createGraph3D(el, doc, ctx, host, win) {
       gl.bufferData(gl.ARRAY_BUFFER, edgePos, gl.STATIC_DRAW)
     }
     nodeW = new Float32Array(nodes.length)
+    nodeV = new Float32Array(nodes.length)
     nodes.forEach((n, i) => {
       const live = raw.length === nodes.length ? raw[i] : null
       const w = live && live.w ? live.w : n.w
       n.w = w
       nodeW[i] = w
+      const v = live && live.v !== undefined ? live.v : (n.v || 0)
+      n.v = v
+      nodeV[i] = Math.max(0, Math.min(1, v))
     })
     gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf)
     gl.bufferData(gl.ARRAY_BUFFER, nodePos, gl.STATIC_DRAW)
@@ -551,6 +563,10 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.bindBuffer(gl.ARRAY_BUFFER, wBuf)
     gl.bufferData(gl.ARRAY_BUFFER, nodeW, gl.STATIC_DRAW)
     upload.wBuf = wBuf
+    const vBuf = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuf)
+    gl.bufferData(gl.ARRAY_BUFFER, nodeV, gl.STATIC_DRAW)
+    upload.vBuf = vBuf
     report({ nodes: nodes.length, edges: edges.length,
       lit: nodeW.reduce((a, b) => a + (b > 0.05 ? 1 : 0), 0) })
   }
@@ -688,14 +704,16 @@ function createGraph3D(el, doc, ctx, host, win) {
     gl.useProgram(pointProg)
     gl.uniformMatrix4fv(pMVP, false, MVP)
     gl.uniform1f(pDpr, win.devicePixelRatio || 1)
-    // Slightly larger, and never hidden behind an edge: a picture whose dots cannot be found has
-    // failed at the one thing it is for.
+    // Never hidden behind an edge: a picture whose dots cannot be found has failed at the one
+    // thing it is for.
     gl.uniform1f(pSize, 1.35)
     gl.depthMask(false)
     gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf)
     gl.enableVertexAttribArray(pPos); gl.vertexAttribPointer(pPos, 3, gl.FLOAT, false, 0, 0)
     gl.bindBuffer(gl.ARRAY_BUFFER, upload.wBuf || pointBuf)
     gl.enableVertexAttribArray(pW); gl.vertexAttribPointer(pW, 1, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, upload.vBuf || pointBuf)
+    gl.enableVertexAttribArray(pV); gl.vertexAttribPointer(pV, 1, gl.FLOAT, false, 0, 0)
     gl.drawArrays(gl.POINTS, 0, nodePos.length / 3)
     gl.depthMask(true)
     frames++
