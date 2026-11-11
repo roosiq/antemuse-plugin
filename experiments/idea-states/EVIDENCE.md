@@ -10,12 +10,14 @@
   counts can be recomputed.
 - `*.png`, `index.html` — the same numbers as pictures.
 
-Not published: `results-*.json`, `variation-*.json`, `log-*.log`. Those hold the raw model
-transcripts, including the states' own text. Two reasons they stay on the author's disk:
-the catalog's install-time security scan treats a transcript of a model role-playing a
-deception as a dangerous payload, and shipping tens of megabytes of prompt text with a
-plugin that never reads it is waste. Nothing in the report depends on reading them — the
-aggregates are copied from them mechanically.
+Not in this tree: `results-*.json`, `variation-*.json`, `log-*.log`. Those hold the raw
+model transcripts, including the states' own text, and they are published separately at
+[roosiq/antemuse-evidence](https://github.com/roosiq/antemuse-evidence) with a sha256 for
+every file. They are not here for two reasons: the catalog's install-time security scan
+treats a transcript of a model role-playing a deception as a dangerous payload, and shipping
+tens of megabytes of prompt text with a plugin that never reads it is waste. Nothing in the
+report depends on reading them — the aggregates are copied from them mechanically, and the
+separate repository is where a reader can check that.
 
 To regenerate an aggregate from a run you still have locally:
 

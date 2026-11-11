@@ -4,7 +4,7 @@ Six models, four conditions, measured from the text itself. No model judges anot
 Run: 2026-11-09. Evidence: `aggregate-*.json` (every number below, per model and
 condition), `concepts.md`, `percent.md`, `math-*.md`, `floor.md`, `overlap.md`, `master.md`,
 `table.png`, `concepts.png`, `master.png`, `index.html`. The raw transcripts those aggregates
-were computed from are not published; `EVIDENCE.md` says why and how to regenerate them.
+were computed from are published separately at [roosiq/antemuse-evidence](https://github.com/roosiq/antemuse-evidence); `EVIDENCE.md` says why they are not in this tree and how to regenerate them.
 
 ## The question
 
