@@ -360,8 +360,15 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
     note = ""
     if previous and previous["key"] != spec_key:
         note = f" (left {previous['key']}; no residue kept)"
-    return (f"{spec['label']} · {duration:g} min · {spec['turns']} "
-            f"{(spec.get('dose') or {}).get('unit') or 'turn(s)'} · {spec['contract']}{note}")
+    # The dose is the promise; the minutes are the ceiling it falls back on. Printing the
+    # ceiling first said "30 min" for a dream that is over after one turn of work, and it
+    # printed spec['turns'] as the count, so an unstuck that owes ONE direction announced three.
+    dose = (spec.get("dose") or {})
+    n = int(dose.get("n") or spec["turns"])
+    unit = dose.get("unit") or "turn(s)"
+    if n == 1 and unit.endswith("s") and unit not in ("turn(s)", "tools"):
+        unit = unit[:-1]                      # "1 direction", not "1 directions"
+    return (f"{spec['label']} · {n} {unit} · up to {duration:g} min · {spec['contract']}{note}")
 
 
 def current_session() -> str:

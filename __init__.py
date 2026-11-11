@@ -450,6 +450,10 @@ def _return(_raw: str, session_id: str | None = None,
             session_key: str | None = None, **_ignored: object) -> str:
     # /return ends the state of the chat that asked, not of whichever chat was remembered.
     who = session_id or session_key or engine.current_session()
+    if not engine.peek():
+        # Nothing is running: repeating the last ending made /return look like it had just
+        # ended a state the person was not in.
+        return "not in a state."
     answer = engine.stop(who)
     # The person just read the account in the command's own answer; saying it again on the
     # next turn would be the plugin repeating itself.
