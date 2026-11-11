@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.34 — 2026-11-11
+
+- docs: stop advertising a takeover that 0.10.30 deleted, in the entry, TESTING.md and the spec (2026-11-11)
+- docs(eval): the idea-states benchmark ships its report, plots, scripts and per-model aggregates (2026-11-11)
+
 ## 0.10.33 — 2026-11-11
 
 - one unit per turn, so the pane shows each hop (2026-11-11)
