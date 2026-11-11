@@ -229,6 +229,15 @@ templates into something that never existed, e.g. "a {frame} missing its {agent}
 so every {patient} has to stand in for it". No tools. Thirty minutes, long
 dissolves; this is the state whose texture is duration.
 
+### 3.4a The installer installs where the plugin imports
+
+`hermes plugins validate --install-deps` installs into Hermes's own environment, which on some
+builds is not the interpreter `install.py` probes (a tools python can sit beside a staged runtime
+venv). Its exit status therefore proves nothing about the interpreter the plugin's hooks run on,
+so `install.py` re-probes and installs into that interpreter itself when the probe still fails.
+A failure names the cause it established: a module that is not importable is reported as such,
+with the interpreter named, and only a genuine download error points at the downloader.
+
 ### 4.4b A move that joins never answers "nothing"
 
 Daydream and dream exist to put two things together. An answer of "no connection today" or

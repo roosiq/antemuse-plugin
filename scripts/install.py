@@ -89,6 +89,59 @@ def hermes_python() -> str:
     return sys.executable
 
 
+def ensure_deps(py: str, dry: bool) -> None:
+    """Step 1: pillow and nltk where the *plugin* imports them, not merely where Hermes does."""
+    say("1. python dependencies (pillow, nltk)")
+    has = run([py, "-c", "import PIL, nltk"], dry, quiet=True)
+    if has:
+        ok("already importable")
+        return
+    # `hermes plugins validate --install-deps` installs into Hermes's own venv, which on some
+    # builds is *not* the interpreter this script just probed — a tools python can sit beside a
+    # staged runtime venv. So its exit status proves nothing about `py`: the re-probe decides,
+    # and if it still fails we install into `py` ourselves.
+    if run(["hermes", "plugins", "validate", str(SRC), "--install-deps"], dry, quiet=True):
+        warn("'hermes plugins validate --install-deps' ran; it may have used a different "
+             "interpreter, so re-checking " + py)
+    else:
+        warn("'hermes plugins validate --install-deps' did not complete")
+    if not run([py, "-c", "import PIL, nltk"], dry, quiet=True):
+        if not run([py, "-m", "pip", "install", "--quiet", "pillow>=10,<14", "nltk>=3.8,<4"],
+                   dry):
+            die(f"could not install pillow/nltk into {py}")
+        ok(f"installed into {py}")
+    if not run([py, "-c", "import PIL, nltk"], dry, quiet=True):
+        die(f"pillow/nltk are still not importable in {py}, which is the interpreter the "
+            f"plugin's hooks run on. Set HERMES_PY to that interpreter and re-run.")
+
+
+def ensure_corpora(py: str, dry: bool) -> None:
+    """Step 2: the wordnet and framenet corpora the projection needs."""
+    say("2. nltk corpora (wordnet, framenet)")
+    nltk_dir = Path(os.environ.get("NLTK_DATA") or Path.home() / "nltk_data")
+    if (nltk_dir / "corpora" / "wordnet").is_dir() and (nltk_dir / "corpora" / "framenet_v17").is_dir():
+        ok(f"already present in {nltk_dir}")
+        return
+    if dry:
+        print(f"  would download wordnet, framenet_v17 into {nltk_dir}")
+        return
+    code = ("import sys, nltk\n"
+            "dest = sys.argv[1]\n"
+            "for pkg in ('wordnet', 'framenet_v17'):\n"
+            "    nltk.download(pkg, download_dir=dest, quiet=True)\n")
+    if not run([py, "-c", code, str(nltk_dir)], dry):
+        # A missing module and a failed download are different bugs with different fixes, so the
+        # label says which one happened instead of guessing "network?".
+        probe = subprocess.run([py, "-c", "import nltk"], capture_output=True, text=True)
+        if probe.returncode != 0:
+            last = ((probe.stderr or "").strip().splitlines() or [""])[-1]
+            die(f"nltk is not importable in {py} ({last or 'no error text'}), so the corpora "
+                f"could not be fetched")
+        die(f"nltk could not download wordnet/framenet_v17 into {nltk_dir}; see "
+            f"`{py} -m nltk.downloader -d {nltk_dir} wordnet framenet_v17` for the reason")
+    ok(f"downloaded into {nltk_dir}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Install Antemuse into a Hermes home.")
     ap.add_argument("--dry-run", action="store_true")
@@ -107,35 +160,8 @@ def main() -> int:
     if dry:
         print("  dry run     nothing will be written")
 
-    # ---------------------------------------------------------------- 1. dependencies
-    say("1. python dependencies (pillow, nltk)")
-    has = run([py, "-c", "import PIL, nltk"], dry, quiet=True)
-    if has:
-        ok("already importable")
-    else:
-        if run(["hermes", "plugins", "validate", str(SRC), "--install-deps"], dry, quiet=True):
-            ok("installed via 'hermes plugins validate --install-deps'")
-        else:
-            warn("'hermes plugins validate --install-deps' did not complete; installing directly")
-            if not run([py, "-m", "pip", "install", "--quiet", "pillow>=10,<14", "nltk>=3.8,<4"], dry):
-                die(f"could not install pillow/nltk into {py}")
-            ok(f"installed into {py}")
-
-    # ------------------------------------------------------------------- 2. corpora
-    say("2. nltk corpora (wordnet, framenet)")
-    nltk_dir = Path(os.environ.get("NLTK_DATA") or Path.home() / "nltk_data")
-    if (nltk_dir / "corpora" / "wordnet").is_dir() and (nltk_dir / "corpora" / "framenet_v17").is_dir():
-        ok(f"already present in {nltk_dir}")
-    elif dry:
-        print(f"  would download wordnet, framenet_v17 into {nltk_dir}")
-    else:
-        code = ("import sys, nltk\n"
-                "dest = sys.argv[1]\n"
-                "for pkg in ('wordnet', 'framenet_v17'):\n"
-                "    nltk.download(pkg, download_dir=dest, quiet=True)\n")
-        if not run([py, "-c", code, str(nltk_dir)], dry):
-            die("nltk corpus download failed (network?)")
-        ok(f"downloaded into {nltk_dir}")
+    ensure_deps(py, dry)
+    ensure_corpora(py, dry)
 
     # -------------------------------------------------------------------- 3. plugin
     say("3. plugin files")
