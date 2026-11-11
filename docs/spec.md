@@ -1163,6 +1163,12 @@ Supporting evidence files:
 
 ## 16. Evidence base and its limits
 
+**Where the evidence lives.** The harness (`evaluation/`) and the raw runs (`experiments/`)
+are kept on the author's disk and are not published with the plugin: they are model
+transcripts, no runtime path loads them, and the catalog's install-time scanner read 37
+role-play and deception matches in recorded story text and rated the tree `dangerous`. The
+numbers below are the summaries; the transcripts are available on request.
+
 The research note (`docs/creativity-exercises.md`) supports **state and frame**
 changes more strongly than techniques: eight minutes of walking before
 generating (81% improved on Alternate Uses versus 23% on a convergent task);

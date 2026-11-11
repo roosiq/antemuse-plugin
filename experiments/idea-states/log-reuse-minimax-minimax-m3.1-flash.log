@@ -1,5 +1,0 @@
-Could not reach the Hub (Cannot reach https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2: offline mode is enabled. To disable it, please unset the `HF_HUB_OFFLINE` environment variable.). Using cached commit hash for 'sentence-transformers/all-MiniLM-L6-v2'.
-Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5174.31it/s]
-[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:   0%|          | 1/311 [00:00<00:46,  6.67it/s]Loading weights:  34%|███▍      | 105/311 [00:00<00:00, 508.96it/s]Loading weights:  53%|█████▎    | 166/311 [00:00<00:00, 525.62it/s]Loading weights:  72%|███████▏  | 225/311 [00:00<00:00, 404.36it/s]Loading weights:  87%|████████▋ | 272/311 [00:00<00:00, 401.12it/s]Loading weights: 100%|██████████| 311/311 [00:00<00:00, 413.58it/s]
-wrote /home/ryan/antemuse-plugin/experiments/idea-states/report-minimax-minimax-m3-1-flash.md

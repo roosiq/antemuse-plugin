@@ -173,7 +173,6 @@ core/orchestrator.py   run orchestration (library only; not runtime-wired)
 core/selection.py      selection aids (library only; not runtime-wired)
 core/feedback.py       human feedback plumbing (library only; not runtime-wired)
 core/presenter.py      prepared-artifact presentation (library only; not runtime-wired)
-evaluation/            evaluation controls and harness (library only)
 data/collider/         real Open Collider generated examples, CC BY 4.0,
                        with attribution (library only)
 bin/antemuse           launcher on PATH
@@ -182,8 +181,13 @@ tests/                 pytest suite (renderer tests need `npm ci`; count in spec
 
 ## Experimental exploration library
 
+The evaluation harness and the raw experiment runs (`evaluation/`, `experiments/`) are
+research material and are **not published** with the plugin: they are model transcripts,
+nothing at runtime loads them, and the catalog's install scanner reads every tracked file.
+What they showed is summarised in `docs/spec.md` §16.
+
 The approved creative-state-evidence work adds an exploration layer at the
-library level: `evaluation/`, `core/collider.py`, `core/collision.py`,
+library level: `core/collider.py`, `core/collision.py`,
 `core/llm.py`, `core/orchestrator.py`, `core/selection.py`, `core/feedback.py`,
 `core/presenter.py`, and `data/collider/`.
 
@@ -271,15 +275,25 @@ What a person should know before installing. Each line names where it happens.
   `SD_SERVER` on a tailnet host, not localhost.
 - **Credentials.** None requested, read, stored or refreshed. No `.env`, no
   `auth.json`, no keychain, no OAuth token. Environment reads are limited to
-  `ANTEMUSE_STATES_HOME`, `NLTK_DATA`, `NO_COLOR` and `TERM`.
+  `ANTEMUSE_STATES_HOME`, `ANTEMUSE_NO_SCAN`, `ANTEMUSE_EXPERIMENT` (dose overrides for the research runner only), `HERMES_HOME`, `XDG_CACHE_HOME`, `NO_COLOR` and `TERM`; `NLTK_DATA` is set (`setdefault`) so the corpora resolve, never read for anything else.
 - **Telemetry and model usage.** None. No analytics, no usage reporting, no
   hidden LLM calls on the state path. The experimental exploration library uses
   `ctx.llm` only when explicitly invoked by code that is not runtime-wired.
 - **Updates.** The plugin does not update itself and never fetches its own code.
   Updates arrive through the catalog's pinned SHA and `hermes plugins update`.
-- **Unattended runs.** States work under cron and the messaging gateway; a state
-  that cannot draw degrades to a picture or a text record rather than waiting on
-  a person.
+- **Unattended runs.** States work under cron and the messaging gateway; nothing
+  waits on a person, and a state that cannot draw sends nothing rather than
+  blocking.
+- **Starting a state on its own.** Never by default: the recommender only names a
+  state. `suggest_autofollow` (off unless you turn it on) makes it enter the state
+  it named; the suggestion line is still shown, it never stacks on a running
+  state, and the state ends by its dose like any other.
+- **Scope of a state.** A state belongs to the conversation that entered it. Its
+  material is injected only into that conversation's turns, and `/return` from any
+  other conversation changes nothing.
+- **Chat.** No pictures, cards or media are posted into a conversation. The
+  picture is the desktop app's Antemuse pane; a terminal gets the full-screen
+  takeover.
 
 ## three.js backdrop
 

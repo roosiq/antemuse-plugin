@@ -65,7 +65,8 @@ def render(pin: str | None = None) -> str:
         "docs_url": "https://github.com/roosiq/antemuse-plugin#readme",
         "version": str(manifest["version"]),
         "requires_hermes": manifest["requires_hermes"],
-        "platforms": ["linux", "macos"],
+        # read from the manifest, so the entry cannot claim less (or more) than the plugin does
+        "platforms": list(manifest.get("platforms") or ["linux", "macos"]),
         "capabilities": {
             "provides_tools": list(manifest.get("provides_tools") or []),
             "provides_hooks": list(manifest.get("provides_hooks") or []),
@@ -73,17 +74,17 @@ def render(pin: str | None = None) -> str:
             "requires_env": [],
         },
         "known_issues": [
-            "Desktop dock pane is built but not confirmed rendering inside the packaged app; "
-            "the terminal takeover is the verified surface.",
-            "State is profile-wide, not per-session: a state started in one chat is visible to "
-            "the whole profile until it ends or expires.",
+            "The picture is the desktop app's Antemuse pane only; chat carries no "
+            "visualization, and a terminal gets the full-screen takeover.",
+            "Windows: the installer and runtime are pure Python and the suite passes on Linux; "
+            "the takeover needs a POSIX terminal and prints a still frame elsewhere.",
             "The exploration library (spark, keep, collider, selection) is present but runtime-gated "
             "behind experimental.enabled and makes no quality claim.",
         ],
         "image": f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/banner.png",
         "screenshots": [
             f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/{n}"
-            for n in ("takeover.png", "chat-card.png", "return-account.png", "blocked-tool.png")
+            for n in ("pane-walk.png", "takeover.png", "return-account.png", "blocked-tool.png")
         ],
     }
     text = yaml.safe_dump(entry, sort_keys=False, allow_unicode=True, width=100)

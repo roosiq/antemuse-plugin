@@ -51,7 +51,7 @@ not a guess. Ignore it when the work is nearly done; the nudge waits 45 minutes.
 
 An approved experimental exploration layer lives under
 `specs/changes/creative-state-evidence/` (spec, plan, tasks). Its library modules
-(`evaluation/`, `core/collider.py`, `core/collision.py`, `core/llm.py`,
+(`core/collider.py`, `core/collision.py`, `core/llm.py`,
 `core/orchestrator.py`, `core/selection.py`, `core/feedback.py`,
 `core/presenter.py`, `data/collider/`) exist. Wave 3 has begun: the three
 auxiliary task routes (`antemuse_generate`, `antemuse_select`,

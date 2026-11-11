@@ -4,12 +4,14 @@
     python3 tools/make_screenshots.py            # writes docs/screenshots/*.png
     python3 tools/make_screenshots.py --check    # exit 1 if any still is stale
 
-Five files:
+Four rendered files, plus one captured one:
 
 - ``banner.png``            1200x600, the catalog ``image:``
 - ``takeover.png``          the terminal takeover, rasterised by the same node
                             scene renderer the plugin uses (160x40 cells at 8x18)
-- ``chat-card.png``         the chat postcard, via ``core.surfaces.snapshot_path``
+- ``pane-walk.png``         NOT rendered here: a frame of the desktop pane, captured
+                            from the running app during a walk (it is the only
+                            visualization, and it is a GL layer the app draws)
 - ``return-account.png``    the account ``/return`` prints, in the terminal font
 - ``blocked-tool.png``      a refused tool call, message taken from
                             ``engine.policy`` rather than retyped
@@ -113,24 +115,6 @@ def takeover() -> Image.Image:
         return _fill(Image.open(ppm))
 
 
-def chat_card() -> Image.Image:
-    """The chat postcard: the same scene the card carries, at chat width."""
-    with tempfile.TemporaryDirectory() as td:
-        ppm = Path(td) / "card.ppm"
-        subprocess.run(
-            ["node", str(ROOT / "tools" / "term_scene.cjs"),
-             "--scene", "daydream", "--cols", "56", "--rows", "12", "--ppm", str(ppm)],
-            check=True, cwd=ROOT, capture_output=True,
-        )
-        art = Image.open(ppm).convert("RGB").resize((56 * 14, 12 * 28), Image.NEAREST)
-    im = Image.new("RGB", (1280, 720), GROUND)
-    d = ImageDraw.Draw(im)
-    box = (120, 110, 1160, 610)
-    d.rounded_rectangle(box, radius=18, outline=AMBER, width=2)
-    im.paste(art, (box[0] + 40, box[1] + 40))
-    return im
-
-
 def return_account() -> Image.Image:
     from core import engine
     engine.enter("daydream")
@@ -151,7 +135,8 @@ def blocked_tool() -> Image.Image:
     engine.enter("daydream", block=True)
     verdict = engine.policy("read_file") or {}
     return _panel([
-        ("$ /daydream", DIM),
+        # states are open by default; the refusal exists only because this entry asked for it
+        ('state(action="enter", name="daydream", block=true)', DIM),
         (engine.status().splitlines()[0], AMBER),
         ("", INK),
         ("the agent calls: read_file(README.md)", INK),
@@ -166,7 +151,6 @@ def render_all() -> dict[str, bytes]:
         shots = {
             "banner.png": banner(),
             "takeover.png": takeover(),
-            "chat-card.png": chat_card(),
             "return-account.png": return_account(),
             "blocked-tool.png": blocked_tool(),
         }

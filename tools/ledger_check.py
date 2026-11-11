@@ -5,7 +5,7 @@ The ledger is the only record the experiment trusts, so it is checked by a scrip
 has no opinion: every entry carries its assignment, its dose as delivered, and its
 outcome — and a missing field fails the run rather than being filled in later.
 
-    python3 tools/ledger_check.py                 # validate experiments/state-settings/ledger.jsonl
+    python3 tools/ledger_check.py                 # validate a state-settings ledger.jsonl (research tree, not published)
     python3 tools/ledger_check.py --summary       # counts per state/arm
 
 Exit 1 on any violation. Predicted outcomes are refused: an outcome must be a boolean,

@@ -359,7 +359,7 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=400)
     parser.add_argument("--semantic", action="store_true",
-                        help="place concepts by meaning (needs experiments/graph/embeddings.json)")
+                        help="place concepts by meaning (needs an embeddings.json from tools/graph_embed.py)")
     parser.add_argument("--embeddings", default=str(_embeddings_path()))
     parser.add_argument("--out", default=str(OUT))
     args = parser.parse_args(argv)
