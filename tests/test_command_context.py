@@ -81,8 +81,9 @@ def test_entry_line_leads_with_the_dose_not_the_ceiling():
         engine.stop(reason="look")
         lines[key] = plugin._enter(key)("", session_id="dose-line", platform="desktop").splitlines()[0]
     for key, line in lines.items():
-        assert "up to" in line, (key, line)
-        assert "min" not in line.split("up to")[0], (key, line)
+        assert "min" not in line, (key, line)
+        assert "hop" in line or "direction" in line or "pairs" in line \
+            or "items" in line or "recombinations" in line, (key, line)
     assert "1 direction" in lines["unstuck"], lines["unstuck"]
     assert " 1 directions" not in lines["unstuck"], lines["unstuck"]
     engine.stop(reason="look")

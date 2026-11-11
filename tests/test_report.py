@@ -27,7 +27,7 @@ def test_stop_returns_an_account_with_the_steps():
 
     msg = engine.stop()
     assert "WALKING ended" in msg
-    assert "3 step(s)" in msg
+    assert "3 of 6 hops" in msg
     assert "salt" in msg and "river" in msg
     assert "different first step" in msg.lower()
 
@@ -57,14 +57,12 @@ def test_next_turn_is_told_to_talk_about_it():
     assert "harbour" in directive
 
 
-def test_expiry_also_produces_the_account():
+def test_a_dry_turn_also_produces_the_account():
+    """The clock is gone; a turn that arrives with nothing delivered is what ends it now."""
     engine.enter("daydream")
-    active = engine.peek()
-    assert active
-    # run the clock out without spending turns
-    data = engine._load()
-    data["active"]["ends_at"] = 0
-    engine._save(data)
+    assert engine.peek()
+    engine.note_turn()          # turn one: nothing owed yet
+    engine.note_turn()          # turn two: the material is dry
 
     directive = engine.inject()
     assert "YOU JUST CAME BACK" in directive
@@ -93,7 +91,7 @@ def test_the_account_ends_where_the_walk_landed():
         _hop(a, b)
 
     msg = engine.stop()
-    assert "6 step(s)" in msg, msg
+    assert "6 of 6 hops" in msg, msg
     assert "weigela→hawk [far]" in msg, msg
     assert "agent→dowse [far]" in msg, msg
 
@@ -111,7 +109,7 @@ def test_six_real_wordnet_hops_still_fit_and_end_on_the_landing():
         _hop(a, b)
 
     msg = engine.stop()
-    assert "6 step(s)" in msg, msg
+    assert "6 of 6 hops" in msg, msg
     assert "agent→alveolar rhabdomyosarcoma [far]" in msg, msg
     assert "seborrheic dermatitis→cyprinodont [far]" in msg, msg
     assert "…" not in msg, msg
@@ -124,7 +122,7 @@ def test_a_chain_too_long_for_the_line_gives_up_its_middle_not_its_landing():
         _hop(a, b)
 
     msg = engine.stop()
-    assert "11 step(s)" in msg, msg
+    assert "6 of 6 hops" in msg, msg     # the dose caps the count
     assert "concept number 0 of a long walk→concept number 1" in msg, msg
     assert "concept number 11 of a long walk" in msg, msg     # where it landed survives
     assert "…" in msg, msg                                    # and the gap is admitted

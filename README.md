@@ -27,7 +27,7 @@ ceiling passed first: "expired before its dose: 2 of 3").
 ## The six commands
 
 ```
-/walk [minutes]      /daydream      /dream
+/walk [graph]        /daydream      /dream
 /doomscroll          /unstuck       /return
 ```
 
@@ -42,7 +42,7 @@ is silence: the recommender reads counters the plugin already keeps and names th
 that fits — a tool failing three times in a row is a walk, a source failing twice in four
 turns is a doomscroll, sixty turns is a dream, a stretch twice your own measured median is
 a daydream, and a repo with no commits and no spec is an unstuck. Every line carries the
-counter that justified it, and arrives at most once per cooling window (45 minutes by
+counter that justified it, and arrives at most once per cooling window (ten turns by
 default).
 
 `core/mood.py` measures and never names; `core/recommend.py` names. One owner, so two
@@ -125,9 +125,9 @@ hermes config get plugins.entries.antemuse.settings
 |---|---|---|
 | `recommend_enabled` | `true` | whether the measurement runs and `/break` can name a state |
 | `show_recommendations` | `false` | whether a suggestion is shown to the person and offered to the agent |
-| `recommend_cooling_minutes` | `45` | how long one recommendation holds (10–240) |
+| `recommend_cooling_turns` | `10` | how many turns one recommendation holds (2–60) |
 | `suggest_autofollow` | `false` | enter the state a suggestion names, instead of only naming it |
-| `long_stretch_minutes` | `0` | `0` keeps the measured threshold; otherwise 30–360 |
+| `long_stretch_turns` | `0` | `0` keeps the measured threshold; otherwise 5–200 |
 | `journal_cap` | `60` | entries kept (reduce only, 20–60) |
 
 A setting changes how loud or how long a state is. None of them changes what a state *is*:
@@ -194,16 +194,20 @@ added. Run the command. `TESTING.md` has the manual recipes and what each check 
 
 ## What each state actually does
 
-States are not moods: each one pulls real material on a timer and writes it into the
+States are not moods: each one pulls real material as it is delivered and writes it into the
 journal as an event (`who="state"`), so the pane fills while you watch.
 
-| state | length | cadence | material | done with it |
-|---|---|---|---|---|
-| **walk** | 3 min | 9 s | **WordNet** — 117,659 synsets | a path for the person to watch and for the agent to come back from; **no material is injected** while walking, because the evidence says the gain is in leaving the frame, not in new input |
-| **daydream** | 3 min | 10 s | `MEMORY.md` + `USER.md` | two memories surface; they are joined only when they share enough terms, otherwise reported adjacent |
-| **doomscroll** | 8 min | 6 s | Bluesky, fosstodon, HN, Ars Technica, and The Verge, cached 10 min | random items, no synthesis — the feed talks, you consume |
-| **dream** | 30 min | 40 s | **FrameNet** — 1,221 frames | a frame's roles and lexical units recombined into a thing that does not exist |
-| **unstuck** | 1 turn | — | the repo's own state: commits, specs, what failed last | one direction named, and the counter that justified it |
+Nothing here is on a timer. A state has a **dose** and no clock: it ends when the dose has
+been delivered and a turn has used it, when a turn arrives with nothing left to deliver
+(and the account says so), or when you type `/return`.
+
+| state | dose | material | done with it |
+|---|---|---|---|
+| **walk** | 6 hops | **WordNet** — 117,659 synsets | a path for the person to watch and for the agent to come back from; **no material is injected** while walking, because the evidence says the gain is in leaving the frame, not in new input |
+| **daydream** | 2 pairs | `MEMORY.md` + `USER.md` | two memories surface; they are joined only when they share enough terms, otherwise reported adjacent |
+| **doomscroll** | 3 items | Bluesky, fosstodon, HN, Ars Technica, and The Verge, cached 10 min | random items, no synthesis — the feed talks, you consume |
+| **dream** | 2 recombinations | **FrameNet** — 1,221 frames | a frame's roles and lexical units recombined into a thing that does not exist |
+| **unstuck** | 1 direction | the repo's own state: commits, specs, what failed last | one direction named, and the counter that justified it |
 
 Sources are honest about failure: missing WordNet says `wordnet unavailable`, missing
 FrameNet says `framenet unavailable`, an unreachable feed says `feed unavailable`, and none
@@ -216,10 +220,12 @@ Corpora live in `~/nltk_data` (`wordnet`, `framenet_v17`) and are found through
 ### Coming back
 
 Every state ends with an account of itself, built from the journal rather than from a
-template: state, minutes, step count, and the trail, condensed to four-word heads.
+template: state, dose delivered, and the trail, condensed to four-word heads. The plugin
+posts that line at the moment the state ends, so the chat says what happened without
+waiting for the next message; the model is not asked to repeat it.
 
 ```
-WALKING ended · walk 1m · 3 step(s) · salt to brine → brine to fish → fish to salt
+WALKING · walk · 3 of 6 hops · salt to brine → brine to fish → fish to salt
 Come back and tell the person what happened in there.
 ```
 

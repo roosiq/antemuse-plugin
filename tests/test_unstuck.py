@@ -52,7 +52,8 @@ def _repo(path: Path, commits: int = 0, spec: bool = False) -> Path:
 
 def test_the_state_exists_with_a_read_only_budget():
     spec = states.STATES["unstuck"]
-    assert spec["minutes"] == 5 and spec["turns"] == 3 and spec["cadence"] == 20
+    assert spec["dose"] == {"unit": "directions", "n": 1}
+    assert "minutes" not in spec and "cadence" not in spec
     assert spec["tools"] == ["read_file", "search_files"], "a unstuck that can edit is a scaffold"
     assert states.resolve("start") == "unstuck"
 
@@ -114,7 +115,7 @@ def test_entering_a_state_posts_nothing_into_the_chat(monkeypatch):
 
     line = plugin._enter("unstuck")("5", session_id="chat-1", platform="discord")
 
-    assert "UNSTUCK" in line.upper() or "unstuck" in line.lower()
+    assert "not timed" in line.lower(), line
     assert posted == [], "a state beginning posts no picture"
 
 
@@ -134,18 +135,18 @@ def test_a_finished_state_is_handed_to_the_model_to_say(monkeypatch):
 
     plugin._enter("walk")("", session_id="chat-1", platform="discord")
     engine.note_turn()
+    # what register() wires in the real host, scoped to this test so it cannot leak
+    monkeypatch.setattr(engine, "_NOTIFY", plugin._post, raising=False)
     engine.stop("chat-1")
 
+    # The state's ending is spoken at the moment it ends, not on the next turn: the account
+    # goes out through the host's channel, and the model is not asked to repeat it.
+    assert posted, "a finished state says so immediately"
+    assert "hops" in posted[-1], posted
     block = plugin._pre_llm_call(prompt="hi", session_id="chat-1", platform="discord") or ""
-    assert "[ANTEMUSE REPORT]" in block
-    assert "step(s)" in block, "the facts travel with the request"
-    assert "The agent in the third person" in block, "the voice travels too"
-    assert posted == [], "the plugin does not write the sentence itself"
+    assert "[ANTEMUSE REPORT]" not in block, block
 
-    # It is only counted as said once the model has actually said something.
-    assert engine.unreported("chat-1")
-    plugin._transform(response_text="WALKING ended · the agent walked 1m · 2 step(s) · a → b",
-                      session_id="chat-1")
+    # Said once, at the ending: there is nothing left for the model to repeat.
     assert engine.unreported("chat-1") is None
 
     # And the next turn does not ask again.

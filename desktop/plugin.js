@@ -85,15 +85,10 @@ export function whyFailed(err) {
 // ---------------------------------------------------------------- pure helpers
 
 /** Seconds as a short clock: 179 -> "2:59". Never negative. */
-export function clock(seconds) {
-  const s = Math.max(0, Math.floor(Number(seconds) || 0))
-  const m = Math.floor(s / 60)
-  const rest = String(s % 60).padStart(2, '0')
-  return `${m}:${rest}`
-}
+/* A state has no clock, so the pane has none to format: the dose is the count. */
 
 function doseLeft(active) {
-  const dose = Number(active.dose || active.turns_left || 0)
+  const dose = Number(active.dose || 0)
   const served = Number(active.served || 0)
   return Math.max(0, dose - served)
 }
@@ -103,9 +98,9 @@ export function counts(payload) {
   const active = payload && payload.active
   if (!active) return ''
   const bits = [
-    `${clock(active.seconds_left)} left`,
-    // the dose in the state's own unit (hops, pairs, items, recombinations), not "turns"
-    `${doseLeft(active)} ${active.unit || 'turn(s)'}`
+    // the dose in the state's own unit (hops, pairs, items, recombinations), not "turns".
+    // There is no clock: a state ends when its dose lands, so the count is the whole story.
+    `${doseLeft(active)} ${active.unit || 'turn(s)'} to go`
   ]
   const tools = active.tools || {}
   if (tools.mode === 'none') bits.push('no tools')
@@ -142,7 +137,7 @@ export function viewModel(payload, error) {
     // pane could see, printed beside an error — the screenshot that says "the backend did not
     // answer · 1:31 left" is the pane contradicting itself. Nothing is counted when the answer
     // is missing.
-    clock: active && !error ? clock(active.seconds_left) : '',
+    clock: '',
     counts: error ? '' : counts(payload),
     contract: active && !error ? String(active.contract || '') : '',
     lines: Array.isArray(frame.lines) ? frame.lines : [],
@@ -995,8 +990,17 @@ function createGraph3D(el, doc, ctx, host, win) {
     }
     return out
   }
+  // The picture is a live view, so the poll should follow the state rather than a fixed beat.
+  // At four seconds a walk that lands a hop a second arrived as one jump and then stillness —
+  // the same reading as a frozen pane. A second apart while a state runs, four when idle.
+  let pollDelay = 350
+  // One request at a time. At a second apart, a poll that takes four seconds would otherwise
+  // stack three builds on the gateway and each would be slower than the one before — the pane
+  // asking for a picture faster than one can be drawn is how a timeout storm starts.
+  let inFlight = false
   const pull = () => {
-    if (stopped || typeof ctx.rest !== 'function') return
+    if (stopped || inFlight || typeof ctx.rest !== 'function') return
+    inFlight = true
     if (!(el.clientWidth || 0) || !(el.clientHeight || 0)) return
     const session = host && host.state && host.state.focusedSessionId
       ? host.state.focusedSessionId.get() : ''
@@ -1008,7 +1012,11 @@ function createGraph3D(el, doc, ctx, host, win) {
     const askedAt = performance.now()
     const slow = new Promise((_, reject) => setTimeout(() => reject(new Error('graph timeout')), 12000))
     Promise.race([Promise.resolve(ctx.rest(q)), slow]).then((seed) => {
+      inFlight = false
       if (stopped) return
+      // A live state serves one unit per delivery call, so polling fast is what makes each
+      // hop its own frame. There is no clock in the dose to race.
+      pollDelay = (seed && seed.active) ? 350 : 4000
       const g = seed && seed.graph ? seed.graph : (seed && seed.nodes ? seed : null)
       report({ routeMs: Math.round(performance.now() - askedAt), fails: 0, session: session || '' })
       boot('graph:' + (g ? (g.nodes ? g.nodes.length : 'nonodes') : 'none'))
@@ -1037,6 +1045,7 @@ function createGraph3D(el, doc, ctx, host, win) {
       // through the cloud as a pair of translucent bands — which is what the pane was serving.
       el.querySelectorAll('[data-antemuse-bake], img').forEach((im) => { im.style.opacity = '0' })
     }, (e) => {
+      inFlight = false
       // A timeout is a number, not a mood: keep how long the route took to not answer.
       report({ routeMs: Math.round(performance.now() - askedAt), lastErr: String(e && e.message || e).slice(0, 60),
         fails: (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails ? (((win.__antemuse || {}).g3s || {})[INSTANCE] || {}).fails + 1 : 1 })
@@ -1075,14 +1084,20 @@ function createGraph3D(el, doc, ctx, host, win) {
     boot('early:' + (e && e.message ? e.message : e))
   }
   pull()
-  const timer = typeof ctx.setInterval === 'function' ? ctx.setInterval(pull, 4000) : setInterval(pull, 4000)
+  let timer = null
+  const schedule = () => {
+    if (stopped) return
+    const at = typeof ctx.setTimeout === 'function' ? ctx.setTimeout : win.setTimeout.bind(win)
+    timer = at(() => { pull(); schedule() }, pollDelay)
+  }
+  schedule()
   rafId = win.requestAnimationFrame ? win.requestAnimationFrame(loop) : win.setTimeout(() => loop(Date.now()), 16)
 
   return {
     dispose: () => {
       stopped = true
       try { if (win.cancelAnimationFrame) win.cancelAnimationFrame(rafId); else win.clearTimeout(rafId) } catch (e) {}
-      try { if (typeof ctx.clearInterval === 'function' && typeof ctx.setInterval === 'function') ctx.clearInterval(timer); else clearInterval(timer) } catch (e) {}
+      try { if (typeof ctx.clearTimeout === 'function' && timer !== null) ctx.clearTimeout(timer); else if (timer !== null) win.clearTimeout(timer) } catch (e) {}
       doc.removeEventListener('pointerdown', gDown, true)
       doc.removeEventListener('pointermove', gMove, true)
       doc.removeEventListener('pointerup', gUp, true)

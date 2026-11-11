@@ -78,25 +78,27 @@ def test_allow_without_block_is_refused_and_enters_nothing():
     assert engine.peek() is None
 
 
-def test_state_expires_on_turns_and_leaves_residue():
-    engine.enter("daydream")  # 2 turns
+def test_state_ends_when_the_dose_is_delivered_and_leaves_residue():
+    """A state ends on its dose, used in a turn. Turns alone no longer spend anything."""
+    engine.enter("daydream")  # 2 pairs
     assert engine.tick() is not None
-    assert engine.tick() is not None
-    assert engine.tick() is None                     # spent
-    assert engine.peek() is None
+    engine.note_turn()                               # turn one: nothing owed yet, nothing dry
+    assert engine.peek() is not None
+    engine.note_turn()                               # turn two arrived with nothing delivered
+    assert engine.peek() is None, "a turn that delivers nothing ends the state"
     assert "daydream" in engine.inject()
 
 
-def test_state_expires_on_clock():
-    engine.enter("walk", minutes=1)
-    path = None
+def test_a_clock_in_the_past_no_longer_ends_a_state():
+    """The field is gone; an old record that still carries one must not end anything."""
+    engine.enter("walk")
     import pathlib
     path = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
     data = json.loads(path.read_text())
     data["active"]["ends_at"] = time.time() - 1
     path.write_text(json.dumps(data))
-    assert engine.peek() is None
-    assert "walk" in engine.inject()
+    live = engine.peek()
+    assert live is not None and live["key"] == "walk", live
 
 
 def test_return_ends_the_state_and_keeps_residue():
@@ -116,13 +118,14 @@ def test_loading_the_plugin_keeps_a_live_state():
     assert live["key"] == "walk"
 
 
-def test_loading_the_plugin_expires_a_dead_clock_and_keeps_the_account():
+def test_loading_the_plugin_closes_a_spent_dose_and_keeps_the_account():
     import pathlib
     engine.enter("walk", minutes=5)
     engine.record("state", "salt to brine", event="walk")
     path = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
     data = json.loads(path.read_text())
-    data["active"]["ends_at"] = time.time() - 1
+    data["active"]["served"] = int(data["active"].get("dose") or 0)
+    data["active"]["turns"] = 1
     path.write_text(json.dumps(data))
     engine.settle()
     assert engine.peek() is None
@@ -169,7 +172,7 @@ def test_the_account_counts_material_not_the_agents_own_words():
     engine.record("state", "salt (n) → brine (n) · took its hyponym", event="walk")
     engine.record("agent", "the salt made the water feel heavier", event="walk")
     out = engine.stop()
-    assert "1 step(s)" in out, out
+    assert "1 of 6 hops" in out, out
     assert "salt→brine [hyponym]" in out, out
     assert "heavier" not in out, "the agent's prose is not material"
 
@@ -187,19 +190,19 @@ def test_a_new_state_does_not_inherit_the_last_states_material():
     assert "brine" not in arrived, "the doomscroll must not consume the walk's steps"
 
 
-def test_the_account_stops_at_the_states_own_clock():
+def test_the_account_states_the_dose_and_no_elapsed_time():
+    """An hour could pass between entries; the account still says what arrived, not how long."""
     import pathlib
-    engine.enter("walk", minutes=2)
+    engine.enter("walk")
     engine.record("state", "salt (n) → brine (n) · took its hyponym", event="walk")
     path = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
     data = json.loads(path.read_text())
-    # a two-minute walk whose end was only noticed an hour later
     data["active"]["entered_at"] -= 3600
-    data["active"]["ends_at"] = data["active"]["entered_at"] + 120
     path.write_text(json.dumps(data))
-    engine.settle()
+    engine.stop()
     text = [r["text"] for r in engine.watch_state()["residue"] if r.get("kind") == "report"][-1]
-    assert text.startswith("walk 2m"), text
+    assert text.startswith("walk · 1 of 6 hops"), text
+    assert "m " not in text or "min" not in text, text
 
 
 def test_a_missing_corpus_refuses_the_entry_instead_of_going_empty(monkeypatch):
@@ -248,7 +251,7 @@ def test_a_turn_brings_material_that_the_dead_thread_missed():
     sources.PROVIDERS = Fake.PROVIDERS
     try:
         assert eng.deliver_if_due() >= 1, "the first turn of a state gets material"
-        assert eng.deliver_if_due() == 0, "the dose is spent; not due twice in a row"
+        assert eng.deliver_if_due() >= 1, "a call delivers one unit, and dream owes two"
         text = engine.inject() or ""
         assert "salt (n) → brine (n)" in text
     finally:
@@ -373,7 +376,7 @@ def test_a_diagnostic_never_appears_in_the_human_account():
     engine.record("state", "harbour → quay [far]")
     line = engine.stop(session_id="acct").splitlines()[0]
     assert "concept write failed" not in line, line
-    assert "1 step(s)" in line, line
+    assert "1 of 6 hops" in line, line
     assert "harbour" in line, line
 
 
@@ -473,7 +476,7 @@ def test_a_state_that_ends_has_an_account_the_chat_has_not_heard():
     engine.stop("CHAT-A")
     said = engine.unreported("CHAT-A")
     assert said and said["state"] == "walk"
-    assert "step(s)" in said["text"]
+    assert "of 6 hops" in said["text"]
 
 
 def test_an_account_is_spoken_once():

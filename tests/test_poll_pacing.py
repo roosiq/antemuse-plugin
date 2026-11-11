@@ -61,30 +61,32 @@ def _stub_walk(monkeypatch, lines=None) -> None:
                         {**sources.PROVIDERS, "walk": lambda steps=1: body[:steps]})
 
 
-def test_a_poll_delivers_the_units_the_clock_earned(monkeypatch):
-    """No turn, no typing — three seconds pass and the pane's own poll serves them."""
+def test_a_poll_serves_one_unit_and_no_clock_banks_them(monkeypatch):
+    """No turn, no typing — the pane's own poll serves a unit. Time is not a currency here."""
     _stub_walk(monkeypatch)
     engine.stop(reason="reset")
     engine.enter("walk", session="poll-pane", platform="desktop")
     assert _served() == 0, "entry alone served material; the poll is not what this measures"
 
-    _backdate(3)
+    _backdate(3)                                 # three seconds, which now buy nothing
     route_state(session="poll-pane")             # one poll, as the pane sends it
 
-    assert _served() == 4, f"entry plus three banked seconds is 4 units, got {_served()}"
+    assert _served() == 1, f"one poll must serve exactly one hop, got {_served()}"
 
 
-def test_a_second_poll_in_the_same_second_buys_nothing(monkeypatch):
-    """The pane polls every four seconds; a burst of polls must not drain the dose."""
+def test_a_burst_of_polls_drains_the_dose_one_unit_at_a_time(monkeypatch):
+    """Each poll is a delivery call, so a burst walks faster — and stops at the dose."""
     _stub_walk(monkeypatch)
     engine.stop(reason="reset")
     engine.enter("walk", session="poll-burst", platform="desktop")
 
-    route_state(session="poll-burst")
-    first = _served()
-    for _ in range(3):
+    for _ in range(4):
         route_state(session="poll-burst")
-    assert _served() == first, f"four polls in one second served {_served() - first} extra units"
+    assert _served() == 4, f"four polls should serve four hops, got {_served()}"
+
+    for _ in range(6):
+        route_state(session="poll-burst")
+    assert _served() == 6, f"a six-hop walk cannot serve more than six, got {_served()}"
 
 
 def test_a_failed_hop_is_named_and_the_pane_still_draws(monkeypatch):

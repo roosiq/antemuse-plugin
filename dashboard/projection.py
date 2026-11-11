@@ -71,7 +71,7 @@ def _kind(entry: Any) -> str:
 
 def _dose_left(active) -> int:
     """Remaining dose in the unit the state counts in (see core.engine._dose_left)."""
-    dose = int(active.get("dose") or active.get("turns_left") or 0)
+    dose = int(active.get("dose") or 0)
     unit = str(active.get("unit") or "turn(s)")
     served = int(active.get("served") or 0) if unit != "turn(s)" else int(active.get("turns") or 0)
     return max(0, dose - served)
@@ -112,14 +112,11 @@ def project(
         "label": str(active.get("label") or ""),
         "walk": active.get("walk"),
         "contract": str(active.get("contract") or ""),
-        "ends_at": active.get("ends_at"),
-        "seconds_left": int(active.get("seconds_left") or 0),
-        "total_seconds": int(active.get("total_seconds") or 0),
-        "turns_left": int(active.get("turns_left") or 0),
         # the dose in the state's own unit, so a pane can say "2 pairs" instead of "2 turns"
         # the state's own count, never spec["turns"]: an unstuck owes one direction, not three
-        "dose": int(active.get("dose") or active.get("turns_left") or 0),
+        "dose": int(active.get("dose") or 0),
         "unit": str(active.get("unit") or "turn(s)"),
+        "served": int(active.get("served") or 0),
         "dose_left": _dose_left(active),
         "tools": tools_of(
             active.get("tools"),

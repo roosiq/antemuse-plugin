@@ -44,13 +44,14 @@ def _age_the_break(minutes: float, turns: int = 0, fails: int = 0) -> None:
     data["breaks"] = [time.time() - minutes * 60]
     data["work"] = {"turns": turns, "tools": turns * 2, "fails": fails,
                     "started_at": time.time() - minutes * 60}
-    data["offered_at"] = 0.0
+    data["since_offer"] = 60      # past the cooling window, so a nudge may speak
     path.write_text(json.dumps(data))
 
 
 def test_a_fresh_start_measures_near_zero():
     view = engine.break_view()
-    assert view["minutes"] <= 1 and view["turns"] == 0
+    assert view["turns"] == 0
+    assert "minutes" not in view, "a stretch is counted in turns, not minutes"
 
 
 def test_the_strain_score_is_gone():
@@ -63,9 +64,9 @@ def test_the_strain_score_is_gone():
 def test_a_long_stretch_is_measured_and_named():
     _age_the_break(140, turns=30, fails=6)
     view = engine.break_view()
-    assert view["minutes"] >= 140 and view["turns"] == 30
+    assert view["turns"] == 30
     line = (engine.inject() or "")
-    assert "140m since the last state" in line, line
+    assert "30 turns since the last state" in line, line
     assert "this looks like a daydream" in line, line
 
 
@@ -85,7 +86,7 @@ def test_sharp_does_not_silence_the_measurement():
     _age_the_break(100, turns=10)
     engine.record_mood("sharp")
     view = engine.break_view()
-    assert view["minutes"] >= 100 and view["feeling"] == "sharp"
+    assert view["turns"] == 10 and view["feeling"] == "sharp"
 
 
 def test_an_unknown_feeling_is_refused():
@@ -117,10 +118,9 @@ def test_the_offer_is_injected_once_and_then_cools_down():
 
 def test_taking_a_state_resets_the_work_counters():
     _age_the_break(200, turns=40, fails=8)
-    engine.enter("daydream", 3)
+    engine.enter("daydream")
     view = engine.break_view()
     assert view["turns"] == 0 and view["fails"] == 0
-    assert view["minutes"] <= 1
 
 
 def test_turns_and_tools_are_counted():
@@ -137,7 +137,7 @@ def test_absurd_counters_are_reported_as_they_are():
     _age_the_break(10_000, turns=10_000, fails=10_000)
     engine.record_mood("stuck")
     view = engine.break_view()
-    assert view["minutes"] == 10_000 and view["turns"] == 10_000
+    assert view["turns"] == 10_000
 
 
 def test_a_profile_that_has_never_run_anything_can_still_report():
@@ -148,15 +148,15 @@ def test_a_profile_that_has_never_run_anything_can_still_report():
     path.unlink(missing_ok=True)
     assert engine.record_mood("tired").startswith("mood: tired")
     assert engine.take_break()
-    assert engine.break_view()["minutes"] >= 0
+    assert engine.break_view()["turns"] >= 0
 
 
-def test_the_walk_keeps_its_dose_but_runs_fast():
-    """Always 20 steps; the wall clock has been squeezed three times now."""
-    spec = states.STATES["walk"]
-    assert spec["minutes"] * 60 // spec["cadence"] == 20, "the dose is fixed"
-    assert spec["cadence"] <= 10, "a step should arrive faster than a turn takes"
-    assert spec["minutes"] <= 3
+def test_a_state_has_a_dose_and_no_clock():
+    """There is no ceiling and no cadence: the dose is the whole of a state's length."""
+    for key, spec in states.STATES.items():
+        assert "minutes" not in spec, f"{key} still carries a time ceiling"
+        assert "cadence" not in spec, f"{key} still carries a second-based cadence"
+        assert int((spec.get("dose") or {}).get("n") or 0) > 0, f"{key} has no dose"
 
 
 def _age_state(seconds: float) -> None:

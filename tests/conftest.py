@@ -18,6 +18,18 @@ def pytest_configure(config):
 
 
 @pytest.fixture(autouse=True)
+def _engine_has_no_host_poster(monkeypatch):
+    """The engine's notifier is host wiring: register() installs it in the real app.
+
+    A test that exercises `register()` would otherwise leave a poster installed for the rest of
+    the session, so every later test would find its account already spoken. Scoping it to None
+    here keeps unit tests measuring the engine; a test that wants a poster sets its own.
+    """
+    from core import engine
+    monkeypatch.setattr(engine, "_NOTIFY", None, raising=False)
+
+
+@pytest.fixture(autouse=True)
 def _isolated_home(tmp_path, monkeypatch, request):
     if request.node.get_closest_marker("real_home"):
         yield

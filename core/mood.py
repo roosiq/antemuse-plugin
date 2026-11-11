@@ -1,8 +1,8 @@
 """When to step away, and which way to step.
 
 Mood is not guessed from prose. It comes from two things a plugin can actually
-see: what the work has cost (turns, tool calls, failed calls, minutes since the
-last state) and what the agent says about itself when asked.
+see: what the work has cost (turns, tool calls, failed calls, turns since the last
+state) and what the agent says about itself when asked.
 
     state(action="mood", feeling="stuck")   the agent reports
     /walk, /daydream, /doomscroll, /dream    the recommendation, taken
@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 FEELINGS = ("stuck", "tired", "sharp", "flat", "saturated")
 
 STALE_AFTER_MIN = 240      # a self-report older than four hours stops counting
-OFFER_AFTER_MIN = 45       # fallback only: the live value is settings.recommend_cooling_minutes
+OFFER_AFTER_TURNS = 10     # fallback only: the live value is settings.recommend_cooling_turns
 
 
 def _now() -> float:
@@ -51,24 +51,29 @@ _FAILS = 0
 
 
 def view(work: Dict[str, Any], mood: List[Dict[str, Any]],
-         breaks: List[float], offered_at: float = 0.0, now: Optional[float] = None) -> Dict[str, Any]:
-    """Everything the decision needs, computed in one place."""
+         breaks: List[float], since_offer: Optional[int] = None,
+         now: Optional[float] = None) -> Dict[str, Any]:
+    """Everything the decision needs, computed in one place.
+
+    There is no clock here. A stretch is counted in turns worked since the last state, and
+    the cooling window is counted in turns since the last recommendation, so a slow day and a
+    fast one are read the same way.
+    """
     now = now or _now()
-    last_break = max(breaks) if breaks else (work.get("started_at") or now)
-    minutes = max(0.0, (now - last_break) / 60.0)
 
     since = [m for m in mood if now - float(m.get("at") or 0) <= STALE_AFTER_MIN * 60]
     feeling = (since[-1].get("feeling") if since else None)
 
     try:
         from . import settings
-        cooling_minutes = settings.number("recommend_cooling_minutes")
+        cooling_turns = settings.number("recommend_cooling_turns")
     except Exception:
-        cooling_minutes = OFFER_AFTER_MIN
-    cooling = (now - offered_at) < cooling_minutes * 60
+        cooling_turns = OFFER_AFTER_TURNS
+    # Nothing offered yet in this stretch means the first one is allowed at once.
+    cooling = since_offer is not None and int(since_offer) < cooling_turns
 
     return {
-        "minutes": int(minutes),
+        "turns_since_offer": since_offer,
         "turns": int(work.get("turns") or 0),
         "fails": int(work.get("fails") or 0),
         "tools": int(work.get("tools") or 0),
@@ -80,7 +85,7 @@ def view(work: Dict[str, Any], mood: List[Dict[str, Any]],
 
 def line(v: Dict[str, Any]) -> str:
     """The measured facts, and nothing else: no score, no suggested state."""
-    bits = [f"{v['minutes']}m since the last state", f"{v['turns']} turn(s)"]
+    bits = [f"{v['turns']} turn(s) since the last state"]
     if v["fails"]:
         bits.append(f"{v['fails']} failed call(s)")
     if v["streak"]:

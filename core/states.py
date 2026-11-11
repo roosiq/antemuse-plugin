@@ -12,13 +12,11 @@ from typing import Dict, List
 STATES: Dict[str, Dict] = {
     "walk": {
         "label": "WALKING",
-        "minutes": 3,
         "turns": 6,
         # the dose is turns worked with the frame elsewhere; the walk supplies nothing
         "dose": {"unit": "hops", "n": 6},
         "waiting": "taking a stroll · walking the graph",
         "after": ('the walk is over and the frame you were in is gone. Do not resume the approach you were taking. First: state the goal in one line. Then: name the approach you were stuck in and why it was the obvious one. Then: take a different first step from the one you would have taken, and work from there. The path you walked is scenery, not a hint.'),
-        "cadence": 9,
         "tools": None,
         "scene": "walk",
         # The human evidence is subtraction: the problem is removed, the fixation
@@ -42,12 +40,10 @@ STATES: Dict[str, Dict] = {
     },
     "daydream": {
         "label": "DAYDREAMING",
-        "minutes": 3,
         "turns": 2,
         "dose": {"unit": "pairs", "n": 2},
         "waiting": "staring out of the window · letting two memories meet",
         "after": ('the daydream is over. In one line: the two things that surfaced and what they touched — then the possibility, if it still holds. If they did not join, say what the gap was. Then get back to the work you were doing.'),
-        "cadence": 10,
         "tools": [],
         "scene": "daydream",
         "directive": (
@@ -62,12 +58,10 @@ STATES: Dict[str, Dict] = {
     },
     "doomscroll": {
         "label": "DOOMSCROLLING",
-        "minutes": 8,
         "turns": 3,
         "dose": {"unit": "items", "n": 3},
         "waiting": "scrolling · looking for stupidity and comedy",
         "after": ('the scroll is over. In one line: whether anything was worth keeping — usually nothing, and that is the point. Do not turn it into a plan or a lesson. Then get back to work.'),
-        "cadence": 6,
         "tools": ["web_search", "web_extract", "read_file", "search_files", "browser_exec"],
         "scene": "doomscroll",
         "directive": (
@@ -82,12 +76,10 @@ STATES: Dict[str, Dict] = {
     },
     "unstuck": {
         "label": "UNSTUCK",
-        "minutes": 5,
         "turns": 3,
         "dose": {"unit": "directions", "n": 1},
         "waiting": "thinking back over what you have done",
         "after": ('the recommendation stands. Restate it in one line with the first move, then take that move. If the history and the gap did not support a recommendation, say so plainly instead of inventing one.'),
-        "cadence": 20,
         # Read the empty project, change nothing. A trailhead that can edit is a
         # scaffold generator, and that is a different tool.
         "tools": ["read_file", "search_files"],
@@ -107,12 +99,10 @@ STATES: Dict[str, Dict] = {
     },
     "dream": {
         "label": "DREAMING",
-        "minutes": 30,
         "turns": 2,
         "dose": {"unit": "recombinations", "n": 2},
         "waiting": "asleep · letting the day's projects touch",
         "after": ('the dream is over. In one line: the connection you found across projects — both sides and what they share — and whether it is worth acting on now or only noting. Then get back to work.'),
-        "cadence": 40,
         "tools": [],
         "scene": "dream",
         "directive": (
@@ -187,11 +177,12 @@ def palette() -> str:
         else:
             tools = "tools: " + ", ".join(s["tools"])
         unit = (s.get("dose") or {}).get("unit") or "turn(s)"
-        lines.append(f"  /{key:<10} {s['minutes']:>3} min · {s['dose']['n']} {unit} · {tools}")
+        lines.append(f"  /{key:<10} {s['dose']['n']} {unit} · {tools}")
         lines.append(f"             {s['contract']}")
     lines.append("  /return     end the current state and keep the residue")
     lines.append("")
     doses = " · ".join(f"{key} {spec['dose']['n']} {spec['dose']['unit']}"
                        for key, spec in STATES.items())
     lines.append(f"  a state ends when its dose is delivered: {doses}")
+    lines.append("  no clock: nothing here expires on time")
     return "\n".join(lines)

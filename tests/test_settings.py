@@ -47,8 +47,8 @@ def test_defaults_when_nothing_is_configured():
     settings.bind(Host())
     assert settings.flag("recommend_enabled") is True
     assert settings.flag("suggest_autofollow") is False
-    assert settings.number("recommend_cooling_minutes") == 45
-    assert settings.number("long_stretch_minutes") == 0
+    assert settings.number("recommend_cooling_turns") == 10
+    assert settings.number("long_stretch_turns") == 0
     assert settings.number("journal_cap") == 60
 
 
@@ -60,17 +60,17 @@ def test_values_are_read_from_the_host_not_a_file():
 
 def test_out_of_range_is_clamped_and_never_raises():
     settings.reset_warnings()
-    settings.bind(Host({"recommend_cooling_minutes": 5, "journal_cap": 900,
-                        "long_stretch_minutes": 9999}))
-    assert settings.number("recommend_cooling_minutes") == 10
+    settings.bind(Host({"recommend_cooling_turns": 1, "journal_cap": 900,
+                        "long_stretch_turns": 9999}))
+    assert settings.number("recommend_cooling_turns") == 2
     assert settings.number("journal_cap") == 60, "the journal cap may only be reduced"
-    assert settings.number("long_stretch_minutes") == 360
+    assert settings.number("long_stretch_turns") == 200
 
 
 def test_a_stretch_override_below_30_minutes_is_not_a_stretch():
     settings.reset_warnings()
-    settings.bind(Host({"long_stretch_minutes": 5}))
-    assert settings.number("long_stretch_minutes") == 30
+    settings.bind(Host({"long_stretch_turns": 3}))
+    assert settings.number("long_stretch_turns") == 5
 
 
 def test_a_wrong_type_falls_back_to_the_default():
@@ -104,10 +104,10 @@ def test_hidden_recommendations_say_nothing_even_when_measured(monkeypatch):
 def test_the_cooling_window_comes_from_settings():
     from core import mood
     import time
-    settings.bind(Host({"recommend_cooling_minutes": 10}))
-    view = mood.view({"turns": 1, "started_at": time.time()}, [], [], offered_at=time.time() - 11 * 60)
+    settings.bind(Host({"recommend_cooling_turns": 10}))
+    view = mood.view({"turns": 1, "started_at": time.time()}, [], [], since_offer=11)
     assert view["cooling"] is False
-    view = mood.view({"turns": 1, "started_at": time.time()}, [], [], offered_at=time.time() - 5 * 60)
+    view = mood.view({"turns": 1, "started_at": time.time()}, [], [], since_offer=5)
     assert view["cooling"] is True
 
 

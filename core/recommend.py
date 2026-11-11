@@ -31,10 +31,7 @@ SATURATION_TURNS = 60
 #: provider failures inside the recent window.
 WALL_FAILS = 2
 WALL_WINDOW = 4
-#: the same state twice inside this many seconds is a rut.
-RUT_SECONDS = 600
-#: a long healthy stretch with no state at all is itself a measurement.
-LONG_MINUTES = 90
+#: a long healthy stretch with no state at all is itself a measurement, counted in turns.
 LONG_TURNS = 10
 
 #: a *reported* feeling, mapped. Reported, not inferred: the person or the agent said it.
@@ -95,26 +92,25 @@ def _reported(feeling: Optional[str]) -> Optional[Dict[str, str]]:
     return {"state": pair[0], "evidence": pair[1]}
 
 
-def _long_stretch(minutes: int, turns: int) -> Optional[str]:
-    """Minutes since the last state, against this person's own measured stretch.
+def _long_stretch(turns: int) -> Optional[str]:
+    """Turns since the last state, against this person's own measured stretch.
 
-    The threshold used to be the constant 90. It is now the measured 75th percentile of
-    the stretches this person actually takes, clamped 60–180; with too little history it
-    falls back to 90 and the evidence says which one is being used.
+    The threshold used to be the constant 90 minutes. It is now the measured 75th percentile
+    of the stretches this person actually takes, counted in turns and clamped 15–80; with too
+    little history it falls back to 30 and the evidence says which one is being used.
     """
-    from . import normal
     from . import normal, settings
-    override = settings.number("long_stretch_minutes")
+    override = settings.number("long_stretch_turns")
     limit = normal.long_stretch_threshold() if not override else {
-        "minutes": override, "source": "fixed", "raw": None, "usual": None}
-    threshold = int(limit["minutes"])
-    if minutes < threshold or turns < LONG_TURNS:
+        "turns": override, "source": "fixed", "raw": None, "usual": None}
+    threshold = int(limit["turns"])
+    if turns < threshold or turns < LONG_TURNS:
         return None
     usual = limit.get("usual")
     if limit["source"] == "measured" and usual:
-        ratio = round(minutes / float(usual), 1)
-        return f"{minutes}m since the last state, {ratio}× your usual {usual}m"
-    return f"{minutes}m since the last state (fixed at {threshold}m, no baseline yet)"
+        ratio = round(turns / float(usual), 1)
+        return f"{turns} turns since the last state, {ratio}× your usual {usual}"
+    return f"{turns} turns since the last state (fixed at {threshold}, no baseline yet)"
 
 
 def _loop(work: Dict[str, Any]) -> Optional[str]:
@@ -174,8 +170,6 @@ def _rut(entries: List[Dict[str, Any]], active: Optional[Dict[str, Any]],
     if str(previous.get("key") or "") != current:
         return None
     keys = [str(e.get("key") or "") for e in history[-2:]] + [current]
-    if entered - float(previous.get("at") or 0) <= RUT_SECONDS:
-        return {"state": _other(current, keys), "evidence": f"just chose {current} again"}
     return {"state": _other(current, keys), "evidence": f"the last state was {current} too"}
 
 
@@ -205,7 +199,6 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
 
     now = now if now is not None else time.time()
     work = data.get("work") or {}
-    minutes = int(data.get("minutes") or 0)
     active = data.get("active") or None
 
     if active:
@@ -232,7 +225,7 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
         ("loop", "walk", _loop(work)),
         ("wall", "doomscroll", _wall(work)),
         ("saturation", "dream", _saturation(work, open_decisions)),
-        ("long stretch", "daydream", _long_stretch(minutes, int(work.get("turns") or 0))),
+        ("long stretch", "daydream", _long_stretch(int(work.get("turns") or 0))),
         ("grind", "daydream", _grind(work)),
     ):
         if evidence:

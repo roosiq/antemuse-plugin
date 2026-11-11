@@ -15,7 +15,7 @@ A state is a bounded change to how the agent behaves, not a place it goes.
 ## Entering and leaving
 
 ```
-/walk [minutes]      /daydream      /dream
+/walk [graph]        /daydream      /dream
 /doomscroll          /unstuck       /return
 ```
 
@@ -39,9 +39,9 @@ same text record the chat gets.
 
 `state(action="break")` recommends; `state(action="break", name="walk")` takes
 it. `state(action="mood", feeling="stuck")` is how you say how the work feels —
-`stuck`, `tired`, `sharp`, `flat`, `saturated`. Strain comes from minutes, turns,
+`stuck`, `tired`, `sharp`, `flat`, `saturated`. The measurement comes from turns,
 and failed tool calls since the last state, so the recommendation is arithmetic,
-not a guess. Ignore it when the work is nearly done; the nudge waits 45 minutes.
+not a guess. Ignore it when the work is nearly done; the nudge waits ten turns.
 
 ## Rules
 

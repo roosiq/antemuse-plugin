@@ -15,8 +15,8 @@ _TRUE = {"1", "true", "yes", "on", "t"}
 
 #: (key, default, low, high) — bounds are clamped in both directions.
 INT_BOUNDS = {
-    "recommend_cooling_minutes": (45, 10, 240),
-    "long_stretch_minutes": (0, 0, 360),
+    "recommend_cooling_turns": (10, 2, 60),
+    "long_stretch_turns": (0, 0, 200),
     "journal_cap": (60, 20, 60),
 }
 BOOL_DEFAULTS = {
@@ -73,10 +73,10 @@ def number(key: str) -> int:
         got = int(value)
     except Exception:
         got = default
-    # long_stretch_minutes treats 0 as "keep the measured threshold", so the floor there
-    # is 0 or 30..360: a 5-minute override is not a stretch, it is a fidget.
-    if key == "long_stretch_minutes" and 0 < got < 30:
-        got = 30
+    # long_stretch_turns treats 0 as "keep the measured threshold", so the floor there
+    # is 0 or 5..200: a three-turn override is not a stretch, it is a fidget.
+    if key == "long_stretch_turns" and 0 < got < 5:
+        got = 5
     clamped = max(low, min(high, got))
     if clamped != got and key not in _warned:
         _warned.add(key)

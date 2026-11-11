@@ -49,7 +49,7 @@ STATE_SCHEMA: Dict[str, Any] = {
     "description": (
         "Enter or leave a cognitive state for the agent itself. "
         "state(action='enter', name='walk'|'daydream'|'dream'|'doomscroll') changes what tools "
-        "you may use and what shape your next replies take, for a bounded number of minutes and turns. "
+        "you may use and what shape your next replies take, until the act's dose is delivered. "
         "state(action='exit') ends it and keeps the residue. state(action='status') reports what you are in. "
         "state(action='break') recommends one and state(action='break', name='walk') takes it; "
         "state(action='mood', feeling='stuck') records how the work feels. "
@@ -66,7 +66,6 @@ STATE_SCHEMA: Dict[str, Any] = {
                                 "watch"]},
             "name": {"type": "string",
                      "description": "State to enter (walk, daydream, dream, doomscroll) or the walk to use."},
-            "minutes": {"type": "integer", "description": "Optional override for how long the state lasts."},
             "walk": {"type": "string", "description": "Which walk to traverse: wander, upward, downward, lateral, or one you saved."},
             "goal": {"type": "string",
                      "description": "For action='spark': what the run is for. The person sees counts, never candidates."},
@@ -176,7 +175,7 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         if any(k in opts for k in ("method", "seed", "budget")) and not experimental_enabled(host):
             return ("cannot enter with method, seed, or budget · experimental methods are off "
                     "(plugins.entries.antemuse.settings.experimental.enabled: true)")
-        return engine.enter(str(a.get("name") or ""), a.get("minutes"), a.get("walk"), opts or None)
+        return engine.enter(str(a.get("name") or ""), None, a.get("walk"), opts or None)
     if action == "walks":
         return _walks_report()
     if action == "walk_new":
@@ -363,7 +362,7 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
         global _PENDING_REPORT
         _PENDING_REPORT = (session_id or engine.current_session(), done.get("state") or "")
     # A recommendation is the one thing worth pushing as its own message: it arrives
-    # once per 45 minutes, and waiting for someone to type a command would defeat it.
+    # once per cooling window (counted in turns), and waiting for a command defeats it.
     global _LAST_UPDATE
     advice = next((line for line in block.splitlines() if line.startswith("this looks like a ")), "")
     if advice and advice != _LAST_UPDATE:
@@ -440,14 +439,19 @@ def _enter(key: str, minutes: int | None = None):
         arg = (raw_args or "").strip()
         where = {"session": session_id or session_key or None,
                  "platform": platform or source or None}
-        if arg and not arg.isdigit():
-            # /walk upward  →  walk that graph; /walk 5  →  five minutes
+        if arg:
+            # A number here used to mean "this many minutes". States have no duration any
+            # more, so it is refused rather than silently ignored — on every state, not just
+            # the ones that never took a name.
+            if arg.isdigit():
+                return (f"states are not timed. /{key} takes no number; it ends when its "
+                        f"dose is delivered.")
+            # /walk upward → walk that graph.
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
-            line = engine.enter(key, minutes, walk=arg, **where)
+            line = engine.enter(key, None, walk=arg, **where)
             return line + "\n" + _waiting_for(key, line)
-        override = int(arg) if arg.isdigit() else minutes
-        line = engine.enter(key, override, **where)
+        line = engine.enter(key, minutes, **where)
         return line + "\n" + _waiting_for(key, line)
     return handler
 
@@ -619,6 +623,10 @@ def register(ctx) -> None:
     _HOST = ctx
     settings.bind(ctx)
     engine.settle()
+    # The account of a state is spoken when the state ends, not on the person's next turn.
+    # `_post` goes through the host's message channel, so the finish line lands in the chat
+    # that ran the state while the agent is still holding its reply.
+    engine.set_notifier(_post)
 
     ctx.register_hook("pre_llm_call", _pre_llm_call)
     ctx.register_hook("pre_tool_call", _pre_tool_call)

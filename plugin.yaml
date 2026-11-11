@@ -32,15 +32,16 @@ config_schema:
       data wall, a long stretch). Off by default: states are measured either way,
       but nothing is suggested to the person and nothing is offered to the agent.
       /break still works and still names no state unless this is on.
-  recommend_cooling_minutes:
+  recommend_cooling_turns:
     type: int
-    default: 45
-    min: 10
-    max: 240
-    label: Minutes between recommendations
+    default: 10
+    min: 2
+    max: 60
+    label: Turns between recommendations
     description: >-
-      How long one recommendation holds before another may replace it. Below 10 is
-      clamped to 10, above 240 to 240: a plugin that speaks every turn is a nag.
+      How many turns one recommendation holds before another may replace it, counted
+      in turns rather than minutes. Below 2 is clamped to 2, above 60 to 60: a plugin
+      that speaks every turn is a nag.
   suggest_autofollow:
     type: bool
     default: false
@@ -49,16 +50,16 @@ config_schema:
       When the plugin suggests a state, enter it instead of only saying so. Off by
       default: a suggestion is advice, and the person decides whether to act on it.
       A followed state still ends by its dose, and nothing about the move changes.
-  long_stretch_minutes:
+  long_stretch_turns:
     type: int
     default: 0
     min: 0
-    max: 360
+    max: 200
     label: Long-stretch threshold
     description: >-
-      Minutes without a state before one is recommended. 0 keeps the measured
-      threshold (the 75th percentile of your own stretches, clamped 60-180).
-      Any other value overrides it, and the line says "fixed at N".
+      Turns without a state before one is recommended. 0 keeps the measured threshold
+      (the 75th percentile of your own stretches, clamped 15-80). Any other value
+      overrides it, and the line says "fixed at N".
   journal_cap:
     type: int
     default: 60

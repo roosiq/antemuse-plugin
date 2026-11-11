@@ -23,7 +23,7 @@ def test_nothing_is_claimed_from_a_few_turns(monkeypatch, tmp_path):
     assert s["measured"] is False
     assert "tools_per_turn" not in s
     assert normal.long_stretch_threshold()["source"] == "fixed"
-    assert normal.long_stretch_threshold()["minutes"] == 90
+    assert normal.long_stretch_threshold()["turns"] == 30
 
 
 def test_a_measured_baseline_reports_its_shape(monkeypatch, tmp_path):
@@ -38,34 +38,34 @@ def test_a_measured_baseline_reports_its_shape(monkeypatch, tmp_path):
 
 def test_the_threshold_follows_the_measured_stretch(monkeypatch, tmp_path):
     _home(monkeypatch, tmp_path)
-    for minutes in (20, 30, 40, 50, 50, 60, 70, 80):
-        normal.observe_stretch(minutes)
+    for turns in (5, 10, 15, 20, 20, 25, 30, 40):
+        normal.observe_stretch(turns)
     limit = normal.long_stretch_threshold()
     assert limit["source"] == "measured"
-    assert 60 <= limit["minutes"] <= 180
+    assert 15 <= limit["turns"] <= 80
 
 
 def test_the_floor_stops_short_sessions_from_causing_nagging(monkeypatch, tmp_path):
     _home(monkeypatch, tmp_path)
-    for minutes in (2, 3, 4, 5, 6, 7):
-        normal.observe_stretch(minutes)
-    assert normal.long_stretch_threshold()["minutes"] == 60
+    for turns in (2, 3, 4, 5, 6, 7):
+        normal.observe_stretch(turns)
+    assert normal.long_stretch_threshold()["turns"] == 15
 
 
 def test_the_cap_stops_one_long_day_from_silencing_it_for_a_week(monkeypatch, tmp_path):
     _home(monkeypatch, tmp_path)
-    for minutes in (300, 400, 500, 600, 700, 800):
-        normal.observe_stretch(minutes)
-    assert normal.long_stretch_threshold()["minutes"] == 180
+    for turns in (300, 400, 500, 600, 700, 800):
+        normal.observe_stretch(turns)
+    assert normal.long_stretch_threshold()["turns"] == 80
 
 
 def test_the_line_says_which_threshold_it_used(monkeypatch, tmp_path):
     _home(monkeypatch, tmp_path)
-    got = recommend._long_stretch(200, 30)
+    got = recommend._long_stretch(200)
     assert got and "no baseline yet" in got, got
-    for minutes in (30, 40, 50, 55, 60, 65, 70, 75):
-        normal.observe_stretch(minutes)
-    got = recommend._long_stretch(200, 30)
+    for turns in (20, 25, 30, 35, 40, 45, 50, 55):
+        normal.observe_stretch(turns)
+    got = recommend._long_stretch(200)
     assert got and "your usual" in got, got
 
 
@@ -104,9 +104,9 @@ def test_entering_after_a_gap_records_the_stretch(monkeypatch):
     from core import engine, normal
 
     data = engine._load()
-    three_hours_ago = time.time() - 3 * 3600
-    data["work"]["started_at"] = three_hours_ago
-    data["breaks"] = [three_hours_ago]
+    data["work"]["turns"] = 44          # the stretch is counted in turns now
+    data["work"]["started_at"] = time.time() - 3 * 3600
+    data["breaks"] = [time.time() - 3 * 3600]
     data["entries"] = []
     data["active"] = None
     data["baseline"] = {}
@@ -117,5 +117,5 @@ def test_entering_after_a_gap_records_the_stretch(monkeypatch):
     after = normal.stats().get("stretches") or 0
     assert after == before + 1, (before, after)
     recorded = normal._load().get("stretches") or []
-    assert max(recorded) > 60, f"a three-hour gap was recorded as {max(recorded)} minutes"
+    assert max(recorded) == 44, f"the stretch was recorded as {max(recorded)}"
     engine.stop(reason="returned")

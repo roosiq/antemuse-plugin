@@ -69,7 +69,7 @@ def test_data_wall_names_a_doomscroll():
 
 
 def test_old_provider_failures_expire():
-    assert recommend.suggest({"work": {"turns": 30, "source_fail_turns": [2, 3]}}) is None
+    assert recommend.suggest({"work": {"turns": 20, "source_fail_turns": [2, 3]}}) is None
 
 
 def test_saturation_names_a_dream():
@@ -161,7 +161,7 @@ def test_walk_after_walk_is_still_a_rut():
     active = {"key": "walk", "entered_at": now}
     entries = [{"key": "walk", "at": now - 120}, {"key": "walk", "at": now}]
     rut = recommend._rut(entries, active, now + 5)
-    assert rut and rut["evidence"] == "just chose walk again"
+    assert rut and rut["evidence"] == "the last state was walk too"
 
 
 def test_a_different_previous_state_is_not_a_rut():

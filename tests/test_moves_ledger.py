@@ -37,22 +37,21 @@ def _moves(state: str) -> list:
         conn.close()
 
 
-def test_a_state_that_expires_by_time_records_how_it_ended(monkeypatch):
+def test_a_state_that_ends_dry_records_how_it_ended(monkeypatch):
+    """There is no clock ending. A state whose material stops arriving ends as dry."""
     monkeypatch.setattr(social, "pick", lambda steps=1: FEED[:steps])
     engine.enter("doomscroll", session="moves-time", platform="discord")
     engine.note_turn()
     engine.tick()
     engine.deliver_if_due()
 
-    data = engine._load()
-    data["active"]["ends_at"] = time.time() - 1
-    engine._save(data)
-    engine.tick()
+    engine.note_turn()          # a turn arrived and nothing was delivered
+    engine.note_turn()
 
-    assert engine.peek() is None, "the state should have expired"
+    assert engine.peek() is None, "the state should have ended dry"
     rows = _moves("doomscroll")
-    assert rows, "a state expired and left no moves row"
-    assert rows[-1][1] == "expired", rows[-1]
+    assert rows, "a state ended and left no moves row"
+    assert rows[-1][1] == "dry", rows[-1]
     assert rows[-1][2] >= 0, rows[-1]
 
 
@@ -61,11 +60,8 @@ def test_a_state_that_finishes_its_dose_records_a_different_ending(monkeypatch):
     monkeypatch.setattr(social, "pick", lambda steps=1: FEED[:steps])
     engine.enter("doomscroll", session="moves-dose", platform="discord")
     engine.note_turn()
-    engine.deliver_if_due()               # the first unit, at entry
-    data = engine._load()
-    data["active"]["entered_at"] = float(data["active"]["entered_at"]) - 30
-    engine._save(data)                    # everything the rest of the dose could still owe
-    engine.deliver_if_due()
+    for _ in range(3):                    # three items, one per delivery call
+        engine.deliver_if_due()
     engine.complete_if_dosed()
 
     assert engine.peek() is None, "the dose should have ended the state"

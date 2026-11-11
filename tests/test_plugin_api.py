@@ -41,7 +41,7 @@ WALK = {
         "key": "walk", "walk": "wander", "label": "WALKING",
         "contract": "work continues · the frame is elsewhere",
         "directive": "SECRET MODEL INSTRUCTION",
-        "ends_at": 1000.0, "seconds_left": 145, "total_seconds": 180, "turns_left": 4,
+        "dose": 6, "unit": "hops", "served": 1, "entered_at": 800.0,
         "tools": None,
     },
     "journal": [{"kind": "walk", "text": "salt→ski parka [far]"}],
@@ -63,9 +63,9 @@ def test_active_state_reports_counts_and_contract():
     active = payload["active"]
     assert active["key"] == "walk"
     assert active["label"] == "WALKING"
-    assert active["seconds_left"] == 145
-    assert active["total_seconds"] == 180
-    assert active["turns_left"] == 4
+    assert "seconds_left" not in active and "ends_at" not in active
+    assert active["dose"] == 6 and active["unit"] == "hops"
+    assert active["served"] == 1 and active["dose_left"] == 5
     assert active["contract"] == "work continues · the frame is elsewhere"
     assert payload["frame"]["lines"] == ["line one"]
     assert payload["residue"] == {"count": 1, "kinds": ["walk"]}

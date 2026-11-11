@@ -25,9 +25,10 @@ MIN_TURNS = 20
 MIN_STRETCHES = 5
 
 #: the fixed fallback, and the clamp that keeps a measurement from going absurd.
-FALLBACK_MINUTES = 90
-FLOOR_MINUTES = 60
-CAP_MINUTES = 180
+#: counted in turns: a stretch is work done, and minutes say nothing about that.
+FALLBACK_TURNS = 30
+FLOOR_TURNS = 15
+CAP_TURNS = 80
 
 
 def path() -> Path:
@@ -60,31 +61,30 @@ def observe_turn(tools: int, fails: int) -> None:
     _save(data)
 
 
-def observe_stretch(minutes: float) -> None:
-    """How long this person worked before asking for a state.
+def observe_stretch(turns: float) -> None:
+    """How many turns this person worked before asking for a state.
 
-    Recorded on entry, not on exit: an abandoned state should not teach the plugin that a
-    two-minute stretch is normal.
+    Counted, not timed. Recorded on entry, not on exit: an abandoned state should not teach
+    the plugin that a two-turn stretch is normal.
     """
-    if minutes <= 0:
+    if turns <= 0:
         return
     data = _load()
     stretches = [int(m) for m in (data.get("stretches") or [])]
-    stretches.append(int(minutes))
+    stretches.append(int(turns))
     data["stretches"] = stretches[-STRETCH_WINDOW:]
     _save(data)
 
 
-def observe_completion(state: str, turns: int, seconds: float, reason: str) -> None:
-    """Turns-to-dose and seconds-to-dose, per state. The measurement Ryan asked for.
+def observe_completion(state: str, turns: int, reason: str) -> None:
+    """Turns-to-dose per state. The measurement Ryan asked for, counted in turns.
 
     Recording is not claiming: a distribution is built here, and a comparison across
     models is a later artefact that reads it.
     """
     data = _load()
     runs = list(data.get("completions") or [])
-    runs.append({"state": state, "turns": int(turns), "seconds": int(seconds),
-                 "reason": reason})
+    runs.append({"state": state, "turns": int(turns), "reason": reason})
     data["completions"] = runs[-200:]
     _save(data)
 
@@ -123,13 +123,13 @@ def stats() -> Dict[str, Any]:
 
 
 def long_stretch_threshold() -> Dict[str, Any]:
-    """The minutes that count as a long stretch, and where that number came from."""
+    """The turn count that counts as a long stretch, and where that number came from."""
     s = stats()
     if s.get("stretch_p75"):
         raw = int(s["stretch_p75"])
-        value = max(FLOOR_MINUTES, min(CAP_MINUTES, raw))
-        return {"minutes": value, "source": "measured", "raw": raw, "usual": s.get("stretch_median")}
-    return {"minutes": FALLBACK_MINUTES, "source": "fixed", "raw": None, "usual": None}
+        value = max(FLOOR_TURNS, min(CAP_TURNS, raw))
+        return {"turns": value, "source": "measured", "raw": raw, "usual": s.get("stretch_median")}
+    return {"turns": FALLBACK_TURNS, "source": "fixed", "raw": None, "usual": None}
 
 
 def clear() -> None:

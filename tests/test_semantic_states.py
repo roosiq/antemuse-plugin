@@ -1,4 +1,4 @@
-"""A state ends when its act is done. The clock is only a ceiling."""
+"""A state ends when its act is done. There is no clock at all."""
 from __future__ import annotations
 
 import json
@@ -34,9 +34,8 @@ def test_the_dose_ends_the_state_without_a_command():
     """A doomscroll is three feed items; after the third there is nothing to wait for."""
     engine.enter("doomscroll", 30)
     engine.note_turn()
-    engine.deliver_if_due()      # the first unit, at entry
-    _backdate(30)                # everything the rest of the dose could still owe
-    engine.deliver_if_due()
+    for _ in range(3):           # three items, one per delivery call
+        engine.deliver_if_due()
     engine.note_turn()           # the turn that consumes the last unit closes the state
     assert engine.peek() is None, "the state outlived its dose"
 
@@ -49,24 +48,22 @@ def test_an_early_completion_is_a_completion_not_an_expiry():
     assert report[-1]["reason"] == "complete"
 
 
-def test_an_expiry_reports_how_much_of_the_dose_was_delivered():
+def test_a_dry_ending_reports_how_much_of_the_dose_was_delivered():
     engine.enter("doomscroll", 30)
     path = _state_file()
     data = json.loads(path.read_text())
-    data["active"]["ends_at"] = time.time() - 1
     data["active"]["served"] = 1
     path.write_text(json.dumps(data))
-    engine.inject()
+    engine.note_turn()
+    engine.note_turn()
     report = [r for r in json.loads(path.read_text())["journal"] if r.get("event") == "report"]
     # What matters is that the expiry states the shortfall rather than pretending the act was
     # finished. The count itself was pinned at "2 of 3" and depended on whether the turn's own
     # delivery landed before the expiry — a race between a past `ends_at` and the load that
     # expires it — so the number moved whenever unrelated tests changed the turn order.
-    import re
+    assert report[-1]["reason"] == "dry", report[-1]
     text = report[-1]["text"]
-    m = re.search(r"expired before its dose: (\d+) of 3", text)
-    assert m, text
-    assert int(m.group(1)) < 3, text
+    assert "1 of 3 items" in text, text
 
 
 def _backdate(seconds: float) -> None:
@@ -82,19 +79,23 @@ def test_the_first_unit_lands_as_soon_as_the_state_exists():
     assert engine.deliver_if_due() == 1
 
 
-def test_a_state_drains_its_dose_as_fast_as_the_clock_allows():
-    """One unit a second, starting now: five seconds banked is six units of a six-hop walk.
+def test_a_call_serves_one_unit_however_many_seconds_are_banked():
+    """The clock says what may be served; the call says how much. One unit, not a lump.
 
-    This is the walk's whole point. Paced per turn it needed six of the person's messages,
-    the three-minute ceiling arrived first, and the state ended at five of six — the clock
-    was doing the ending. Paced by the clock it takes six seconds, and it ends on its dose.
+    A state nobody polled for five seconds owes five units, and serving all five at once is
+    what made a six-hop walk arrive as two or three jumps — nobody ever saw the walk
+    happening. Each call takes one, so the dose still ends on the dose, and the picture shows
+    the hops one at a time.
     """
     engine.enter("walk", session="pace", platform="discord")
     assert engine.deliver_if_due() == 1
     _backdate(5)
-    assert engine.deliver_if_due() == 5, "five banked seconds bought one unit"
+    assert engine.deliver_if_due() == 1, "banked seconds are entitlement, not a dump"
+    for _ in range(4):
+        assert engine.deliver_if_due() == 1, "each call takes one unit"
     active = engine.peek()
     assert active is not None and active["served"] == 6, active
+    assert engine.deliver_if_due() == 0, "a spent dose keeps arriving"
     # A full dose still waits for the turn that used it, or the material would never reach one,
     # and that turn closes the state on its own.
     engine.note_turn()
@@ -102,19 +103,19 @@ def test_a_state_drains_its_dose_as_fast_as_the_clock_allows():
 
 
 def test_a_turn_buys_no_extra_units():
-    """Turns are the work, not the meter: the second a state is asked twice, it buys one unit."""
+    """Turns are the work, not the meter: only a delivery call spends the dose."""
     engine.enter("doomscroll", 30, session="pace", platform="discord")
-    assert engine.deliver_if_due() >= 1
+    assert engine.deliver_if_due() == 1
     served = engine.peek()["served"]
-    for _ in range(3):
-        engine.note_turn()
-    assert engine.deliver_if_due() == 0, "three turns unlocked a unit"
-    assert engine.peek()["served"] == served
+    engine.note_turn()
+    assert engine.deliver_if_due() == 1, "each delivery call serves exactly one unit"
+    assert engine.peek()["served"] == served + 1
 
 
-def test_the_ceiling_is_still_a_ceiling():
+def test_there_is_no_ceiling_to_hit():
     engine.enter("walk", 3)
-    assert engine.peek()["ends_at"] > time.time()
+    live = engine.peek()
+    assert "ends_at" not in live and "minutes" not in live, live
 
 
 def test_a_directive_never_promises_material_its_state_does_not_feed():
@@ -280,7 +281,7 @@ def test_a_finished_state_reaches_the_person_even_when_the_model_ignores_it(tmp_
 
     silent = mod._transform(response_text="Sure — the build is green.", session_id="post-walk")
     assert silent and silent.startswith("Sure — the build is green."), silent
-    assert "— " in silent and "step" in silent, silent
+    assert "— " in silent and "hops" in silent, silent
 
     # a model that does say the facts is not double-printed
     engine.stop(reason="qa")
@@ -293,3 +294,22 @@ def test_a_finished_state_reaches_the_person_even_when_the_model_ignores_it(tmp_
     mod._PENDING_REPORT = ("post-walk-2", "walk")
     said = mod._transform(response_text=facts["text"], session_id="post-walk-2")
     assert said is None or said.count("— ") <= 1, said
+
+
+def test_the_account_is_posted_when_the_dose_lands(monkeypatch):
+    """The end of a state is spoken in the turn it ends in, not on the person's next message."""
+    from core import sources
+
+    posted = []
+    monkeypatch.setattr(engine, "_NOTIFY", lambda text: posted.append(text) or True, raising=False)
+    monkeypatch.setitem(sources.PROVIDERS, "doomscroll", lambda steps=1: ["item one", "item two", "item three"][:steps])
+
+    engine.enter("doomscroll", 30, session="say-now", platform="discord")
+    engine.note_turn()
+    for _ in range(3):
+        engine.deliver_if_due()
+
+    assert engine.peek() is None, "the dose did not end the state"
+    assert posted, "a finished state posted nothing"
+    assert "3 of 3 items" in posted[-1], posted
+    assert engine.unreported("say-now") is None, "the account must not be said twice"
