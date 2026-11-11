@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.35 — 2026-11-11
+
+- docs: only what the plugin is — every document audited, the spec tree removed, dead tools gone (2026-11-11)
+
 ## 0.10.34 — 2026-11-11
 
 - docs: stop advertising a takeover that 0.10.30 deleted, in the entry, TESTING.md and the spec (2026-11-11)
