@@ -15,6 +15,7 @@ import json
 import os
 import re
 import subprocess
+import pathlib
 import sys
 from collections import Counter
 
@@ -149,7 +150,7 @@ def probe(repo):
 
 
 def main():
-    root = sys.argv[1] if len(sys.argv) > 1 else "/home/ryan"
+    root = sys.argv[1] if len(sys.argv) > 1 else str(pathlib.Path.home())
     rows = [probe(os.path.join(root, name)) for name in DEFAULT_REPOS]
 
     cols = ("commits", "fix_commits", "multifile_commits", "test_files", "colocated_tests", "messy_data", "docs")

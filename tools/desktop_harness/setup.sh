@@ -8,7 +8,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
-host="${HERMES_APP_NODE_MODULES:-/home/ryan/.hermes/hermes-agent/node_modules}"
+host="${HERMES_APP_NODE_MODULES:-$HOME/.hermes/hermes-agent/node_modules}"
 
 mkdir -p "$here/node_modules/@hermes/plugin-sdk" "$here/.work"
 

@@ -1168,7 +1168,9 @@ function ArtSurface({ ctx }) {
         const base = new URL('../../plugin-data/antemuse/activation/' + key + '/', import.meta.url)
         return names.map((n) => new URL(n, base).href)
       } catch (e) {
-        return names.map((n) => 'file:///home/ryan/.hermes/plugin-data/antemuse/activation/' + key + '/' + n)
+        // No module URL to derive from (a bundled module): say so with an empty list. A hardcoded
+        // home directory here was a leg that could only ever work on the author's machine.
+        return []
       }
     }
 

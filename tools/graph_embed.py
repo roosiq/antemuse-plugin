@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Embed the ledger's concepts once, so the graph can be projected by meaning.
 
-    /home/ryan/ontology-embedding-experiment/.venv/bin/python tools/graph_embed.py
+    <venv>/bin/python tools/graph_embed.py
     ... --model BAAI/bge-small-en-v1.5 --out embeddings.json
 
 This is the only tool in the repo that needs torch, so it is run with whatever interpreter has

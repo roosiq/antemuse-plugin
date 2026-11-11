@@ -13,7 +13,7 @@ from pathlib import Path
 
 from PIL import Image
 
-ROOT = Path("/home/ryan/antemuse-plugin")
+ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / "data/meshy/pack"
 TMP = Path("/tmp/contact")
 RAMP = " .:-=+*#"

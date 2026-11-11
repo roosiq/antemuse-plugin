@@ -23,7 +23,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path("/home/ryan/antemuse-plugin")
+ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data/meshy/pack"
 LEDGER = OUT / "ledger.jsonl"
 CLI = ["npm", "exec", "--yes", "--package=meshy-cli@0.4.3", "--", "meshy"]

@@ -48,7 +48,7 @@ def glb_triangles(path: pathlib.Path) -> int:
     return total
 
 
-ROOT = pathlib.Path("/home/ryan/antemuse-plugin")
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 PACK = ROOT / "data/meshy/pack"
 
 

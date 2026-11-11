@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Project every WordNet synset once, and keep the projection instead of the vectors.
 
-    /home/ryan/ontology-embedding-experiment/.venv/bin/python tools/project_wordnet.py
+    <venv>/bin/python tools/project_wordnet.py
 
 An embedding is only ever used for three things here: a 2D position, a 3D position, and "which
 concepts are near this one". All three are computable once, offline, for the whole synset set —

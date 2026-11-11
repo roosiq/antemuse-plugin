@@ -87,9 +87,11 @@ breaks both `pytest` collection and `PIL` inside any other interpreter. Clear it
 for every test run:
 
 ```bash
-env -u PYTHONPATH NLTK_DATA=/home/ryan/nltk_data \
-  ANTEMUSE_STATES_HOME=$(mktemp -d) \
+env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) \
   uvx --with pillow --with nltk --quiet pytest tests/ -q
+
+# NLTK_DATA is only needed if your corpora live outside the default lookup:
+#   NLTK_DATA=~/nltk_data ...
 ```
 
 The plugin declares `pillow` and `nltk`, but Hermes does not install plugin

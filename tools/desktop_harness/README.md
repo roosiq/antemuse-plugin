@@ -9,7 +9,7 @@ node tools/desktop_harness/mount.mjs
 ```
 
 `setup.sh` reads `HERMES_APP_NODE_MODULES`, defaulting to
-`/home/ryan/.hermes/hermes-agent/node_modules`. It installs nothing: it links the
+`~/.hermes/hermes-agent/node_modules`. It installs nothing: it links the
 three packages and writes a `@hermes/plugin-sdk` stub beside the harness, because
 `plugin.js` imports only constants from that alias.
 

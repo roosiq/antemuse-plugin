@@ -16,16 +16,54 @@ from pathlib import Path  # noqa: E402
 import shutil  # noqa: E402
 
 
+def _frame_source():
+    """Where production looks, so the fixture cannot depend on the author's home directory.
+
+    This used to copy frames out of the author's ~/.hermes/... and skip when that path was absent —
+    so the suite tested three fewer things on every machine but one, silently, while reporting a
+    pass. If there is no bank, the fixture draws one: the render path is what is under test, not
+    the provenance of the pixels.
+    """
+    from core import storage
+
+    return storage.data_dir() / "three_frames"
+
+
+def _draw_frames(dst: Path) -> None:
+    """A dark field with a few warm masses — the same shape as a real activation still.
+
+    Measured through the renderer: pure black reads 0.0, one blob 0.06, three 0.25. The art test
+    wants a picture that is neither blank nor solid, so the fixture draws what sits between.
+    """
+    from PIL import Image, ImageDraw
+
+    for i, scene in enumerate(("walk", "daydream", "dream", "doomscroll")):
+        out = dst / scene
+        out.mkdir(parents=True, exist_ok=True)
+        img = Image.new("RGB", (320, 180), (0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        for k in range(3 + (i % 2)):
+            x = 40 + 78 * k
+            draw.ellipse([x, 60 - 6 * (k % 2), x + 42, 120 + 6 * (k % 2)], fill=(210, 170, 105))
+        img.save(out / "f0.png")
+
+
 def setup_module(_):
-    """The art renderer reads pre-rendered frames; seed the temp profile with one."""
-    src = Path("/home/ryan/.hermes/plugin-data/antemuse/three_frames")
+    """The art renderer reads pre-rendered frames; seed this profile with some."""
+    src = _frame_source()
     dst = Path(os.environ["ANTEMUSE_STATES_HOME"]) / "three_frames"
     dst.mkdir(parents=True, exist_ok=True)
-    cands = sorted(src.glob("*.png")) or [
-        p for d in sorted(src.iterdir()) if d.is_dir() for p in sorted(d.glob("*.png"))[:1]
-    ] if src.is_dir() else []
-    for png in cands[:3]:
-        shutil.copy(png, dst / png.name)
+    cands = []
+    if src.is_dir():
+        cands = sorted(src.glob("*.png")) or [
+            p for d in sorted(src.iterdir()) if d.is_dir() for p in sorted(d.glob("*.png"))[:1]
+        ]
+        for png in cands[:3]:
+            target = dst / png.name
+            if target.resolve() != png.resolve():      # the bank may already be this profile
+                shutil.copy(png, target)
+    if not cands:
+        _draw_frames(dst)
 
 
 def state(active=True):
@@ -111,15 +149,17 @@ def _density(rows, cols=40):
 
 
 def _seed_scene(scene):
-    """One real frame per scene, in this temp profile."""
-    src = Path("/home/ryan/.hermes/plugin-data/antemuse/three_frames") / scene
+    """One frame per scene, in this temp profile — drawn if no bank exists."""
+    src = _frame_source() / scene
     if not src.is_dir():
-        import pytest
-        pytest.skip(f"no frame bank at {src}")
+        _draw_frames(Path(os.environ["ANTEMUSE_STATES_HOME"]) / "three_frames")
+        src = Path(os.environ["ANTEMUSE_STATES_HOME"]) / "three_frames" / scene
     dst = Path(os.environ["ANTEMUSE_STATES_HOME"]) / "three_frames" / scene
     dst.mkdir(parents=True, exist_ok=True)
     for png in sorted(src.glob("*.png"))[:2]:
-        shutil.copy(png, dst / png.name)
+        target = dst / png.name
+        if target.resolve() != png.resolve():
+            shutil.copy(png, target)
     assert dst.glob("*.png"), f"no frame bank for {scene}"
 
 

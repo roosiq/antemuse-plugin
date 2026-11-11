@@ -9,8 +9,8 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-os.environ["ANTEMUSE_STATES_HOME"] = "/home/ryan/.hermes/cache/scratch/bench"
-os.environ.setdefault("NLTK_DATA", "/home/ryan/nltk_data")
+os.environ.setdefault("ANTEMUSE_STATES_HOME", str(pathlib.Path.home() / ".hermes/cache/scratch/bench"))
+os.environ.setdefault("NLTK_DATA", str(pathlib.Path.home() / "nltk_data"))
 
 t0 = time.perf_counter()
 from core import engine, mood, panel, photographs, states, storage, tui  # noqa: E402

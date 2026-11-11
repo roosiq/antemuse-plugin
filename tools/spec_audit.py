@@ -99,15 +99,26 @@ def recorded_count() -> int | None:
 
 
 def pytest_bin() -> str:
-    for candidate in ("/home/ryan/.local/bin/pytest", "pytest"):
-        if Path(candidate).exists() or candidate == "pytest":
-            return candidate
-    return sys.executable
+    """How to run pytest here, without naming anyone's home directory.
+
+    A hardcoded interpreter path meant this tool could only measure on the machine it was written
+    on — and it measured the test count, which is the number a release note quotes.
+    """
+    import shutil
+
+    found = shutil.which("pytest")
+    return found or sys.executable
 
 
 def actual_count() -> int | None:
-    proc = subprocess.run([pytest_bin(), "-q"], cwd=ROOT, capture_output=True, text=True,
-                          env={**__import__("os").environ, "NLTK_DATA": "/home/ryan/nltk_data"})
+    import os
+
+    env = dict(os.environ)
+    env.setdefault("NLTK_DATA", str(Path.home() / "nltk_data"))   # the caller's data, not ours
+    cmd = [pytest_bin(), "-q"]
+    if cmd[0] == sys.executable:
+        cmd = [sys.executable, "-m", "pytest", "-q"]
+    proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, env=env)
     m = re.search(r"(\d+) passed", proc.stdout)
     return int(m.group(1)) if m else None
 

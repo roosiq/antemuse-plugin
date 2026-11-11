@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/home/ryan/antemuse-plugin")
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
 from core import surfaces  # noqa: E402
 
 from PIL import Image

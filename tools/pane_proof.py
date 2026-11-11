@@ -12,8 +12,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/home/ryan/antemuse-plugin")
-sys.path.insert(0, "/home/ryan/antemuse-plugin/tools")
+_ROOT = __import__("pathlib").Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(_ROOT))
+sys.path.insert(0, str(_ROOT / "tools"))
 import screensaver  # noqa: E402
 
 from PIL import Image

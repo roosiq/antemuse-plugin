@@ -16,7 +16,7 @@ Because the filter slides, ascent tends to produce a *repeating* motif across
 positions — the text analogue of the dog-slurry texture in the 2015 images.
 
 Trains from any jsonl with {"text": ..., "label": 0|1}. Run with the venv that
-has torch: /home/ryan/slopslingers-infra/services/gateway/.venv/bin/python
+has torch: <torch venv>/services/gateway/.venv/bin/python
 """
 
 from __future__ import annotations
@@ -212,7 +212,7 @@ def grow_sequence(seq, tok, factor, max_len, special):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=Path,
-                    default=Path("/home/ryan/toslop-model/specs/007-ai-slop-quality-model/data/train_v5.jsonl"))
+                    default=Path.home() / "toslop-model/specs/007-ai-slop-quality-model/data/train_v5.jsonl")
     ap.add_argument("--limit", type=int, default=3000)
     ap.add_argument("--epochs", type=int, default=2)
     ap.add_argument("--seed-text", default=(

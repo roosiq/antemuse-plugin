@@ -390,22 +390,22 @@ def test_a_steered_run_does_not_call_excluded_sources_skipped():
 def test_material_is_dropped_when_the_turn_arrives_from_another_project():
     """Dropped, not rerouted: another project's turn must not receive the run."""
     run = runtime.plan("make the weekly report less boring")
-    runtime.prepare("sess-origin", run, origin={"project": "/home/ryan/antemuse"})
-    assert runtime.injection("sess-origin", origin={"project": "/home/ryan/toslop"}) is None
+    runtime.prepare("sess-origin", run, origin={"project": "/projects/antemuse-plugin"})
+    assert runtime.injection("sess-origin", origin={"project": "/projects/toslop"}) is None
     assert runtime.take_account("sess-origin") is None, "no account leaks either"
 
 
 def test_material_is_delivered_in_the_project_that_prepared_it():
     run = runtime.plan("make the weekly report less boring")
-    runtime.prepare("sess-same", run, origin={"project": "/home/ryan/antemuse"})
-    assert runtime.injection("sess-same", origin={"project": "/home/ryan/antemuse"}) is not None
+    runtime.prepare("sess-same", run, origin={"project": "/projects/antemuse-plugin"})
+    assert runtime.injection("sess-same", origin={"project": "/projects/antemuse-plugin"}) is not None
 
 
 def test_an_unknown_origin_does_not_block_delivery():
     """No project at prepare time is ignorance, not a mismatch."""
     run = runtime.plan("make the weekly report less boring")
     runtime.prepare("sess-blind", run, origin={})
-    assert runtime.injection("sess-blind", origin={"project": "/home/ryan/toslop"}) is not None
+    assert runtime.injection("sess-blind", origin={"project": "/projects/toslop"}) is not None
 
 
 def test_release_forgets_every_runtime_book_for_that_session():

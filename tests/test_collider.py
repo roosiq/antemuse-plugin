@@ -432,7 +432,7 @@ def test_bank_paths_point_at_the_source_that_carries_each_body():
     repo = Path(
         os.environ.get(
             "ANTEMUSE_OC_REPO",
-            "/home/ryan/.hermes/cache/scratch/concept-re/open-collider-research",
+            str(Path.home() / ".hermes/cache/scratch/concept-re/open-collider-research"),
         )
     )
     if not (repo / "OC_data" / "creativity_engine").is_dir():

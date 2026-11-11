@@ -22,7 +22,7 @@ from typing import List, Optional
 ROOT = Path(__file__).resolve().parent.parent
 PAGE = "/tools/activation_post.html"
 SHOOT = ROOT / "tools" / "shoot.mjs"
-NODE_MODULES = Path("/home/ryan/.hermes/hermes-agent/node_modules")
+NODE_MODULES = Path(os.environ.get("ANTEMUSE_NODE_MODULES") or (Path.home() / ".hermes/hermes-agent/node_modules"))
 TIMEOUT_S = 120
 
 
