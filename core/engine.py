@@ -84,6 +84,22 @@ def _save(data: Dict[str, Any]) -> None:
 DIAGNOSTIC_EVENTS = ("history", "failure", "error")
 
 
+def _trail_body(trail: List[str], limit: int = 8) -> str:
+    """The chain the state walked, ending on the concept it landed on.
+
+    The trail was cut with `trail[:5]` while the count beside it said `6 step(s)`, so the
+    one hop the account dropped was always the last one — the place the state actually
+    ended up, which is the whole of "different on return". Counting entries, not
+    characters, keeps a real six-hop walk whole: a chain longer than the limit gives up
+    its middle, says so, and never its landing.
+    """
+    if not trail:
+        return "nothing arrived"
+    if len(trail) <= limit:
+        return " → ".join(trail)
+    return " → ".join([trail[0], "…", *trail[-(limit - 2):]])
+
+
 def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     """What happened while the agent was away, in one line it can speak from.
 
@@ -125,7 +141,7 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
             head = (parts[0] if parts else "")[:40].rstrip(",.;:· ")
         if head and head not in trail:
             trail.append(head)
-    body = " → ".join(trail[:5]) if trail else "nothing arrived"
+    body = _trail_body(trail)
     # A bare event word ("JOINED") says a thing happened but not how much of it; the tally is the
     # part of the account that is safe to state.
     for mark in ("JOINED", "adjacent"):
@@ -134,7 +150,7 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
             body = f"{body} · {mark.lower()} ×{n}"
     return {
         "state": key,
-        "text": f"{key} {mins}m · {len(steps)} step(s) · {body[:180]}",
+        "text": f"{key} {mins}m · {len(steps)} step(s) · {body}",
         "steps": len(steps),
     }
 

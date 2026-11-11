@@ -75,3 +75,57 @@ def test_an_empty_state_still_reports_something():
     engine.enter("walk")
     msg = engine.stop()
     assert "nothing arrived" in msg
+
+
+def _hop(a, b):
+    engine.record("state", f"{a} (n) → {b} (n) · took its far edge", event="walk")
+
+
+def test_the_account_ends_where_the_walk_landed():
+    """Six hops used to print five: the dropped one was always the landing.
+
+    The line beside the trail counted `6 step(s)`, so an account that stopped short was
+    not just narrow, it was wrong about the only fact the walk promises — where it got to.
+    """
+    engine.enter("walk")
+    for a, b in [("agent", "dowse"), ("dowse", "igloo"), ("igloo", "thalassemia"),
+                 ("thalassemia", "coder"), ("coder", "weigela"), ("weigela", "hawk")]:
+        _hop(a, b)
+
+    msg = engine.stop()
+    assert "6 step(s)" in msg, msg
+    assert "weigela→hawk [far]" in msg, msg
+    assert "agent→dowse [far]" in msg, msg
+
+
+def test_six_real_wordnet_hops_still_fit_and_end_on_the_landing():
+    """The everyday case: six hops with real labels, none of them dropped."""
+    engine.enter("walk")
+    chain = [("agent", "alveolar rhabdomyosarcoma"),
+             ("alveolar rhabdomyosarcoma", "Australian coral snake"),
+             ("Australian coral snake", "European fly honeysuckle"),
+             ("European fly honeysuckle", "buffel grass"),
+             ("buffel grass", "seborrheic dermatitis"),
+             ("seborrheic dermatitis", "cyprinodont")]
+    for a, b in chain:
+        _hop(a, b)
+
+    msg = engine.stop()
+    assert "6 step(s)" in msg, msg
+    assert "agent→alveolar rhabdomyosarcoma [far]" in msg, msg
+    assert "seborrheic dermatitis→cyprinodont [far]" in msg, msg
+    assert "…" not in msg, msg
+
+
+def test_a_chain_too_long_for_the_line_gives_up_its_middle_not_its_landing():
+    engine.enter("walk")
+    names = [f"concept number {i} of a long walk" for i in range(12)]
+    for a, b in zip(names, names[1:]):
+        _hop(a, b)
+
+    msg = engine.stop()
+    assert "11 step(s)" in msg, msg
+    assert "concept number 0 of a long walk→concept number 1" in msg, msg
+    assert "concept number 11 of a long walk" in msg, msg     # where it landed survives
+    assert "…" in msg, msg                                    # and the gap is admitted
+    assert "concept number 3 of a long walk" not in msg, msg   # the middle gave way
