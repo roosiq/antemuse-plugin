@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.10.43 — 2026-11-12
+
+- walks: the three entry points agree on what a name means (2026-11-12)
+
 ## 0.10.42 — 2026-11-12
 
 - security: a walk name is a filename, so make it one (2026-11-12)
