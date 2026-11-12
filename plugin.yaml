@@ -2,7 +2,7 @@ name: antemuse
 label: Antemuse
 kind: standalone
 manifest_version: 2
-version: "0.10.41"
+version: "0.10.42"
 author: Antemuse
 homepage: https://antemuse.com
 license: MIT
