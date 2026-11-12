@@ -539,10 +539,46 @@ def memory_pairs(steps: int = 1, join_threshold: int = 2) -> List[str]:
 
 # ------------------------------------------------------------------ the day, across projects
 
-#: The projects a dream is allowed to see. Names, not transcripts: this reads each repo's own
-#: commit subjects, which the plugin already treats as material (unstuck reads the repo too).
-REPOS = ["concept.cooking", "antemuse", "antemuse-plugin", "toslop", "toslop-model",
-         "ryancook.name", "slopslingers-infra", "brand-agents"]
+#: Which repositories a dream may read. Not a list baked into the source: a plugin has no
+#: business knowing what somebody's projects are called. Empty means "the project you are
+#: working in", and `plugins.entries.antemuse.settings.dream_projects` widens it when a person
+#: wants the day across several (comma or newline separated; a plain name under ~ or an
+#: absolute path). Names, not transcripts: this reads each repo's own commit subjects, which
+#: the plugin already treats as material (unstuck reads the repo too).
+def projects() -> List[Path]:
+    from . import settings
+
+    configured = str(settings.text("dream_projects", "") or "").strip()
+    roots: List[Path] = []
+    if configured:
+        for part in re.split(r"[,\n]+", configured):
+            part = part.strip()
+            if not part:
+                continue
+            path = Path(part).expanduser()
+            roots.append(path if path.is_absolute() else Path.home() / path)
+    else:
+        here = Path.cwd()
+        # The repository the working directory belongs to, so a dream read from a subdirectory
+        # of a checkout still finds that checkout.
+        roots = [here]
+        for candidate in (here, *here.parents):
+            if (candidate / ".git").exists():
+                roots = [candidate]
+                break
+
+    seen: set = set()
+    out: List[Path] = []
+    for root in roots:
+        try:
+            resolved = root.resolve()
+        except Exception:
+            continue
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        out.append(resolved)
+    return out
 
 
 def _git_log(root: Path, since: str, name_only: bool = False) -> List[str]:
@@ -561,12 +597,11 @@ def _git_log(root: Path, since: str, name_only: bool = False) -> List[str]:
 def day_work(hours: int = 24) -> List[tuple]:
     """What was actually done today, per project: (project, subject)."""
     out: List[tuple] = []
-    for name in REPOS:
-        root = Path.home() / name
+    for root in projects():
         if not (root / ".git").exists():
             continue
         for subject in _git_log(root, f"{hours} hours ago")[:12]:
-            out.append((name, subject))
+            out.append((root.name, subject))
     return out
 
 
@@ -581,8 +616,8 @@ def project_terms(hours: int = 24) -> Dict[str, Dict[str, object]]:
     still this repository's own material: no transcript, no memory provider, no network.
     """
     out: Dict[str, Dict[str, object]] = {}
-    for name in REPOS:
-        root = Path.home() / name
+    for root in projects():
+        name = root.name
         if not (root / ".git").exists():
             continue
         lines = _git_log(root, f"{hours} hours ago", name_only=True)
@@ -835,7 +870,12 @@ def walk_text(steps: int = 1) -> List[str]:
     from . import engine, walks
     state = engine.watch_state() or {}
     name = ((state.get("active") or {}).get("walk") or "wander")
-    walk = walks.get(name)
+    try:
+        walk = walks.get(name)
+    except ValueError as exc:
+        # The name came from the model. Refuse it in the account rather than walking
+        # whatever it pointed at.
+        return [f"walk '{name}' refused · {exc}"]
     try:
         return walk.step(steps)
     except Exception as exc:

@@ -113,7 +113,7 @@ per-model aggregates — scores, not prose. See `experiments/idea-states/EVIDENC
 
 ## Settings
 
-Six settings, declared in `plugin.yaml`'s `config_schema`. The desktop app renders them as
+Eight settings, declared in `plugin.yaml`'s `config_schema`. The desktop app renders them as
 a form under **Settings ▸ Plugins ▸ Antemuse**; the same values can be set from a shell:
 
 ```bash
@@ -129,6 +129,8 @@ hermes config get plugins.entries.antemuse.settings
 | `suggest_autofollow` | `false` | enter the state a suggestion names, instead of only naming it |
 | `long_stretch_turns` | `0` | `0` keeps the measured threshold; otherwise 5–200 |
 | `journal_cap` | `60` | entries kept (reduce only, 20–60) |
+| `session_scan` | `true` | whether past sessions may be read as daydream/dream material |
+| `dream_projects` | `""` | repos a dream reads; empty means the project you are in |
 
 A setting changes how loud or how long a state is. None of them changes what a state *is*:
 directives, contracts, residue, `/return`, the tool policy default and the no-model rule
@@ -291,7 +293,8 @@ What a person should know before installing. Each line names where it happens.
 - **Reads outside the plugin data dir.** `daydream` reads the operator's Hermes memory files
   (`~/.hermes/memories/MEMORY.md` and `USER.md`) as its material, `session-scan` reads recent
   messages from the Hermes session database (`~/.hermes/state.db`, bounded to 300 messages
-  over 14 days, once per session in a background thread, off under `ANTEMUSE_NO_SCAN`), and
+  over 14 days, once per session in a background thread, off with the `session_scan`
+  setting), and
   walks use the local WordNet/FrameNet corpora via `nltk` (`core/history.py`,
   `core/sources.py`).
 - **Text placed in the agent's context.** `doomscroll` puts public feed items in front of
@@ -310,7 +313,7 @@ What a person should know before installing. Each line names where it happens.
   rebuilds) are run by hand and are never imported by plugin registration.
 - **Credentials.** None requested, read, stored or refreshed. No `.env`, no `auth.json`, no
   keychain, no OAuth token. Environment reads are limited to `ANTEMUSE_STATES_HOME`,
-  `ANTEMUSE_NO_SCAN`, `ANTEMUSE_EXPERIMENT`, `HERMES_HOME`, `XDG_CACHE_HOME`, `NO_COLOR` and
+  `ANTEMUSE_EXPERIMENT`, `HERMES_HOME`, `XDG_CACHE_HOME`, `NO_COLOR` and
   `TERM`; `NLTK_DATA` is set (`setdefault`) so the corpora resolve, never read for anything
   else.
 - **Telemetry and model usage.** None. No analytics, no usage reporting, no hidden LLM calls

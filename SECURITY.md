@@ -14,7 +14,7 @@ feed fetches named below, no credentials, no telemetry, and no self-updater.
 - **Files read outside the plugin data dir:** `daydream` reads
   `~/.hermes/memories/MEMORY.md` and `USER.md`; `session-scan` reads up to 300
   recent messages from `~/.hermes/state.db`, once per session, in a background
-  thread (`ANTEMUSE_NO_SCAN` disables it); walks read local WordNet/FrameNet
+  thread (the `session_scan` setting disables it); walks read local WordNet/FrameNet
   corpora through `nltk`.
 - **Files written:** the profile plugin data dir (`ANTEMUSE_STATES_HOME`
   overrides it), and `<repo>/.antemuse/` for per-project artifacts. Nothing is

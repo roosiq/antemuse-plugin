@@ -69,6 +69,23 @@ config_schema:
     description: >-
       How many journal entries the state keeps. Reduce only: values above 60 are
       clamped to 60, and below 20 to 20.
+  session_scan:
+    type: bool
+    default: true
+    label: Read past sessions
+    description: >-
+      Let daydream and dream use recent session text as material: one bounded scan of the
+      last 14 days, once per session, in a background thread. Off means the plugin never
+      opens the session store, and the states fall back to memory files and feeds.
+  dream_projects:
+    type: string
+    default: ""
+    label: Projects a dream may read
+    description: >-
+      Which repositories dream reads for "what happened today". Empty means the project you
+      are working in. For several, list them comma separated: plain names under your home
+      directory, or absolute paths. The plugin reads commit subjects and changed file names
+      only, never a transcript.
 provides_tools:
   - state
 provides_hooks:

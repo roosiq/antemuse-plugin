@@ -25,10 +25,32 @@ BOOL_DEFAULTS = {
     # shown. Off by default: the plugin observes, it does not tell the person what to do.
     "show_recommendations": False,
     "suggest_autofollow": False,
+    # The past-session scan reads recent session text as daydream/dream material. On by
+    # default (it is the plugin's own well), and off here rather than through an environment
+    # variable: a person's control belongs in the settings form, not in their shell.
+    "session_scan": True,
+}
+
+#: Free-text settings. Only ones that are a list or a path, never a secret: a secret belongs
+#: in requires_env, where the host keeps it.
+TEXT_DEFAULTS = {
+    "dream_projects": "",
 }
 
 _host: Any = None
 _warned: set = set()
+#: Test-only: the suite has no host to bind, and a scan that ran for real would read the
+#: developer's own sessions. Production code never writes this.
+_OVERRIDES: Dict[str, Any] = {}
+
+
+def override(**values: Any) -> None:
+    """Set settings without a host. Tests only."""
+    _OVERRIDES.update(values)
+
+
+def clear_overrides() -> None:
+    _OVERRIDES.clear()
 
 
 def bind(ctx: Any) -> None:
@@ -38,6 +60,8 @@ def bind(ctx: Any) -> None:
 
 
 def _raw(key: str, default: Any) -> Any:
+    if key in _OVERRIDES:
+        return _OVERRIDES[key]
     host = _host
     get = getattr(host, "get_config", None)
     if callable(get):
@@ -62,6 +86,8 @@ def flag(key: str) -> bool:
 
 def text(key: str, default: str = "") -> str:
     """A plain string setting. Unknown keys fall back — a typo in config is not a crash."""
+    if not default:
+        default = TEXT_DEFAULTS.get(key, default)
     value = _raw(key, default)
     return str(value) if isinstance(value, (str, int, float)) else default
 
@@ -92,6 +118,7 @@ def number(key: str) -> int:
 def all_values() -> Dict[str, Any]:
     out: Dict[str, Any] = {k: flag(k) for k in BOOL_DEFAULTS}
     out.update({k: number(k) for k in INT_BOUNDS})
+    out.update({k: text(k) for k in TEXT_DEFAULTS})
     return out
 
 

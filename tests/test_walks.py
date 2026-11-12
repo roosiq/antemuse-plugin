@@ -165,3 +165,41 @@ def test_artifacts_follow_the_project(tmp_path, monkeypatch):
     local = storage.project_dir()
     assert local == repo.resolve() / ".antemuse" and local.is_dir()
     assert walks.cursor_path_default().parent == local
+
+
+# ------------------------------------------------------------------ the name is a filename
+
+def test_a_walk_name_cannot_reach_outside_the_walks_directory(cursor):
+    """The name comes from the model, and it is joined into a path.
+
+    `name="../../../auth"` used to mean `HERMES_HOME/auth.json`: readable, overwritable, or
+    deletable by a state argument. A name is lowercase letters, digits, '-' and '_' — no dots
+    at all, so '..' cannot be spelled — and the resolved path must still be inside the walks
+    directory before anything is read, written or unlinked.
+    """
+    outside = cursor.parent / "auth.json"
+    outside.write_text('{"token": "must survive"}')
+
+    bad = ["../auth", "../../auth", "..", ".", "a/b", "..\\auth", "/etc/passwd",
+           "walk.json/../../auth", "x" * 65, ""]
+    for name in bad:
+        with pytest.raises(ValueError):
+            walks.get(name, cursor)
+        with pytest.raises(ValueError):
+            walks.save({"name": name, "graph": "manual", "edges": {"a": ["b"]}}, cursor)
+        with pytest.raises(ValueError):
+            walks.remove(name, cursor)
+
+    assert outside.read_text() == '{"token": "must survive"}'
+    assert not (cursor.parent / "walks" / "..json").exists()
+
+
+def test_a_valid_name_still_saves_and_removes(cursor):
+    for name in ("hearth", "two-words", "with_underscore", "n1"):
+        walks.save({"name": name, "graph": "manual", "edges": {"a": ["b"]}}, cursor)
+        assert walks.get(name, cursor).name == name
+        assert walks.remove(name, cursor) is True
+
+
+def test_an_unknown_walk_still_falls_back_to_wander(cursor):
+    assert walks.get("no-such-walk", cursor).name == "wander"

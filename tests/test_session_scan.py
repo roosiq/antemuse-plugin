@@ -19,7 +19,8 @@ from core import history  # noqa: E402
 def store(tmp_path, monkeypatch):
     home = tmp_path / "home"
     home.mkdir()
-    monkeypatch.delenv("ANTEMUSE_NO_SCAN", raising=False)
+    from core import settings
+    settings.override(session_scan=True)
     monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(home))
     db = tmp_path / "state.db"
     conn = sqlite3.connect(db)
@@ -105,7 +106,8 @@ def test_a_scan_leaves_one_line_in_the_ledger(store):
 
 
 def test_a_missing_store_is_a_named_failure_not_an_exception(tmp_path, monkeypatch):
-    monkeypatch.delenv("ANTEMUSE_NO_SCAN", raising=False)
+    from core import settings
+    settings.override(session_scan=True)
     monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path / "home"))
     monkeypatch.setattr(history, "_SCAN_LOCK", {"running": False})
     result = history.autoscan("session-1", db=tmp_path / "absent.db", wait=True)
@@ -121,6 +123,7 @@ def test_the_thread_never_leaves_the_lock_set(store):
     assert history._SCAN_LOCK["running"] is False
 
 
-def test_the_kill_switch_wins(tmp_path, monkeypatch):
-    monkeypatch.setenv("ANTEMUSE_NO_SCAN", "1")
+def test_the_setting_is_the_kill_switch(tmp_path):
+    from core import settings
+    settings.override(session_scan=False)
     assert history.autoscan("session-1", db=tmp_path / "x.db", wait=True)["reason"] == "disabled"

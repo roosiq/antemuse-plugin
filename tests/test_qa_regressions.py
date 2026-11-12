@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def test_a_mistyped_tool_action_says_so(tmp_path, monkeypatch):
     monkeypatch.setenv("ANTEMUSE_STATES_HOME", str(tmp_path / "home"))
-    monkeypatch.setenv("ANTEMUSE_NO_SCAN", "1")
+    from core import settings
+    settings.override(session_scan=False)
     (tmp_path / "home").mkdir()
     spec = importlib.util.spec_from_file_location("antemuse_fallback_qa", ROOT / "__init__.py")
     module = importlib.util.module_from_spec(spec)

@@ -19,6 +19,7 @@ import json
 import os
 import random
 import time
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -596,11 +597,38 @@ def list_walks(cursor_path: Path | None = None) -> List[Dict[str, Any]]:
     return out
 
 
+#: A walk is a file in the walks directory named after it, so the name is a filename. It is
+#: model-supplied (the `walk` argument of the state tool), which makes it untrusted: anything
+#: that can hold a '/' or a '..' can point at HERMES_HOME/auth.json and be read, overwritten or
+#: deleted. The alphabet is deliberately narrow — no dots at all, so '..' cannot be spelled.
+NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
+
+
+def valid_name(name: str) -> bool:
+    return bool(NAME_RE.match(str(name or "").strip().lower()))
+
+
+def _walk_file(name: str, cursor_path: Path | None = None) -> Path:
+    """The one file `name` may mean. Raises rather than returning something outside the dir."""
+    key = str(name or "").strip().lower()
+    if not NAME_RE.match(key):
+        raise ValueError(
+            f"walk names are lowercase letters, digits, '-' and '_', up to 64 characters "
+            f"(got {name!r})")
+    directory = walks_dir(cursor_path or cursor_path_default()).resolve()
+    path = (directory / f"{key}.json").resolve()
+    if not path.is_relative_to(directory):
+        raise ValueError(f"walk name {name!r} resolves outside {directory}")
+    if path.parent != directory:
+        raise ValueError(f"walk name {name!r} is not a file in {directory}")
+    return path
+
+
 def get(name: str, cursor_path: Path | None = None) -> GraphWalk:
     cursor_path = cursor_path or cursor_path_default()
     if name in BUILTIN:
         return GraphWalk({"name": name, **BUILTIN[name]}, cursor_path)
-    path = walks_dir(cursor_path) / f"{name}.json"
+    path = _walk_file(name, cursor_path)
     if path.exists():
         spec = json.loads(path.read_text())
         spec.setdefault("name", name)
@@ -620,7 +648,7 @@ def save(spec: Dict[str, Any], cursor_path: Path | None = None) -> Dict[str, Any
         raise ValueError("graph 'manual' needs an 'edges' map")
     directory = walks_dir(cursor_path)
     directory.mkdir(parents=True, exist_ok=True)
-    (directory / f"{name}.json").write_text(json.dumps(spec, indent=2))
+    _walk_file(name, cursor_path).write_text(json.dumps(spec, indent=2))
     return GraphWalk(spec, cursor_path).describe()
 
 
@@ -628,7 +656,7 @@ def remove(name: str, cursor_path: Path | None = None) -> bool:
     cursor_path = cursor_path or cursor_path_default()
     if name in BUILTIN:
         return False
-    path = walks_dir(cursor_path) / f"{name}.json"
+    path = _walk_file(name, cursor_path)
     if path.exists():
         path.unlink()
         return True

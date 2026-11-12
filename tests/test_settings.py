@@ -29,9 +29,10 @@ class Host:
 def test_the_manifest_declares_every_setting_the_plugin_reads():
     manifest = yaml.safe_load(open(os.path.join(ROOT, "plugin.yaml")))
     schema = manifest.get("config_schema") or {}
-    assert set(schema) == set(settings.BOOL_DEFAULTS) | set(settings.INT_BOUNDS)
+    assert set(schema) == (set(settings.BOOL_DEFAULTS) | set(settings.INT_BOUNDS)
+                           | set(settings.TEXT_DEFAULTS))
     for key, spec in schema.items():
-        assert spec.get("type") in ("bool", "int", "str", "float"), (key, spec)
+        assert spec.get("type") in ("bool", "int", "str", "string", "float"), (key, spec)
         assert "default" in spec and spec.get("label") and spec.get("description")
 
 
@@ -128,6 +129,8 @@ def test_the_manifest_and_the_code_agree_on_every_default():
     for key, spec in schema.items():
         if key in settings.BOOL_DEFAULTS:
             assert spec["default"] == settings.BOOL_DEFAULTS[key], key
+        elif key in settings.TEXT_DEFAULTS:
+            assert spec["default"] == settings.TEXT_DEFAULTS[key], key
         else:
             default, low, high = settings.INT_BOUNDS[key]
             assert spec["default"] == default, key

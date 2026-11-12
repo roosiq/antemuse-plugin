@@ -63,3 +63,46 @@ def test_memory_pairs_report_the_join():
 def test_providers_cover_every_state():
     from core import states
     assert set(sources.PROVIDERS) == set(states.STATES)
+
+
+# ------------------------------------------------------- which projects a dream may read
+
+def test_a_dream_reads_the_project_you_are_in(monkeypatch, tmp_path):
+    """No list of somebody's repositories is baked into the source.
+
+    Empty `dream_projects` means the repository the working directory belongs to, found by
+    walking up from a subdirectory so a dream read from inside a checkout still sees it.
+    """
+    from core import settings, sources
+
+    repo = tmp_path / "proj"
+    (repo / ".git").mkdir(parents=True)
+    deep = repo / "src" / "inner"
+    deep.mkdir(parents=True)
+    monkeypatch.chdir(deep)
+    settings.override(dream_projects="")
+    try:
+        assert sources.projects() == [repo.resolve()]
+    finally:
+        settings.clear_overrides()
+
+
+def test_a_dream_reads_the_projects_the_person_names(monkeypatch, tmp_path):
+    from core import settings, sources
+
+    a, b = tmp_path / "alpha", tmp_path / "beta"
+    (a / ".git").mkdir(parents=True)
+    (b / ".git").mkdir(parents=True)
+    settings.override(dream_projects=f"{a}, {b}\n{a}")
+    try:
+        assert sources.projects() == [a.resolve(), b.resolve()]
+    finally:
+        settings.clear_overrides()
+
+
+def test_the_source_carries_no_hardcoded_project_names():
+    from core import sources
+
+    text = open(sources.__file__).read()
+    assert "concept.cooking" not in text and "slopslingers-infra" not in text
+    assert "brand-agents" not in text and "toslop-model" not in text

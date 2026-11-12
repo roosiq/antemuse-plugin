@@ -745,7 +745,8 @@ def autoscan(session: str = "", messages: int = AUTO_MESSAGES,
     The turn must never wait for this: it returns immediately and the scan runs in a daemon
     thread. `wait=True` exists for tests and for a caller that wants the numbers back.
     """
-    if os.environ.get("ANTEMUSE_NO_SCAN"):
+    from . import settings
+    if not settings.flag("session_scan"):
         return {"ok": False, "reason": "disabled"}
     if not session:
         session = active_session()

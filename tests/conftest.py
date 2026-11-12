@@ -40,13 +40,17 @@ def _isolated_home(tmp_path, monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
-def _no_automatic_scan(monkeypatch):
+def _no_automatic_scan():
     """Off by default: a scan that starts itself is not a test fixture.
 
-    `tests/test_session_scan.py` deletes this to exercise the real thing.
+    The switch is the plugin setting, not an environment variable, so the suite sets it the
+    way a person would — and `tests/test_session_scan.py` turns it back on to exercise the
+    real thing.
     """
-    monkeypatch.setenv("ANTEMUSE_NO_SCAN", "1")
+    from core import settings
+    settings.override(session_scan=False)
     yield
+    settings.clear_overrides()
 
 
 def requires_tree(*names):

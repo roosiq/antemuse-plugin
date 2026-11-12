@@ -175,7 +175,11 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         if any(k in opts for k in ("method", "seed", "budget")) and not experimental_enabled(host):
             return ("cannot enter with method, seed, or budget · experimental methods are off "
                     "(plugins.entries.antemuse.settings.experimental.enabled: true)")
-        return engine.enter(str(a.get("name") or ""), None, a.get("walk"), opts or None)
+        walk_name = a.get("walk")
+        if walk_name and not walks.valid_name(str(walk_name)):
+            return (f"cannot enter · walk names are lowercase letters, digits, '-' and '_' "
+                    f"(got '{walk_name}')")
+        return engine.enter(str(a.get("name") or ""), None, walk_name, opts or None)
     if action == "walks":
         return _walks_report()
     if action == "walk_new":
@@ -188,7 +192,10 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         return f"saved walk '{saved['name']}' · {saved['graph']} · {'/'.join(saved['relations'])}\n" + _walks_report()
     if action == "walk_del":
         name = str(a.get("name") or "")
-        ok = walks.remove(name, walks.CURSOR)
+        try:
+            ok = walks.remove(name, walks.CURSOR)
+        except ValueError as exc:
+            return f"walk not removed · {exc}"
         return (f"removed walk '{name}'" if ok else f"'{name}' is built-in or does not exist") + "\n" + _walks_report()
     if action == "break":
         return engine.take_break(a.get("name"))
@@ -449,6 +456,9 @@ def _enter(key: str, minutes: int | None = None):
             # /walk upward → walk that graph.
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
+            if not walks.valid_name(arg):
+                return (f"walk names are lowercase letters, digits, '-' and '_' "
+                        f"(got '{arg}')")
             line = engine.enter(key, None, walk=arg, **where)
             return line + "\n" + _waiting_for(key, line)
         line = engine.enter(key, minutes, **where)
