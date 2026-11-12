@@ -181,7 +181,7 @@ def test_a_walk_name_cannot_reach_outside_the_walks_directory(cursor):
     outside.write_text('{"token": "must survive"}')
 
     bad = ["../auth", "../../auth", "..", ".", "a/b", "..\\auth", "/etc/passwd",
-           "walk.json/../../auth", "x" * 65, ""]
+           "walk.json/../../auth", "x" * 65, "", ".. /auth", "a/.b"]
     for name in bad:
         with pytest.raises(ValueError):
             walks.get(name, cursor)
@@ -192,6 +192,15 @@ def test_a_walk_name_cannot_reach_outside_the_walks_directory(cursor):
 
     assert outside.read_text() == '{"token": "must survive"}'
     assert not (cursor.parent / "walks" / "..json").exists()
+
+
+def test_the_three_entry_points_agree_on_what_a_name_means(cursor):
+    """`save()` has always normalised case and spaces; get and remove agree with it now, so
+    "/walk outward" and walk_new "outward" are the same walk rather than two different rules."""
+    walks.save({"name": "Outward Sky", "graph": "manual", "edges": {"a": ["b"]}}, cursor)
+    assert walks.get("outward sky", cursor).name == "outward-sky"
+    assert walks.get("  OUTWARD SKY  ", cursor).name == "outward-sky"
+    assert walks.remove("Outward Sky", cursor) is True
 
 
 def test_a_valid_name_still_saves_and_removes(cursor):

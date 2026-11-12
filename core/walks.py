@@ -610,7 +610,9 @@ def valid_name(name: str) -> bool:
 
 def _walk_file(name: str, cursor_path: Path | None = None) -> Path:
     """The one file `name` may mean. Raises rather than returning something outside the dir."""
-    key = str(name or "").strip().lower()
+    # The same normalisation `save()` has always done, so all three entry points agree on
+    # what a name means: "/walk a b" and walk_new with "a b" both mean "a-b".
+    key = str(name or "").strip().lower().replace(" ", "-")
     if not NAME_RE.match(key):
         raise ValueError(
             f"walk names are lowercase letters, digits, '-' and '_', up to 64 characters "
