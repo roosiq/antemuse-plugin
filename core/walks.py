@@ -604,15 +604,22 @@ def list_walks(cursor_path: Path | None = None) -> List[Dict[str, Any]]:
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 
+def normalise(name: str) -> str:
+    """The name as a filename: lowercase, trimmed, spaces turned into dashes.
+
+    `save()` has always done this, and a name that arrives from a command or a tool argument
+    should mean the same file whichever door it came through.
+    """
+    return str(name or "").strip().lower().replace(" ", "-")
+
+
 def valid_name(name: str) -> bool:
-    return bool(NAME_RE.match(str(name or "").strip().lower()))
+    return bool(NAME_RE.match(normalise(name)))
 
 
 def _walk_file(name: str, cursor_path: Path | None = None) -> Path:
     """The one file `name` may mean. Raises rather than returning something outside the dir."""
-    # The same normalisation `save()` has always done, so all three entry points agree on
-    # what a name means: "/walk a b" and walk_new with "a b" both mean "a-b".
-    key = str(name or "").strip().lower().replace(" ", "-")
+    key = normalise(name)
     if not NAME_RE.match(key):
         raise ValueError(
             f"walk names are lowercase letters, digits, '-' and '_', up to 64 characters "

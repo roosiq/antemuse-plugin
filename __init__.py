@@ -179,6 +179,8 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         if walk_name and not walks.valid_name(str(walk_name)):
             return (f"cannot enter · walk names are lowercase letters, digits, '-' and '_' "
                     f"(got '{walk_name}')")
+        if walk_name:
+            walk_name = walks.normalise(str(walk_name))
         return engine.enter(str(a.get("name") or ""), None, walk_name, opts or None)
     if action == "walks":
         return _walks_report()
@@ -459,7 +461,7 @@ def _enter(key: str, minutes: int | None = None):
             if not walks.valid_name(arg):
                 return (f"walk names are lowercase letters, digits, '-' and '_' "
                         f"(got '{arg}')")
-            line = engine.enter(key, None, walk=arg, **where)
+            line = engine.enter(key, None, walk=walks.normalise(arg), **where)
             return line + "\n" + _waiting_for(key, line)
         line = engine.enter(key, minutes, **where)
         return line + "\n" + _waiting_for(key, line)

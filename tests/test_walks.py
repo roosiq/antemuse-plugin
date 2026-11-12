@@ -200,7 +200,55 @@ def test_the_three_entry_points_agree_on_what_a_name_means(cursor):
     walks.save({"name": "Outward Sky", "graph": "manual", "edges": {"a": ["b"]}}, cursor)
     assert walks.get("outward sky", cursor).name == "outward-sky"
     assert walks.get("  OUTWARD SKY  ", cursor).name == "outward-sky"
+    assert walks.valid_name("Outward Sky") is True
+    assert walks.normalise("Outward Sky") == "outward-sky"
     assert walks.remove("Outward Sky", cursor) is True
+
+
+def test_a_command_enters_the_normalised_name(cursor):
+    """`/walk outward sky` must enter `outward-sky`, not refuse a name walk_new accepted."""
+    import importlib.util
+    import pathlib
+
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("antemuse_walkname", repo / "__init__.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    class Ctx:
+        def __init__(self):
+            self.commands = {}
+
+        def register_hook(self, *a, **k):
+            pass
+
+        def register_command(self, name, handler=None, **k):
+            self.commands[name] = handler
+
+        def register_tool(self, **kw):
+            pass
+
+        def register_auxiliary_task(self, *a, **k):
+            pass
+
+        def register_skill(self, *a, **k):
+            pass
+
+        def emit(self, *a, **k):
+            pass
+
+        def get_config(self, key, default=None):
+            return default
+
+    walks.save({"name": "Outward Sky", "graph": "manual", "edges": {"a": ["b"]}}, cursor)
+    ctx = Ctx()
+    module.register(ctx)
+    from core import engine
+    engine.stop(reason="reset")
+    out = ctx.commands["walk"]("outward sky", session_id="walk-name", platform="discord")
+    assert "WALKING" in out.upper(), out
+    assert engine.peek()["walk"] == "outward-sky", engine.peek()
+    engine.stop(reason="reset")
 
 
 def test_a_valid_name_still_saves_and_removes(cursor):
