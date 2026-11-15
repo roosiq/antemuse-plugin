@@ -8,7 +8,7 @@ homepage: https://antemuse.com
 license: MIT
 tags: [state, cognition, workflow, creativity]
 platforms: [linux, macos, windows]
-description: "One agent state and a concept map you fly yourself. /walk changes the frame the agent works in without sending it anywhere: six hops out to the far rim of a concept's neighbourhood in WordNet, one bought per turn, recorded for the pane and never injected into the turn, so what comes back comes from somewhere it would not have reached. In /explore you fly the same graph yourself and the plugin only records what you pick. The cockpit names the concept under your reticle, and keep/trash judgements are written to the ledger and counted by tools/hit_rate.py. No model calls on the state path. Disclosure — By default, once per session, reads the last 14 days of your Hermes session messages (read-only) so the map can show what you have already seen (turn off with the `session_scan` setting)."
+description: "One agent state and a concept map you fly yourself. /walk changes the frame the agent works in without sending it anywhere: six hops out to the far rim of a concept's neighbourhood in WordNet, one bought per turn, recorded for the pane and never injected into the turn, so what comes back comes from somewhere it would not have reached. In /explore you fly the same graph yourself and the plugin only records what you pick. The cockpit names the concept under your reticle, and keep/trash judgements are written to the ledger and counted by tools/hit_rate.py. No model calls on the state path. Disclosure — By default, once per session, reads the last 14 days of your Hermes session messages (read-only) so the walk steers away from concepts you have already met (turn off with the `session_scan` setting)."
 requires_hermes: ">=0.21.6"
 python_dependencies:
   - "nltk>=3.8,<4"
@@ -75,9 +75,9 @@ config_schema:
     label: Read past sessions
     description: >-
       One bounded scan of the last 14 days of session text, once per session, in a
-      background thread, so the map can mark the concepts you have already met and the
-      walk can steer away from them. Off means the plugin never opens the session store
-      and the map shows only what this profile has recorded itself.
+      background thread, so the walk steers away from concepts you have already met. It
+      does not light the map: `LIT` counts what the running state has served. Off means
+      the plugin never opens the session store, and the walk may revisit ground you know.
 provides_tools:
   - state
 provides_hooks:
