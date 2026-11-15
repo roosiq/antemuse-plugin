@@ -3,7 +3,7 @@
 ## What this plugin can and cannot do
 
 Antemuse runs inside the Hermes process and registers one tool (`state`), eight
-hooks, and six slash commands. It has no network client of its own beyond the
+hooks, and seven slash commands. It has no network client of its own beyond the
 feed fetches named below, no credentials, no telemetry, and no self-updater.
 
 - **Credentials:** none requested, read, stored, or refreshed. There is no

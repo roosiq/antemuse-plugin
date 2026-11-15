@@ -61,7 +61,8 @@ def render(pin: str | None = None) -> str:
         "description": manifest["description"].strip(),
         "maintainer": "roosiq",
         "tier": "community",
-        "category": "general",
+        "category": "desktop",   # a plugin whose product is two desktop panes
+
         "docs_url": "https://github.com/roosiq/antemuse-plugin#readme",
         "version": str(manifest["version"]),
         "requires_hermes": manifest["requires_hermes"],
@@ -74,7 +75,8 @@ def render(pin: str | None = None) -> str:
             "requires_env": [],
         },
         "known_issues": [
-            "The picture is the desktop app's Antemuse pane only. Chat carries no visualization and "
+            "The picture is two desktop panes — the Antemuse map, and the cockpit /explore is flown in. "
+            "Chat carries no visualization and "
             "a terminal gets the same text record; there is no terminal takeover since 0.10.30.",
             "Windows: the installer and runtime are pure Python and the suite passes on Linux; there "
             "is no Windows-specific path, so the pane is expected to work but is unverified there.",

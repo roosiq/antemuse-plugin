@@ -1,0 +1,276 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Antemuse — functional flow</title>
+<style>
+  :root{
+    --bg:#05070a; --panel:#0d1219; --line:#1e2a36; --ink:#efe9d8;
+    --dim:#9aa7b4; --gold:#f2cf8f; --cool:#cfd6dd; --red:#e08a7a; --green:#8fbf9f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"DejaVu Sans",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .page{width:1880px;padding:34px 40px 30px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+  h1{margin:0;font-size:30px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+  h1 span{color:var(--gold)}
+  .sub{color:var(--dim);font-size:15px;line-height:1.5;margin-top:7px;max-width:1050px}
+  .meta{text-align:right;color:var(--dim);font-size:13px;line-height:1.7;font-variant-numeric:tabular-nums}
+  .meta b{color:var(--cool);font-weight:600}
+
+  .lanes{display:grid;grid-template-columns:340px 496px 470px 382px;gap:26px;align-items:start}
+  .lane{background:linear-gradient(180deg,#0b1017,#0a0e14);border:1px solid var(--line);
+    border-radius:12px;padding:14px 14px 16px}
+  .lane > h2{margin:0 0 12px;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+  .lane > h2 em{font-style:normal;color:var(--dim);letter-spacing:.06em;font-size:11px;text-transform:none}
+  .card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
+    border-radius:8px;padding:11px 13px;margin-bottom:19px;position:relative}
+  .card:not(:last-child)::after{content:"▾";position:absolute;left:50%;bottom:-17px;
+    transform:translateX(-50%);color:#3a4a5a;font-size:10px;line-height:1}
+  .card:last-child{margin-bottom:0}
+  .card h3{margin:0 0 6px;font-size:15px;font-weight:600;letter-spacing:.01em;color:var(--ink)}
+  .card h3 .n{color:var(--gold);font-variant-numeric:tabular-nums;margin-right:7px;font-weight:700}
+  .card p{margin:0;font-size:13px;line-height:1.55;color:var(--dim)}
+  .card p + p{margin-top:4px}
+  .card code,.mono{font-family:"DejaVu Sans Mono",monospace;font-size:12.5px;color:var(--cool)}
+  .card .arr{color:var(--gold)}
+  .b-gold{border-left-color:var(--gold)}
+  .b-cool{border-left-color:#3f5d78}
+  .b-red{border-left-color:var(--red)}
+  .b-green{border-left-color:var(--green)}
+  .tick{color:var(--green)}
+  .cross{color:var(--red)}
+
+  .turn{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin-bottom:19px;position:relative}
+  .turn:not(:last-child)::after{content:"▾";position:absolute;left:50%;bottom:-17px;
+    transform:translateX(-50%);color:#3a4a5a;font-size:10px;line-height:1}
+  .turn .step{position:absolute;left:-1px;top:12px;bottom:12px;width:3px;background:#3f5d78;border-radius:2px}
+  .turn h3{margin:0 0 7px;font-size:15px;font-weight:600}
+  .turn h3 .k{font-family:"DejaVu Sans Mono",monospace;font-size:13.5px;color:var(--gold)}
+  .turn ul{margin:0;padding-left:15px}
+  .turn li{font-size:13px;line-height:1.55;color:var(--dim);margin-bottom:2px}
+  .turn li code{font-family:"DejaVu Sans Mono",monospace;font-size:12.5px;color:var(--cool)}
+  .loop{display:flex;align-items:center;gap:10px;margin:2px 0 11px;color:var(--gold);
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+  .loop .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+
+  .band{margin-top:26px;border:1px solid var(--line);border-radius:12px;background:#0b1017;padding:16px 18px}
+  .band > h2{margin:0 0 14px;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  .ends{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+  .end{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--line);
+    border-radius:8px;padding:11px 13px}
+  .end h4{margin:0 0 5px;font-size:14px;font-weight:600;font-family:"DejaVu Sans Mono",monospace}
+  .end p{margin:0;font-size:12.5px;line-height:1.5;color:var(--dim)}
+  .end .say{margin-top:7px;font-size:12.5px;color:var(--cool);font-style:italic}
+  .fail{margin-top:16px;display:flex;flex-wrap:wrap;gap:9px}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;
+    color:var(--dim);background:#0a0e14;white-space:nowrap}
+  .chip b{color:var(--cool);font-weight:600;font-family:"DejaVu Sans Mono",monospace}
+  .chip.failchip{border-color:#3a2a2a}
+  .chip.failchip b{color:var(--red)}
+  footer{margin-top:20px;display:flex;justify-content:space-between;color:#5f6b77;font-size:12px;letter-spacing:.04em}
+</style></head>
+<body><div class="page">
+
+<header>
+  <div>
+    <h1>Antemuse <span>· functional flow</span></h1>
+    <div class="sub">Six states, one dose, one account. The person asks for a state; the plugin changes what the
+      agent's turn is made of, serves the state's material one unit at a time, and closes with an account the
+      person actually reads. <span style="color:#7f8b98">Columns are lanes, not steps: each one is a different
+      actor, read top to bottom — the loop is the turn in the second lane.</span> Drawn from the code, not the docs.</div>
+  </div>
+  <div class="meta">
+    <b>v0.10.44</b> · plugin.yaml<br>
+    core/engine.py · core/states.py · __init__.py<br>
+    routes: /state · /graph · panes: /{id} · /{id}/cockpit
+  </div>
+</header>
+
+<div class="lanes">
+
+  <!-- PERSON -->
+  <section class="lane">
+    <h2>Person <em>asks, reads, flies</em></h2>
+
+    <div class="card b-gold">
+      <h3><span class="n">1</span>enters a state</h3>
+      <p class="mono">/walk · /explore<br>and /return</p>
+      <p>or the agent calls the <code>state</code> tool, or a recommendation is followed automatically (setting)</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">2</span>keeps working</h3>
+      <p>their message is journalled as a note</p>
+      <p>the injected block never reaches their eyes</p>
+    </div>
+
+    <div class="card b-cool">
+      <h3><span class="n">3</span>reads the account</h3>
+      <p>the model says it in the closing turn</p>
+      <p>if the model skips it, the plugin appends the line itself</p>
+    </div>
+
+    <div class="card b-gold">
+      <h3><span class="n">4</span>flies the map</h3>
+      <p><code>/explore</code> — cockpit, lasso picks</p>
+      <p>ends only when they type <code>/return</code></p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">5</span>watches the panes</h3>
+      <p>Antemuse pane — the map, hops, journal labels</p>
+      <p>Cockpit pane — the same map, first person</p>
+    </div>
+  </section>
+
+  <!-- AGENT TURN -->
+  <section class="lane">
+    <h2>Agent turn <em>one pass, then repeat</em></h2>
+
+    <div class="turn"><span class="step"></span>
+      <h3><span class="k">pre_llm_call</span></h3>
+      <ul>
+        <li><code>note_turn()</code> · <code>tick()</code> · journal the person's message</li>
+        <li><code>inject()</code> builds this turn's block</li>
+      </ul>
+    </div>
+
+    <div class="turn" style="border-color:#2b3a4b"><span class="step" style="background:var(--gold)"></span>
+      <h3><span class="k">the block</span> <span class="arr">→</span> appended to the user message</h3>
+      <ul>
+        <li><code>[STATE: WALKING · 5/6 hops left]</code></li>
+        <li>directive + tool rule</li>
+        <li><code>[WHAT ARRIVED WHILE YOU WERE THERE]</code> — only if the state feeds; the walk does not</li>
+        <li><code>[YOU JUST CAME BACK]</code> + the account, when a state has closed</li>
+        <li><code>[RESIDUE]</code> · recommendation line</li>
+      </ul>
+    </div>
+
+    <div class="turn"><span class="step"></span>
+      <h3><span class="k">the model works</span></h3>
+      <ul>
+        <li><code>pre_tool_call</code> — policy allows or blocks the tool</li>
+        <li><code>post_tool_call</code> — did the tool work</li>
+      </ul>
+    </div>
+
+    <div class="turn"><span class="step"></span>
+      <h3><span class="k">transform_llm_output</span></h3>
+      <ul>
+        <li>annotate: <code>— walking · 5 hops left · /return to come back</code></li>
+        <li>append the account if the model skipped it</li>
+        <li>append the run's account</li>
+      </ul>
+    </div>
+
+    <div class="loop"><span>repeat</span><span class="rule"></span></div>
+
+    <div class="turn" style="border-color:#2b3a4b"><span class="step" style="background:var(--green)"></span>
+      <h3><span class="k">reply</span> <span class="arr">→</span> the person</h3>
+      <ul><li>the reply, plus the annotation, plus the account when one is owed</li></ul>
+    </div>
+  </section>
+
+  <!-- ENGINE -->
+  <section class="lane">
+    <h2>Engine <em>owns the state</em></h2>
+
+    <div class="card b-gold">
+      <h3><span class="k">enter()</span></h3>
+      <p>resolves the state · <code>sources.ready()</code> refuses if a corpus is missing</p>
+      <p>writes <code>active</code>: key, origin (session · platform · project), dose + unit, entered_at; work counters reset</p>
+      <p>returns <code>WALKING · 6 hops · work continues · the frame is elsewhere</code></p>
+    </div>
+
+    <div class="card b-cool">
+      <h3><span class="k">inject()</span></h3>
+      <p><code>deliver_if_due()</code> serves one unit from the source</p>
+      <p><code>_expire()</code> · builds the block · <code>complete_if_dosed()</code></p>
+    </div>
+
+    <div class="card b-gold">
+      <h3><span class="k">dose accounting</span></h3>
+      <p><code>served</code> = units fetched · <code>seen</code> = units shown to a turn</p>
+      <p>a unit is spent only when it has been shown</p>
+      <p>a pane poll may serve, never complete</p>
+    </div>
+
+    <div class="card b-red">
+      <h3><span class="k">stop()</span></h3>
+      <p>builds the account from the journal</p>
+      <p>appends a residue report · 2 turns</p>
+      <p>posts it now through the notifier</p>
+      <p>records the ending in <code>normal</code></p>
+    </div>
+  </section>
+
+  <!-- SOURCES -->
+  <section class="lane">
+    <h2>Sources &amp; store <em>no model calls</em></h2>
+
+    <div class="card"><h3>walk <span class="arr">→</span> WordNet</h3><p>six hops, one per turn, out to the rim</p></div>
+    <div class="card"><h3>cockpit <span class="arr">→</span> the map</h3><p>the same <code>/graph</code> payload, flown by hand</p></div>
+    <div class="card"><h3>explore <span class="arr">→</span> the person</h3><p>picks only, no provider</p></div>
+    <div class="card"><h3>verdicts <span class="arr">→</span> the ledger</h3><p>keep / trash, counted by <code>tools/hit_rate.py</code></p></div>
+    <div class="card b-cool">
+      <h3><span class="mono">.antemuse/</span></h3>
+      <p><code>state.json</code> — active · journal (cap 60) · residue · mood · work counters</p>
+      <p><code>concepts.db</code> — the ledger the pane and the recommendation read</p>
+      <p><code>normal.json</code> — how long a dose took, per state; <code>walk_cursor.json</code></p>
+    </div>
+  </section>
+
+</div>
+
+<div class="band">
+  <h2>How a state ends</h2>
+  <div class="ends">
+    <div class="end" style="border-top-color:var(--green)">
+      <h4>complete</h4>
+      <p>dose served <em>and</em> seen, at least one turn worked</p>
+      <p class="say">“The act is done, so the state is over.”</p>
+    </div>
+    <div class="end" style="border-top-color:var(--gold)">
+      <h4>returned</h4>
+      <p>the person types <code>/return</code></p>
+      <p class="say">“The frame you were in is gone…”</p>
+    </div>
+    <div class="end" style="border-top-color:var(--red)">
+      <h4>failed</h4>
+      <p>the source died, or it ran dry having served nothing</p>
+      <p class="say">“nothing arrived”</p>
+    </div>
+    <div class="end" style="border-top-color:#3f5d78">
+      <h4>explore</h4>
+      <p>no dose, no clock, no provider — only <code>/return</code></p>
+      <p class="say">“What they picked is theirs.”</p>
+    </div>
+    <div class="end" style="border-top-color:#5a4a3a">
+      <h4>superseded</h4>
+      <p>entering another state drops the first</p>
+      <p class="say">“left walk; no residue kept” — a known gap</p>
+    </div>
+  </div>
+
+  <div class="fail">
+    <span class="chip failchip"><b>401/403</b> sign-in required</span>
+    <span class="chip failchip"><b>404</b> the plugin backend is not mounted</span>
+    <span class="chip failchip"><b>5xx</b> the backend did not answer</span>
+    <span class="chip failchip"><b>no response</b> reconnecting → backend unavailable</span>
+    <span class="chip failchip"><b>missing corpora</b> cannot enter walk · wordnet unavailable</span>
+    <span class="chip failchip"><b>feed down</b> feed unavailable · source</span>
+    <span class="chip"><b>pane</b> the map rides on /state</span>
+    <span class="chip"><b>one state</b> owns the profile at a time</span>
+  </div>
+</div>
+
+<footer>
+  <span>drawn from core/engine.py · core/states.py · __init__.py · dashboard/plugin_api.py</span>
+  <span>docs/design/app-flow.html → antemuse-flow.png</span>
+</footer>
+
+</div></body></html>

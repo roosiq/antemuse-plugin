@@ -8,7 +8,7 @@ homepage: https://antemuse.com
 license: MIT
 tags: [state, cognition, workflow, creativity]
 platforms: [linux, macos, windows]
-description: "The agent takes a walk, daydreams, dreams, doomscrolls, or gets unstuck: a bounded change to how it works, with a dose rather than a duration. Walks step through WordNet, dreams recombine FrameNet roles, daydreams draw on stored memories, doomscrolls on live feeds. No model calls on the state path."
+description: "One agent state and a concept map you fly yourself. /walk changes the frame the agent works in without sending it anywhere: six hops out to the far rim of a concept's neighbourhood in WordNet, one bought per turn, recorded for the pane and never injected into the turn, so what comes back comes from somewhere it would not have reached. In /explore you fly the same graph yourself and the plugin only records what you pick. The cockpit names the concept under your reticle, and keep/trash judgements are written to the ledger and counted by tools/hit_rate.py. No model calls on the state path. Disclosure — By default, once per session, reads the last 14 days of your Hermes session messages (read-only) so the map can show what you have already seen (turn off with the `session_scan` setting)."
 requires_hermes: ">=0.21.6"
 python_dependencies:
   - "nltk>=3.8,<4"
@@ -31,7 +31,7 @@ config_schema:
       Display a suggested state when the shape of the work has a name (a loop, a
       data wall, a long stretch). Off by default: states are measured either way,
       but nothing is suggested to the person and nothing is offered to the agent.
-      /break still works and still names no state unless this is on.
+      state(action="break") still works and still names no state unless this is on.
   recommend_cooling_turns:
     type: int
     default: 10
@@ -74,18 +74,10 @@ config_schema:
     default: true
     label: Read past sessions
     description: >-
-      Let daydream and dream use recent session text as material: one bounded scan of the
-      last 14 days, once per session, in a background thread. Off means the plugin never
-      opens the session store, and the states fall back to memory files and feeds.
-  dream_projects:
-    type: string
-    default: ""
-    label: Projects a dream may read
-    description: >-
-      Which repositories dream reads for "what happened today". Empty means the project you
-      are working in. For several, list them comma separated: plain names under your home
-      directory, or absolute paths. The plugin reads commit subjects and changed file names
-      only, never a transcript.
+      One bounded scan of the last 14 days of session text, once per session, in a
+      background thread, so the map can mark the concepts you have already met and the
+      walk can steer away from them. Off means the plugin never opens the session store
+      and the map shows only what this profile has recorded itself.
 provides_tools:
   - state
 provides_hooks:

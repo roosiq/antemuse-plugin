@@ -1,8 +1,9 @@
 # Contributing
 
-Antemuse is a Hermes plugin: Python for the state engine, one plain JavaScript file for the
-desktop pane. The repository root **is** the plugin root — `plugin.yaml`, `__init__.py` and
-`core/` sit at the top level, and Hermes loads it through the symlink
+Antemuse is a Hermes plugin: Python for the state engine, one plain JavaScript file for both
+desktop panes (the map, and the cockpit). The repository root **is** the plugin root —
+`plugin.yaml`, `__init__.py` and `core/` sit at the top level, and Hermes loads it through
+the symlink
 `~/.hermes/plugins/antemuse` → this directory.
 
 ## Rules that are not negotiable
@@ -12,12 +13,12 @@ desktop pane. The repository root **is** the plugin root — `plugin.yaml`, `__i
 - **A state may change what the agent can do and what it says. It may not claim to make the
   agent more creative.** The evidence for what a state does, and its limits, is in
   `experiments/idea-states/BENCHMARK.md`.
-- **The six commands are the public contract.** `/walk /daydream /doomscroll /dream
-  /unstuck /return`. Adding a verb means changing that contract deliberately; a plural
-  neighbour (`/states` beside `/state`) is a past defect, and the suite fails on it.
+- **The seven commands are the public contract.** `/walk /daydream /doomscroll /dream
+  /unstuck /explore /return`. Adding a verb means changing that contract deliberately; a
+  plural neighbour (`/states` beside `/state`) is a past defect, and the suite fails on it.
 - **One token, one meaning.** `/state` was a command that rendered a picture, and `/states`
   was the same picture under a plural. Both are gone: `state(action="status")` is the record,
-  and the picture is the pane.
+  and the picture is the panes.
 - Plain sentences in user-facing strings. No exclamation marks, no jargon the person did not
   bring.
 - Tests name the behaviour, not the implementation. If a test needs a private detail to

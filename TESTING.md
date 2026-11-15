@@ -1,113 +1,65 @@
 # Testing
 
-What to run, and what each check actually proves.
-
 ## Requirements
 
-- Hermes Agent **0.21.6 or newer** (`hermes --version`).
-- Python 3.11+ (Hermes's own runtime is fine).
-- Optional: `node` + `npm`, only for the pane harness. Nothing at runtime needs them.
-- Linux or macOS. Windows is unverified.
-
-## Install from a tarball
-
-```bash
-# 1. unpack somewhere permanent (the tarball has one top-level directory)
-mkdir -p ~/antemuse-plugin
-tar -xzf antemuse-<version>.tar.gz -C ~/antemuse-plugin --strip-components=1
-
-# 2. link it into Hermes and enable it
-ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
-hermes plugins enable antemuse
-
-# 3. restart the gateway, then check the host can load it
-hermes gateway restart
-hermes plugins doctor antemuse      # expect: 1 tool, 8 hooks, OK
-```
-
-No credentials, no API keys and no configuration are required. The one Python dependency
-(`nltk`) is declared in `plugin.yaml` and prepared by Hermes at install time.
+- Hermes Agent 0.21.6 or newer.
+- Python 3.11+.
+- `nltk` with the WordNet corpus for live walk coverage.
+- Optional: `node` and `npm` for the desktop-pane harness.
 
 ## First run
 
 ```bash
-hermes chat -q '/walk'        # 3 minutes of work, tools open
-hermes chat -q '/daydream'    # 3 minutes, tools open unless you ask for block
-hermes chat -q '/return'      # end it, keep the account
+hermes chat -q '/walk'       # six hops, tools open, work continues
+hermes chat -q '/return'     # end it and keep the account
 ```
 
-The commands are one per state plus `/return` — `/walk`, `/daydream`, `/doomscroll`,
-`/unstuck`, `/dream`, `/return`. There is no `/break`, `/mood`, `/note`, `/watch` or
-`/states` command: those are **actions on the `state` tool** the agent calls when you ask in
-words ("is a break due?").
+The three slash commands are `/walk`, `/explore`, and `/return`.
 
-What you should see:
+- `/walk` enters the only agent state: `WALKING · 6 hops · work continues · the frame is elsewhere · different on return`.
+- `/explore` is person-driven and open-ended: `EXPLORING · 0 picks · you fly · you choose · it ends when you end it`.
+- `/return` ends the active walk or explore and preserves its account.
 
-- `/walk` → `WALKING · 3 min · 6 turn(s) · work continues · distant concepts, still a path back to the task`
-- `/daydream` → `DAYDREAMING · 3 min · 2 turn(s) · two memories · what they touch · one possibility`
-- `/return` → `DAYDREAMING ended · daydream 1m · 0 step(s) · nothing arrived` and
-  `Summarise it in three lines — where it went, what it touched — then get back to work.`
-- `state(action="break")` → the counters (`0m since the last state · 0 turn(s)`) followed by
-  one named recommendation with its reason, e.g.
-  `this looks like a rut · the last state was walk too · /daydream`.
-- A reply made while a state is active ends with a marker such as
-  `— daydreaming, 2 min left · /return to come back`.
+There is no `/break`, `/mood`, `/note`, `/watch`, or `/states` command. Those are
+actions on the `state` tool.
 
-There is no terminal takeover to run: `core/tui.py` and the alt-screen surface were deleted
-in 0.10.30, so a terminal gets the same text record the chat gets. The picture is the desktop
-app's pane. Nothing in a state ever blocks the agent's work unless you ask for `block: true`.
+## Suite
 
-## Verify it yourself
+Run this exact command from the repository root:
 
 ```bash
-cd ~/antemuse-plugin
-tools/test.sh                    # suite in a temp data home
-tools/test.sh --with-renderers   # npm ci in the harness dir, then mount the pane
-hermes plugins validate . --install-deps   # what catalog CI runs
+env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) \
+  uvx --with-requirements requirements-test.txt --quiet pytest tests/ -q
+```
+
+The suite uses a temporary state home. It verifies the walk dose, delivery ownership,
+tool narrowing, ending accounts, residue, ledger rows, command surface, person-driven
+explore, and docs consistency.
+
+## Additional checks
+
+```bash
+python3 tools/examples.py --check
+hermes plugins validate . --install-deps
 hermes plugins doctor antemuse
 ```
 
-No test count is recorded here on purpose: it rots with the next test. Run the command and
-read the number it prints. A single green run is not proof of stability either — the suite
-has one stochastic case, so treat a lone failure as worth a second run before believing it.
-
-## What each check proves
-
-| command | what a green result means |
-|---|---|
-| `tools/test.sh` | the shipped code does what the tests name, in a temp data home, with no model calls |
-| `tools/test.sh --with-renderers` | the pane's JavaScript mounts in jsdom and 12 properties hold: registration, settings page, helpers, DOM text, frame, aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean |
-| `hermes plugins doctor antemuse` | the host can discover, parse, import and register the plugin: 1 tool, 8 hooks |
-| `hermes plugins validate .` | the manifest, declared capabilities, dependency bounds, desktop surface and safety scan all hold |
-
-Validate a **clone or the packed tarball**, not your working tree. `experiments/` and
-`evaluation/` are gitignored, so a local checkout keeps raw model transcripts the install
-scanner rightly refuses; a clone has none of them and is what catalog CI reads.
-| `tar -tzf … \| grep -E 'pyc\|\.antemuse'` | the package carries no bytecode and no local state |
+`tools/examples.py` generates `docs/EXAMPLES.md` from the real engine. The examples
+cover the current walk and explore surfaces only.
 
 ## Where it writes
 
-- State, journal, residue, cursors: `~/.hermes/plugin-data/antemuse/` (or the active
-  profile's equivalent). Override with `ANTEMUSE_STATES_HOME` for testing.
-- Per-project artefacts: `<your repo>/.antemuse/`.
-- Nothing else. No config, auth, memory or credential files are written. `daydream` does read
-  your own `~/.hermes/memories/` files as its material, and `doomscroll` fetches public feeds.
+- State, journal, residue, cursors: `~/.hermes/plugin-data/antemuse/` (or
+  `ANTEMUSE_STATES_HOME` during tests).
+- Per-project walk data: `<your repo>/.antemuse/`.
+- `/explore` writes the concepts a person picks to the concept ledger.
+
+No credentials or API keys are required for a walk.
 
 ## Known limits
 
-- **The pane needs the desktop app.** Built and exercised from the shipped package, but there
-  is no picture at all in a terminal or a chat-only install.
-- **State is profile-wide**, not per-session: it is about the agent, so every chat in that
-  profile sees the same state until it ends or expires.
-- `spark`, `keep` and the exploration library are present but runtime-gated behind
-  `experimental.enabled`; leave it off.
-- A state entered with `block: true` closes tools for the whole profile until it ends. Do not
-  do that in a profile that runs unattended work.
-
-## Uninstall
-
-```bash
-hermes plugins disable antemuse
-rm ~/.hermes/plugins/antemuse          # removes the symlink, not your clone
-rm -rf ~/.hermes/plugin-data/antemuse  # optional: drop state and journal
-```
+- State is profile-wide, while delivery and accounts are owned by the session that entered it.
+- The desktop app is required to see the map or cockpit; chat and terminal show text only.
+- `spark`, `keep`, and the exploration library are experimental and gated behind
+  `experimental.enabled`.
+- A walk entered with `block: true` can restrict tools for the profile until it ends.

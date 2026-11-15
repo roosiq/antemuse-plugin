@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1760" height="1440" viewBox="0 0 1760 1440" font-family="Inter, 'DejaVu Sans', system-ui, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f2cf8f" fill-opacity="0.75"/></marker></defs>
+<rect x="0" y="0" width="1760" height="1440" fill="#05070a"/>
+<rect x="0" y="0" width="1760" height="10" fill="#05070a"/>
+<rect x="32" y="150" width="340" height="944" rx="14" fill="#0b1017" stroke="#1b2430"/>
+<text x="50" y="180" font-size="12.5" fill="#f2cf8f" letter-spacing="2.4" font-weight="600">A PERSON</text>
+<text x="50" y="196" font-size="11.5" fill="#6b7c8d">starts it, reads it</text>
+<rect x="408" y="150" width="780" height="944" rx="14" fill="#0b1017" stroke="#1b2430"/>
+<text x="426" y="180" font-size="12.5" fill="#f2cf8f" letter-spacing="2.4" font-weight="600">THE ENGINE</text>
+<text x="426" y="196" font-size="11.5" fill="#6b7c8d">the state, the dose, the account</text>
+<rect x="1224" y="150" width="504" height="944" rx="14" fill="#0b1017" stroke="#1b2430"/>
+<text x="1242" y="180" font-size="12.5" fill="#f2cf8f" letter-spacing="2.4" font-weight="600">THE AGENT TURN</text>
+<text x="1242" y="196" font-size="11.5" fill="#6b7c8d">where the block lands</text>
+<text x="32" y="62" font-size="30" font-weight="600" fill="#efe9d8">Antemuse — the functional flow</text>
+<text x="32" y="90" font-size="14" fill="#93a3b4">one agent state, one dose, one account · drawn from core/engine.py, core/states.py and __init__.py at 0.10.44</text>
+<text x="32" y="112" font-size="12.5" fill="#6b7c8d">solid arrows are the ordinary path · dashed arrows are the return path · orange boxes are known gaps</text>
+<rect x="1460" y="40" width="12" height="12" rx="3" fill="#101823" stroke="#233041"/>
+<text x="1480" y="51" font-size="12" fill="#93a3b4">a component</text>
+<rect x="1460" y="64" width="12" height="12" rx="3" fill="#151009" stroke="#4a3126"/>
+<text x="1480" y="75" font-size="12" fill="#93a3b4">a known gap</text>
+<rect x="32" y="196" width="340" height="157" rx="10" fill="#101823" stroke="#233041"/>
+<text x="45" y="224" font-size="15.5" font-weight="600" fill="#efe9d8">A person starts a state</text>
+<text x="45" y="244" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">/walk  /explore</text>
+<text x="45" y="261" font-size="13" fill="#93a3b4">explore is the person's own map to fly</text>
+<text x="45" y="279" font-size="13" fill="#93a3b4">or the agent calls the state tool</text>
+<text x="45" y="297" font-size="13" fill="#93a3b4">or a recommendation is followed, if the</text>
+<text x="45" y="315" font-size="13" fill="#93a3b4">setting is on</text>
+<text x="45" y="333" font-size="13" fill="#93a3b4">one state owns the profile at a time</text>
+<rect x="32" y="367" width="340" height="122" rx="10" fill="#101823" stroke="#233041"/>
+<text x="45" y="395" font-size="15.5" font-weight="600" fill="#efe9d8">and keeps working</text>
+<text x="45" y="415" font-size="13" fill="#93a3b4">their message is journalled as a note</text>
+<text x="45" y="433" font-size="13" fill="#93a3b4">the injected block never reaches their eyes</text>
+<text x="45" y="451" font-size="13" fill="#93a3b4">they see the reply, the annotation, the</text>
+<text x="45" y="469" font-size="13" fill="#93a3b4">account</text>
+<rect x="32" y="503" width="340" height="85" rx="10" fill="#101823" stroke="#233041"/>
+<text x="45" y="531" font-size="15.5" font-weight="600" fill="#efe9d8">gets the reply</text>
+<text x="45" y="551" font-size="13" fill="#93a3b4">the model's words, plus an annotation</text>
+<text x="45" y="569" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">— walking · 5 hops left · /return</text>
+<rect x="32" y="602" width="340" height="122" rx="10" fill="#101823" stroke="#233041"/>
+<text x="45" y="630" font-size="15.5" font-weight="600" fill="#efe9d8">reads the account</text>
+<text x="45" y="650" font-size="13" fill="#93a3b4">the closing turn says it, in the house voice</text>
+<text x="45" y="668" font-size="13" fill="#93a3b4">if the model skips it the plugin appends the</text>
+<text x="45" y="686" font-size="13" fill="#93a3b4">line</text>
+<text x="45" y="704" font-size="13" fill="#93a3b4">counts, not quotes — the privacy constraint</text>
+<rect x="32" y="738" width="340" height="104" rx="10" fill="#101823" stroke="#233041"/>
+<text x="45" y="766" font-size="15.5" font-weight="600" fill="#efe9d8">watches the panes</text>
+<text x="45" y="786" font-size="13" fill="#93a3b4">Antemuse pane: the map, 320–560px, right</text>
+<text x="45" y="804" font-size="13" fill="#93a3b4">Cockpit pane: the same map, first person</text>
+<text x="45" y="822" font-size="13" fill="#93a3b4">both poll /state; nothing navigates by itself</text>
+<rect x="32" y="856" width="340" height="104" rx="10" fill="#101823" stroke="#233041"/>
+<text x="45" y="884" font-size="15.5" font-weight="600" fill="#efe9d8">flies /explore</text>
+<text x="45" y="904" font-size="13" fill="#93a3b4">cockpit, lasso picks, PICK / LIT</text>
+<text x="45" y="922" font-size="13" fill="#93a3b4">no dose, no clock, no provider</text>
+<text x="45" y="940" font-size="13" fill="#93a3b4">ends only when they type /return</text>
+<rect x="32" y="974" width="340" height="86" rx="10" fill="#151009" stroke="#4a3126"/>
+<text x="45" y="1002" font-size="15.5" font-weight="600" fill="#e08a6a">drops a state silently</text>
+<text x="45" y="1022" font-size="13" fill="#93a3b4">entering a second state leaves the first with</text>
+<text x="45" y="1040" font-size="13" fill="#93a3b4">no account: “left walk; no residue kept”</text>
+<rect x="408" y="196" width="780" height="121" rx="10" fill="#101823" stroke="#233041"/>
+<text x="421" y="224" font-size="15.5" font-weight="600" fill="#efe9d8">enter() — the state begins</text>
+<text x="421" y="244" font-size="13" fill="#93a3b4">resolve the name · sources.ready() refuses without corpora</text>
+<text x="421" y="262" font-size="13" fill="#93a3b4">write active: key, origin (session · platform · project),</text>
+<text x="421" y="280" font-size="13" fill="#93a3b4">dose + unit, entered_at, work counters reset</text>
+<text x="421" y="298" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">returns  WALKING · 6 hops · work continues · the frame is elsewhere</text>
+<rect x="408" y="331" width="780" height="104" rx="10" fill="#101823" stroke="#233041"/>
+<text x="421" y="359" font-size="15.5" font-weight="600" fill="#efe9d8">inject() — once per turn</text>
+<text x="421" y="379" font-size="13" fill="#93a3b4">deliver_if_due(): serve the next unit for this state</text>
+<text x="421" y="397" font-size="13" fill="#93a3b4">_expire(): no clock — time passing is not a reason for anything</text>
+<text x="421" y="415" font-size="13" fill="#93a3b4">build the block, then complete_if_dosed()</text>
+<rect x="408" y="449" width="780" height="122" rx="10" fill="#101823" stroke="#233041"/>
+<text x="421" y="477" font-size="15.5" font-weight="600" fill="#efe9d8">the dose is the whole promise</text>
+<text x="421" y="497" font-size="13" fill="#93a3b4">served = units fetched seen = units shown to a turn</text>
+<text x="421" y="515" font-size="13" fill="#93a3b4">a unit is spent only when it has been shown, so a pane poll</text>
+<text x="421" y="533" font-size="13" fill="#93a3b4">may serve ahead but can never complete a state</text>
+<text x="421" y="551" font-size="13" fill="#93a3b4">dose ends it — not a duration, not a ceiling</text>
+<rect x="408" y="585" width="780" height="122" rx="10" fill="#101823" stroke="#233041"/>
+<text x="421" y="613" font-size="15.5" font-weight="600" fill="#efe9d8">stop() — the ending</text>
+<text x="421" y="633" font-size="13" fill="#93a3b4">build the account from the journal (this state only)</text>
+<text x="421" y="651" font-size="13" fill="#93a3b4">append a residue report with 2 turns left</text>
+<text x="421" y="669" font-size="13" fill="#93a3b4">the notifier posts it the moment the state closes</text>
+<text x="421" y="687" font-size="13" fill="#93a3b4">normal records turns-to-dose, so the cost is measurable</text>
+<rect x="408" y="721" width="780" height="153" rx="10" fill="#101823" stroke="#233041"/>
+<text x="421" y="749" font-size="15.5" font-weight="600" fill="#efe9d8">failure paths, all named</text>
+<text x="421" y="769" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">cannot enter · wordnet unavailable</text>
+<text x="421" y="786" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">feed unavailable · &lt;source&gt;</text>
+<text x="421" y="803" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">/graph 401/403 → sign-in required</text>
+<text x="421" y="820" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">404 → backend not mounted</text>
+<text x="421" y="837" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">5xx → the backend did not answer</text>
+<text x="421" y="854" font-size="13" fill="#93a3b4">no answer at all → reconnecting → backend unavailable</text>
+<rect x="408" y="888" width="780" height="104" rx="10" fill="#0b1017" stroke="#233041"/>
+<text x="421" y="916" font-size="15.5" font-weight="600" fill="#efe9d8">nothing on the state path calls a model</text>
+<text x="421" y="936" font-size="13" fill="#93a3b4">a state is arithmetic and memory: WordNet walks,</text>
+<text x="421" y="954" font-size="13" fill="#93a3b4">a WordNet walk and the concept ledger</text>
+<text x="421" y="972" font-size="13" fill="#93a3b4">so a state costs tokens only through its directive</text>
+<rect x="1224" y="196" width="504" height="103" rx="10" fill="#101823" stroke="#233041"/>
+<text x="1237" y="224" font-size="15.5" font-weight="600" fill="#efe9d8">the agent enters one too</text>
+<text x="1237" y="244" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">state(action='enter', name='walk')</text>
+<text x="1237" y="261" font-size="13" fill="#93a3b4">same handler, same dose, same account</text>
+<text x="1237" y="279" font-size="13" fill="#93a3b4">the escape hatch survives every state</text>
+<rect x="1224" y="313" width="504" height="86" rx="10" fill="#101823" stroke="#233041"/>
+<text x="1237" y="341" font-size="15.5" font-weight="600" fill="#efe9d8">pre_llm_call</text>
+<text x="1237" y="361" font-size="13" fill="#93a3b4">note_turn · tick · journal the message</text>
+<text x="1237" y="379" font-size="13" fill="#93a3b4">inject() returns this turn's block</text>
+<rect x="1224" y="413" width="504" height="154" rx="10" fill="#101823" stroke="#233041"/>
+<text x="1237" y="441" font-size="15.5" font-weight="600" fill="#efe9d8">the block</text>
+<text x="1237" y="461" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">[STATE: WALKING · 5/6 hops left]</text>
+<text x="1237" y="478" font-size="13" fill="#93a3b4">directive — the shape this turn takes</text>
+<text x="1237" y="496" font-size="13" fill="#93a3b4">tool rule — open unless the entry closed it</text>
+<text x="1237" y="514" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">[WHAT ARRIVED] — only if the state feeds</text>
+<text x="1237" y="531" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">[YOU JUST CAME BACK] + the account</text>
+<text x="1237" y="548" font-size="12" fill="#cfd6dd" font-family="ui-monospace, Menlo, monospace">[RESIDUE] · the recommendation line</text>
+<rect x="1224" y="581" width="504" height="86" rx="10" fill="#101823" stroke="#233041"/>
+<text x="1237" y="609" font-size="15.5" font-weight="600" fill="#efe9d8">the model works</text>
+<text x="1237" y="629" font-size="13" fill="#93a3b4">pre_tool_call: the policy allows or blocks</text>
+<text x="1237" y="647" font-size="13" fill="#93a3b4">post_tool_call: did the tool work</text>
+<rect x="1224" y="681" width="504" height="104" rx="10" fill="#101823" stroke="#233041"/>
+<text x="1237" y="709" font-size="15.5" font-weight="600" fill="#efe9d8">transform_llm_output</text>
+<text x="1237" y="729" font-size="13" fill="#93a3b4">annotate the reply, while a state runs</text>
+<text x="1237" y="747" font-size="13" fill="#93a3b4">append the report if the model skipped it</text>
+<text x="1237" y="765" font-size="13" fill="#93a3b4">append the run's account, counts only</text>
+<rect x="1224" y="799" width="504" height="86" rx="10" fill="#101823" stroke="#233041"/>
+<text x="1237" y="827" font-size="15.5" font-weight="600" fill="#efe9d8">reply</text>
+<text x="1237" y="847" font-size="13" fill="#93a3b4">the person sees the reply and the annotation</text>
+<text x="1237" y="865" font-size="13" fill="#93a3b4">the loop runs again next turn</text>
+<path d="M 372.0 274.5 Q 390.0 265.5 408.0 256.5" fill="none" stroke="#f2cf8f" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="390.0" y="256.5" font-size="11.5" fill="#6b7c8d" text-anchor="middle" letter-spacing="0.4">command or tool</text>
+<path d="M 1188.0 383.0 Q 1206.0 369.5 1224.0 356.0" fill="none" stroke="#f2cf8f" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="1206.0" y="360.5" font-size="11.5" fill="#6b7c8d" text-anchor="middle" letter-spacing="0.4">this turn's block</text>
+<path d="M 1224.0 733.0 Q 1206.0 621.5 1188.0 510.0" fill="none" stroke="#f2cf8f" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="1206.0" y="612.5" font-size="11.5" fill="#6b7c8d" text-anchor="middle" letter-spacing="0.4">turn taken · seen</text>
+<path d="M 408.0 646.0 Q 390.0 654.5 372.0 663.0" fill="none" stroke="#f2cf8f" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="390.0" y="645.5" font-size="11.5" fill="#6b7c8d" text-anchor="middle" letter-spacing="0.4">the account</text>
+<path d="M 1068.0 1112.0 Q 933.0 844.5 798.0 577.0" fill="none" stroke="#f2cf8f" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="933.0" y="844.5" font-size="11.5" fill="#6b7c8d" text-anchor="middle" letter-spacing="0.4">one unit per turn</text>
+<path d="M 1224.0 842.0 L 1202.0 842.0 L 1202.0 1110.0 L 398.0 1110.0 L 398.0 545.5 L 372.0 545.5" fill="none" stroke="#f2cf8f" stroke-opacity="0.38" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+<text x="800.0" y="1103.0" font-size="11.5" fill="#6b7c8d" text-anchor="middle">the reply</text>
+<rect x="408" y="1116" width="1320" height="168" rx="14" fill="#0b1017" stroke="#1b2430"/>
+<text x="426" y="1146" font-size="12.5" fill="#f2cf8f" letter-spacing="2.4" font-weight="600">SOURCES &amp; STORE</text>
+<text x="586" y="1146" font-size="11.5" fill="#6b7c8d">where a unit comes from — and what survives</text>
+<rect x="426.0" y="1166" width="204.0" height="54" rx="8" fill="#101823" stroke="#233041"/>
+<text x="437.0" y="1188" font-size="13" font-weight="600" fill="#efe9d8">walk · WordNet</text>
+<text x="437.0" y="1206" font-size="11.5" fill="#93a3b4">six hops, one per turn,</text>
+<text x="437.0" y="1221" font-size="11.5" fill="#93a3b4">out to the rim</text>
+<rect x="642.0" y="1166" width="204.0" height="54" rx="8" fill="#101823" stroke="#233041"/>
+<text x="653.0" y="1188" font-size="13" font-weight="600" fill="#efe9d8">cockpit · the map</text>
+<text x="653.0" y="1206" font-size="11.5" fill="#93a3b4">the same /graph payload,</text>
+<text x="653.0" y="1221" font-size="11.5" fill="#93a3b4">flown by hand</text>
+<rect x="858.0" y="1166" width="204.0" height="54" rx="8" fill="#101823" stroke="#233041"/>
+<text x="869.0" y="1188" font-size="13" font-weight="600" fill="#efe9d8">explore · the person</text>
+<text x="869.0" y="1206" font-size="11.5" fill="#93a3b4">picks only; no provider at</text>
+<text x="869.0" y="1221" font-size="11.5" fill="#93a3b4">all</text>
+<rect x="1074.0" y="1166" width="204.0" height="54" rx="8" fill="#101823" stroke="#233041"/>
+<text x="1085.0" y="1188" font-size="13" font-weight="600" fill="#efe9d8">verdicts · the ledger</text>
+<text x="1085.0" y="1206" font-size="11.5" fill="#93a3b4">keep / trash, counted by</text>
+<text x="1085.0" y="1221" font-size="11.5" fill="#93a3b4">tools/hit_rate.py</text>
+<rect x="1460" y="1232" width="250" height="34" rx="8" fill="#101823" stroke="#233041"/>
+<text x="1471" y="1248" font-size="13" font-weight="600" fill="#efe9d8">.antemuse/state.json</text>
+<text x="1471" y="1261" font-size="11" fill="#93a3b4">active · journal (cap 60) · residue · ledger · mood · work</text>
+<text x="32" y="1310" font-size="12.5" fill="#f2cf8f" letter-spacing="2.4" font-weight="600">HOW A STATE ENDS</text>
+<rect x="32.0" y="1324" width="415.0" height="86" rx="10" fill="#101823" stroke="#233041"/>
+<text x="45.0" y="1348" font-size="14" font-weight="600" fill="#efe9d8">complete</text>
+<text x="45.0" y="1367" font-size="11.5" fill="#93a3b4">the dose is served and seen, and at least</text>
+<text x="45.0" y="1382" font-size="11.5" fill="#93a3b4">one turn was worked</text>
+<text x="45.0" y="1402" font-size="11.5" fill="#6b7c8d" font-style="italic">“The act is done, so the state is over.”</text>
+<rect x="459.0" y="1324" width="415.0" height="86" rx="10" fill="#101823" stroke="#233041"/>
+<text x="472.0" y="1348" font-size="14" font-weight="600" fill="#efe9d8">failed</text>
+<text x="472.0" y="1367" font-size="11.5" fill="#93a3b4">the source died, or a turn ran dry having</text>
+<text x="472.0" y="1382" font-size="11.5" fill="#93a3b4">served nothing</text>
+<text x="472.0" y="1402" font-size="11.5" fill="#6b7c8d" font-style="italic">“nothing arrived” — and the reason is named</text>
+<rect x="886.0" y="1324" width="415.0" height="86" rx="10" fill="#101823" stroke="#233041"/>
+<text x="899.0" y="1348" font-size="14" font-weight="600" fill="#efe9d8">returned</text>
+<text x="899.0" y="1367" font-size="11.5" fill="#93a3b4">the person typed /return</text>
+<text x="899.0" y="1402" font-size="11.5" fill="#6b7c8d" font-style="italic">“The frame you were in is gone. State the goal…”</text>
+<rect x="1313.0" y="1324" width="415.0" height="86" rx="10" fill="#151009" stroke="#4a3126"/>
+<text x="1326.0" y="1348" font-size="14" font-weight="600" fill="#e08a6a">superseded</text>
+<text x="1326.0" y="1367" font-size="11.5" fill="#93a3b4">another state was entered instead</text>
+<text x="1326.0" y="1402" font-size="11.5" fill="#6b7c8d" font-style="italic">no account — the known gap</text>
+</svg>

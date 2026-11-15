@@ -1,13 +1,13 @@
 ---
 name: antemuse
-description: Take and leave agent states — walk, daydream, dream, doomscroll — and watch them as imagery. Use when the user asks the agent to step away from the desk, work at a distance, or when a state is already active and governs this turn.
+description: Take and leave the one agent state (walk) and the person-driven map (explore). Use when the user asks the agent to step away from the desk, work at a distance, or when a state is already active and governs this turn.
 ---
 
 # Antemuse
 
 A state is a bounded change to how the agent behaves, not a place it goes.
 
-- `tools` — what it may still touch (a walk takes nothing; a dream takes everything)
+- `tools` — what it may still touch (a walk takes nothing)
 - `directive` — injected into the turn it governs
 - `contract` — the one line the reply is held to
 - `residue` — what it carries back when the state ends
@@ -15,11 +15,15 @@ A state is a bounded change to how the agent behaves, not a place it goes.
 ## Entering and leaving
 
 ```
-/walk [graph]        /daydream      /dream
-/doomscroll          /unstuck       /return
+/walk [graph]        /explore        /return
 ```
 
-That is the whole command surface — six verbs, nothing else. A person's own
+That is the whole command surface — three verbs, nothing else. `walk` is the only
+state the agent enters: six hops, one bought per turn, recorded for the pane and
+never injected into the turn. `/explore` is the one state a person drives: it has
+no dose and no end of its own, the cockpit is the map, and what you keep is
+counted (`K` keeps, `T` drops, `tools/hit_rate.py` reports the rate). It closes
+when they type `/return`, and the account names the concepts they picked, by count. A person's own
 message is journalled as a note automatically while a state runs, so there is no
 `/note`; the recommendation arrives in the turn by itself, so there is no `/watch`.
 
@@ -28,9 +32,10 @@ Agents use the tool instead: `state(action="enter", name="walk")`,
 `state(action="list")`. There is no action that asks for a picture: the pane draws
 the state you are already in.
 
-## The panel
+## The panes
 
-The picture lives in the desktop app's Antemuse pane and nowhere else. In chat a
+The picture lives in two desktop panes and nowhere else: the Antemuse pane draws
+the map, and the cockpit pane flies it in first person for `/explore`. In chat a
 state posts its account as text, on entry, without media. There is no terminal
 takeover and no image frame: `/state` is not a command, and a terminal reads the
 same text record the chat gets.
@@ -57,11 +62,10 @@ not a guess. Ignore it when the work is nearly done; the nudge waits ten turns.
 An experimental exploration layer lives in the library. Its modules
 (`core/collider.py`, `core/collision.py`, `core/llm.py`,
 `core/orchestrator.py`, `core/selection.py`, `core/feedback.py`,
-`data/collider/`) exist. Wave 3 has begun: the three
-auxiliary task routes (`antemuse_generate`, `antemuse_select`,
-`antemuse_refresh`) are declared — a routing entry, not a call — and the four
-session-boundary hooks are registered. On a session boundary they release any
-material bound to that session. `/spark` is the first thing that binds material;
+`data/collider/`) exist. Three auxiliary task routes (`antemuse_generate`,
+`antemuse_select`, `antemuse_refresh`) are declared — a routing entry, not a call —
+and the four session-boundary hooks are registered; on a session boundary they
+release any material bound to that session. `/spark` is the first thing that binds material;
 it is also the only runtime path that can reach a model, and only when the flag
 is on.
 
@@ -92,7 +96,11 @@ for every test run:
 
 ```bash
 env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) \
-  uvx --with nltk --quiet pytest tests/ -q
+  uvx --with-requirements requirements-test.txt --quiet pytest tests/ -q
+
+# `--with nltk` alone is not enough: the dashboard tests import fastapi/httpx
+# and the catalog test imports pyyaml, so collection aborts with three errors on
+# a clean machine. requirements-test.txt is the list that actually runs.
 
 # NLTK_DATA is only needed if your corpora live outside the default lookup:
 #   NLTK_DATA=~/nltk_data ...
