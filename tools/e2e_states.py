@@ -11,8 +11,7 @@ Each state runs in its own home: a shared ledger would let one state's terms sat
     /usr/bin/python3 tools/e2e_states.py --only walk
 
 Exit 0 = every state honoured the contract. Exit 1 = at least one did not (the row says which).
-No network is required except for doomscroll's feed; a feed failure is reported as a named
-failure, not as success.
+No network is required; the walk uses the local WordNet corpus.
 """
 from __future__ import annotations
 
@@ -28,11 +27,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-STATES = ["walk", "daydream", "doomscroll", "dream", "unstuck"]
+STATES = ["walk"]
+# `/explore` is person-driven: it has no dose to spend and is covered separately.
+NOT_DRIVEN = ["explore"]
 MAX_TURNS = 14
-# Delivery is paced by the clock (one unit a second), so the turns have to be a second
-# apart or the runner measures a state that was never given time to do anything.
-TURN_GAP = 1.1
+E2E_TURNS = [
+    "The onboarding screen asks for an API key before it shows what the tool does.",
+    "Every tutorial we wrote reads like a manual, and people leave before the first command.",
+    "The release notes are a list of fixes; nobody can tell what the product is for.",
+    "A walk moves the frame while the work continues.",
+    "The pane is the only place the path is visible, and it draws hops as they land.",
+    "Naming the state after the act made the commands easier to remember.",
+]
+# Delivery is one unit per call and the call is the only clock. The gap is kept so a run
+# resembles a conversation's pacing rather than a busy loop; it buys no units.
+#: Kept tiny: delivery is one unit per call now, not one per second, so a gap between turns
+#: bought nothing but runtime. A token pause keeps the journal's timestamps ordered.
+TURN_GAP = 0.05
 
 
 def _fresh_home() -> str:
@@ -79,15 +90,21 @@ def run_state(key: str) -> dict:
     prev_home = os.environ.get("ANTEMUSE_STATES_HOME")
     home = _fresh_home()
     _purge_modules()
-    from core import engine, states, history
+    from core import engine, states, history, recall
+
+    # A fresh home has no recent turns, so every memory-fed state falls back to the memory
+    # files and serves the same pair until it runs dry. A real install has a conversation
+    # behind it; these lines stand in for one, so the run measures the state rather than the
+    # emptiness of a temporary directory.
+    for line in E2E_TURNS:
+        recall.remember(line)
 
     out = {"state": key, "home": home, "turns": [], "problems": []}
     entered = engine.enter(key, session="e2e")
     out["entered"] = str(entered)[:200]
     # the entry line is the state's own voice ("WALKING · 3 min · 6 turn(s) · ..."), not the word
     # ACTIVE; what matters is that it reports the state it was asked for
-    verb = {"walk": "WALKING", "daydream": "DAYDREAMING", "doomscroll": "DOOMSCROLLING",
-            "dream": "DREAMING", "unstuck": "UNSTUCK"}[key]
+    verb = {"walk": "WALKING"}[key]
     if verb not in str(entered).upper():
         out["problems"].append(f"entry did not report {verb}: {entered!r}")
 
@@ -129,6 +146,7 @@ def run_state(key: str) -> dict:
     if conn:
         conn.close()
 
+    out["dose"] = int((states.STATES[key].get("dose") or {}).get("n") or 0)
     out["served_rows"] = len(served)
     out["served_moves"] = sorted({m for _l, m in served})
     out["served_sample"] = [label for label, _m in served[:5]]

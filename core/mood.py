@@ -5,11 +5,11 @@ see: what the work has cost (turns, tool calls, failed calls, turns since the la
 state) and what the agent says about itself when asked.
 
     state(action="mood", feeling="stuck")   the agent reports
-    /walk, /daydream, /doomscroll, /dream    the recommendation, taken
+    /walk    the recommendation, taken
 
 This module **measures; it does not recommend.** It used to sum the counters into a
 "strain" score and name a state from that arithmetic, which was a timer pretending to be
-a judgement: 122 minutes became "break overdue", and overdue picked daydream because the
+a judgement: 122 minutes became "break overdue", and overdue picked a state because the
 number was large. Naming a state is `core/recommend.py`'s job, and it must be able to
 point at the counter that justified it.
 """

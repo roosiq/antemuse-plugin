@@ -33,9 +33,7 @@ BOOL_DEFAULTS = {
 
 #: Free-text settings. Only ones that are a list or a path, never a secret: a secret belongs
 #: in requires_env, where the host keeps it.
-TEXT_DEFAULTS = {
-    "dream_projects": "",
-}
+TEXT_DEFAULTS: dict[str, str] = {}
 
 _host: Any = None
 _warned: set = set()

@@ -141,6 +141,21 @@ class Graph:
     def resume(self, node_id: str) -> Optional[Dict[str, Any]]:
         return self.resolve(node_id)
 
+    def far_from(self, node: Dict[str, Any], samples: int = 32,
+                 avoid: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
+        """Graphs without distance say so, rather than pretending to jump."""
+        return None
+
+
+_GLOSS_STOP = {"the", "a", "an", "of", "or", "and", "to", "in", "by", "for", "with",
+               "something", "someone", "that", "this", "is", "as", "from", "act",
+               "state", "quality", "being", "make", "makes", "making", "into", "its"}
+
+
+def _content_words(text: str) -> set:
+    import re
+    return {w for w in re.findall(r"[a-z]{4,}", str(text).lower()) if w not in _GLOSS_STOP}
+
 
 def _node(id_: str, label: str, pos: str = "", gloss: str = "", **extra) -> Dict[str, Any]:
     return {"id": id_, "label": label, "pos": pos, "gloss": gloss, **extra}
@@ -192,41 +207,97 @@ class WordNetGraph(Graph):
             return None
         return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
 
+    def rim(self, node: Dict[str, Any], depth: int = 2,
+            budget: int = 400) -> List[Dict[str, Any]]:
+        """Nodes two relation-steps out — the neighbourhood's edge, not the dictionary."""
+        try:
+            start = self.wn().synset(node["id"])
+        except Exception:
+            return []
+        if start is None:
+            return []
+        seen = {start.name()}
+        frontier = [self._node(start.name(), start.lemma_names()[0].replace("_", " "),
+                               start.pos(), start.definition())]
+        out: List[Dict[str, Any]] = []
+        for _ in range(max(1, depth)):
+            nxt: List[Dict[str, Any]] = []
+            for cur in frontier:
+                for _rel, child in self.edges(cur):
+                    if child["id"] in seen:
+                        continue
+                    seen.add(child["id"])
+                    nxt.append(child)
+                    out.append(child)
+                    if len(seen) >= budget:
+                        return out
+            frontier = nxt
+            if not frontier:
+                break
+        return out
+
     def far_from(self, node: Dict[str, Any], samples: int = 32,
                  avoid: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
-        """The farthest synset in a small random sample — a jump, not a step.
+        """The farthest node on the rim: two steps out, as far as that goes.
 
-        Distance is WordNet's own path similarity; a candidate with no path at
-        all (different root) counts as 0.0, which is as far as this measures.
+        This used to sample uniformly from `wordnet.words()` and keep the least
+        similar, which guaranteed an unrelated word — `idea → zebra-tailed
+        lizard → Hydra` is what that policy is. A jump is now the outer rim of
+        the connected neighbourhood: never a direct neighbour, always reachable
+        within two relation steps, and chosen from the farthest of a sample so
+        two walks do not take the same hop.
         """
-        wn = self.wn()
+        skip = set(avoid or []) | {node["id"]}
+        cands = [c for c in self.rim(node, depth=2) if c["id"] not in skip]
+        if not cands:
+            # A synset with no relations has no rim; one edge out is still a hop
+            # and still explainable, so it is better than standing still.
+            cands = [c for _rel, c in self.edges(node) if c["id"] not in skip]
+            if not cands:
+                return None
+            return RNG.choice(cands)
         try:
-            cur = wn.synset(node["id"])
+            cur = self.wn().synset(node["id"])
         except Exception:
-            return None
-        if self._words is None:
-            self._words = list(wn.words())      # a corpus view is not a sequence
-        skip = set(avoid or [])
-        best, best_sim = None, 2.0
-        for _ in range(samples):
+            cur = None
+        if cur is None:
+            return RNG.choice(cands)
+        pool = cands if len(cands) <= samples else RNG.sample(cands, samples)
+        # Of the rim, prefer the hops whose own definition does not already reuse
+        # the words of the one we are leaving: siblings under the same parent are
+        # "distance" that reads as a restatement.
+        mine = _content_words(node.get("gloss") or "")
+        fresh = [c for c in pool if not (_content_words(c.get("gloss") or "") & mine)]
+        pool = fresh or pool
+        scored: List[Tuple[float, Dict[str, Any]]] = []
+        for cand in pool:
             try:
-                cand = wn.synsets(RNG.choice(self._words))[0]
+                cand_syn = self.wn().synset(cand["id"])
+                sim = cur.path_similarity(cand_syn) if cand_syn is not None else None
             except Exception:
-                continue
-            if cand.name() in skip or cand.name() == cur.name():
-                continue
-            sim = cur.path_similarity(cand)
-            score = 0.0 if sim is None else sim
-            if score < best_sim:
-                best, best_sim = cand, score
-                if score == 0.0:
-                    break
-        if best is None:
-            return None
-        return self._node(best.name(), best.lemma_names()[0].replace("_", " "), best.pos(), best.definition())
+                sim = None
+            scored.append((0.0 if sim is None else float(sim), cand))
+        scored.sort(key=lambda t: t[0])
+        # Among the farthest few, not the single farthest: a fixed answer would
+        # make every walk of a node identical, and this walk is supposed to move.
+        edge = scored[:max(1, min(6, len(scored)))]
+        return RNG.choice(edge)[1]
+
 
     def edges(self, node: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
-        syn = self.wn().synset(node["id"])
+        """Named edges out of a node; none when the id is not a synset.
+
+        A cursor learned by an older version can hold a label instead of a
+        synset name. Asking WordNet for that returns None and every probe then
+        raised `'NoneType' object has no attribute '_hypernyms'`, which a walk
+        surfaced as material. An id that does not resolve has no edges.
+        """
+        try:
+            syn = self.wn().synset(node["id"])
+        except Exception:
+            return []                       # a malformed name is not a node
+        if syn is None:
+            return []
         probes = {
             "hypernym": lambda s: s.hypernyms(),
             "hyponym": lambda s: s.hyponyms(),
@@ -335,7 +406,11 @@ class GraphWalk:
         mode = (self.seed_spec or {}).get("mode", "continue")
         # a seed places the first step; after that the walk continues from its cursor
         cur = self._read_cursor().get("node")
-        if cur and mode in ("fixed", "word", "continue"):
+        # A walk is where you left it, not where it was three days ago: an old
+        # cursor kept the walk in leftover WordNet space (`finback → mammal
+        # genus`) instead of setting out from the work in front of the person.
+        stale = (time.time() - float(self._read_cursor().get("at") or 0)) > 12 * 3600
+        if cur and not stale and mode in ("fixed", "word", "continue"):
             resumed = self.graph.resume(cur)
             if resumed is not None:
                 return resumed
@@ -388,10 +463,16 @@ class GraphWalk:
             how = "jumped" if jumped else f"{hops} hop{'s' if hops != 1 else ''}"
             return f" · ↩ {how} from {anchor}: {path}"
         out: List[str] = []
+        # A jump used to be able to land back on a node the walk had already left,
+        # which reads as a loop rather than as distance. Everything the walk has
+        # stood on stays out of the far search.
+        visited_ids = {node["id"]}
+
         def far(node_, avoid=None):
             if not hasattr(self.graph, "far_from"):
                 return None
-            return self.graph.far_from(node_, samples=self.samples, avoid=avoid)
+            skip = list(dict.fromkeys(str(x) for x in [*(avoid or []), *visited_ids]))
+            return self.graph.far_from(node_, samples=self.samples, avoid=skip)
 
         def unseen(node_) -> bool:
             try:
@@ -463,6 +544,7 @@ class GraphWalk:
             return self.rotation[n % len(self.rotation)]
 
         for n in range(steps):
+            visited_ids.add(node["id"])
             mode = mode_at(n)
             # --- navigation policies that leave the neighbourhood -----------------
             if mode == "vault":
@@ -527,20 +609,33 @@ class GraphWalk:
                     continue
             options = [(rel, n) for rel, n in self.graph.edges(node) if rel in self.relations]
             if not options:
-                # a dead end is not the end of the walk unless the graph is exhausted
+                # a dead end is not the end of the walk unless the graph is exhausted.
+                # The restart is a hop and says so: a diagnostic line in the material
+                # ("dead end — no hyponym edge") reads to a turn like a concept that arrived.
                 restart = self.graph.random_node(self.relations)
                 if restart is None or restart["id"] == node["id"]:
                     out.append(f"{node['label']} · no {', '.join(self.relations)} edge — the walk stops")
                     break
-                out.append(f"{node['label']} · dead end — no {', '.join(self.relations)} edge, "
-                           f"so the walk picks up again at {restart['label']}")
+                hops += 1
+                if restart["label"] not in trail:
+                    trail.append(restart["label"])
+                remember(restart)
+                out.append(f"{node['label']} → {restart['label']} "
+                           f"({restart['pos'] or 'thing'}) · picked up again after a dead end"
+                           + back(jumped=True) + visited(restart))
                 prev_id, node = node["id"], restart
                 continue
             forward = [(r, n) for r, n in options if n["id"] != prev_id] if self.avoid_backtrack else options
             if not forward:
                 restart = self.graph.random_node(self.relations)
                 if restart is not None and restart["id"] != node["id"]:
-                    out.append(f"{node['label']} · only way back — the walk picks up again at {restart['label']}")
+                    hops += 1
+                    if restart["label"] not in trail:
+                        trail.append(restart["label"])
+                    remember(restart)
+                    out.append(f"{node['label']} → {restart['label']} "
+                               f"({restart['pos'] or 'thing'}) · the only edge back, so the walk "
+                               f"picks up again" + back(jumped=True) + visited(restart))
                     prev_id, node = node["id"], restart
                     continue
             choice = pick([(r, n) for r, n in (forward or options)])

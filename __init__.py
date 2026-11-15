@@ -1,4 +1,4 @@
-"""Antemuse — the agent can take a walk, daydream, doomscroll, dream.
+"""Antemuse — the agent can take a walk; people can explore the map.
 
 A state is a temporary change to how the agent behaves, not a place it goes:
 
@@ -11,7 +11,7 @@ Surfaces:
   pre_llm_call         inject the active state into the turn
   pre_tool_call        block tools the state forbids
   transform_llm_output make the state visible on the reply
-  commands             see SKILL.md for the six verbs a person types;
+  commands             see SKILL.md for the three verbs a person types;
                        one verb, one name — `state(action="status")` is the record, and
                        the picture is the desktop pane, never a command
   tool                 state(action=…) — twelve actions, defined in the same place
@@ -47,13 +47,14 @@ __version__ = "0.10.44"
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
     "description": (
-        "Enter or leave a cognitive state for the agent itself. "
-        "state(action='enter', name='walk'|'daydream'|'dream'|'doomscroll') changes what tools "
-        "you may use and what shape your next replies take, until the act's dose is delivered. "
-        "state(action='exit') ends it and keeps the residue. state(action='status') reports what you are in. "
-        "state(action='break') recommends one and state(action='break', name='walk') takes it; "
+        "Enter or leave the walk state for the agent itself. "
+        "state(action='enter', name='walk') changes what shape your next replies take until "
+        "the walk's dose is delivered. state(action='exit') ends it and keeps the residue. "
+        "state(action='status') reports whether a walk is running. state(action='break') "
+        "recommends a walk and state(action='break', name='walk') takes it; "
         "state(action='mood', feeling='stuck') records how the work feels. "
-        "state(action='list') shows every state with its tools, duration, and contract. "
+        "state(action='list') shows the walk and the way out. The separate /explore command "
+        "is person-driven: it has no dose or provider and ends only on /return. "
         "Walks are user-definable: state(action='walks') lists them, "
         "state(action='walk_new') saves one, state(action='walk_del') removes your own."
     ),
@@ -65,7 +66,7 @@ STATE_SCHEMA: Dict[str, Any] = {
                                 "walk_del", "break", "mood", "spark", "keep", "complete",
                                 "watch"]},
             "name": {"type": "string",
-                     "description": "State to enter (walk, daydream, dream, doomscroll) or the walk to use."},
+                     "description": "Agent state to enter: walk. /explore is person-driven and is entered with its command."},
             "walk": {"type": "string", "description": "Which walk to traverse: wander, upward, downward, lateral, or one you saved."},
             "goal": {"type": "string",
                      "description": "For action='spark': what the run is for. The person sees counts, never candidates."},
@@ -344,9 +345,15 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
     engine.remember_platform(platform, session_id)
     # Once per session, bounded and in the background: a ledger nobody fills is a ledger no
     # move can use. It returns immediately, so the turn never waits for it.
-    history.autoscan(session_id or engine.current_session())
-    engine.note_turn()
-    engine.tick()
+    try:
+        history.autoscan(session_id or engine.current_session())
+    except Exception as exc:  # health: BLE001 -- a scan is never worth a failed turn
+        logger.debug("antemuse: session scan skipped: %s", exc)
+    try:
+        engine.note_turn(session_id or None)
+        engine.tick(session_id or None)
+    except Exception as exc:  # health: BLE001 -- bookkeeping must not cost the turn
+        logger.warning("antemuse: turn bookkeeping failed (%s): %s", type(exc).__name__, exc)
     said = _person_text(kwargs)
     if said:
         # Every provider hands a plugin the turn it is governing, so this is the one
@@ -390,7 +397,15 @@ def _post_tool_call(tool_name: str = "", status: str | None = None,
 
 
 def _pre_tool_call(tool_name: str = "", **kwargs: Any) -> Dict[str, Any] | None:
-    return engine.policy(tool_name)
+    # A policy hook that raises takes the entire tool channel down with it — every tool in
+    # every session, not just the ones the state meant to block. That is exactly what an
+    # open-ended state did when a field it does not carry was read with `[]`. Nothing here
+    # is worth that: if the policy cannot be computed, allow the call and say so in the log.
+    try:
+        return engine.policy(tool_name)
+    except Exception as exc:  # health: BLE001 -- a broken policy must not block tools
+        logger.warning("antemuse: tool policy failed (%s): %s", type(exc).__name__, exc)
+        return None
 
 
 def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> str | None:
@@ -684,17 +699,25 @@ def register(ctx) -> None:
             name=key,
             handler=_enter(key),
             description=f"Enter the {key} state ({states.STATES[key]['contract']})",
-            args_hint="[minutes]",
+            # No minutes anywhere: a state has a dose, and `/explore` has neither a dose nor
+            # a duration. The hint says what an argument can be, not how long it lasts.
+            args_hint="[walk]",
             argument_mode="text",
         )
+
+    ctx.register_command(
+        name="explore",
+        handler=_enter("explore"),
+        description="Explore the concept map yourself; it ends only on /return",
+        args_hint="",
+        argument_mode="text",
+    )
 
     ctx.register_command(name="return", handler=_return,
                          description="End the current state and keep its residue")
 
-    # Five commands. Everything else a person might want is automatic: their message
-    # is journalled as a note while a state runs, the recommendation line arrives in
-    # the turn by itself, and exploration runs through the tool the agent already has.
-    # The picture arrives with the state; there is nothing to ask for.
+    # One agent state and a way out; /explore is registered separately because the person,
+    # rather than the agent, drives it and decides when it ends.
 
 
     try:
@@ -702,7 +725,7 @@ def register(ctx) -> None:
         ctx.register_skill(
             "antemuse",
             Path(__file__).resolve().parent / "SKILL.md",
-            description="Take and leave agent states: walk, daydream, doomscroll, unstuck, dream.",
+            description="Take a walk state or explore the map yourself.",
         )
     except Exception:
         pass

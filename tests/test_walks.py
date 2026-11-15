@@ -100,7 +100,9 @@ def test_the_outer_walk_jumps_instead_of_stepping(cursor):
     cursor.write_text(json.dumps({"outer": {"node": wn.synsets("hand")[0].name(), "prev": "", "at": 0}}))
     walk = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, cursor)
     steps = walk.step(6)
-    assert all("far edge" in s for s in steps), steps
+    # A dead end restarts the walk instead of stopping it, and that restart is a hop
+    # too — it says so in its own words. What must never appear is a plain step.
+    assert all("far edge" in s or "picks up again" in s for s in steps), steps
 
     graph = walks.WordNetGraph()
     node = graph.resume(wn.synsets("hand")[0].name())
@@ -109,48 +111,36 @@ def test_the_outer_walk_jumps_instead_of_stepping(cursor):
     assert far is not None and far["id"] not in neighbours, "a far hop must not be an edge"
 
 
-def test_outer_hops_are_farther_than_wander_hops(cursor):
-    import json
-    import re
+def test_an_outer_hop_is_a_jump_but_never_an_unrelated_word(cursor):
+    """Outer used to mean "least similar word in the dictionary", which served
+    `idea → zebra-tailed lizard`. A jump is now the rim of the neighbourhood:
+    farther than a step, still reachable in two edges, and never 0.0.
+    """
     import statistics
     from nltk.corpus import wordnet as wn
-    from core import walks
-    STEP = re.compile(r"^(?P<a>.+?) \([a-z]+\) → (?P<b>.+?) \([a-z]+\)")
 
-    # n=64, not 16: the walk picks neighbours with a SystemRandom, so a short
-    # sample estimates the walk's distance poorly. Measured over 30 runs each:
-    #   n=16  outer 0.044 (sd 0.004)  wander 0.264 (sd 0.076)  -> held 94%
-    #   n=64  outer 0.043 (sd 0.003)  wander 0.253 (sd 0.043)  -> held 100%
-    # The property is real; the estimate needed more steps. No runtime change.
-    def mean_similarity(name, n=64, seed="hand", restarts=3):
-        """Median of a few restarts.
+    graph = walks.WordNetGraph()
+    node = graph.resolve("hand")
+    assert node is not None
+    cur = wn.synset(node["id"])
 
-        The walk's neighbour choice is a SystemRandom, so a single draw cannot be seeded and
-        occasionally lands inside one tight cluster — that run measures the cluster, not the
-        walk, and flipped this test about one time in three. The property is about the typical
-        hop; the median of three restarts estimates that without touching the walk.
-        """
-        runs = sorted(_one(name, n, seed) for _ in range(restarts))
-        return runs[len(runs) // 2]
+    def sim(other):
+        if other is None:
+            return None
+        v = cur.path_similarity(wn.synset(other["id"]))
+        return None if v is None else float(v)
 
-    def _one(name, n=64, seed="hand"):
-        cursor.write_text(json.dumps({name: {"node": wn.synsets(seed)[0].name(), "prev": "", "at": 0}}))
-        walk = walks.GraphWalk({"name": name, **walks.BUILTIN[name]}, cursor)
-        sims = []
-        for step in walk.step(n):
-            m = STEP.match(step)
-            if not m:
-                continue
-            a, b = wn.synsets(m.group("a")), wn.synsets(m.group("b"))
-            if not a or not b:
-                continue
-            v = a[0].path_similarity(b[0])
-            sims.append(0.0 if v is None else v)
-        if len(sims) < 3:                      # a dead-end start yields no pairs
-            return _one(name, n, seed="river")
-        return statistics.mean(sims)
+    steps = [sim(graph.resume(child["id"])) for _rel, child in graph.edges(node)]
+    steps = [s for s in steps if s is not None]
+    jumps = [sim(graph.far_from(node)) for _ in range(20)]
+    jumps = [j for j in jumps if j is not None]
 
-    assert mean_similarity("outer") + 0.1 < mean_similarity("wander")
+    assert jumps, "the walk must be able to leave"
+    assert statistics.mean(jumps) < statistics.mean(steps), (
+        "a jump has to be farther than a step: "
+        f"jumps {statistics.mean(jumps):.3f} steps {statistics.mean(steps):.3f}")
+    unrelated = [j for j in jumps if j == 0.0]
+    assert len(unrelated) <= 1, f"{len(unrelated)}/20 jumps went nowhere near the node"
 
 
 def test_artifacts_follow_the_project(tmp_path, monkeypatch):

@@ -1,83 +1,77 @@
-"""Every ending writes a `moves` row — not just `/return`.
-
-The table was created, the writer written, and then never called for a release. It was wired into
-`stop()` next, and still nothing appeared, because a state that ends by *expiry* (time-out or
-dose-exhausted — the common ending) never goes through `stop()`. So `moves` looked broken when it
-was merely unrecorded, and the natural conclusion was "no state has ended yet", which was wrong.
-
-Both endings go through `engine._record_finish` now. These tests end a state each way and read
-the table.
-"""
+"""Every walk ending writes one `moves` row."""
+from __future__ import annotations
 
 import os
 import sys
 import tempfile
-import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="moves-ledger-")
 
-from core import engine, history, social, sources  # noqa: E402
-
-FEED = [
-    "bluesky · @a · the office fridge is now a raccoon habitat · [1 skipped as work]",
-    "fosstodon · @b · the printer has started writing poems about death",
-    "babylonbee.com · @c · Local Man Unsure Why Fridge Has Raccoon In It",
-]
+from core import engine, history, sources  # noqa: E402
 
 
-def _moves(state: str) -> list:
+def _moves():
     conn = history._connect()
     assert conn is not None
     try:
-        return conn.execute(
-            "SELECT state, ending, dose_done FROM moves WHERE state = ? ORDER BY id", (state,)
-        ).fetchall()
+        return conn.execute("SELECT state, ending, dose_done FROM moves WHERE state = 'walk' ORDER BY id").fetchall()
     finally:
         conn.close()
 
 
+def _provider(*lines):
+    queue = list(lines)
+
+    def call(steps=1):
+        return [queue.pop(0)] if queue else []
+
+    return call
+
+
 def test_a_state_that_ends_dry_records_how_it_ended(monkeypatch):
-    """There is no clock ending. A state whose material stops arriving ends as dry."""
-    monkeypatch.setattr(social, "pick", lambda steps=1: FEED[:steps])
-    engine.enter("doomscroll", session="moves-time", platform="discord")
-    engine.note_turn()
-    engine.tick()
-    engine.deliver_if_due()
-
-    engine.note_turn()          # a turn arrived and nothing was delivered
-    engine.note_turn()
-
-    assert engine.peek() is None, "the state should have ended dry"
-    rows = _moves("doomscroll")
-    assert rows, "a state ended and left no moves row"
-    assert rows[-1][1] == "dry", rows[-1]
-    assert rows[-1][2] >= 0, rows[-1]
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = _provider("one hop", "one hop", "one hop")
+    try:
+        engine.enter("walk", session="moves-dry")
+        engine.note_turn("moves-dry")
+        engine.inject("moves-dry")
+        engine.deliver_if_due()
+        engine.deliver_if_due()
+        assert engine.peek() is None
+        row = _moves()[-1]
+        assert row[1] == "dry"
+        assert row[2] == 1
+    finally:
+        sources.PROVIDERS["walk"] = original
 
 
 def test_a_state_that_finishes_its_dose_records_a_different_ending(monkeypatch):
-    """The dose ending is not the expiry ending and must not be labelled as one."""
-    monkeypatch.setattr(social, "pick", lambda steps=1: FEED[:steps])
-    engine.enter("doomscroll", session="moves-dose", platform="discord")
-    engine.note_turn()
-    for _ in range(3):                    # three items, one per delivery call
-        engine.deliver_if_due()
-    engine.complete_if_dosed()
-
-    assert engine.peek() is None, "the dose should have ended the state"
-    rows = _moves("doomscroll")
-    assert rows, "a state finished its dose and left no moves row"
-    assert rows[-1][1] and rows[-1][1] != "expired", rows[-1]
-    assert rows[-1][2] == 3, rows[-1]
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = _provider(*[f"hop {n}" for n in range(6)])
+    try:
+        engine.enter("walk", session="moves-dose")
+        engine.note_turn("moves-dose")
+        for _ in range(6):
+            engine.deliver_if_due()
+        engine.inject("moves-dose")
+        assert engine.peek() is None
+        row = _moves()[-1]
+        assert row[1] == "complete"
+        assert row[2] == 6
+    finally:
+        sources.PROVIDERS["walk"] = original
 
 
 def test_one_row_per_state_not_one_per_turn(monkeypatch):
-    """A turn is not an ending. A state that spanned three turns writes one row, not three."""
-    monkeypatch.setattr(social, "pick", lambda steps=1: FEED[:steps])
-    before = len(_moves("dream"))
-    engine.enter("dream", session="moves-turns", platform="discord")
-    for _ in range(3):
-        engine.note_turn()
-        engine.tick()
-        engine.inject()
-    assert len(_moves("dream")) - before == 1
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = _provider(*[f"hop {n}" for n in range(6)])
+    before = len(_moves())
+    try:
+        engine.enter("walk", session="moves-turns")
+        for _ in range(6):
+            engine.note_turn("moves-turns")
+            engine.inject("moves-turns")
+        assert len(_moves()) - before == 1
+    finally:
+        sources.PROVIDERS["walk"] = original

@@ -5,7 +5,7 @@ nowhere else, deterministically, so an invalid request never reaches an entry
 and never leaves a half-open state behind.
 
 Absent means today's behaviour: an entry with no options is the same walk,
-daydream, doomscroll, or dream it has always been.
+walk it has always been.
 """
 from __future__ import annotations
 

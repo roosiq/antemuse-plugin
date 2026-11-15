@@ -20,14 +20,8 @@ from . import recall, storage
 #: project : conversation : random, as buckets out of ten — the default.
 MIX = (5, 3, 2)
 
-#: A state may declare its own mix. `dream` starts from memory: it is the state whose
-#: whole premise is recombining what is already known, so a random frame is the wrong door.
-MIXES = {
-    "dream": (("memory", 6), ("project", 2), ("random", 2)),
-    # at a trailhead the project is the only thing there is; the random share exists so
-    # two trailheads in similar repositories do not start from the same word
-    "unstuck": (("project", 8), ("random", 2)),
-}
+#: All walks use the same project/conversation/random mix.
+MIXES = {}
 
 STOP = set("""
 a about above after again against all also and any are because been before being below

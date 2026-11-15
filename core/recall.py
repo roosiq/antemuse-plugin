@@ -5,7 +5,7 @@ plugin-facing read. So a state that wants "something this person actually said" 
 not depend on which banker is on duty. The one thing every provider hands a plugin is
 the turn itself — `pre_llm_call` carries `user_message` and `conversation_history` — so
 this module keeps a bounded ring of what the conversation has said, in the plugin's own
-data dir, and daydream draws from it before falling back to the built-in memory files.
+data dir, and the walk's seeding draws from it before falling back to the built-in memory files.
 
 Bounded on purpose: 24 entries, 400 characters each, newest wins. This is a working
 surface, not a store; nothing here is written back to Hermes memory.

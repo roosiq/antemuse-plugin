@@ -73,7 +73,7 @@ def test_a_full_walk_writes_its_concepts_and_crashes_on_nothing():
 def test_a_finished_state_leaves_a_move_row():
     """The moves table was created and its writer written, and then never called by anything."""
     before = _count("moves")
-    engine.enter("daydream", session="move-test", platform="discord")
+    engine.enter("walk", session="move-test", platform="discord")
     engine.note_turn()
     engine.tick()
     engine.stop("move-test")
@@ -86,6 +86,6 @@ def test_a_finished_state_leaves_a_move_row():
             "SELECT state, started, ended, ending FROM moves ORDER BY rowid DESC LIMIT 1").fetchone()
     finally:
         conn.close()
-    assert row[0] == "daydream", row
+    assert row[0] == "walk", row
     assert row[2] and row[2] >= row[1], f"ended before it started: {row}"
     assert row[3] == "returned", row

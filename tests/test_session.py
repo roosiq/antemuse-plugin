@@ -211,6 +211,17 @@ def test_the_tool_schema_fields_are_optional():
     assert fields["method"]["enum"] == ["collide", "deep", "chaos", "spark"]
 
 
+def test_the_tool_schema_names_every_state():
+    """An agent reads the schema, not the README. `unstuck` was missing from both strings —
+    the enum spelled five states while the manifest and the command surface had six."""
+    from core import states
+    schema = _plugin().STATE_SCHEMA
+    text = (schema["description"] + " "
+            + schema["parameters"]["properties"]["name"]["description"])
+    for key in states.STATES:
+        assert key in text, f"{key} is not named in the tool schema"
+
+
 def test_entering_with_a_method_while_disabled_is_refused():
     module = _plugin()
     ctx = FakeCtx()

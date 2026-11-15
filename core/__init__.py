@@ -7,7 +7,6 @@
   activation  what is firing now, derived from the ledger and never authoritative
   walks       walks are data, not code: a graph plus rules for moving on it
   sources     where a state's material comes from (WordNet, FrameNet, memory, feeds)
-  social      the live feed a doomscroll eats
   report      the facts an ending hands the model, so it can say what happened
   projection  the join between the ledger and the dashboard's numbers
   settings    the few numbers a host may tune

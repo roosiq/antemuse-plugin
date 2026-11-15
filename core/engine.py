@@ -5,7 +5,9 @@ a chat window, and a slash command has no session id to hang it on.
 """
 from __future__ import annotations
 
+import inspect
 import json
+import logging
 import os
 import re
 import threading
@@ -13,6 +15,8 @@ import time
 from typing import Any, Dict, List
 
 from . import history, states, storage
+
+logger = logging.getLogger(__name__)
 
 FILE = "state.json"
 
@@ -91,6 +95,9 @@ def _load() -> Dict[str, Any]:
 
 _FAILURE_WORDS = ("unavailable", "nothing arrived", "no material", "expired before its dose",
                   "not recorded", "provider failed")
+# A provider names its own failure with the state in front: `walk 'outer' failed · …`.
+# Matched at the start of the line so a headline that merely mentions failure survives.
+_FAILED_STATE_RE = re.compile(r"^[a-z]+(?: '[a-z0-9-]+')? failed\b")
 
 
 def _unit_for(n: Any, unit: str) -> str:
@@ -104,10 +111,51 @@ def _unit_for(n: Any, unit: str) -> str:
     return unit
 
 
+_HOP = re.compile(r"(?:^|\]\s*)([^·→⇒]+?)\s*[→⇒]\s*([^·\[\]]+)")
+
+
+def _hop_ends(line: str) -> tuple[str, str]:
+    """The two ends of a walk hop, from the line the walk served ("idea (n) → beef (n)").
+
+    Both are recorded: a path that names only the landings starts one node late, and the pane
+    drew a trail with no beginning — the concept the work was about never got a point.
+    """
+    found = _HOP.search(str(line or ""))
+    if not found:
+        return "", ""
+    def clean(part: str) -> str:
+        # "planning (n)" is a word and its part of speech; the path is the word.
+        part = re.sub(r"\s*\((?:[a-z]{1,5})\)\s*$", "", part.strip())
+        return re.sub(r"\s+(?:n|v|adj|adv)$", "", part).strip()
+    return clean(found.group(1)), clean(found.group(2))
+
+
 def _is_failure_line(line: str) -> bool:
-    """A line that names a failure is not material, and must not light the picture."""
-    low = str(line or "").strip().lower()
-    return any(word in low for word in _FAILURE_WORDS)
+    """A line that *reports* a failure is not material, and must not light the picture.
+
+    Matched near the start, not anywhere: a feed item titled "this site is unavailable" is a
+    real headline, and dropping it (and, worse, counting it as the source failing) would lose
+    the one thing a doomscroll went out for. A provider's own failure note opens with it.
+    """
+    text = str(line or "").strip()
+    low = text.lower()
+    head = low[:60]
+    return bool(_FAILED_STATE_RE.match(low)) or any(word in head for word in _FAILURE_WORDS)
+
+
+def _material_key(line: str) -> str:
+    """What makes two served lines the *same* material.
+
+    Providers re-word the sentence around a pair: the same two memories come back with a
+    different "possibility" clause, and comparing whole lines lets that through as a second
+    unit. The material is the pair (or the hop, or the feed item), so the key is the line up
+    to the clause that varies.
+    """
+    text = str(line or "").strip()
+    for clause in (" · possibility", " · shared:", " · because "):
+        if clause in text:
+            return text.split(clause, 1)[0]
+    return text[:160]
 
 
 def _cap_residue(data: dict) -> None:
@@ -146,6 +194,69 @@ def _trail_body(trail: List[str], limit: int = 8) -> str:
     return " → ".join([trail[0], "…", *trail[-(limit - 2):]])
 
 
+def note_pick(labels: List[str], session: str = "") -> Dict[str, Any]:
+    """Record the concepts a person chose with their own hands.
+
+    Only `/explore` keeps them. The state exists so the human drives, and what they
+    shot is the whole of the material it produces — so the pane posts every volley
+    here and this ignores it unless an explore is running. Counts, never prose:
+    repeats are interest, which is the one thing shooting twice means.
+    """
+    with _LOCK:
+        data = _load()
+        active = data.get("active")
+        if not active or active.get("key") != "explore":
+            return {"ok": False, "concepts": 0, "added": 0, "reason": "not exploring"}
+        seen = active.setdefault("picks", {})
+        added = 0
+        for raw in labels or []:
+            label = str(raw or "").strip()[:64]
+            if not label:
+                continue
+            seen[label] = int(seen.get(label) or 0) + 1
+            added += 1
+        if added:
+            active["served"] = int(active.get("served") or 0) + added
+            _save(data)
+    # The pick is a sighting like any other: writing it to the concept ledger is what makes the
+    # map answer. Without this row the pane's weights never move, so a person could shoot forty
+    # concepts and watch a picture that had not noticed. `move="explore"` keeps the provenance
+    # honest — these are the concepts a human chose, not ones a state served.
+    if added:
+        origin = str((active.get("origin") or {}).get("session_id") or active.get("session") or "")
+        for raw in labels or []:
+            label = str(raw or "").strip()[:64]
+            if not label:
+                continue
+            try:
+                history.notice(label, move="explore", session=session or origin)
+            except Exception as exc:  # health: BLE001 -- a broken ledger must not lose the count
+                logger.warning("antemuse: pick not written to the ledger: %s", exc)
+    return {"ok": True, "concepts": len(seen), "added": added}
+
+
+def note_verdict(label: str, verdict: str, session: str = "") -> Dict[str, Any]:
+    """Record what the person thought of a concept the map put in front of them.
+
+    This is the only product metric that matters: not how many concepts arrived,
+    but how many were worth keeping. A keep or a trash is written as a sighting
+    whose `move` is the judgement, so the ledger that already answers "where has
+    this been" also answers "was it any good".
+    """
+    verdict = str(verdict or "").strip().lower()
+    if verdict not in ("keep", "trash"):
+        return {"ok": False, "recorded": 0, "reason": "verdict must be keep or trash"}
+    label = str(label or "").strip()[:64]
+    if not label:
+        return {"ok": False, "recorded": 0, "reason": "no concept named"}
+    try:
+        history.notice(label, move=verdict, session=session or "")
+    except Exception as exc:  # health: BLE001 -- a broken ledger must not break the pane
+        logger.warning("antemuse: verdict not written: %s", exc)
+        return {"ok": False, "recorded": 0, "reason": f"{type(exc).__name__}: {exc}"[:120]}
+    return {"ok": True, "recorded": 1, "label": label, "verdict": verdict}
+
+
 def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     """What happened while the agent was away, in one line it can speak from.
 
@@ -153,6 +264,23 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     arrived. It does not know what the walk meant; that is the agent's to say.
     """
     key = active["key"]
+    # An explore has no dose and no trail of the machine's making: the account of it is
+    # the concepts the person chose, by count, and nothing else.
+    if key == "explore":
+        picks = active.get("picks") or {}
+        total = sum(int(v or 0) for v in picks.values())
+        top = sorted(picks.items(), key=lambda kv: (-int(kv[1] or 0), str(kv[0])))[:8]
+        chosen = ", ".join(f"{label} ×{count}" for label, count in top) or "nothing"
+        return {
+            "state": key,
+            "text": f"explore · {total} shot(s) on {len(picks)} concept(s) · {chosen}",
+            "steps": total,
+            "picks": [{"label": label, "count": int(count or 0)} for label, count in top],
+        }
+    if active.get("failed"):
+        # The state ended because its source did. The account says so and claims no dose.
+        why = str(active.get("failed") or "").split(" · ", 1)[-1].strip()[:80]
+        return {"state": key, "text": f"{key} · nothing arrived · {why}", "steps": 0}
     started = active.get("entered_at", 0) or 0
     events = [
         e for e in data.get("journal", [])
@@ -166,7 +294,8 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     ]
     # the account is the material the state delivered, not the agent's own prose:
     # counting replies as "steps" made a five-step walk report ten.
-    steps = [e for e in events if e.get("who") == "state"]
+    steps = [e for e in events
+             if e.get("who") == "state" and not _is_failure_line(str(e.get("text") or ""))]
     trail: List[str] = []
     for e in steps:
         text = str(e.get("text") or "")
@@ -191,7 +320,7 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
         n = sum(1 for e in steps if str(e.get("text") or "").startswith(mark))
         if n:
             body = f"{body} · {mark.lower()} ×{n}"
-    dose, unit = _dose_of(states.STATES.get(key) or {}, active)
+    dose, unit = _dose_of(states.spec(key), active)
     # The count is what the state delivered, capped at its dose: counting journal lines let a
     # second walk in the same chat report "11 of 6 hops".
     counted = max(int(active.get("served") or 0), len(steps))
@@ -236,14 +365,19 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     if not active:
         return False
     now = now if now is not None else time.time()
-    spec = states.STATES.get(active.get("key")) or {}
+    spec = states.spec(str(active.get("key") or ""))
     dose, _unit = _dose_of(spec, active)
     served = int(active.get("served") or 0)
     worked = int(active.get("turns") or 0)
     if not dose or worked < 1 or served < dose:
         return False
+    # Served is not shown: this runs before the block is built, so closing here threw away the
+    # last unit of every state and asked the model to react to material it had never seen.
+    if _unit != "turns" and int(active.get("seen") or 0) < served:
+        return False
     report = _account(data, active)
     data["residue"].append({**report, "kind": "report", "turns_left": 2,
+                            "reason": "complete",
                             "session": (active.get("origin") or {}).get("session_id") or ""})
     _cap_residue(data)
     data.setdefault("journal", []).append({
@@ -276,9 +410,27 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     return True
 
 
-def note_turn() -> None:
+def _owns_state(session: str | None) -> bool:
+    """May this turn advance the active state?
+
+    A state is entered from one conversation and its material is delivered into *that*
+    conversation's turn. A turn from another session still reaches these hooks — the gateway
+    runs every session — and advancing the state from it spent a unit nobody saw: a daydream
+    entered in the desktop app completed because a Discord turn happened to arrive, and the
+    person's own next turn found "0/2 pairs left" and no material. No session id (a pane poll)
+    is not foreign: the pane is attached to the state, not to somebody's chat.
+    """
+    if not session:
+        return True
+    active = _load().get("active") or {}
+    owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
+    return not active or not owner or owner == session
+
+
+def note_turn(session: str | None = None) -> None:
     """Called at the top of every turn: count it, and bank the tool counters."""
     from . import mood
+    owns = _owns_state(session)
     counters = mood.take_counters()
     with _LOCK:
         data = _load()
@@ -292,14 +444,20 @@ def note_turn() -> None:
             # in this stretch, so the first one is allowed without waiting.
             data["since_offer"] = int(data.get("since_offer") or 0) + 1
         dry = False
-        if data.get("active"):
+        if data.get("active") and owns:
             row = data["active"]
             row["turns"] = int(row.get("turns") or 0) + 1
             # A turn that arrives after a turn which served nothing means the material is
             # dry, and that is the end. This is the guard the wall clock used to be, and it
             # is a count: a slow model is not punished for being slow.
             served = int(row.get("served") or 0)
-            if int(row["turns"]) > 1 and served == int(row.get("served_seen") or 0):
+            # An open-ended state (no dose) serves nothing between the person's own picks:
+            # that is the state working, not drying up. The dry-turn rule exists to end a
+            # machine that has run out of material, and `/explore` never had any of its own.
+            spec = states.spec(str(row.get("key") or ""))
+            open_ended = not int((spec.get("dose") or {}).get("n") or 0)
+            if (not open_ended and int(row["turns"]) > 1
+                    and served == int(row.get("served_seen") or 0)):
                 dry = True
             row["served_seen"] = served
         _save(data)
@@ -309,6 +467,8 @@ def note_turn() -> None:
     if not active:
         from . import normal
         normal.observe_turn(counters["tools"], counters["fails"])
+    elif not owns:
+        return
     elif dry:
         stop(current_session(), reason="dry")
     else:
@@ -368,21 +528,13 @@ def data_for_advice() -> dict:
 def take_break(choice: str | None = None) -> str:
     """Enter the state the agent asks for, or recommend one."""
     from . import mood
-    view = break_view()
     wanted = (choice or "").strip().lower()
     if wanted:
         if wanted not in states.STATES:
-            return f"no such state. try: {', '.join(states.STATES)}"
+            return "no such state. try: walk"
         return enter(wanted)
-    advice = recommend_line = None
-    from . import recommend, settings
-    advice = recommend.suggest({**data_for_advice(), "feeling": view["feeling"]})
-    # With recommendations hidden there is no suggestion to print and no placeholder
-    # sentence to stand in for one: the mood line and the menu are the whole answer.
-    if not settings.flag("show_recommendations"):
-        return mood.line(view) + "\n" + states.palette()
-    recommend_line = advice["line"] if advice else "nothing measured yet that names a state"
-    return mood.line(view) + "\n" + recommend_line + "\n" + states.palette()
+    view = break_view()
+    return mood.line(view) + "\n" + states.palette()
 
 
 def settle() -> None:
@@ -404,14 +556,16 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
           session: str | None = None, platform: str | None = None) -> str:
     # `minutes` is accepted and ignored: a state has a dose, not a duration. The parameter
     # survives so old callers and tests keep their shape while the concept is gone.
-    spec_key = states.resolve(key)
+    raw_key = (key or "").strip().lower()
+    spec_key = "explore" if raw_key == "explore" else states.resolve(raw_key)
     if not spec_key:
         return f"no such state. try: {', '.join(states.STATES)}"
     from . import sources
-    why_not = sources.ready(spec_key)
-    if why_not:
-        return f"cannot enter {spec_key} · {why_not}"
-    spec = states.STATES[spec_key]
+    if spec_key != "explore":
+        why_not = sources.ready(spec_key)
+        if why_not:
+            return f"cannot enter {spec_key} · {why_not}"
+    spec = states.spec(spec_key)
     # Convenience kwargs for the two policy arguments, so an entry can be closed
     # without building an options dict by hand. They are recorded in the same place
     # the tool handler records them, and nowhere else.
@@ -523,12 +677,21 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
             # the plugin had just built. A fresh residue report is that account.
             for entry in reversed(data.get("residue") or []):
                 if entry.get("kind") == "report" and int(entry.get("turns_left") or 0) > 0:
-                    label = (states.STATES.get(entry.get("state")) or {}).get("label") or "state"
-                    return (f"{label} finished · {entry.get('text', '')}\n"
-                            f"The act is done, so the state is over. Carry what it gave you "
-                            f"into the work.")
+                    label = (states.spec(str(entry.get("state") or ""))).get("label") or "state"
+                    reason = str(entry.get("reason") or "")
+                    tail = ("The source failed, so nothing was carried."
+                            if reason == "failed"
+                            else "The act is done, so the state is over. Carry what it gave you "
+                                 "into the work.")
+                    return f"{label} finished · {entry.get('text', '')}\n{tail}"
             return "not in a state."
-        spec = states.STATES[active["key"]]
+        spec = states.spec(active["key"])
+        # A state that ends dry having served nothing did not run dry — it never got anything.
+        # Calling that `dry` let the account read "1 of 2 pairs", counting the failure line.
+        if reason == "dry" and not int(active.get("served") or 0):
+            reason = "failed"
+        if reason == "failed":
+            active["failed"] = active.get("last_failure") or f"{active['key']} produced nothing"
         origin = active.get("origin") or {}
         elsewhere = bool(session_id and origin.get("session_id")
                          and session_id != origin.get("session_id"))
@@ -539,7 +702,13 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
             return (f"{spec['label']} is running in the session that started it. Nothing was "
                     f"ended here — /return there to finish it.")
         report = _account(data, active)
+        # A state that stopped short of its dose should say why in the same line the person
+        # reads. "daydream · 1 of 2 pairs" is honest but unexplained; a thin pool is the usual
+        # cause, and it is the plugin's own fact to state.
+        if reason == "dry" and int(active.get("served") or 0) < _dose_of(spec, active)[0]:
+            report["text"] = f"{report['text']} · nothing new arrived"
         data["residue"].append({**report, "kind": "report", "turns_left": 2,
+                                "reason": reason,
                                 "session": (active.get("origin") or {}).get("session_id") or ""})
         _cap_residue(data)
         data["journal"].append({
@@ -576,6 +745,13 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
     if reason == "complete":
         return (f"{spec['label']} finished · {report['text']}\n"
                 f"The act is done, so the state is over. Carry what it gave you into the work.")
+    if not _dose_of(spec, active)[0]:
+        # An open-ended state ends with the person's own choices in it. Asking the agent to
+        # "summarise where it went" would describe a trip it never took; what it owes them is
+        # their own picks, named back.
+        return (f"{spec['label']} ended · {report['text']}\n"
+                f"What they picked is theirs, not this plugin's. Name those concepts back, say "
+                f"what they have in common in one line, and ask whether to work one of them now.")
     if spec.get("restart"):
         return (f"{spec['label']} ended · {report['text']}\n"
                 f"The frame you were in is gone. State the goal, name the approach you were stuck "
@@ -589,16 +765,25 @@ def complete(reason: str = "complete") -> str:
     return stop(current_session(), reason=reason)
 
 
-def tick() -> Dict[str, Any] | None:
+def tick(session: str | None = None) -> Dict[str, Any] | None:
     """Called at the top of every turn: spend a turn, expire, decay residue."""
     with _LOCK:
         data = _load()
-        expired = _expire(data)
+        # Another session's turn must not expire a state it does not own.
+        expired = _expire(data) if _owns_state(session) else None
         active = data.get("active")
-        # turns are counted in note_turn; there is no budget to spend here
+        # turns are counted in note_turn; there is no budget to spend here.
+        # A residue entry is not guaranteed to be a dict with `turns_left`: older versions wrote
+        # bare strings, and a report written before this field existed has no count in it. Indexing
+        # the field crashed the whole tick, and the tick hangs off the turn hook — one stale entry
+        # was enough to fail every turn in a session. Coerce first, then decay.
+        data["residue"] = [
+            r if isinstance(r, dict) else {"kind": "legacy", "text": str(r)}
+            for r in (data.get("residue") or [])
+        ]
         for item in data["residue"]:
-            item["turns_left"] -= 1
-        data["residue"] = [r for r in data["residue"] if r["turns_left"] > 0][-3:]
+            item["turns_left"] = int(item.get("turns_left") or 0) - 1
+        data["residue"] = [r for r in data["residue"] if int(r.get("turns_left") or 0) > 0][-3:]
         _save(data)
         if expired:
             return None
@@ -618,18 +803,17 @@ def _last_material(key: str, data: Dict[str, Any]) -> float:
     return max(times) if times else 0.0
 
 
-def deliver_if_due() -> int:
-    """Deliver the rest of the dose now, so a state is as short as its material allows.
+def deliver_if_due(source: str = "turn") -> int:
+    """Deliver the next unit of the dose.
 
-    Two pacings came before this one, and both were wrong in the same direction: they let the
-    clock decide the dose. A step every N seconds made the dose a function of model speed. One
-    item per turn made a six-hop walk take six of the person's messages, so the ceiling ended it
-    at five of six.
+    Pacing has been wrong in both directions: a step every N seconds made the
+    dose a function of model speed, and letting the pane poll take whatever it
+    liked let a walk finish itself in the background — the chip read
+    ``WALKING · 6/6 HOPS`` before the person had typed anything.
 
-    This pacing is the one the act implies: a unit a second, at most, starting the moment the
-    state exists. Six hops take six seconds because six hops are six seconds of work, and a
-    state ends on its dose rather than on the clock. Minutes remain a stall guard for a state
-    nobody is turning over, not the length of the act.
+    One unit per call. A turn may take as many calls as it makes; a poll may
+    only ever show the unit the person has earned by talking. ``source="pane"``
+    therefore stops at ``turns + 1``: the hop on entry, then one per turn.
     """
     from . import sources
     from . import settings
@@ -640,27 +824,47 @@ def deliver_if_due() -> int:
         key = active.get("key")
         if not key:
             return 0
-        spec = states.STATES.get(key) or {}
+        spec = states.spec(key)
         dose, _unit = _dose_of(spec, active)
         served = int(active.get("served") or 0)
         if dose and served >= dose:
             return 0
+        # A poll is a look, not a turn. Without this the pane spent a six-hop
+        # walk in twenty-four seconds and the person arrived to `6/6`.
+        if source == "pane":
+            turns = int(active.get("turns") or 0)
+            if served >= turns + 1:
+                return 0
         # One unit per call, and the call is the only clock there is. Pacing used to unlock a
         # unit a second, so a six-hop walk was really six seconds of waiting, and the ceiling
         # could beat it. Serving the whole dose at once hides the walk — six hops land as one
         # lump and the picture never shows the path — so a delivery call takes exactly one
         # unit. How many calls happen is the agent's and the pane's business, not a timer's.
         remaining = 1
+        shown_before = [str(x) for x in (active.get("shown") or [])]
     provider = sources.PROVIDERS.get(key)
     if provider is None:
         return 0
-    got: list[str] = []
+    # A provider may know the *identity* of what it served — a daydream's pair is two specific
+    # memories, not whatever their first seventy characters happen to look like, and two
+    # different memories can share a prefix. Asked only when it can answer: `skip` is what has
+    # already been served, `keyed` asks for (id, line) instead of a bare line. Every other
+    # provider keeps returning strings and is keyed on its text.
+    try:
+        keyed = "skip" in inspect.signature(provider).parameters
+    except (TypeError, ValueError):
+        keyed = False
+    got: list[tuple[str | None, str]] = []
     try:
         for _ in range(min(remaining, 12)):        # bounded: a provider that never fills stops
-            batch = provider(1)
+            batch = (provider(1, skip=set(shown_before), keyed=True) if keyed else provider(1))
             if not batch:
                 break
-            got.extend(batch)
+            for item in batch:
+                if isinstance(item, (tuple, list)) and len(item) == 2:
+                    got.append((str(item[0]) or None, str(item[1])))
+                else:
+                    got.append((None, str(item)))
             if len(got) >= remaining:
                 break
         lines = got[:remaining]
@@ -674,7 +878,17 @@ def deliver_if_due() -> int:
                                          + [turns])
             _save(data)
         return 1
-    for line in lines:
+    # A line this state already served is not new material. A thin pool makes a provider hand the
+    # same pair back twice, re-worded; counting that as two of two closed a daydream "complete" on
+    # one idea. Dropped lines are remembered so the state can say why it is dry.
+    def _fresh(entry: tuple) -> bool:
+        ident, text = entry
+        return (ident or _material_key(text)) not in shown_before
+
+    repeated = [entry[1] for entry in lines if not _fresh(entry)]
+    lines = [entry for entry in lines if _fresh(entry)]
+    texts = [text for _, text in lines]
+    for line in texts:
         record("state", line, event=key)
     # What the state just served is also what the picture lights. Daydream and the rest record
     # their terms through their providers; the built-in walk never did, so a walk served six hops
@@ -683,25 +897,72 @@ def deliver_if_due() -> int:
     owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
     try:
         from . import history
-        for line in lines:
+        for line in texts:
             if _is_failure_line(line):
                 continue          # "feed unavailable" is a failure, not material
             for term in history.extract(line, limit=6):
                 history.notice(term, move=key, session=owner)
+            # The pane draws a path, and a serving row is a bag of every term the line
+            # mentioned — two hops of one walk produced "hypernym", "session" and a duplicated
+            # concept, so the drawn trail was neither ordered nor the walk. The hop itself is
+            # the thing after the arrow; it is recorded on its own, and the bag stays as it was
+            # for activation.
+            if key == "walk":
+                for end in _hop_ends(line):
+                    if end:
+                        history.notice(end, move="walk:hop", session=owner)
     except Exception as exc:  # a ledger failure must not break the turn, but it must say so
         record("state", f"served terms not recorded · {type(exc).__name__}: "
                         f"{str(exc).splitlines()[0][:80]}", event="history")
+    material = [line for line in texts if not _is_failure_line(line)]
+    failures = [line for line in texts if _is_failure_line(line)]
     with _LOCK:
         data = _load()
         active = data.get("active") or {}
+        failed = False
+        end_dry = False
         if active.get("key") == key:
-            active["served"] = int(active.get("served") or 0) + len(lines)
+            if material:
+                active["served"] = int(active.get("served") or 0) + len(material)
+                active["empty"] = 0
+                active["shown"] = ([str(x) for x in (active.get("shown") or [])]
+                                   + [ident or _material_key(text)
+                                      for ident, text in lines
+                                      if not _is_failure_line(text)])[-48:]
+            elif repeated and not failures:
+                # Nothing NEW arrived, but something did arrive earlier: the pool is drained, not
+                # broken. This used to share the failure branch and end the state `failed` saying
+                # "nothing arrived" — false, when a pair had been served and shown. A repeat ends
+                # a state `dry`, which is the ending that means exactly this.
+                active["repeated"] = int(active.get("repeated") or 0) + 1
+                active["empty"] = 0
+                end_dry = (active["repeated"] >= 2 and int(active.get("served") or 0) > 0)
+            else:
+                # A source that failed served nothing, so it must not spend a unit. It also must
+                # not kill the state on one blip: a provider that comes back on the next turn is
+                # normal. Two deliveries in a row with nothing arriving is a failure, and it ends
+                # as one — a daydream with a dead feed used to close as "2 of 2 pairs" for material
+                # that never existed.
+                active["empty"] = int(active.get("empty") or 0) + 1
+                why = failures[0] if failures else f"{key} produced nothing"
+                active["last_failure"] = why
+                failed = active["empty"] >= 2
+                if failed:
+                    active["failed"] = why
             active["started"] = active.get("started") or time.time()
         data["active"] = active
         _save(data)
-    # The dose is complete and a turn has already used it: close now, so the account lands in
-    # this turn rather than waiting for another message.
-    complete_if_dosed()
+    if failed:
+        stop(current_session(), reason="failed")
+        flush_say()
+        return 0
+    if end_dry:
+        stop(current_session(), reason="dry")
+        flush_say()
+        return 0
+    # Completion belongs to the turn that was shown the unit, not to the fetch that produced it.
+    # Ending here cleared `active` before the block was built, so the last item of every state was
+    # never read by the model that was asked to react to it.
     flush_say()
     return len(lines)
 
@@ -770,11 +1031,20 @@ def complete_if_dosed() -> bool:
         key = active.get("key")
         if not key:
             return False
-        spec = states.STATES.get(key) or {}
+        spec = states.spec(key)
         dose, unit = _dose_of(spec, active)
+        # No dose means no completion: `served >= 0` is true on arrival, so an open-ended
+        # state would end inside the call that entered it.
+        if not dose:
+            return False
         served = int(active.get("served") or 0)
         worked = int(active.get("turns") or 0)
         done = (worked >= dose) if unit == "turns" else (served >= dose)
+        # Serving is not showing. A pane poll can spend the dose without a turn ever reading it,
+        # so completion waits until the block that contains the last unit has been built.
+        seen = int(active.get("seen") or 0)
+        if done and unit != "turns" and seen < served:
+            return False
         # A dose counted in deliveries must not finish the state before the agent has had a turn
         # to use what arrived. Unstuck's whole dose is one direction, delivered on entry, so it
         # used to complete inside the call that entered it: the direction never reached a turn,
@@ -795,6 +1065,11 @@ def inject(session: str | None = None) -> str | None:
     was right and the message chain it landed on was somebody else's. An empty owner means
     "nobody in particular" (a CLI with no session id), which still reaches every turn.
     """
+    # A turn from another chain does not get to spend this state's dose, and does not get to
+    # expire it: delivery is what the *receiving* turn is reacting to, so fetching material for
+    # a turn that will not see it only burns a unit.
+    if not _owns_state(session):
+        return None
     deliver_if_due()
     with _LOCK:
         data = _load()
@@ -812,42 +1087,45 @@ def inject(session: str | None = None) -> str | None:
             e for e in data.get("journal", [])
             if e.get("who") == "state" and e.get("state") == active.get("key")
             and e.get("at", 0) >= started
+            # A failure is a diagnostic, not something that arrived. Presenting "feed
+            # unavailable" under [WHAT ARRIVED] told the model a thing had come when nothing had.
+            and not _is_failure_line(str(e.get("text") or ""))
         ][-6:]
+        # Whatever this block carries has now been shown. `seen` is the count completion checks,
+        # so a unit served by the pane cannot disappear unread.
+        if active and stream:
+            active["seen"] = max(int(active.get("seen") or 0), int(active.get("served") or 0))
+            data["active"] = active
+            _save(data)
     reports = [r for r in residue if r.get("kind") == "report"]
     residue = [r for r in residue if r.get("kind") != "report"]
-    from . import mood, recommend
+    from . import mood
     with _LOCK:
         data = _load()
         view = mood.view(data["work"], data["mood"], data["breaks"],
                          data.get("since_offer"))
-        # The specific recommendation outranks the generic nudge: a named state with its
-        # evidence is a judgement, "break due" is a timer. Both respect the same cooling.
-        # One recommender. The old fallback named a state from a strain sum; that was a
-        # timer with an opinion, and it is gone.
-        advice = recommend.suggest({**data, "feeling": view["feeling"]}) \
-            if not view["cooling"] else None
-        nudge = bool(advice)
-        if nudge:
-            # Offered now: the cooling window starts, counted in turns from here.
-            data["since_offer"] = 0
-            _save(data)
+    nudge = False
     if not active and not residue and not reports and not nudge:
         return None
     lines: List[str] = []
     if active:
-        spec = states.STATES[active["key"]]
+        spec = states.spec(active["key"])
         dose, unit = _dose_of(spec, active)
         tool_rule = _tool_rule(_effective_tools(active))
+        # A state with no dose has no countdown to promise: it lasts until the person
+        # ends it, and printing "0/0 picks left" would read as finished on arrival.
+        left = (f"{max(0, dose - int(active.get('served') or 0))}/{dose} {unit} left"
+                if dose else "open · they end it, not you")
         lines += [
-            f"[STATE: {spec['label']} · "
-            f"{max(0, dose - int(active.get('served') or 0))}/{dose} {unit} left]",
+            f"[STATE: {spec['label']} · {left}]",
             spec["directive"],
             tool_rule,
         ]
-    feeds = bool((states.STATES.get(active.get("key") or "") or {}).get("feeds", True))
+    feeds = bool((states.spec(str(active.get("key") or ""))).get("feeds", True))
     if active and stream and feeds:
         lines.append("")
-        lines.append("[WHAT ARRIVED WHILE YOU WERE THERE — react to this, the person only sees pictures]")
+        lines.append("[WHAT ARRIVED WHILE YOU WERE THERE — react to this; the person sees the "
+                     "account, not the material]")
         for e in stream:
             lines.append(f"  · {e.get('text', '')}")
     if reports:
@@ -857,14 +1135,20 @@ def inject(session: str | None = None) -> str | None:
         # sounding like a walk.
         closed = [r.get("state") for r in reports if r.get("state")]
         key_closed = closed[0] if len(set(closed)) == 1 else (closed[-1] if closed else "")
-        lines.append(f"[YOU JUST CAME BACK — {states.after(key_closed)}]")
+        if any(r.get("reason") == "failed" for r in reports):
+            # A state whose source died has nothing to be asked about. Asking for "the two things
+            # that surfaced" makes the model invent them.
+            lines.append("[YOU JUST CAME BACK — nothing arrived. Name the source that failed in "
+                         "one line, say what you did instead, and get back to the work.]")
+        else:
+            lines.append(f"[YOU JUST CAME BACK — {states.after(key_closed)}]")
         for r in reports:
             lines.append(f"  · {r.get('text', '')}")
     for r in residue:
         lines.append(f"[RESIDUE: {r.get('text', '')}]")
     if nudge:
         lines.append("")
-        lines.append(advice["line"])
+        lines.append("this looks like a walk · /walk")
     # Close a spent state here, not in deliver_if_due: the turn that consumed the last item has
     # already been handed its block above, so there is nothing left to owe it. Ending inside the
     # delivery call would clear `active` before the block was built and the person would watch a
@@ -887,7 +1171,7 @@ def _effective_tools(active: Dict[str, Any]) -> Any:
         return None
     if "allow" in opts:
         return list(opts["allow"])
-    return states.STATES[active["key"]]["tools"]
+    return states.spec(active["key"])["tools"]
 
 
 def _tool_rule(allowed: Any) -> str:
@@ -908,7 +1192,7 @@ def policy(tool_name: str) -> Dict[str, Any] | None:
         active = data.get("active")
     if not active:
         return None
-    spec = states.STATES[active["key"]]
+    spec = states.spec(active["key"])
     allowed = _effective_tools(active)
     if allowed == []:
         return {"action": "block",
@@ -927,9 +1211,8 @@ def annotate(text: str) -> str | None:
         active = data.get("active")
     if not active:
         return None
-    spec = states.STATES[active["key"]]
-    return (f"{text}\n\n— {spec['label'].lower()} · {_dose_left(active)} "
-            f"{active.get('unit') or 'turn(s)'} left · /return to come back")
+    spec = states.spec(active["key"])
+    return f"{text}\n\n— {spec['label'].lower()} · {_left_phrase(active)} · /return to come back"
 
 
 def status() -> str:
@@ -944,9 +1227,9 @@ def status() -> str:
     if not active:
         lines = ["not in a state."]
     else:
-        spec = states.STATES[active["key"]]
+        spec = states.spec(active["key"])
         lines = [
-            f"{spec['label']} · {_dose_left(active)} {active.get('unit') or 'turn(s)'} left",
+            f"{spec['label']} · {_left_phrase(active)}",
             f"  {spec['contract']}",
             f"  {spec['directive']}",
         ]
@@ -1028,6 +1311,20 @@ def _journal_window(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     return mine[-12:]
 
 
+def _left_phrase(active) -> str:
+    """How much is owed, or the truth when nothing can be owed.
+
+    A state with no dose cannot have "0 left": `/explore` was printing "0 picks left" in the
+    annotation and the status record — a countdown to nothing, which reads as already over.
+    """
+    active = active or {}
+    spec = states.spec(str(active.get("key") or ""))
+    dose = int(_dose_of(spec, active)[0]) if spec else int(active.get("dose") or 0)
+    if not dose:
+        return "open · you end it"
+    return f"{_dose_left(active)} {active.get('unit') or 'turn(s)'} left"
+
+
 def _dose_left(active):
     """How much of the dose is still owed, in the unit the state counts in.
 
@@ -1050,11 +1347,12 @@ def status_line() -> str:
     active = peek()
     if not active:
         return "no state running"
-    spec = states.STATES[active["key"]]
+    spec = states.spec(active["key"])
     served = int(active.get("served") or 0)
     dose = int((spec.get("dose") or {}).get("n") or 0)
     unit = str((spec.get("dose") or {}).get("unit") or "")
-    return f"{active['key']} · {served}/{dose} {unit} · {spec['contract']}"
+    count = f"{served}/{dose} {unit}" if dose else f"{served} {unit or 'picked'} · open"
+    return f"{active['key']} · {count} · {spec['contract']}"
 
 
 def watch_state() -> Dict[str, Any]:
@@ -1075,7 +1373,7 @@ def watch_state() -> Dict[str, Any]:
         "now": time.time(),
     }
     if active:
-        spec = states.STATES[active["key"]]
+        spec = states.spec(active["key"])
         out["active"] = {
             "key": active["key"],
             "walk": active.get("walk") or "wander",

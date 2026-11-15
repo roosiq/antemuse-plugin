@@ -521,6 +521,23 @@ def recent(days: int = 3, limit: int = 40) -> List[Dict[str, Any]]:
             for r in rows]
 
 
+def verdicts(since_days: int = 30) -> Dict[str, Any]:
+    """How often a concept was kept, from the ledger alone.
+
+    A verdict is a `served` row whose `move` is `keep` or `trash`. Nothing else
+    records taste, so this is where the only product metric lives: of the
+    concepts put in front of a person and judged, how many were worth keeping.
+    An empty ledger answers "nothing yet", not zero per cent.
+    """
+    since = time.time() - max(0, int(since_days)) * 86400
+    rows = _query("SELECT move, COUNT(*) FROM served "
+                  "WHERE move IN ('keep', 'trash') AND at >= ? GROUP BY move", (since,))
+    tally = {str(move): int(total) for move, total in rows}
+    keep, trash = tally.get("keep", 0), tally.get("trash", 0)
+    total = keep + trash
+    return {"keep": keep, "trash": trash, "rate": (keep / total) if total else None}
+
+
 def when(ts: Optional[float]) -> str:
     if not ts:
         return ""

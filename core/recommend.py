@@ -35,11 +35,12 @@ WALL_WINDOW = 4
 LONG_TURNS = 10
 
 #: a *reported* feeling, mapped. Reported, not inferred: the person or the agent said it.
+#: There is one state, so every report recommends it and the evidence does the work.
 REPORTED = {
     "stuck": ("walk", "you said you were stuck"),
-    "tired": ("daydream", "you said you were tired"),
-    "saturated": ("dream", "you said you were saturated"),
-    "flat": ("doomscroll", "you said you were flat"),
+    "tired": ("walk", "you said you were tired — the walk costs nothing but distance"),
+    "saturated": ("walk", "you said you were saturated"),
+    "flat": ("walk", "you said you were flat"),
     "sharp": ("walk", "you said you were sharp — keep the thread, change the frame"),
 }
 
@@ -174,8 +175,8 @@ def _rut(entries: List[Dict[str, Any]], active: Optional[Dict[str, Any]],
 
 
 def _other(current: str, keys: List[str]) -> str:
-    """Pick a different state. Which one is a fixed rotation, not a mood read."""
-    order = ["walk", "daydream", "dream", "doomscroll"]
+    """Pick the state to name. There is one, so the rotation is a single step."""
+    order = ["walk"]
     if current in order:
         return order[(order.index(current) + 1) % len(order)]
     return "walk"
@@ -220,13 +221,13 @@ def suggest(data: Dict[str, Any], *, open_decisions: int = 0,
     for pattern, state, evidence in (
         # On an empty repository there is no loop worth interrupting: there is nothing
         # to be stuck in yet. This is the one pattern that outranks everything.
-        ("new project", "unstuck", _new_project()),
+        ("new project", "walk", _new_project()),
 
         ("loop", "walk", _loop(work)),
-        ("wall", "doomscroll", _wall(work)),
-        ("saturation", "dream", _saturation(work, open_decisions)),
-        ("long stretch", "daydream", _long_stretch(int(work.get("turns") or 0))),
-        ("grind", "daydream", _grind(work)),
+        ("wall", "walk", _wall(work)),
+        ("saturation", "walk", _saturation(work, open_decisions)),
+        ("long stretch", "walk", _long_stretch(int(work.get("turns") or 0))),
+        ("grind", "walk", _grind(work)),
     ):
         if evidence:
             return {"pattern": pattern,

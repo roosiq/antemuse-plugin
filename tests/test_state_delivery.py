@@ -1,0 +1,173 @@
+"""Walk dose delivery: delivered material, ownership, endings, and accounts."""
+from __future__ import annotations
+
+import json
+import os
+import sys
+import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="delivery-test-")
+
+from core import engine, sources, states  # noqa: E402
+
+
+def setup_function(_):
+    engine.clear()
+
+
+def provider(*lines):
+    queue = list(lines)
+
+    def call(_n):
+        return [queue.pop(0)] if queue else []
+
+    return call
+
+
+def drive(*lines, turns=8, session="delivery"):
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(*lines)
+    try:
+        engine.enter("walk", session=session)
+        blocks = []
+        for _ in range(turns):
+            engine.note_turn(session)
+            engine.tick(session)
+            blocks.append(engine.inject(session) or "")
+            if engine.peek() is None:
+                break
+        return blocks
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+
+def state_home() -> dict:
+    with open(os.path.join(os.environ["ANTEMUSE_STATES_HOME"], "state.json")) as fh:
+        return json.load(fh)
+
+
+def markers(n=6):
+    return [f"WALK-MARKER-{i}" for i in range(1, n + 1)]
+
+
+def test_the_last_unit_reaches_the_turn_that_spends_it():
+    lines = markers()
+    drive(*lines)
+    journal = [e["text"] for e in state_home()["journal"] if e.get("who") == "state"]
+    assert journal[:6] == lines
+    assert engine.peek() is None
+
+
+def test_a_state_ends_with_exactly_one_account():
+    drive(*markers())
+    reports = [r for r in state_home()["residue"] if r.get("kind") == "report"]
+    assert len(reports) == 1
+    assert reports[0]["state"] == "walk"
+    assert reports[0]["reason"] == "complete"
+
+
+def test_a_dead_source_ends_as_failed_and_claims_no_dose():
+    blocks = drive("feed unavailable · nothing to read")
+    joined = "\n".join(blocks)
+    assert "nothing arrived" in joined
+    assert "1 of 6 hops" not in joined
+    assert "[WHAT ARRIVED" not in joined
+    report = [r for r in state_home()["residue"] if r.get("kind") == "report"][0]
+    assert report["reason"] == "failed"
+    assert "nothing arrived" in report["text"]
+
+
+def test_a_source_that_runs_dry_mid_dose_is_not_called_nothing_arrived():
+    drive("WALK-MARKER-1", "WALK-MARKER-2")
+    report = [r for r in state_home()["residue"] if r.get("kind") == "report"][0]
+    assert report["reason"] == "dry"
+    assert "2 of 6 hops" in report["text"]
+    assert "nothing arrived" not in report["text"]
+
+
+def test_a_pane_poll_cannot_spend_a_state():
+    lines = markers()
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(*lines)
+    try:
+        engine.enter("walk", session="pane")
+        engine.note_turn("pane")
+        engine.tick("pane")
+        for _ in range(8):
+            engine.deliver_if_due(source="pane")
+        active = engine.peek()
+        assert active is not None
+        assert active["served"] == 2
+        engine.inject("pane")
+        assert engine.peek() is not None
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+
+def test_a_turn_from_another_session_does_not_spend_the_dose():
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider("a → b", "b → c")
+    try:
+        engine.enter("walk", session="A")
+        engine.note_turn("A")
+        engine.inject("A")
+        assert engine._load()["active"]["served"] == 1
+        engine.note_turn("B")
+        engine.tick("B")
+        assert engine.inject("B") is None
+        active = engine._load()["active"]
+        assert active["served"] == 1
+        assert active["turns"] == 1
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+
+def test_a_repeated_line_ends_dry_and_does_not_claim_nothing_arrived():
+    line = "WALK-MARKER"
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(line, line, line)
+    try:
+        engine.enter("walk", session="repeat")
+        engine.note_turn("repeat")
+        engine.inject("repeat")
+        engine.deliver_if_due()
+        engine.deliver_if_due()
+        assert engine.peek() is None
+        report = [r for r in state_home()["residue"] if r.get("kind") == "report"][0]
+        assert report["reason"] == "dry"
+        assert "nothing arrived" not in report["text"]
+        assert "nothing new arrived" in report["text"]
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+
+def test_a_repeated_line_is_not_new_material():
+    line = "WALK-MARKER"
+    drive(line, line, line)
+    report = [r for r in state_home()["residue"] if r.get("kind") == "report"][0]
+    assert report["reason"] == "dry"
+    assert "1 of 6 hops" in report["text"]
+    assert "6 of 6 hops" not in report["text"]
+
+
+def test_a_walk_still_withholds_its_material():
+    blocks = drive(*markers())
+    assert all("[WHAT ARRIVED" not in block for block in blocks)
+
+
+def test_an_open_ended_explore_never_completes():
+    engine.enter("explore", session="pane")
+    for _ in range(4):
+        engine.note_turn("pane")
+        engine.tick("pane")
+        engine.deliver_if_due()
+    assert engine.peek()["key"] == "explore"
+
+
+def test_a_provider_failure_line_is_not_material():
+    assert engine._is_failure_line("feed unavailable · timed out")
+
+
+def test_walk_dose_is_six_hops():
+    assert states.STATES["walk"]["dose"] == {"unit": "hops", "n": 6}

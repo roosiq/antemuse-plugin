@@ -1,9 +1,9 @@
-"""A pane poll is a second of the state's life.
+"""A pane poll is a look, not a turn.
 
-Delivery is paced by the clock (one unit a second from entry), so the thing that asks while
-nobody is typing is the pane — `GET /state`, every four seconds. That makes the poll route a
-delivery surface, not just a reader, and nothing else in the suite exercises it: the engine
-tests call `deliver_if_due()` themselves, which would pass even if the route never did.
+The poll route is a delivery surface: the pane asks every four seconds, and the
+engine serves the next hop there so a walk shows itself while nobody is typing.
+What it may not do is spend the dose the person has not earned — a burst of
+polls used to finish a six-hop walk before the first message was written.
 
 These call the route directly, as its own docstring allows, and read the state record
 afterwards. The provider is stubbed *in the module the route loads* (`plugin_api.plugin()`),
@@ -57,8 +57,12 @@ def _served() -> int:
 def _stub_walk(monkeypatch, lines=None) -> None:
     sources = _route_module("sources")
     body = list(lines if lines is not None else HOPS)
-    monkeypatch.setattr(sources, "PROVIDERS",
-                        {**sources.PROVIDERS, "walk": lambda steps=1: body[:steps]})
+
+    def call(steps=1):          # a walk serves a new hop per call, not the same first hop
+        out, body[:] = body[:steps], body[steps:]
+        return out
+
+    monkeypatch.setattr(sources, "PROVIDERS", {**sources.PROVIDERS, "walk": call})
 
 
 def test_a_poll_serves_one_unit_and_no_clock_banks_them(monkeypatch):
@@ -74,19 +78,28 @@ def test_a_poll_serves_one_unit_and_no_clock_banks_them(monkeypatch):
     assert _served() == 1, f"one poll must serve exactly one hop, got {_served()}"
 
 
-def test_a_burst_of_polls_drains_the_dose_one_unit_at_a_time(monkeypatch):
-    """Each poll is a delivery call, so a burst walks faster — and stops at the dose."""
+def test_a_burst_of_polls_cannot_outrun_the_person(monkeypatch):
+    """A poll is a look, not a turn.
+
+    Four polls used to serve four hops, so a six-hop walk finished itself in
+    twenty-four seconds and the person arrived to a chip reading `6/6`. The pane
+    may show the hop that exists on entry and no more until a turn is taken.
+    """
     _stub_walk(monkeypatch)
     engine.stop(reason="reset")
     engine.enter("walk", session="poll-burst", platform="desktop")
 
     for _ in range(4):
         route_state(session="poll-burst")
-    assert _served() == 4, f"four polls should serve four hops, got {_served()}"
+    assert _served() == 1, f"polls spent the dose before anyone spoke: {_served()}"
+
+    engine.note_turn(session="poll-burst")
+    route_state(session="poll-burst")
+    assert _served() == 2, f"one turn should earn one more hop, got {_served()}"
 
     for _ in range(6):
         route_state(session="poll-burst")
-    assert _served() == 6, f"a six-hop walk cannot serve more than six, got {_served()}"
+    assert _served() == 2, f"polls kept spending after the turn: {_served()}"
 
 
 def test_a_failed_hop_is_named_and_the_pane_still_draws(monkeypatch):

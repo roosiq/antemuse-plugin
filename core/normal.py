@@ -1,6 +1,6 @@
 """What an ordinary session looks like — the baseline a state is measured against.
 
-Every threshold in `core/recommend.py` was a constant somebody picked. A state is only
+Every threshold in the recommendation path was a constant somebody picked. A state is only
 meaningful relative to normal, so normal is measured with the same instrument: turns,
 tool calls, failures, and how long this person works between states.
 
