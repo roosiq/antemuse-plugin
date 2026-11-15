@@ -47,6 +47,8 @@ const PROBE_FONT = 10
 
 const copy = {
   pane: 'Antemuse',
+  cockpit: 'Cockpit',
+  cockpitOpen: 'Open concept cockpit',
   idle: 'no state',
   // The empty pane is a dead end without this: a person who opens it and finds a dark map has
   // nothing to act on. One command, not five — the label above this line already says there is
@@ -100,7 +102,11 @@ export function counts(payload) {
   const bits = [
     // the dose in the state's own unit (hops, pairs, items, recombinations), not "turns".
     // There is no clock: a state ends when its dose lands, so the count is the whole story.
-    `${doseLeft(active)} ${active.unit || 'turn(s)'} to go`
+    // An open-ended state (`/explore`) has no dose at all and says so rather than promising
+    // "0 picks to go" on arrival, which reads as already finished.
+    Number(active.dose || 0) > 0
+      ? `${doseLeft(active)} ${active.unit || 'turn(s)'} to go`
+      : `${Number(active.served || 0)} picked · you end it`
   ]
   const tools = active.tools || {}
   if (tools.mode === 'none') bits.push('no tools')
@@ -108,6 +114,23 @@ export function counts(payload) {
   else bits.push('all tools')
   if (payload.residue && payload.residue.count) bits.push(`${payload.residue.count} carried`)
   return bits.join(' · ')
+}
+
+/** The ambient readout: the one fact a person should learn without opening anything.
+ *
+ * The status bar is occupied by a chip that used to carry a label and nothing else — a state
+ * could be half spent and the corner still read "walking". A dose is the thing that changes, so
+ * the dose is what the chip shows: `4/6 hops`, `0 picked` for an open-ended state, and nothing
+ * at all when there is no state to describe (an empty chip is not a claim).
+ */
+export function chip(payload) {
+  const active = payload && payload.active
+  if (!active) return ''
+  const dose = Number(active.dose || 0)
+  const served = Math.max(0, Number(active.served || 0))
+  if (!Number.isFinite(served) || !Number.isFinite(dose)) return ''
+  if (!dose) return served ? `${served} picked` : ''
+  return `${Math.min(served, dose)}/${dose} ${active.unit || 'turn(s)'}`
 }
 
 /** What the pane is looking at, in one of four honest states. */
@@ -1411,6 +1434,9 @@ function StateView({ ctx }) {
   const { payload, error } = useStatePayload(ctx, cells)
   const vm = viewModel(payload, error)
   const frame = (payload && payload.frame) || {}
+  // `/explore` is a state with a surface, and the surface is another pane. A state whose
+  // whole point is the cockpit is useless if the person has to find it in the nav first.
+  const exploring = Boolean(payload && payload.active && payload.active.key === 'explore')
 
   // The art is the pane; the words are furniture in the corner of it.
   return jsxs('div', {
@@ -1433,16 +1459,34 @@ function StateView({ ctx }) {
           // to be readable: an empty pane that whispers "no state" is indistinguishable from a
           // pane that failed to load.
           opacity: vm.situation === 'active' ? 0.5 : 0.78,
-          pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '1px',
-          color: '#9aa6b2', letterSpacing: '0.02em'
+          pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '2px',
+          color: 'var(--ui-text-secondary, inherit)'
         },
         children: [
-          jsx('div', { style: { letterSpacing: '0.08em', fontWeight: 600 }, children: vm.label }),
-          vm.note ? jsx('div', { children: vm.note }) : null,
-          vm.counts ? jsx('div', { children: vm.counts }) : null,
-          vm.contract ? jsx('div', { children: vm.contract }) : null
+          // The label is the instrument's readout line: tracked, uppercase, and
+          // first, the way the site sets its own navigation.
+          jsx('div', { style: { ...LABEL, opacity: 0.95 }, children: vm.label }),
+          vm.note ? jsx('div', { style: { ...DATA, opacity: 0.8 }, children: vm.note }) : null,
+          vm.counts ? jsx('div', { style: { ...DATA, color: 'var(--ui-text-secondary, inherit)' }, children: vm.counts }) : null,
+          vm.contract ? jsx('div', { style: { ...DATA, color: 'var(--ui-text-secondary, inherit)' }, children: vm.contract }) : null
         ]
-      })
+      }),
+      exploring
+        ? jsx('button', {
+            key: 'cockpit',
+            type: 'button',
+            onClick: () => { if (ctx.navigate) ctx.navigate(`/${ID}/cockpit`) },
+            style: {
+              position: 'absolute', left: 12, bottom: 66, zIndex: 2,
+              background: 'transparent',
+              border: '1px solid var(--ui-stroke-secondary, currentColor)',
+              borderRadius: '2px', padding: '4px 9px', cursor: 'pointer',
+              color: 'var(--ui-accent, currentColor)',
+              font: `600 10px ${FONT.label}`, letterSpacing: '0.14em', textTransform: 'uppercase'
+            },
+            children: 'open the cockpit'
+          })
+        : null
     ]
   })
 }
@@ -1451,18 +1495,28 @@ function StateView({ ctx }) {
 function StateChip({ ctx }) {
   const { payload, error } = useStatePayload(ctx)
   const vm = viewModel(payload, error)
-  const label = vm.clock ? `${vm.label} · ${vm.clock}` : vm.label
+  // A count is a claim about now. Under a failed poll it would describe the last time the pane
+  // could see, printed next to an error — the pane contradicting itself.
+  const dose = error ? '' : chip(payload)
+  const label = [vm.label, dose].filter(Boolean).join(' · ')
+  // While exploring, the chip is the way into the map rather than into settings: the state
+  // exists to be flown, and this is the one control on screen at all times.
+  const exploring = Boolean(payload && payload.active && payload.active.key === 'explore')
   return jsx('button', {
     type: 'button',
-    title: label,
-    onClick: () => { if (ctx.navigate) ctx.navigate(pluginSettingsHref(ID)) },
+    title: exploring ? 'open the concept cockpit' : label,
+    onClick: () => {
+      if (!ctx.navigate) return
+      ctx.navigate(exploring ? `/${ID}/cockpit` : pluginSettingsHref(ID))
+    },
     style: {
       background: 'transparent',
       border: 0,
       padding: '0 6px',
       cursor: 'pointer',
-      font: 'inherit',
-      fontSize: '11px',
+      font: `600 10px ${FONT.label}`,
+      letterSpacing: '0.16em',
+      textTransform: 'uppercase',
       opacity: vm.situation === 'active' ? 0.9 : 0.5,
       color: 'var(--ui-text-secondary, inherit)'
     },
@@ -2192,6 +2246,1985 @@ function ChatBackdrop({ ctx }) {
   return null
 }
 
+// ---------------------------------------------------------------- the cockpit
+//
+// A first-person view of the SAME `/graph` payload the pane draws: the same
+// labels, the same stored 3D positions, the same firing weights and the same
+// walk trail. Nothing is invented here — a concept with no projection is not in
+// the payload and cannot be flown to, and a node is only hot because the ledger
+// says it fired.
+//
+// Why a second surface instead of a camera mode in the map: the map answers
+// "what is near what", which wants an orbit. This answers "what is over there",
+// which wants a heading. Both read the one route, so they cannot disagree.
+//
+// Raw canvas 2D, no library: the desktop half is one file and the host resolves
+// no third-party module. Geometry is a plain pinhole projection.
+
+// ---------------------------------------------------------------- brand
+//
+// The one place in this file allowed to name a colour. Values are sampled from
+// the public Nous surfaces (the site body is the electric blue, type is paper,
+// the only counterpoints are neon and yellow). Everything inside the cockpit
+// block refers to these names, so a repaint is one edit here and the colour
+// guard in tests/test_cockpit_pane.py can still fail a stray literal.
+// The cockpit takes its colours from the app, not from a palette of its own:
+// these are the host's theme variables, and every literal left in this file is
+// the tube itself (black raster, black vignette), never a brand hue.
+// Candidate names per role, first match wins. The app has moved these around:
+// recent builds expose --ui-*, this one resolves accent/stroke as --ui-* but
+// keeps ground and text on --background/--foreground, and older themes put the
+// text on --ui-text-secondary. Listing every known name means the pane reads the
+// theme instead of silently falling back to black and white.
+const THEME_VARS = {
+  glass: ['--ui-panel-background', '--ui-background', '--background', '--sidebar'],
+  text: ['--ui-text', '--foreground', '--color-foreground', '--ui-text-secondary'],
+  dim: ['--ui-text-secondary', '--muted-foreground', '--color-muted-foreground', '--ui-text'],
+  stroke: ['--ui-stroke-secondary', '--ui-stroke', '--border', '--color-border'],
+  accent: ['--ui-accent', '--color-primary', '--primary'],
+  ink: ['--ui-panel-background', '--ui-background', '--background', '--sidebar']
+}
+
+// Instrument type: monospace for readouts and labels, one weight each. The app's
+// own faces stay on the DOM panels, which inherit them.
+const FONT = {
+  display: '700 1em ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace',
+  label: '600 1em ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace',
+  data: '500 1em ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace'
+}
+
+// Panel chrome for the cockpit's DOM, in the app's own variables so the panes
+// match the rest of the desktop instead of sitting on their own surface.
+const PANEL = {
+  background: 'var(--ui-panel-background, var(--background, rgba(0, 0, 0, 0.72)))',
+  border: '1px solid var(--ui-stroke-secondary, var(--border, rgba(255, 255, 255, 0.14)))',
+  borderRadius: '2px',
+  color: 'var(--ui-text, var(--foreground, inherit))'
+}
+const LABEL = {
+  font: `600 9px/1.7 ${FONT.label}`,
+  letterSpacing: '0.22em',
+  textTransform: 'uppercase',
+  color: 'var(--ui-text-secondary, var(--muted-foreground, var(--color-muted-foreground, inherit)))',
+  opacity: 0.85
+}
+const DATA = {
+  font: `500 11px/1.55 ${FONT.data}`,
+  fontVariantNumeric: 'tabular-nums',
+  color: 'var(--ui-text, var(--foreground, inherit))'
+}
+
+const COCKPIT_POLL_MS = 4000
+const COCKPIT_MEET = 0.16        // world units: close enough to count as met
+const COCKPIT_GLASS_FRACTION = 0.15
+// Asteroids, not a sniper rifle: hold the trigger and a stream of shots walks
+// across the field. Bullets are objects with a position and a life, so a shot
+// can miss, and a miss is visible.
+const FIRE_INTERVAL = 0.16       // seconds between shots while held
+const BULLET_SPEED = 0.45        // world units per second: the cloud is ~1 unit
+                                 // across, so a bullet at 1.0 crossed the glass in
+                                 // a couple of frames and was never seen
+const BULLET_LIFE = 3.2          // seconds before a shot is spent
+const BULLET_R = 0.055           // world-unit hit radius
+const CONVERGE = 1.4             // world units where both barrels agree on the aim
+const MUZZLE_REACH = 0.12        // world units from the eye to the muzzle: the cloud
+                                 // is only about a unit across, so a long reach would
+                                 // start every shot inside a neighbour and swallow it
+const GUN_X = 92                 // px each cannon sits off the centreline
+const GUN_LEN = 30               // px of barrel above the dash
+const GUN_KICK = 0.09           // seconds of recoil after a shot
+const MAX_BULLETS = 64
+// The edge of the navigable map: the cloud lives inside about one unit, and the
+// boundary is drawn here and used as the soft stop in the flight model, so what
+// you see is what turns you around.
+const MAP_RADIUS = 1.9
+
+/** Screen-space scale for the ship's furniture and the shot marks.
+ *
+ *  Everything here was sized for a 1280px pane. A maximised window is 2140px,
+ *  where a 4px dot is a speck and a 92px cannon offset is a rounding error, so
+ *  the instruments and the shots scale with the glass. */
+const uiScale = (glassWidth) => Math.max(1, Math.min(2.4, glassWidth / 1280))
+
+/** Theme colours, read from the host once per mount. Never a hardcoded colour. */
+function cockpitTheme(el, doc, win) {
+  // Read the host's theme, once per mount. The cockpit is an instrument inside
+  // the app, so it borrows the app's palette rather than painting its own: the
+  // only literals below describe the tube (black raster, black vignette).
+  // Theme variables are often declared as color-mix(), which getComputedStyle
+  // hands back unresolved. So resolve them the way the app does: paint a probe
+  // with the variable and read the resulting colour. A sentinel value tells us
+  // when the variable is simply not defined.
+  // A grey sentinel on purpose: even this probe value asserts no hue.
+  const SENTINEL = 'rgb(1, 1, 1)'
+  let probe = null
+  if (typeof doc !== 'undefined' && doc.body) {
+    probe = doc.createElement('span')
+    probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:0;height:0;pointer-events:none'
+    doc.body.appendChild(probe)
+  }
+  const read = (names) => {
+    if (!probe || !win.getComputedStyle) return ''
+    for (const name of names) {
+      probe.style.color = `var(${name}, ${SENTINEL})`
+      const v = win.getComputedStyle(probe).color
+      if (v && v.trim() && v.trim() !== SENTINEL) return v.trim()
+    }
+    return ''
+  }
+  // Fallbacks are neutral on purpose: if the host exposes nothing, the pane
+  // still has to be readable, and grey is the one colour that asserts nothing.
+  const text = read(THEME_VARS.text) || '#ffffff'
+  const glass = read(THEME_VARS.glass) || '#000000'
+  const stroke = read(THEME_VARS.stroke)
+  const accent = read(THEME_VARS.accent)
+  const ink = read(THEME_VARS.ink)
+  if (probe && probe.parentNode) probe.parentNode.removeChild(probe)
+  return {
+    glass: glass,
+    ink: ink || glass,
+    text: text,
+    phosphor: text,
+    paper: text,
+    dim: withAlpha(text, 0.6),
+    stroke: stroke || withAlpha(text, 0.35),
+    accent: accent || text,
+    // the tube is physical: its raster and its falloff are black, not themed
+    tubeClear: 'rgba(0, 0, 0, 0)',
+    tubeEdge: 'rgba(0, 0, 0, 0.5)',
+    frameEdge: withAlpha(text, 0.12)
+  }
+}
+
+/** Any CSS colour → rgba() at an alpha. The theme hands us hex or rgb(); canvas
+ *  wants a concrete string, and appending "55" to a var() would be a guess. */
+function withAlpha(color, a) {
+  const c = String(color || '').trim()
+  let r = 235, g = 235, b = 235
+  const hex = c.match(/^#([0-9a-f]{3,8})$/i)
+  if (hex) {
+    const h = hex[1]
+    if (h.length === 3 || h.length === 4) {
+      r = parseInt(h[0] + h[0], 16); g = parseInt(h[1] + h[1], 16); b = parseInt(h[2] + h[2], 16)
+    } else if (h.length >= 6) {
+      r = parseInt(h.slice(0, 2), 16); g = parseInt(h.slice(2, 4), 16); b = parseInt(h.slice(4, 6), 16)
+    }
+  } else {
+    const rgb = c.match(/-?[\d.]+/g)
+    if (rgb && rgb.length >= 3) {
+      r = Math.round(parseFloat(rgb[0])); g = Math.round(parseFloat(rgb[1])); b = Math.round(parseFloat(rgb[2]))
+    }
+  }
+  return `rgba(${r}, ${g}, ${b}, ${a})`
+}
+
+/**
+ * Mount the cockpit on a canvas. Returns a handle with `destroy()` and
+ * `stats()` so the pane can verify itself and a harness can drive it without
+ * React.
+ */
+function createCockpit({ ctx, el, callbacks }) {
+  const doc = el.ownerDocument
+  const win = doc.defaultView
+  const c2d = el.getContext('2d')
+  const onCatch = callbacks && callbacks.onCatch ? callbacks.onCatch : () => {}
+  const onTarget = callbacks && callbacks.onTarget ? callbacks.onTarget : () => {}
+  const onPicks = callbacks && callbacks.onPicks ? callbacks.onPicks : () => {}
+  // A counter alone cannot say what the person acted on. These names are an
+  // interaction readout for the pane; a failed verdict route must never affect flight.
+  const onName = callbacks && callbacks.onName ? callbacks.onName : () => {}
+  let lastNamed = ''
+  const nameNode = (node, source) => {
+    if (!node || !node.l) return
+    const label = String(node.l)
+    const key = `${source}:${label}`
+    if ((source !== 'hit' && key === lastNamed) || (source === 'target' && lastNamed === `hit:${label}`)) return
+    lastNamed = key
+    onName(label, source)
+  }
+
+  // What the person shot is the only material /explore produces, so it is filed with the
+  // plugin instead of dying with this pane. Only the delta goes over — posting the whole
+  // cumulative list on every hit would multiply-count the same concept — and the backend
+  // ignores the whole thing unless an explore is open, so shooting while idle is free.
+  const posted = Object.create(null)
+  let pickTimer = 0
+  function flushPicks() {
+    const batch = []
+    for (const label of Object.keys(state.hits)) {
+      const n = state.hits[label]
+      for (let i = posted[label] || 0; i < n; i++) batch.push(label)
+      posted[label] = n
+    }
+    if (!batch.length) return
+    try {
+      // Same rule as a verdict: the packaged app cannot reach the gateway with a
+      // relative fetch from a file:// origin, so the host's REST door posts it.
+      const payload = { picks: batch }
+      if (ctx && typeof ctx.rest === 'function') {
+        Promise.resolve(ctx.rest('/picks', { method: 'POST', body: payload })).catch(() => {})
+      } else if (typeof win.fetch === 'function') {
+        win.fetch(`/api/plugins/${ID}/picks`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {})
+      }
+    } catch (e) { /* a pick that cannot be filed is not worth breaking the flight */ }
+  }
+  function queuePicks() {
+    if (pickTimer) return
+    pickTimer = win.setTimeout(() => { pickTimer = 0; flushPicks() }, 500)
+  }
+
+  const theme = cockpitTheme(el, doc, win)
+  const reduced = (() => {
+    try { return Boolean(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches) }
+    catch (e) { return false }
+  })()
+
+  const state = {
+    nodes: [],            // { l, w, v, x, y, z } in unit space
+    path: [],
+    links: [],
+    lit: 0,
+    key: '',
+    payloadAt: 0,
+    error: '',
+    cam: { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0, speed: 0, vx: 0, vy: 0, vz: 0 },
+    target: null,
+    catchList: [],
+    // Shooting picks concepts: every hit adds interest, and interest is what
+    // orders the pick list. A concept hit five times is wanted five times.
+    hits: Object.create(null),
+    bullets: [],
+    bursts: [],
+    firing: false,
+    cool: 0,
+    kick: { l: 0, r: 0 },
+    barrel: 1,
+    shotsFired: 0,
+    net: { active: false, t: 0, landed: false, reach: 1.25 },
+    frames: 0
+  }
+  const view = { w: 1, h: 1, cx: 0, cy: 0, f: 400, dpr: 1 }
+  const home = { x: 0, y: 0, z: 0 }
+
+  // dust gives the empty sky a scale; wrapped around the ship so it never runs out
+  const DUST = 200
+  const DUST_BOX = 6
+  const dust = []
+  for (let i = 0; i < DUST; i++) {
+    const r = (n) => {
+      const s = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453
+      return s - Math.floor(s)
+    }
+    dust.push([r(1) * DUST_BOX * 2 - DUST_BOX, r(2) * DUST_BOX * 2 - DUST_BOX, r(3) * DUST_BOX * 2 - DUST_BOX])
+  }
+
+  // ---------------- geometry ----------------
+  const basis = () => {
+    const cy = Math.cos(state.cam.yaw), sy = Math.sin(state.cam.yaw)
+    const cp = Math.cos(state.cam.pitch), sp = Math.sin(state.cam.pitch)
+    const cr = Math.cos(state.cam.roll), sr = Math.sin(state.cam.roll)
+    // level right/up, then banked around the forward axis: roll is what makes
+    // a turn read as flying rather than as panning a camera
+    const rx = cy, ry = 0, rz = -sy
+    const ux = -sy * sp, uy = cp, uz = -cy * sp
+    return {
+      fwd: [sy * cp, sp, cy * cp],
+      right: [rx * cr + ux * sr, ry * cr + uy * sr, rz * cr + uz * sr],
+      up: [ux * cr - rx * sr, uy * cr - ry * sr, uz * cr - rz * sr]
+    }
+  }
+
+  const toCam = (p, b) => {
+    const dx = p.x - state.cam.x, dy = p.y - state.cam.y, dz = p.z - state.cam.z
+    return {
+      x: dx * b.right[0] + dy * b.right[1] + dz * b.right[2],
+      y: dx * b.up[0] + dy * b.up[1] + dz * b.up[2],
+      z: dx * b.fwd[0] + dy * b.fwd[1] + dz * b.fwd[2]
+    }
+  }
+
+  const project = (c) => ({
+    x: view.cx + (view.f * c.x) / c.z,
+    y: view.cy - (view.f * c.y) / c.z,
+    scale: view.f / c.z
+  })
+
+  // ---------------- payload ----------------
+  const normalize = (raw) => {
+    const rows = (raw || []).filter((n) => n && typeof n.l === 'string'
+      && Number.isFinite(n.x) && Number.isFinite(n.y) && Number.isFinite(n.z))
+    if (!rows.length) return { nodes: [], home: { x: 0, y: 0, z: 0 } }
+    let cx = 0, cy = 0, cz = 0
+    for (const n of rows) { cx += n.x; cy += n.y; cz += n.z }
+    cx /= rows.length; cy /= rows.length; cz /= rows.length
+    // Scale by a robust radius, not the furthest node. One outlier pins the
+    // scale and collapses the entire cloud into a speck around the origin, which
+    // is exactly what an empty-looking cockpit turned out to be.
+    const dists = rows.map((n) => Math.hypot(n.x - cx, n.y - cy, n.z - cz)).sort((a, b) => a - b)
+    const radius = Math.max(1e-6, dists[Math.floor(dists.length * 0.9)] || dists[dists.length - 1] || 1)
+    const clip = (v) => Math.max(-1.25, Math.min(1.25, v))
+    const nodes = rows.map((n) => ({
+      l: n.l,
+      w: Math.max(0, Math.min(1, Number(n.w) || 0)),
+      v: Math.max(0, Math.min(1, Number(n.v) || 0)),
+      x: clip((n.x - cx) / radius),
+      y: clip((n.y - cy) / radius),
+      z: clip((n.z - cz) / radius)
+    }))
+    // The busiest knot, so a session starts inside the structure rather than in
+    // the empty shell a projection always has at its edge.
+    let best = nodes[0], bestScore = -1
+    const MID = 0.22
+    for (const n of nodes) {
+      let near = 0
+      for (const m of nodes) if (m !== n && Math.hypot(m.x - n.x, m.y - n.y, m.z - n.z) < MID) near++
+      const score = near + n.w * 2
+      if (score > bestScore) { bestScore = score; best = n }
+    }
+    return { nodes, home: { x: best.x, y: best.y, z: best.z } }
+  }
+
+  const apply = (payload) => {
+    const first = !state.nodes.length
+    const norm = normalize(payload && payload.nodes)
+    state.nodes = norm.nodes
+    state.path = Array.isArray(payload && payload.path) ? payload.path.slice(0, 64) : []
+    state.links = Array.isArray(payload && payload.links) ? payload.links.slice(0, 600) : []
+    state.lit = Number(payload && payload.lit) || 0
+    state.key = String((payload && payload.key) || '')
+    state.payloadAt = Date.now()
+    state.error = ''
+    home.x = norm.home.x; home.y = norm.home.y; home.z = norm.home.z
+    if (first) {
+      state.cam.x = home.x; state.cam.y = home.y; state.cam.z = home.z
+      state.cam.yaw = 0; state.cam.pitch = 0; state.cam.speed = 0
+    }
+    draw()
+  }
+
+  const poll = () => {
+    const session = (() => {
+      try {
+        const atom = host && host.state && host.state.focusedSessionId
+        return atom && atom.get ? atom.get() : null
+      } catch (e) { return null }
+    })()
+    const q = '/graph?limit=1400' + (session ? '&session=' + encodeURIComponent(session) : '')
+    try {
+      Promise.resolve(ctx.rest(q)).then(
+        (payload) => { apply(payload) },
+        (err) => { state.error = String((err && err.message) || err || 'unreachable'); draw() }
+      )
+    } catch (e) {
+      state.error = String((e && e.message) || e || 'unreachable')
+      draw()
+    }
+  }
+
+  // ---------------- rendering ----------------
+  const alpha = (a) => { c2d.globalAlpha = Math.max(0, Math.min(1, a)) }
+  const REDUCED_LIFE = 380
+
+  // A deterministic grain tile, built once: scattered ink specks, not noise that
+  // boils between frames. Printed, not televised.
+  let grainTile = null
+  function drawGrain(w, h) {
+    if (!grainTile) {
+      const size = 96
+      const tile = doc.createElement('canvas')
+      tile.width = size; tile.height = size
+      const g = tile.getContext('2d')
+      let seed = 0x9e3779b9
+      const rnd = () => {
+        seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5
+        return ((seed >>> 0) % 10000) / 10000
+      }
+      g.fillStyle = theme.phosphor
+      for (let i = 0; i < 900; i++) {
+        const x = rnd() * size, y = rnd() * size
+        const a = 0.04 + rnd() * 0.10
+        g.globalAlpha = a
+        g.fillRect(x, y, 1, rnd() > 0.85 ? 2 : 1)
+      }
+      g.globalAlpha = 1
+      // the raster itself: one dark line every third row, the arcade tell
+      g.fillStyle = '#000000'   // the raster is the tube, not the theme
+      g.globalAlpha = 0.08
+      for (let y = 0; y < size; y += 3) g.fillRect(0, y, size, 1)
+      g.globalAlpha = 1
+      grainTile = tile
+    }
+    const pat = c2d.createPattern(grainTile, 'repeat')
+    if (!pat) return
+    c2d.save()
+    c2d.globalAlpha = 0.5
+    c2d.fillStyle = pat
+    c2d.fillRect(0, 0, w, h)
+    c2d.restore()
+  }
+
+  function fit() {
+    const host = el.parentElement || el
+    const w = host.clientWidth || el.clientWidth || 640
+    const h = host.clientHeight || el.clientHeight || 420
+    view.dpr = Math.min(win.devicePixelRatio || 1, 2)
+    view.w = w
+    view.h = h
+    // Width/height ATTRIBUTES, not just CSS: the pane is resized constantly by
+    // sash drags and a CSS-only size is a blurred stretch.
+    el.width = Math.max(1, Math.round(w * view.dpr))
+    el.height = Math.max(1, Math.round(h * view.dpr))
+    c2d.setTransform(view.dpr, 0, 0, view.dpr, 0, 0)
+    view.cx = w / 2
+    view.cy = h * 0.46
+    view.f = Math.min(w, h) * 0.92
+  }
+
+  const dashTop = () => view.h - Math.max(74, view.h * COCKPIT_GLASS_FRACTION)
+
+  /** The tube: darkened corners and a hairline inner edge. A CRT is never a
+   *  rectangle of flat light — the beam falls off at the rim. */
+  function drawTube(w, h) {
+    const g = c2d.createRadialGradient(
+      w / 2, h / 2, Math.min(w, h) * 0.35,
+      w / 2, h / 2, Math.hypot(w, h) * 0.62
+    )
+    g.addColorStop(0, theme.tubeClear)
+    g.addColorStop(1, theme.tubeEdge)
+    c2d.save()
+    c2d.fillStyle = g
+    c2d.fillRect(0, 0, w, h)
+    c2d.strokeStyle = theme.frameEdge
+    c2d.lineWidth = 1
+    c2d.strokeRect(0.5, 0.5, w - 1, h - 1)
+    c2d.restore()
+  }
+
+  function draw() {
+    if (!view.w) fit()
+    const b = basis()
+    const w = view.w, h = view.h
+    c2d.setTransform(view.dpr, 0, 0, view.dpr, 0, 0)
+    c2d.clearRect(0, 0, w, h)
+
+    // A tube, not a brand surface. Flat green-black ground, phosphor speckle,
+    // and scanlines: the beam is a raster and it shows.
+    c2d.save()
+    c2d.fillStyle = theme.glass
+    c2d.fillRect(0, 0, w, h)
+    drawGrain(w, h)
+    c2d.restore()
+
+    // The horizon has to bank with the ship: a level line under a rolled view
+    // is the one cue that betrays a panning camera dressed as a cockpit.
+    const horizon = view.cy + view.f * Math.tan(state.cam.pitch) * 0.55
+    c2d.save()
+    c2d.translate(view.cx, horizon)
+    c2d.rotate(-state.cam.roll)
+    c2d.strokeStyle = theme.stroke
+    alpha(0.35)
+    c2d.lineWidth = 1
+    const span = Math.hypot(w, h) * 1.2
+    c2d.beginPath(); c2d.moveTo(-span, 0); c2d.lineTo(span, 0); c2d.stroke()
+    c2d.restore()
+
+    // dust
+    c2d.save()
+    c2d.fillStyle = theme.dim
+    for (const d of dust) {
+      const wrap = (v, p) => p + ((((v - p) % (DUST_BOX * 2)) + DUST_BOX * 3) % (DUST_BOX * 2)) - DUST_BOX
+      const p = { x: wrap(d[0], state.cam.x), y: wrap(d[1], state.cam.y), z: wrap(d[2], state.cam.z) }
+      const c = toCam(p, b)
+      if (c.z < 0.2 || c.z > 8) continue
+      const s = project(c)
+      if (s.x < 0 || s.y < 0 || s.x > w || s.y > h) continue
+      alpha(Math.max(0.04, 0.34 - c.z / 22))
+      c2d.fillRect(s.x, s.y, 1.3, 1.3)
+    }
+    c2d.restore()
+
+    // the walked trail, in the order it was walked
+    if (state.path.length > 1) {
+      const byLabel = new Map(state.nodes.map((n) => [n.l, n]))
+      c2d.save()
+      c2d.strokeStyle = theme.accent
+      c2d.lineWidth = 1.4
+      alpha(0.5)
+      c2d.beginPath()
+      let started = false
+      for (const label of state.path) {
+        const n = byLabel.get(label)
+        if (!n) continue
+        const c = toCam(n, b)
+        if (c.z < 0.05) { started = false; continue }
+        const s = project(c)
+        if (!started) { c2d.moveTo(s.x, s.y); started = true } else c2d.lineTo(s.x, s.y)
+      }
+      c2d.stroke()
+      c2d.restore()
+    }
+
+    // nodes, clipped to the glass so nothing labels itself behind the dash
+    c2d.save()
+    c2d.beginPath(); c2d.rect(0, 0, w, Math.max(1, dashTop() - 4)); c2d.clip()
+    const drawn = []
+    for (const n of state.nodes) {
+      const c = toCam(n, b)
+      if (c.z < 0.04) continue
+      const s = project(c)
+      if (s.x < -60 || s.y < -60 || s.x > w + 60 || s.y > h + 60) continue
+      drawn.push({ n, s, dist: Math.hypot(c.x, c.y, c.z), r: Math.max(1.1, Math.min(14, 0.0055 * s.scale * (0.7 + n.v * 0.9))) })
+    }
+    drawn.sort((a, z) => z.dist - a.dist)
+    const caught = new Set(state.catchList.map((n) => n.l))
+    let labels = 0
+    for (const d of drawn) {
+      const lit = d.n.w > 0.05
+      const isCaught = caught.has(d.n.l)
+      const isTarget = state.target === d.n.l
+      const a = Math.max(0.16, Math.min(1, 1.2 - d.dist / 3.2))
+      // Ink marks, not lamps. A firing concept is a filled rule; a cold one is
+      // a hairline ring. No shadow blur: glow is a screen, and this surface is
+      // meant to be printed.
+      c2d.save()
+      if (lit || isCaught || isTarget) {
+        alpha(isCaught || isTarget ? 1 : a)
+        c2d.fillStyle = theme.phosphor
+        c2d.beginPath(); c2d.arc(d.s.x, d.s.y, Math.max(1.6, d.r), 0, Math.PI * 2); c2d.fill()
+        c2d.strokeStyle = theme.phosphor
+        c2d.lineWidth = 1
+        alpha(0.55)
+        c2d.beginPath(); c2d.arc(d.s.x, d.s.y, Math.max(1.6, d.r) + 3.5, 0, Math.PI * 2); c2d.stroke()
+      } else {
+        alpha(a * 0.45)
+        c2d.strokeStyle = theme.phosphor
+        c2d.lineWidth = 1
+        c2d.beginPath(); c2d.arc(d.s.x, d.s.y, Math.max(1.2, d.r * 0.8), 0, Math.PI * 2); c2d.stroke()
+      }
+      c2d.restore()
+
+      if (isTarget) {
+        c2d.save()
+        c2d.strokeStyle = theme.phosphor
+        c2d.lineWidth = 1.5
+        alpha(0.95)
+        const r = d.r + 7
+        for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          c2d.beginPath()
+          c2d.moveTo(d.s.x + sx * r, d.s.y + sy * r - sy * 5)
+          c2d.lineTo(d.s.x + sx * r, d.s.y + sy * r)
+          c2d.lineTo(d.s.x + sx * r - sx * 5, d.s.y + sy * r)
+          c2d.stroke()
+        }
+        c2d.restore()
+      }
+
+      const hits = state.hits[d.n.l] || 0
+      if (hits) {
+        // interest is drawn on the concept: a ring plus one pip per hit
+        c2d.save()
+        c2d.strokeStyle = theme.accent
+        alpha(0.9)
+        c2d.lineWidth = 1.2
+        // pips sit outside the target brackets so interest is not hidden by them
+        const rr = d.r + 11
+        c2d.beginPath(); c2d.arc(d.s.x, d.s.y, rr, 0, Math.PI * 2); c2d.stroke()
+        const pips = Math.min(6, hits)
+        for (let i = 0; i < pips; i++) {
+          const a = -Math.PI / 2 + (i - (pips - 1) / 2) * 0.30
+          c2d.beginPath()
+          c2d.arc(d.s.x + Math.cos(a) * rr, d.s.y + Math.sin(a) * rr, 2.3, 0, Math.PI * 2)
+          c2d.fillStyle = theme.accent
+          c2d.fill()
+        }
+        if (hits > 1) {
+          c2d.font = `600 10px ${FONT.data}`
+          c2d.fillStyle = theme.accent
+          c2d.fillText(`x${hits}`, d.s.x + rr + 4, d.s.y - rr + 2)
+        }
+        c2d.restore()
+      }
+
+      if ((d.dist < 0.34 && labels < 40) || isTarget || isCaught || hits) {
+        labels += 1
+        c2d.save()
+        alpha(isTarget || isCaught ? 0.95 : Math.min(0.75, a))
+        c2d.fillStyle = isTarget || isCaught ? theme.text : theme.dim
+        c2d.font = `${isTarget ? 600 : 400} 11px ${FONT.data}`
+        // A label that runs off the glass is a bug, not a style: flip it to the
+        // other side of the point, and drop it if it will not fit either way.
+        const lw = c2d.measureText(d.n.l).width
+        const edge = Math.max(16, w * 0.045)
+        let lx = d.s.x + d.r + 6
+        if (lx + lw > w - edge) lx = d.s.x - d.r - 6 - lw
+        if (lx >= edge && lx + lw <= w - edge) c2d.fillText(d.n.l, lx, d.s.y + 3.5)
+        c2d.restore()
+      }
+    }
+    c2d.restore()
+
+    drawMapEdge(b)
+    drawBullets(b)
+    drawNet(b)
+    drawChrome(b, hdg())
+    drawNotes()
+    drawTube(w, h)
+  }
+
+  const hdg = () => ((state.cam.yaw * 180 / Math.PI) % 360 + 360) % 360
+
+  /**
+   * The edge of the map.
+   *
+   * The concept cloud is a place with a boundary, but from the seat it had none:
+   * fly far enough and the last concept slides behind you into featureless glass
+   * with nothing to say whether you had left the map or whether it had emptied.
+   * This draws that boundary as a ring on the cloud's own plane, with ticks every
+   * thirty degrees, brightening as you approach it.
+   */
+  function drawMapEdge(b) {
+    // drawn a touch inside the soft stop, so the boundary stays a thing you can
+    // see from outside rather than a shell you are pinned against
+    const R = MAP_RADIUS * 0.9
+    const camDist = Math.hypot(state.cam.x, state.cam.y, state.cam.z)
+    // only speak up near the boundary: at the centre this is background texture
+    const near = Math.max(0, Math.min(1, (camDist - R * 0.55) / (R * 0.45)))
+    const base = 0.16 + near * 0.42
+    const SEG = 96
+    c2d.save()
+    c2d.lineCap = 'butt'
+
+    // A survey grid on the cloud's floor, inside the boundary. From the seat this
+    // is what says "there is a place here": without it the edge ring floats in
+    // nothing and the glass has no ground at all.
+    const ringAt = (r, a) => {
+      c2d.beginPath()
+      let prev = null
+      for (let i = 0; i <= SEG; i++) {
+        const th = (i / SEG) * Math.PI * 2
+        const p = { x: Math.cos(th) * r, y: 0, z: Math.sin(th) * r }
+        const c = toCam(p, b)
+        if (c.z > 0.05) {
+          const s = project(c)
+          if (prev) c2d.lineTo(s.x, s.y)
+          else c2d.moveTo(s.x, s.y)
+          prev = s
+        } else prev = null
+      }
+      // theme.stroke is already a translucent mix: multiplying alpha onto it
+      // vanishes on this ground. The grid is painted in text at low opacity.
+      c2d.strokeStyle = theme.text
+      alpha(a)
+      c2d.lineWidth = 1
+      c2d.stroke()
+    }
+    const onPlane = Math.abs(state.cam.y) < R * 0.45
+    if (onPlane) {
+      ringAt(R * 0.34, 0.1 + near * 0.16)
+      ringAt(R * 0.67, 0.14 + near * 0.18)
+    }
+    c2d.beginPath()
+    for (let i = 0; onPlane && i < 12; i++) {
+      const th = (i / 12) * Math.PI * 2
+      let prev = null
+      for (let j = 0; j <= 24; j++) {
+        const r = (j / 24) * R
+        const p = { x: Math.cos(th) * r, y: 0, z: Math.sin(th) * r }
+        const c = toCam(p, b)
+        if (c.z > 0.05) {
+          const s = project(c)
+          if (prev) c2d.lineTo(s.x, s.y)
+          else c2d.moveTo(s.x, s.y)
+          prev = s
+        } else prev = null
+      }
+    }
+    c2d.strokeStyle = theme.text
+    alpha(0.09 + near * 0.13)
+    c2d.lineWidth = 1
+    c2d.stroke()
+
+    // The boundary is a sphere, not a ring on the floor: from below the plane, or
+    // nose-up at the edge, a single flat circle is invisible exactly when you need
+    // it. Three great circles always put the limit somewhere on the glass.
+    c2d.strokeStyle = near > 0.65 ? theme.accent : theme.text
+    c2d.lineWidth = 1.4 + near * 0.8
+    alpha(0.45 + near * 0.4)
+    const planes = [
+      (a) => ({ x: Math.cos(a) * R, y: Math.sin(a) * R, z: 0 }),
+      (a) => ({ x: Math.cos(a) * R, y: 0, z: Math.sin(a) * R }),
+      (a) => ({ x: 0, y: Math.cos(a) * R, z: Math.sin(a) * R })
+    ]
+    for (const ofPlane of planes) {
+      c2d.beginPath()
+      let prev = null
+      for (let i = 0; i <= SEG; i++) {
+        const a = (i / SEG) * Math.PI * 2
+        const c = toCam(ofPlane(a), b)
+        if (c.z > 0.05) {
+          const s = project(c)
+          if (prev) c2d.lineTo(s.x, s.y)
+          else c2d.moveTo(s.x, s.y)
+          prev = s
+        } else prev = null
+      }
+      c2d.stroke()
+    }
+
+    // ticks: a bare circle reads as a lens flare; ticks read as a surveyed edge
+    c2d.strokeStyle = near > 0.65 ? theme.accent : theme.text
+    alpha(0.42 + near * 0.35)
+    c2d.lineWidth = 1.3
+    c2d.beginPath()
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2
+      const foot = { x: Math.cos(a) * R, y: 0, z: Math.sin(a) * R }
+      const head = { x: Math.cos(a) * R, y: 0.14, z: Math.sin(a) * R }
+      const cf = toCam(foot, b)
+      const ch = toCam(head, b)
+      if (cf.z <= 0.05 || ch.z <= 0.05) continue
+      const f = project(cf)
+      const h = project(ch)
+      c2d.moveTo(f.x, f.y)
+      c2d.lineTo(h.x, h.y)
+    }
+    c2d.stroke()
+
+    // and say it once, on the boundary nearest the nose
+    if (near > 0.5) {
+      const a = state.cam.yaw
+      const p = { x: Math.cos(a) * R, y: 0, z: Math.sin(a) * R }
+      const c = toCam(p, b)
+      if (c.z > 0.2) {
+        const s = project(c)
+        if (s.x > 20 && s.x < view.w - 20 && s.y > 20 && s.y < dashTop()) {
+          c2d.fillStyle = theme.accent
+          alpha(Math.min(0.9, near))
+          c2d.font = `600 ${Math.round(9 * uiScale(view.w))}px ${FONT.label}`
+          tracked('0.18em')
+          const label = 'edge'
+          const lw = c2d.measureText(label).width
+          c2d.fillText(label, s.x - lw / 2, s.y - 6 * uiScale(view.w))
+        }
+      }
+    }
+    c2d.restore()
+
+    // At the wall, nose out, the boundary is behind you: the only honest cue left is on the
+    // glass. It appears when the number is small enough to mean anything, so a person who
+    // holds the stick in is told why nothing is happening.
+    if (near > 0.85) {
+      const px = Math.max(11, Math.min(16, Math.round(view.w / 140)))
+      const y = view.cy - Math.max(28, view.h * 0.055)
+      c2d.save()
+      c2d.textAlign = 'center'
+      c2d.fillStyle = theme.accent
+      alpha(0.9)
+      c2d.font = `700 ${px}px ${FONT.label}`
+      tracked('0.34em')
+      c2d.fillText('EDGE', view.cx, y)
+      c2d.strokeStyle = theme.accent
+      alpha(0.45)
+      c2d.lineWidth = 1
+      const half = Math.max(30, view.w * 0.035)
+      c2d.beginPath()
+      c2d.moveTo(view.cx - half, y + px * 0.75)
+      c2d.lineTo(view.cx - half * 0.32, y + px * 0.75)
+      c2d.moveTo(view.cx + half * 0.32, y + px * 0.75)
+      c2d.lineTo(view.cx + half, y + px * 0.75)
+      c2d.stroke()
+      c2d.restore()
+    }
+  }
+
+  /** Two cannons on the dash. A shot has to leave something the eye can see,
+   *  or the stream reads as appearing out of the air.
+   *
+   *  Each is a solid barrel, canted outward, with a dark bore and a bright rim —
+   *  silhouette first, because a pair of hairlines reads as a gauge stand. */
+  function drawCannons() {
+    c2d.save()
+    c2d.lineJoin = 'miter'
+    for (const side of [-1, 1]) {
+      const g = gunScreen(side)
+      const ui = uiScale(view.w)
+      const base = dashTop() + 4
+      const halfW = 10 * ui
+      const cant = side * 22 * ui    // barrels splay hard outward: nose guns, not posts
+      const tipY = g.y
+      c2d.beginPath()
+      c2d.moveTo(g.x - halfW, base)
+      c2d.lineTo(g.x - halfW * 0.72 + cant, tipY)
+      c2d.lineTo(g.x + halfW * 0.72 + cant, tipY)
+      c2d.lineTo(g.x + halfW, base)
+      c2d.closePath()
+      c2d.fillStyle = theme.ink
+      alpha(0.98)
+      c2d.fill()
+      c2d.strokeStyle = theme.text
+      alpha(0.8)
+      c2d.lineWidth = 1.6
+      c2d.stroke()
+
+      // the bore: a dark mouth with a bright lip, so the muzzle faces you
+      const mx = g.x + cant
+      const kick = state.kick[side < 0 ? 'l' : 'r'] / GUN_KICK
+      if (kick > 0.55) {
+        // a short flash for the first frames after a shot: the cannon is firing
+        c2d.save()
+        c2d.fillStyle = theme.text
+        alpha(0.85 * kick)
+        c2d.beginPath()
+        c2d.arc(mx, tipY - 2 * ui, (4 + 5 * kick) * ui, 0, Math.PI * 2)
+        c2d.fill()
+        c2d.restore()
+      }
+      c2d.beginPath()
+      c2d.ellipse(mx, tipY, halfW * 0.5, 3.1 * ui, 0, 0, Math.PI * 2)
+      c2d.fillStyle = theme.glass
+      alpha(1)
+      c2d.fill()
+      c2d.strokeStyle = theme.text
+      alpha(0.9)
+      c2d.lineWidth = 1.3
+      c2d.stroke()
+
+      // a mount plate tying it to the dash
+      c2d.beginPath()
+      c2d.moveTo(g.x - halfW - 4, base)
+      c2d.lineTo(g.x + halfW + 4, base)
+      c2d.strokeStyle = theme.stroke
+      alpha(0.5)
+      c2d.lineWidth = 1
+      c2d.stroke()
+    }
+    c2d.restore()
+  }
+
+  function drawBullets(b) {
+    if (!state.bullets.length && !state.bursts.length) return
+    c2d.save()
+    c2d.lineCap = 'round'
+    const ui = uiScale(view.w)
+    for (const shot of state.bullets) {
+      const c = toCam(shot, b)
+      if (c.z <= 0.05) continue
+      const s = project(c)
+      // Asteroids: a dot. No tail — the movement is the effect. On a phosphor
+      // tube a bright dot blooms, so the glow is the medium, not decoration.
+      c2d.save()
+      c2d.shadowColor = theme.phosphor
+      c2d.shadowBlur = 10
+      c2d.fillStyle = theme.phosphor
+      alpha(0.98)
+      c2d.beginPath(); c2d.arc(s.x, s.y, 4 * ui, 0, Math.PI * 2); c2d.fill()
+      c2d.restore()
+    }
+    for (const burst of state.bursts) {
+      const c = toCam(burst, b)
+      if (c.z <= 0.05) continue
+      const s = project(c)
+      const k = 1 - burst.t / 0.34
+      c2d.strokeStyle = theme.accent
+      c2d.lineWidth = 1.5 * ui
+      alpha(0.9 * k)
+      c2d.beginPath(); c2d.arc(s.x, s.y, (4 + (1 - k) * 12) * ui, 0, Math.PI * 2); c2d.stroke()
+    }
+    c2d.restore()
+  }
+
+
+
+  function drawNet(b) {
+    if (!state.net.active) return
+    const reach = state.net.landed ? state.net.reach : 0.5 + state.net.t * (state.net.reach - 0.5)
+    const apex = { x: state.cam.x + b.fwd[0] * reach, y: state.cam.y + b.fwd[1] * reach, z: state.cam.z + b.fwd[2] * reach }
+    const c = toCam(apex, b)
+    if (c.z <= 0.05) return
+    const s = project(c)
+    const r = Math.max(8, 0.05 * s.scale)
+    c2d.save()
+    c2d.strokeStyle = theme.accent
+    alpha(state.net.landed ? 0.9 : 0.7)
+    c2d.lineWidth = state.net.landed ? 1.8 : 1.2
+    if (!state.net.landed) c2d.setLineDash([5, 6])
+    c2d.beginPath(); c2d.arc(s.x, s.y, r, 0, Math.PI * 2); c2d.stroke()
+    c2d.setLineDash([])
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + (reduced ? 0 : state.net.t * 2)
+      c2d.beginPath()
+      c2d.moveTo(s.x + Math.cos(a) * r * 0.28, s.y + Math.sin(a) * r * 0.28)
+      c2d.lineTo(s.x + Math.cos(a) * r, s.y + Math.sin(a) * r)
+      c2d.stroke()
+    }
+    c2d.restore()
+  }
+
+  /** Canvas has letterSpacing in Chromium; setting an unknown property is inert. */
+  const tracked = (spacing) => { try { c2d.letterSpacing = spacing } catch (e) { /* older canvas */ } }
+
+  function drawChrome(b, heading) {
+    const w = view.w, h = view.h
+    const panel = theme.ink
+    // canopy: the arch and two pillars, so the view has a frame it sits inside
+    c2d.save()
+    c2d.fillStyle = panel
+    alpha(0.72)
+    const arch = Math.max(26, h * 0.09)
+    c2d.beginPath()
+    c2d.moveTo(0, 0); c2d.lineTo(w, 0); c2d.lineTo(w, arch * 0.5)
+    c2d.quadraticCurveTo(w * 0.5, arch, 0, arch * 0.5)
+    c2d.closePath(); c2d.fill()
+    const pillar = Math.max(14, w * 0.028)
+    c2d.fillRect(0, 0, pillar, h)
+    c2d.fillRect(w - pillar, 0, pillar, h)
+    // dash
+    const top = dashTop()
+    c2d.beginPath()
+    c2d.moveTo(0, top + 14)
+    c2d.quadraticCurveTo(w * 0.5, top - 18, w, top + 14)
+    c2d.lineTo(w, h); c2d.lineTo(0, h); c2d.closePath()
+    alpha(0.96)
+    c2d.fill()
+    c2d.restore()
+
+    // Frame edges as line work as well as fill: a panel colour close to the
+    // surface would otherwise make the canopy invisible, and the cockpit
+    // metaphor is the whole point of this surface.
+    c2d.save()
+    c2d.strokeStyle = theme.stroke
+    alpha(0.55)
+    c2d.lineWidth = 1
+    c2d.beginPath()
+    c2d.moveTo(0, arch * 0.52)
+    c2d.quadraticCurveTo(w * 0.5, arch * 1.02, w, arch * 0.52)
+    c2d.stroke()
+    c2d.beginPath()
+    c2d.moveTo(0, top + 14)
+    c2d.quadraticCurveTo(w * 0.5, top - 18, w, top + 14)
+    c2d.stroke()
+    c2d.restore()
+
+    // Wordmark: the mark and the name, small and quiet, the way the site sets
+    // its own navigation. It is the only place the display face appears.
+    c2d.save()
+    c2d.textBaseline = 'alphabetic'
+    c2d.textAlign = 'left'
+    c2d.fillStyle = theme.text
+    alpha(0.92)
+    // String.fromCodePoint keeps the mark explicit without a literal glyph in
+    // the source: PSI is the mark, and an escape survives every re-encode.
+    const PSI = String.fromCodePoint(0x3A8)
+    c2d.textAlign = 'left'
+    c2d.font = `400 ${Math.max(15, Math.min(21, h * 0.031))}px ${FONT.display}`
+    c2d.fillStyle = theme.text
+    alpha(0.95)
+    c2d.fillText(PSI, 18, arch0(arch) + 5)
+    const markW = c2d.measureText(PSI + ' ').width
+    // Cabinet marquee: caps, wide tracking. A vector display drew clean strokes,
+    // so the type stays crisp — retro is the tube, not a coarse raster.
+    const nameSize = Math.max(13, Math.min(18, h * 0.027))
+    c2d.font = `700 ${nameSize}px ${FONT.display}`
+    tracked('0.2em')
+    c2d.fillText('ANTEMUSE', 18 + markW + 4, arch0(arch) + 5)
+    const nameW = c2d.measureText('ANTEMUSE').width
+    tracked('0.26em')
+    c2d.font = `600 ${Math.max(8, Math.min(9, h * 0.013))}px ${FONT.label}`
+    alpha(0.7)
+    c2d.textAlign = 'right'
+    c2d.fillStyle = theme.dim
+    c2d.fillText('CONCEPT COCKPIT', w - 18, arch0(arch) + 2)
+    // the plate rule: one hairline under the masthead, the way a chart is titled
+    c2d.strokeStyle = theme.phosphor
+    alpha(0.32)
+    c2d.lineWidth = 1
+    c2d.beginPath()
+    c2d.moveTo(18, arch0(arch) + 9)
+    c2d.lineTo(18 + markW + nameW + 12, arch0(arch) + 9)
+    c2d.stroke()
+    tracked('0')
+    c2d.restore()
+
+    // Corner ticks: four hairlines, the frame the site puts around its stage.
+    c2d.save()
+    c2d.strokeStyle = theme.stroke
+    alpha(0.42)
+    c2d.lineWidth = 1
+    const tick = Math.max(10, Math.min(18, w * 0.016))
+    const inset = 7
+    for (const [x, y, dx, dy] of [[inset, inset, 1, 1], [w - inset, inset, -1, 1], [inset, h - inset, 1, -1], [w - inset, h - inset, -1, -1]]) {
+      c2d.beginPath()
+      c2d.moveTo(x, y + dy * tick); c2d.lineTo(x, y); c2d.lineTo(x + dx * tick, y)
+      c2d.stroke()
+    }
+    c2d.restore()
+
+    drawCannons()
+
+    // reticle
+    c2d.save()
+    c2d.strokeStyle = theme.text
+    alpha(0.6)
+    c2d.lineWidth = 1
+    const r = 14, g = 5
+    c2d.beginPath()
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      c2d.moveTo(view.cx + sx * r, view.cy + sy * r - sy * g)
+      c2d.lineTo(view.cx + sx * r, view.cy + sy * r)
+      c2d.lineTo(view.cx + sx * r - sx * g, view.cy + sy * r)
+    }
+    c2d.stroke()
+    c2d.restore()
+
+    // heading tape
+    const tapeW = Math.min(w * 0.6, 420)
+    const tapeY = Math.max(h * 0.1, arch0(arch) + 16)
+    c2d.save()
+    c2d.beginPath(); c2d.rect(view.cx - tapeW / 2, tapeY - 13, tapeW, 26); c2d.clip()
+    c2d.textAlign = 'center'
+    c2d.fillStyle = theme.dim
+    c2d.strokeStyle = theme.stroke
+    for (let d = -60; d <= 60; d += 5) {
+      const deg = Math.round((heading + d) / 5) * 5
+      const x = view.cx + (deg - heading) * (tapeW / 120)
+      const major = deg % 30 === 0
+      alpha(major ? 0.7 : 0.28)
+      c2d.beginPath(); c2d.moveTo(x, tapeY + 7); c2d.lineTo(x, tapeY + (major ? -1 : 3)); c2d.stroke()
+      if (major) {
+        const label = String(((deg % 360) + 360) % 360).padStart(3, '0')
+        // a half-cut number reads as a broken instrument, so it is not drawn
+        const half = (tapeW / 2) - 20
+        if (Math.abs(x - view.cx) <= half) {
+          c2d.font = `500 11px ${FONT.data}`
+          tracked('0.08em')
+          c2d.fillText(label, x, tapeY - 5)
+        }
+      }
+    }
+    c2d.restore()
+    c2d.save()
+    c2d.strokeStyle = theme.accent
+    alpha(0.95)
+    tracked('0')
+    c2d.beginPath(); c2d.moveTo(view.cx, tapeY + 7); c2d.lineTo(view.cx, tapeY - 5); c2d.stroke()
+    c2d.restore()
+
+    // readouts
+    let nearest = null, nd = Infinity
+    for (const n of state.nodes) {
+      const d = Math.hypot(n.x - state.cam.x, n.y - state.cam.y, n.z - state.cam.z)
+      if (d < nd) { nd = d; nearest = n }
+    }
+    if (state.target) nameNode({ l: state.target }, 'target')
+    else if (nearest) nameNode(nearest, 'nearest')
+    const airspeed = Math.hypot(state.cam.vx, state.cam.vy, state.cam.vz)
+    const cells = [
+      ['HDG', String(Math.round(heading)).padStart(3, '0')],
+      ['PITCH', `${(state.cam.pitch * 180 / Math.PI).toFixed(0)}°`],
+      ['ROLL', `${(state.cam.roll * 180 / Math.PI).toFixed(0)}°`],
+      ['SPD', airspeed.toFixed(2)],
+      ['NEAR', nearest ? nearest.l : '—'],
+      ['PICK', String(pickList().length)],
+      // How much map is left between the nose and the edge: the boundary is a
+      // sphere you have to turn around to see, so it also has to be a number.
+      ['EDGE', (() => {
+        const d = MAP_RADIUS - Math.hypot(state.cam.x, state.cam.y, state.cam.z)
+        return d >= 0 ? d.toFixed(2) : '-' + Math.abs(d).toFixed(2)
+      })()],
+      ['LIT', `${state.lit}/${state.nodes.length}`]
+    ]
+    const cellW = Math.min(150, (w - 60) / cells.length)
+    const x0 = view.cx - (cellW * cells.length) / 2 + cellW / 2
+    const y0 = h - Math.max(30, h * 0.045)
+    c2d.save()
+    c2d.textAlign = 'center'
+    cells.forEach(([k, v], i) => {
+      const x = x0 + i * cellW
+      // Amber is interest, not decoration: only the pick and firing counts earn
+      // it. Numbers that describe the ship stay phosphor.
+      const hot = k === 'PICK' || k === 'FIRING' ||
+        (k === 'EDGE' && parseFloat(String(v)) < 0.25)
+      const maxW = cellW - 10
+      c2d.textAlign = 'left'
+      // The HUD is read at a glance from a sofa, not a desk: 9px labels were legible on a
+      // laptop pane and unreadable full-screen, so the type scales with the glass.
+      const labelPx = Math.max(10, Math.min(13, Math.round(w / 150)))
+      c2d.fillStyle = theme.dim
+      c2d.font = `600 ${labelPx}px ${FONT.label}`
+      tracked('0.24em')
+      alpha(0.85)
+      c2d.fillText(k, x, y0 - labelPx + 3)
+      c2d.font = `600 ${Math.max(13, Math.min(18, Math.round(w / 105)))}px ${FONT.data}`
+      tracked('0.02em')
+      // never let a readout run into its neighbour: trim, then draw
+      let text = String(v)
+      while (text.length > 3 && c2d.measureText(text).width > maxW) {
+        text = text.slice(0, -2) + '.'
+      }
+      c2d.fillStyle = hot ? theme.accent : theme.text
+      alpha(0.97)
+      c2d.fillText(text, x, y0 + 10)
+    })
+    // throttle bar
+    const barW = Math.min(w * 0.28, 200)
+    const barX = view.cx - barW / 2
+    const barY = h - Math.max(14, h * 0.022)
+    c2d.strokeStyle = theme.stroke
+    alpha(0.35)
+    c2d.strokeRect(barX, barY, barW, 4)
+    const t = Math.min(1, airspeed / 2.6)
+    c2d.fillStyle = theme.accent
+    alpha(0.9)
+    c2d.fillRect(barX, barY, barW * t, 4)
+    c2d.restore()
+  }
+
+  const arch0 = (arch) => arch * 0.5
+
+  function drawNotes() {
+    if (state.error) {
+      c2d.save()
+      c2d.fillStyle = theme.dim
+      alpha(0.9)
+      c2d.font = `400 11px ${FONT.data}`
+      tracked('0.02em')
+      c2d.fillText(`map unavailable · ${state.error}`.slice(0, 90), 18, view.h * 0.2)
+      c2d.restore()
+      return
+    }
+    if (!state.nodes.length) {
+      c2d.save()
+      c2d.fillStyle = theme.dim
+      alpha(0.9)
+      c2d.font = `400 11px ${FONT.data}`
+      tracked('0.02em')
+      c2d.fillText('no projected concepts yet · /walk starts one', 18, view.h * 0.2)
+      c2d.restore()
+    }
+  }
+
+  // ---------------- flight ----------------
+  let raf = 0, last = 0
+  let stopped = false
+  const keys = new Set()
+
+  function tick(ts) {
+    raf = 0
+    if (stopped) return
+    const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016
+    last = ts
+
+    const turn = 1.6 * dt
+    // A/D bank the ship (roll); the keyboard's yaw lives on the arrows so a
+    // keyboard-only pilot still has every axis.
+    if (keys.has('a')) state.cam.roll -= turn * 1.5
+    if (keys.has('d')) state.cam.roll += turn * 1.5
+    if (keys.has('q')) state.cam.pitch -= turn * 0.7
+    if (keys.has('e')) state.cam.pitch += turn * 0.7
+    if (keys.has('arrowleft')) state.cam.yaw -= turn
+    if (keys.has('arrowright')) state.cam.yaw += turn
+    let want = 0
+    if (keys.has('w') || keys.has('arrowup')) want = 1
+    if (keys.has('s') || keys.has('arrowdown')) want = -0.55
+    if (keys.has('shift')) want *= 2.2
+    // Throttle spools up, so the ship has weight instead of teleporting.
+    state.cam.speed += (want - state.cam.speed) * Math.min(1, dt * 3.2)
+
+    const b = basis()
+    // Travel, don't teleport. The cloud is about two units across: at 0.2 the ship
+    // still left it in about four seconds, so the throttle is slower than walking
+    // pace and the shift key is the way to cross the map.
+    const THRUST = 0.09
+    state.cam.vx += b.fwd[0] * state.cam.speed * THRUST * dt
+    state.cam.vy += b.fwd[1] * state.cam.speed * THRUST * dt
+    state.cam.vz += b.fwd[2] * state.cam.speed * THRUST * dt
+    // Momentum, not a leash: cut the throttle and the ship keeps gliding, so a
+    // turn slides through the cloud instead of stopping to face it.
+    const drag = Math.exp(-dt * (keys.has('s') ? 1.6 : 0.55))
+    state.cam.vx *= drag
+    state.cam.vy *= drag
+    state.cam.vz *= drag
+    const vmax = 0.16
+    const speed = Math.hypot(state.cam.vx, state.cam.vy, state.cam.vz)
+    if (speed > vmax) {
+      const k = vmax / speed
+      state.cam.vx *= k; state.cam.vy *= k; state.cam.vz *= k
+    }
+    state.cam.x += state.cam.vx * dt
+    state.cam.y += state.cam.vy * dt
+    state.cam.z += state.cam.vz * dt
+    // The edge is a wall, and a wall stops the ship. It does not spring it back
+    // and it does not let the throttle win: the position is clamped to the
+    // boundary and the outward part of the velocity is cancelled, so flying
+    // straight at it brings you to a dead stop with the map in front of you.
+    // Tangential motion survives, which is what lets you slide along it under
+    // thrust instead of sticking like glue.
+    const radius = Math.hypot(state.cam.x, state.cam.y, state.cam.z)
+    if (radius > MAP_RADIUS) {
+      const nx = state.cam.x / radius
+      const ny = state.cam.y / radius
+      const nz = state.cam.z / radius
+      // A dead stop, every time. Cancelling only the outward part left a measured ~0.002 u/s
+      // creep along the shell — seven thousandths of a unit over twenty-four seconds with the
+      // stick held in, which is small but visible as "the ship is still moving at the wall".
+      // Contact is contact.
+      state.cam.vx = 0
+      state.cam.vy = 0
+      state.cam.vz = 0
+      state.cam.x = nx * MAP_RADIUS
+      state.cam.y = ny * MAP_RADIUS
+      state.cam.z = nz * MAP_RADIUS
+    }
+    state.cam.pitch = Math.max(-1.15, Math.min(1.15, state.cam.pitch))
+    if (state.cam.yaw > Math.PI) state.cam.yaw -= Math.PI * 2
+    if (state.cam.yaw < -Math.PI) state.cam.yaw += Math.PI * 2
+    if (state.cam.roll > Math.PI) state.cam.roll -= Math.PI * 2
+    if (state.cam.roll < -Math.PI) state.cam.roll += Math.PI * 2
+
+    // Recoil settles whether or not the trigger is held.
+    if (state.kick.l > 0) state.kick.l = Math.max(0, state.kick.l - dt)
+    if (state.kick.r > 0) state.kick.r = Math.max(0, state.kick.r - dt)
+
+    // The trigger is a held state: fire at the cadence, not once per press.
+    state.cool -= dt
+    if (state.firing && state.cool <= 0) shootAt(view.cx, view.cy)
+    stepBullets(dt)
+
+    if (state.net.active && !state.net.landed) {
+      state.net.t = Math.min(1, state.net.t + dt / (reduced ? 0.05 : 0.32))
+      if (state.net.t >= 1) { state.net.landed = true; resolveNet(b) }
+    }
+
+    draw()
+    state.frames += 1
+    if (keys.size || Math.abs(state.cam.speed) > 0.01 || state.net.active || state.firing
+        || state.bullets.length || state.bursts.length) raf = win.requestAnimationFrame(tick)
+  }
+
+  const schedule = () => { if (!raf && !stopped) raf = win.requestAnimationFrame(tick) }
+
+  const resetFlight = () => {
+    Object.assign(state.cam, {
+      x: home.x, y: home.y, z: home.z, yaw: 0, pitch: 0, roll: 0, speed: 0, vx: 0, vy: 0, vz: 0
+    })
+    draw()
+  }
+
+  function resolveNet(b) {
+    // Open the net where the ray is densest, not at a fixed distance: the plane
+    // is a cloud with gaps, and a throw into a gap should still land on a knot.
+    const CONE = Math.tan(17 * Math.PI / 180)
+    const countAt = (depth) => {
+      const radius = Math.max(0.08, depth * CONE)
+      let n = 0
+      for (const node of state.nodes) {
+        const d = { x: node.x - state.cam.x, y: node.y - state.cam.y, z: node.z - state.cam.z }
+        const dz = d.x * b.fwd[0] + d.y * b.fwd[1] + d.z * b.fwd[2]
+        if (Math.abs(dz - depth) > 0.4) continue
+        const off = Math.hypot(d.x - b.fwd[0] * dz, d.y - b.fwd[1] * dz, d.z - b.fwd[2] * dz)
+        if (off <= radius) n++
+      }
+      return n
+    }
+    let depth = 1.25, best = -Infinity
+    for (let d = 0.3; d <= 2.4; d += 0.1) {
+      const score = countAt(d) - d * 0.3
+      if (score > best) { best = score; depth = d }
+    }
+    state.net.reach = depth
+    const radius = Math.max(0.08, depth * CONE)
+    const caught = []
+    for (const node of state.nodes) {
+      const d = { x: node.x - state.cam.x, y: node.y - state.cam.y, z: node.z - state.cam.z }
+      const dz = d.x * b.fwd[0] + d.y * b.fwd[1] + d.z * b.fwd[2]
+      if (Math.abs(dz - depth) > 0.4) continue
+      const off = Math.hypot(d.x - b.fwd[0] * dz, d.y - b.fwd[1] * dz, d.z - b.fwd[2] * dz)
+      if (off <= radius) caught.push(node)
+    }
+    if (!caught.length) {
+      // nothing near the ray: take the closest thing actually ahead
+      let pick = null, bestAngle = 0.95
+      for (const node of state.nodes) {
+        const d = { x: node.x - state.cam.x, y: node.y - state.cam.y, z: node.z - state.cam.z }
+        const dz = d.x * b.fwd[0] + d.y * b.fwd[1] + d.z * b.fwd[2]
+        if (dz < 0.2 || dz > 3) continue
+        const off = Math.hypot(d.x - b.fwd[0] * dz, d.y - b.fwd[1] * dz, d.z - b.fwd[2] * dz)
+        const angle = Math.atan2(off, dz)
+        if (angle < bestAngle) { bestAngle = angle; pick = { node, dz } }
+      }
+      if (pick) {
+        state.net.reach = pick.dz
+        const r = Math.max(0.12, pick.dz * CONE)
+        for (const node of state.nodes) {
+          const dx = node.x - state.cam.x, dy = node.y - state.cam.y, dz2 = node.z - state.cam.z
+          const dz = dx * b.fwd[0] + dy * b.fwd[1] + dz2 * b.fwd[2]
+          if (Math.abs(dz - pick.dz) > 0.45) continue
+          const off = Math.hypot(dx - b.fwd[0] * dz, dy - b.fwd[1] * dz, dz2 - b.fwd[2] * dz)
+          if (off <= r) caught.push(node)
+        }
+      }
+    }
+    state.catchList = caught.slice(0, 24)
+    onCatch(state.catchList)
+  }
+
+  /**
+   * Aim direction through a screen point, in this camera's own basis.
+   *
+   * Bullets travel, so aiming has to be a ray and not a screen-space pickup: the
+   * shot leaves the barrel along the line you are pointing and has to arrive.
+   */
+  function aimDir(ax, ay) {
+    const b = basis()
+    const sx = (ax - view.cx) / view.f
+    const sy = (view.cy - ay) / view.f
+    const d = [
+      b.fwd[0] + b.right[0] * sx + b.up[0] * sy,
+      b.fwd[1] + b.right[1] * sx + b.up[1] * sy,
+      b.fwd[2] + b.right[2] * sx + b.up[2] * sy
+    ]
+    const len = Math.hypot(d[0], d[1], d[2]) || 1
+    return [d[0] / len, d[1] / len, d[2] / len]
+  }
+
+  /** The point the cannons converge on: the nearest concept under the reticle,
+   *  or a point out in the air at CONVERGE when the crosshair is on nothing.
+   *
+   *  Converging on a fixed distance is what made the guns shoot wide: the shot
+   *  leaves a muzzle well below the eye line, so it is only on the crosshair's
+   *  ray where it has been aimed to meet it. */
+  function aimPoint(d) {
+    let best = null
+    let bestD = Infinity
+    for (const node of state.nodes) {
+      const vx = node.x - state.cam.x
+      const vy = node.y - state.cam.y
+      const vz = node.z - state.cam.z
+      const t = vx * d[0] + vy * d[1] + vz * d[2]
+      if (t <= 0.15 || t >= bestD) continue
+      const px = vx - d[0] * t
+      const py = vy - d[1] * t
+      const pz = vz - d[2] * t
+      // This is only the point the muzzle aims at — collision stays a separate,
+      // swept test, so a shot that misses the concept still misses it. The slack
+      // scales with distance (a far concept covers less screen per unit) and is
+      // capped so a shot into open glass never snaps onto something.
+      const tol = Math.min(0.06, Math.max(0.02, t * 0.05))
+      if (px * px + py * py + pz * pz > tol * tol) continue
+      bestD = t
+      best = node
+    }
+    return best
+  }
+
+  /** Where a cannon's muzzle sits on screen this frame. The recoil is a screen
+   *  offset because the gun is part of the ship, not the world. */
+  function gunScreen(side) {
+    const k = state.kick[side < 0 ? 'l' : 'r'] / GUN_KICK
+    const ui = uiScale(view.w)
+    return {
+      x: view.cx + side * GUN_X * ui,
+      y: dashTop() - GUN_LEN * ui + k * 7 * ui
+    }
+  }
+
+  function shootAt(ax, ay) {
+    if (state.bullets.length >= MAX_BULLETS) state.bullets.shift()
+    const d = aimDir(ax, ay)
+    const b = basis()
+    // Alternate barrels, a little off the centreline, so the stream reads as
+    // fire from a ship rather than a stroke from the camera. The shot is then
+    // aimed from the barrel at a point ON the aim ray — otherwise the offset
+    // would bias every shot and a crosshair hit would miss by a barrel width.
+    // Shots leave the ship's cannons, not the middle of the canopy: each shot
+    // starts at the muzzle of whichever gun is up and is aimed at a point on the
+    // crosshair's ray, so the two streams converge on the reticle.
+    state.barrel = -state.barrel
+    const side = state.barrel
+    const gun = gunScreen(side)
+    const gd = aimDir(gun.x, gun.y)
+    const px = state.cam.x + gd[0] * MUZZLE_REACH
+    const py = state.cam.y + gd[1] * MUZZLE_REACH
+    const pz = state.cam.z + gd[2] * MUZZLE_REACH
+    // Converge where the crosshair actually lands: the nearest concept along the
+    // reticle's ray, or a default reach when there is nothing there. Converging
+    // at a fixed distance would make the cannons shoot wide at every other depth.
+    const under = aimPoint(d)
+    const aim = under
+      ? { x: under.x, y: under.y, z: under.z }
+      : { x: state.cam.x + d[0] * CONVERGE, y: state.cam.y + d[1] * CONVERGE, z: state.cam.z + d[2] * CONVERGE }
+    state.kick[side < 0 ? 'l' : 'r'] = GUN_KICK
+    const vx = aim.x - px, vy = aim.y - py, vz = aim.z - pz
+    const vl = Math.hypot(vx, vy, vz) || 1
+    state.bullets.push({
+      x: px, y: py, z: pz,
+      px, py, pz,
+      vx: (vx / vl) * BULLET_SPEED, vy: (vy / vl) * BULLET_SPEED, vz: (vz / vl) * BULLET_SPEED,
+      life: BULLET_LIFE,
+      ax, ay,
+      gun: side
+    })
+    state.shotsFired += 1
+    state.cool = FIRE_INTERVAL
+    schedule()
+    return true
+  }
+
+  /**
+   * Move the bullets, and land the ones that arrive.
+   *
+   * Collision is a distance test in world space, not a screen ray: a bullet that
+   * misses keeps going and expires, which is what makes holding the trigger feel
+   * like firing rather than like selecting.
+   */
+  /** Squared distance from a point to a segment: a shot is swept, never tested
+   * at one instant, or a fast bullet tunnels straight through a concept. */
+  function segDist2(a, b, p) {
+    const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z
+    const len2 = dx * dx + dy * dy + dz * dz
+    let t = len2 > 0 ? ((p.x - a.x) * dx + (p.y - a.y) * dy + (p.z - a.z) * dz) / len2 : 0
+    t = Math.max(0, Math.min(1, t))
+    const cx = a.x + dx * t - p.x, cy = a.y + dy * t - p.y, cz = a.z + dz * t - p.z
+    return cx * cx + cy * cy + cz * cz
+  }
+
+  function stepBullets(dt) {
+    if (!state.bullets.length) return
+    const keep = []
+    for (const shot of state.bullets) {
+      shot.px = shot.x; shot.py = shot.y; shot.pz = shot.z
+      shot.x += shot.vx * dt; shot.y += shot.vy * dt; shot.z += shot.vz * dt
+      shot.life -= dt
+      let hitNode = null
+      const from = { x: shot.px, y: shot.py, z: shot.pz }
+      const to = { x: shot.x, y: shot.y, z: shot.z }
+      for (const node of state.nodes) {
+        if (segDist2(from, to, node) <= BULLET_R * BULLET_R) { hitNode = node; break }
+      }
+      if (hitNode) {
+        state.hits[hitNode.l] = (state.hits[hitNode.l] || 0) + 1
+        state.target = hitNode.l
+        onTarget(hitNode)
+        onName(hitNode.l, 'hit')
+        onPicks(pickList())
+        queuePicks()
+        state.bursts.push({ x: shot.x, y: shot.y, z: shot.z, t: 0 })
+        if (state.bursts.length > 24) state.bursts.shift()
+        continue
+      }
+      if (shot.life > 0 && Math.abs(shot.x) < 1.9 && Math.abs(shot.y) < 1.9 && Math.abs(shot.z) < 1.9) keep.push(shot)
+    }
+    state.bullets = keep
+    for (const burst of state.bursts) burst.t += dt
+    state.bursts = state.bursts.filter((b) => b.t < 0.34)
+  }
+
+  function pickList() {
+    return state.nodes
+      .filter((n) => state.hits[n.l])
+      .map((n) => ({ l: n.l, hits: state.hits[n.l], w: n.w, v: n.v }))
+      .sort((a, z) => z.hits - a.hits || a.l.localeCompare(z.l))
+  }
+
+
+
+  // ---------------- input ----------------
+  // Two ways to aim: click once and the mouse is captured (pointer lock, the
+  // way a cockpit reads — the reticle is the cursor), or drag when the host
+  // will not hand over the pointer. Escape always gives the mouse back.
+  let drag = null
+  let captured = false
+  const lockActive = () => {
+    try { return !!doc.pointerLockElement && doc.pointerLockElement === el } catch (e) { return false }
+  }
+  const onDown = (ev) => {
+    // Keys only reach this pane once it holds focus. A pane that is displayed
+    // but not focused looks completely dead: nothing flies, nothing fires.
+    if (typeof el.focus === 'function') { try { el.focus() } catch (e) { /* gone */ } }
+    // Right button (or a two-finger drag on touch, mapped by the host to button 2)
+    // looks; the left button is the trigger. Holding it fires a stream.
+    if (ev.button === 2) {
+      drag = { x: ev.clientX, y: ev.clientY, moved: 0 }
+      return
+    }
+    const r = el.getBoundingClientRect()
+    const ax = lockActive() ? view.cx : ev.clientX - r.left
+    const ay = lockActive() ? view.cy : ev.clientY - r.top
+    const aimed = aimPoint(aimDir(ax, ay))
+    if (aimed) nameNode(aimed, 'click')
+    state.firing = true
+    shootAt(ax, ay)
+    if (el.requestPointerLock && !lockActive()) {
+      try { el.requestPointerLock() } catch (e) { /* a host may refuse; drag still works */ }
+    }
+  }
+  const onMove = (ev) => {
+    if (lockActive()) {
+      // captured: relative movement, no cursor, no drag bookkeeping
+      state.cam.yaw += (ev.movementX || 0) * 0.0026
+      state.cam.pitch = Math.max(-1.15, Math.min(1.15, state.cam.pitch - (ev.movementY || 0) * 0.0022))
+      schedule()
+      return
+    }
+    if (!drag) {
+      const r = el.getBoundingClientRect()
+      const ax = ev.clientX - r.left, ay = ev.clientY - r.top
+      let nearest = null, distance = Infinity
+      const b = basis()
+      for (const node of state.nodes) {
+        const c = toCam(node, b)
+        if (c.z <= 0.05) continue
+        const s = project(c)
+        const d = Math.hypot(s.x - ax, s.y - ay)
+        if (d < distance) { nearest = node; distance = d }
+      }
+      if (nearest && distance <= 18) nameNode(nearest, 'hover')
+      return
+    }
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y
+    drag.moved += Math.abs(dx) + Math.abs(dy)
+    state.cam.yaw += dx * 0.0032
+    state.cam.pitch = Math.max(-1.15, Math.min(1.15, state.cam.pitch - dy * 0.0026))
+    drag.x = ev.clientX; drag.y = ev.clientY
+    schedule()
+  }
+  const onUp = (ev) => {
+    // Release the trigger. No click-to-select: the shot is the whole interaction.
+    state.firing = false
+    drag = null
+  }
+  const onLockChange = () => {
+    captured = lockActive()
+    el.style.cursor = captured ? 'none' : 'crosshair'
+    draw()
+  }
+  const onKey = (ev) => {
+    const k = String(ev.key || '').toLowerCase()
+    if (k === 'w' || k === 'a' || k === 's' || k === 'd' || k === 'q' || k === 'e' || k === 'shift'
+        || k === 'arrowup' || k === 'arrowdown' || k === 'arrowleft' || k === 'arrowright') {
+      keys.add(k); ev.preventDefault(); schedule(); return
+    }
+    if (k === 'f') {
+      ev.preventDefault()
+      if (!state.firing) { state.firing = true; shootAt(view.cx, view.cy) }
+      return
+    }
+    if (k === ' ') { ev.preventDefault(); state.net = { active: true, t: 0, landed: false, reach: 1.25 }; state.catchList = []; onCatch([]); schedule() }
+    else if (k === '0' || k === 'home') { resetFlight() }
+    else if (k === 'c') { state.catchList = []; onCatch([]); draw() }
+    else if (k === 'escape' && lockActive()) { try { doc.exitPointerLock() } catch (e) { /* gone */ } }
+  }
+  const onKeyUp = (ev) => {
+    const k = String(ev.key || '').toLowerCase()
+    keys.delete(k)
+    if (k === 'f') state.firing = false
+  }
+
+  el.addEventListener('pointerdown', onDown)
+  el.addEventListener('pointermove', onMove)
+  el.addEventListener('pointerup', onUp)
+  el.addEventListener('pointercancel', onUp)
+  el.addEventListener('keydown', onKey)
+  el.addEventListener('keyup', onKeyUp)
+
+  // The pane must not depend on holding focus to fly. A canvas inside the app's
+  // layout loses focus whenever the app re-renders around it, and then every key
+  // silently does nothing. Listen at the document level too, and leave typing
+  // alone: text fields, contenteditable and the pane's own bubbled events bail.
+  const typing = (ev) => {
+    const t = ev.target
+    if (!t) return false
+    const tag = String(t.tagName || '').toLowerCase()
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable === true
+  }
+  const onKeyDoc = (ev) => {
+    if (typing(ev) || el.contains(ev.target)) return
+    onKey(ev)
+  }
+  const onKeyUpDoc = (ev) => {
+    if (typing(ev) || el.contains(ev.target)) return
+    onKeyUp(ev)
+  }
+  doc.addEventListener('keydown', onKeyDoc)
+  doc.addEventListener('keyup', onKeyUpDoc)
+  doc.addEventListener('pointerlockchange', onLockChange)
+
+  // panes are resized constantly by sash drags: track the box, not a mount size
+  let ro = null
+  fit()
+  if (typeof win.ResizeObserver === 'function') {
+    ro = new win.ResizeObserver(() => { fit(); draw() })
+    ro.observe(el)
+  }
+
+  // A read-only handle for debugging in the running app: the pane is canvas-only,
+  // so without this there is no way to tell "empty graph" from "empty view".
+  try {
+    win.__cockpitDebug = () => {
+      const b = basis()
+      let front = 0, onScreen = 0, close = 0, minD = Infinity
+      for (const node of state.nodes) {
+        const c = toCam(node, b)
+        if (c.z > 0.05) front += 1
+        const s = project(c)
+        if (c.z > 0.05 && s.x > 0 && s.y > 0 && s.x < view.w && s.y < view.h) onScreen += 1
+        const d = Math.hypot(node.x - state.cam.x, node.y - state.cam.y, node.z - state.cam.z)
+        if (d < minD) minD = d
+        if (d < 0.6) close += 1
+      }
+      return { nodes: state.nodes.length, front, onScreen, close, minD: Number(minD.toFixed(3)),
+               view: { w: view.w, h: view.h, f: view.f }, cam: { ...state.cam } }
+    }
+  } catch (e) { /* gone */ }
+
+  let timer = null
+  const stopPoll = () => { if (typeof timer === 'function') { try { timer() } catch (e) { /* gone */ } } else if (timer) { win.clearInterval(timer) } }
+  poll()
+  timer = ctx.setInterval ? ctx.setInterval(poll, COCKPIT_POLL_MS) : win.setInterval(poll, COCKPIT_POLL_MS)
+  schedule()
+
+  return {
+    stats: () => ({
+      nodes: state.nodes.length,
+      lit: state.lit,
+      key: state.key,
+      path: state.path.length,
+      frames: state.frames,
+      catchCount: state.catchList.length,
+      picks: pickList().length,
+      shots: state.shotsFired,
+      bullets: state.bullets.length,
+      firing: state.firing,
+      hits: Object.keys(state.hits).length,
+      target: state.target,
+      error: state.error,
+      size: { w: view.w, h: view.h, dpr: view.dpr },
+      cam: {
+        x: state.cam.x, y: state.cam.y, z: state.cam.z,
+        yaw: state.cam.yaw, pitch: state.cam.pitch, roll: state.cam.roll,
+        speed: Math.hypot(state.cam.vx, state.cam.vy, state.cam.vz)
+      }
+    }),
+    // Test seams: a harness drives the same functions the input handlers do.
+    apply,
+    resolveNet: () => resolveNet(basis()),
+    fire: shootAt,
+    picks: pickList,
+    // Harness seam: where the shots are on screen right now, in the same
+    // projection the drawing uses. A bullet nobody can see is not a bullet.
+    bulletScreen: () => state.bullets.map((shot) => {
+      const c = toCam(shot, basis())
+      return c.z > 0.05 ? { ...project(c), z: c.z, world: [shot.x, shot.y, shot.z], life: shot.life } : null
+    }).filter(Boolean),
+    key: (k) => { keys.add(k); schedule() },
+    unkey: (k) => keys.delete(k),
+    home: resetFlight,
+    /** Where a label currently lands on the glass — used to aim a harness click. */
+    screenOf: (label) => {
+      const node = state.nodes.find((n) => n.l === label)
+      if (!node) return null
+      const c = toCam(node, basis())
+      if (c.z <= 0.05) return null
+      return project(c)
+    },
+    draw,
+    destroy: () => {
+      stopped = true
+      if (raf) { try { win.cancelAnimationFrame(raf) } catch (e) { /* gone */ } }
+      raf = 0
+      // A pick still in the debounce window belongs to a pane that is going away; file it
+      // before the listeners come off rather than dropping the last shot of the session.
+      if (pickTimer) { win.clearTimeout(pickTimer); pickTimer = 0; flushPicks() }
+      stopPoll()
+      if (ro) { try { ro.disconnect() } catch (e) { /* gone */ } }
+      el.removeEventListener('pointerdown', onDown)
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
+      el.removeEventListener('pointercancel', onUp)
+      el.removeEventListener('keydown', onKey)
+      el.removeEventListener('keyup', onKeyUp)
+      doc.removeEventListener('keydown', onKeyDoc)
+      doc.removeEventListener('keyup', onKeyUpDoc)
+      doc.removeEventListener('pointerlockchange', onLockChange)
+      try { if (lockActive()) doc.exitPointerLock() } catch (e) { /* gone */ }
+    }
+  }
+}
+
+/**
+ * Verdict controls are ordinary buttons rather than canvas hit targets: both the
+ * label and the action remain reachable without a pointer. Network failure is
+ * intentionally quiet — a personal judgement must not interrupt flight.
+ */
+function CockpitVerdict({ ctx, named, onVerdict }) {
+  const [tally, setTally] = useState(null)
+  const [busy, setBusy] = useState('')
+  const label = named && named.label ? named.label : ''
+  const source = named && named.source ? named.source : 'near'
+  const win = typeof window === 'undefined' ? null : window
+  const reduced = reducedMotion(win || {})
+
+  const readSession = () => {
+    try {
+      const atom = host && host.state && host.state.focusedSessionId
+      return atom && atom.get ? String(atom.get() || '') : ''
+    } catch (e) { return '' }
+  }
+  const readTally = () => {
+    if (!win || typeof win.fetch !== 'function') return
+    try {
+      const request = ctx && typeof ctx.rest === 'function'
+        ? ctx.rest('/verdicts')
+        : win.fetch(`/api/plugins/${ID}/verdicts`).then((response) => response && response.ok ? response.json() : null)
+      Promise.resolve(request).then((data) => {
+        if (!data || typeof data !== 'object') return
+        const keep = Number(data.keep)
+        const trash = Number(data.trash)
+        if (Number.isFinite(keep) && Number.isFinite(trash)) setTally({ keep, trash })
+      }).catch(() => {})
+    } catch (e) { /* optional endpoint: the controls still work locally */ }
+  }
+  useEffect(() => {
+    readTally()
+    if (!ctx || typeof ctx.setInterval !== 'function') return undefined
+    const stop = ctx.setInterval(readTally, COCKPIT_POLL_MS)
+    return () => { if (typeof stop === 'function') stop() }
+  }, [ctx])
+
+  const submit = (verdict) => {
+    if (!label || busy) return
+    setBusy(verdict)
+    const payload = { label, verdict, session: readSession() }
+    try {
+      // The pane lives on a file:// origin in the packaged app, where a relative
+      // `fetch` cannot reach the gateway ("Failed to fetch") — the host's own REST
+      // door is the only route that carries the session cookie. `ctx.rest` first,
+      // the raw fetch only where a host has no door (the harness).
+      const request = ctx && typeof ctx.rest === 'function'
+        ? ctx.rest('/verdict', { method: 'POST', body: payload })
+        : win && typeof win.fetch === 'function'
+          ? win.fetch(`/api/plugins/${ID}/verdict`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).then((response) => response && response.ok ? response.json() : null)
+          : null
+      Promise.resolve(request).then((data) => {
+        if (data && data.ok) readTally()
+      }).catch(() => {}).finally(() => setBusy(''))
+    } catch (e) { setBusy('') }
+    onVerdict(verdict)
+  }
+
+  useEffect(() => {
+    const onKey = (event) => {
+      const target = event.target
+      const tag = String(target && target.tagName || '').toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || (target && target.isContentEditable)) return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      const key = String(event.key || '').toLowerCase()
+      if (key !== 'k' && key !== 't') return
+      if (!label) return
+      event.preventDefault()
+      submit(key === 'k' ? 'keep' : 'trash')
+    }
+    if (!win) return undefined
+    win.document.addEventListener('keydown', onKey)
+    return () => win.document.removeEventListener('keydown', onKey)
+  }, [label, busy])
+
+  const control = (verdict, key, text) => jsx('button', {
+    key: verdict,
+    type: 'button',
+    disabled: !label || Boolean(busy),
+    onClick: () => submit(verdict),
+    onFocus: (event) => { event.currentTarget.style.outline = '2px solid var(--ui-accent, currentColor)' },
+    onBlur: (event) => { event.currentTarget.style.outline = 'none' },
+    'aria-keyshortcuts': key,
+    'aria-label': `${text} ${label || 'nearest concept'} (${key})`,
+    style: {
+      background: 'var(--ui-panel-background, transparent)',
+      border: '1px solid var(--ui-stroke-secondary, currentColor)',
+      borderRadius: '2px', color: 'var(--ui-text, currentColor)', cursor: label ? 'pointer' : 'default',
+      padding: '4px 7px', font: `600 10px ${FONT.label}`, letterSpacing: '0.12em', textTransform: 'uppercase',
+      opacity: label ? 1 : 0.55, outline: 'none', outlineOffset: '2px'
+    },
+    children: `${text} · ${key}`
+  })
+
+  return jsxs('div', {
+    style: {
+      position: 'absolute', left: '18px', top: '82px', zIndex: 2, maxWidth: 'min(62%, 420px)',
+      padding: '6px 8px 7px', ...PANEL, ...DATA, transition: reduced ? 'none' : 'opacity 180ms ease'
+    },
+    'aria-live': 'polite',
+    children: [
+      jsx('div', { key: 'name', style: { ...LABEL, color: 'var(--ui-text-secondary, inherit)' }, children: label ? `${source} · ${label}` : 'aim at a concept' }),
+      jsxs('div', { key: 'controls', style: { display: 'flex', gap: '5px', marginTop: '5px' }, children: [
+        control('keep', 'K', 'keep'), control('trash', 'T', 'trash')
+      ] }),
+      tally ? jsx('div', { key: 'tally', style: { ...DATA, marginTop: '5px', color: 'var(--ui-text-secondary, inherit)' }, children: `kept ${tally.keep} · dropped ${tally.trash}` }) : null
+    ]
+  })
+}
+
+/** The pane: a canvas, and the catches/selection as real text beside it. */
+function CockpitPane({ ctx }) {
+  const canvasRef = useRef(null)
+  const [caught, setCaught] = useState([])
+  const [picks, setPicks] = useState([])
+  const [named, setNamed] = useState(null)
+  const [notice, setNotice] = useState(null)
+  const [engaged, setEngaged] = useState(false)
+  const reduced = reducedMotion(typeof window === 'undefined' ? {} : window)
+
+  useEffect(() => {
+    if (!notice) return undefined
+    const fade = reduced ? null : setTimeout(() => {
+      setNotice((current) => current && current.at === notice.at ? { ...current, visible: false } : current)
+    }, 1300)
+    const clear = setTimeout(() => {
+      setNotice((current) => current && current.at === notice.at ? null : current)
+    }, reduced ? 1300 : 1480)
+    return () => { if (fade) clearTimeout(fade); clearTimeout(clear) }
+  }, [notice, reduced])
+
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return undefined
+    const cockpit = createCockpit({
+      ctx,
+      el,
+      callbacks: {
+        onCatch: (list) => setCaught(list.map((n) => ({ l: n.l, w: n.w }))),
+        onTarget: () => {},
+        onName: (label, source) => {
+          const event = { label, source, at: Date.now(), visible: true }
+          setNamed(event)
+          setNotice(event)
+        },
+        onPicks: (list) => setPicks(list.slice(0, 30))
+      }
+    })
+    // The cockpit is a page the user navigated to, so it takes the keyboard when
+    // it mounts. Otherwise the first frame is a still picture and every key looks
+    // broken until the user happens to click it.
+    const focusTimer = setTimeout(() => { try { el.focus() } catch (e) { /* gone */ } }, 80)
+    return () => {
+      if (focusTimer) clearTimeout(focusTimer)
+      cockpit.destroy()
+    }
+  }, [ctx])
+
+  // Until the pane has been clicked it cannot hear the keyboard, so say so
+  // rather than presenting a still picture the user has to guess at.
+  const hint = engaged
+    ? null
+    : jsx('div', {
+        key: 'hint',
+        style: {
+          position: 'absolute', left: '50%', top: '58%', transform: 'translateX(-50%)',
+          pointerEvents: 'none', textAlign: 'center', whiteSpace: 'nowrap',
+          ...LABEL, letterSpacing: '0.18em'
+        },
+        children: 'w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire'
+      })
+
+  const hitNotice = notice
+    ? jsx('div', {
+        key: `notice-${notice.at}`,
+        style: {
+          position: 'absolute', left: '50%', top: '18%', transform: 'translateX(-50%)', zIndex: 2,
+          pointerEvents: 'none', ...DATA, color: 'var(--ui-text, currentColor)',
+          opacity: notice.visible ? 0.95 : 0,
+          transition: reduced ? 'none' : 'opacity 180ms ease'
+        },
+        children: `${notice.source} · ${notice.label}`
+      })
+    : null
+
+  const list = caught.length
+    ? jsx('ul', {
+        className: 'antemuse-cockpit-catch',
+        style: {
+          position: 'absolute', left: '18px', bottom: '84px', margin: 0, padding: '6px 10px 7px',
+          listStyle: 'none', maxWidth: 'min(46%, 340px)', maxHeight: '32%', overflow: 'hidden',
+          ...PANEL, ...DATA, borderLeft: '2px solid var(--ui-accent, currentColor)'
+        },
+        children: [
+          jsx('li', { key: 'head', style: { ...LABEL, color: 'var(--ui-text-secondary, inherit)' }, children: `net \u00b7 ${caught.length}` }),
+          ...caught.slice(0, 6).map((n) => jsx('li', { key: n.l, children: n.l }))
+        ]
+      })
+    : null
+
+  // Interest is the pick list: ordered by how many times a concept was shot,
+  // so the top of this column is what the session keeps coming back to.
+  const pickPanel = picks.length
+    ? jsxs('div', {
+        key: 'picks',
+        style: {
+          position: 'absolute', right: '18px', top: '96px', padding: '6px 10px 7px',
+          ...PANEL, ...DATA, maxWidth: '38%', maxHeight: '46%', overflow: 'hidden'
+        },
+        children: [
+          jsx('div', {
+            key: 'head',
+            style: { ...LABEL, display: 'flex', gap: '8px', justifyContent: 'space-between' },
+            children: [
+              jsx('span', { key: 't', children: 'picked' }),
+              jsx('span', { key: 'n', style: { color: 'var(--ui-accent, currentColor)' }, children: picks.length })
+            ]
+          }),
+          ...picks.slice(0, 8).map((p) => jsxs('div', {
+            key: p.l,
+            style: { display: 'flex', gap: '8px', justifyContent: 'space-between' },
+            children: [
+              jsx('span', { key: 'l', children: p.l }),
+              jsx('span', { key: 'n', style: { color: 'var(--ui-accent, currentColor)' }, children: `\u00d7${p.hits}` })
+            ]
+          }, p.l))
+        ]
+      })
+    : null
+
+  return jsxs('div', {
+    style: { position: 'relative', width: '100%', height: '100%', minHeight: '240px', overflow: 'hidden' },
+    children: [
+      jsx('canvas', {
+        key: 'canvas',
+        ref: canvasRef,
+        tabIndex: 0,
+        onPointerDown: () => setEngaged(true),
+        onFocus: () => setEngaged(true),
+        onBlur: () => setEngaged(false),
+        role: 'application',
+        'aria-label': 'Concept cockpit. Hold the left mouse button or F to fire a stream of shots; right-drag or click to capture the mouse to look. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse.',
+        style: { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', cursor: 'crosshair', touchAction: 'none' }
+      }),
+      hint,
+      hitNotice,
+      jsx(CockpitVerdict, {
+        key: 'verdict',
+        ctx,
+        named,
+        onVerdict: (verdict) => {
+          if (named && named.label) setNamed({ ...named, source: verdict, at: Date.now() })
+        }
+      }),
+      list,
+      pickPanel
+    ]
+  })
+}
+
+// Kept as a named export so a harness can drive the renderer without React.
+export { createCockpit }
+
 export default {
   id: ID,
   name: 'Antemuse',
@@ -2227,6 +4260,35 @@ export default {
       area: SIDEBAR_NAV_AREA,
       order: 60,
       data: { codicon: 'pulse', label: copy.pane, path: `/${ID}` }
+    })
+    // The cockpit is the same route read from a heading instead of from above.
+    // It is its own pane (a full-height tab) because a first-person view in a
+    // 320px rail is a letterbox, and its own page because a pane can sit in a
+    // collapsed tab when the layout gets tight.
+    ctx.register({
+      id: 'cockpit',
+      area: PANES_AREA,
+      title: copy.cockpit,
+      data: { placement: 'main', collapsible: true, minWidth: '420px', minHeight: '300px' },
+      render: () => jsx(CockpitPane, { ctx })
+    })
+    ctx.register({
+      id: 'cockpit-page',
+      area: ROUTES_AREA,
+      data: { path: `/${ID}/cockpit` },
+      render: () => jsx(CockpitPane, { ctx })
+    })
+    ctx.register({
+      id: 'cockpit-nav',
+      area: SIDEBAR_NAV_AREA,
+      order: 61,
+      data: { codicon: 'rocket', label: copy.cockpit, path: `/${ID}/cockpit` }
+    })
+    ctx.register({
+      id: 'cockpit-open',
+      area: PALETTE_AREA,
+      title: copy.cockpitOpen,
+      run: () => { if (ctx.navigate) ctx.navigate(`/${ID}/cockpit`) }
     })
     ctx.register({
       id: 'watch',

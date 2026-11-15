@@ -19,7 +19,7 @@ from pathlib import Path
 import time
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Body, HTTPException, Query, Request
 
 router = APIRouter()
 
@@ -294,12 +294,27 @@ def graph(session: str = "", limit: int = 1400):
     path: List[str] = []
     if (drawable or recent) and key == "walk":
         try:
+            args = (own, float(active.get("entered_at") or 0.0))
             trail = activation._rows(
                 "SELECT c.label FROM served s JOIN concepts c ON c.id = s.concept_id "
-                "WHERE s.move = 'walk' AND s.session = ? AND s.at >= ? "
-                "ORDER BY s.at DESC LIMIT 32",
-                (own, float(active.get("entered_at") or 0.0)))
-            path = [row[0] for row in reversed(trail or []) if row and row[0]]
+                "WHERE s.move = 'walk:hop' AND s.session = ? AND s.at >= ? "
+                "ORDER BY s.at DESC LIMIT 32", args)
+            if not trail:
+                # Walks recorded before hops were told apart: the old query, so an older state
+                # still draws something rather than an empty map.
+                trail = activation._rows(
+                    "SELECT c.label FROM served s JOIN concepts c ON c.id = s.concept_id "
+                    "WHERE s.move = 'walk' AND s.session = ? AND s.at >= ? "
+                    "ORDER BY s.at DESC LIMIT 32", args)
+            # A hop can serve the same concept twice (a walk revisits a node) and the serving
+            # rows carry every term the line mentioned, not only where it landed. The pane draws
+            # a path, so a repeated label draws the same point twice and makes the trail look
+            # longer than the walk was: first occurrence wins, order kept.
+            seen: set = set()
+            for row in reversed(trail or []):
+                if row and row[0] and row[0] not in seen:
+                    seen.add(row[0])
+                    path.append(row[0])
         except Exception:  # health: BLE001 -- no trail is a fact, not a failure
             path = []
 
@@ -369,6 +384,58 @@ def graph(session: str = "", limit: int = 1400):
     return payload
 
 
+@router.post("/verdict")
+# FastAPI owns the body; a dict default keeps the route callable straight from a test.
+def verdict(body: Dict[str, Any] = Body(default=None)) -> Dict[str, Any]:
+    """Record what the person thought of a concept the map named.
+
+    The pane names the concept under the reticle, so a keep or a trash is a
+    judgement on something specific — the label is required. It is written to the
+    ledger as a sighting whose move is the verdict, which is what `GET /verdicts`
+    and `tools/hit_rate.py` count.
+    """
+    payload = body if isinstance(body, dict) else {}
+    try:
+        return plugin().core.engine.note_verdict(
+            str(payload.get("label") or ""),
+            str(payload.get("verdict") or ""),
+            session=str(payload.get("session") or ""),
+        )
+    except Exception as exc:  # health: BLE001 -- an unreadable ledger must not 500 the pane
+        return {"ok": False, "recorded": 0, "reason": f"{type(exc).__name__}: {exc}"[:120]}
+
+
+@router.get("/verdicts")
+def verdict_tally(days: int = Query(30, ge=0, le=3650)) -> Dict[str, Any]:
+    """The tally the pane prints beside the keep/trash controls."""
+    try:
+        return _core_module("history").verdicts(days)
+    except Exception:  # health: BLE001 -- a tally is never worth an error page
+        return {"keep": 0, "trash": 0, "rate": None}
+
+
+@router.post("/picks")
+# FastAPI owns the body, and a plain dict default means the route can also be called
+# directly in a test without standing up a request.
+def picks(body: Dict[str, Any] = Body(default=None)) -> Dict[str, Any]:
+    """File what the person shot in the cockpit.
+
+    ``/explore`` is the one state a human drives, so its material is their own
+    choosing rather than this plugin's search. The pane posts the labels it hit;
+    the engine keeps a count per concept and hands the tally back when the state
+    ends. Outside an explore nothing is recorded — shooting while idle is a
+    gesture, not a note.
+    """
+    payload = body if isinstance(body, dict) else {}
+    labels = payload.get("picks") if isinstance(payload.get("picks"), list) else payload.get("labels")
+    if not isinstance(labels, list):
+        raise HTTPException(status_code=400, detail="picks must be a list of concept labels")
+    try:
+        return plugin().core.engine.note_pick([str(x) for x in labels], session=str(payload.get("session") or ""))
+    except Exception as exc:  # health: BLE001 -- an unreadable state file must not 500 the pane
+        return {"ok": False, "concepts": 0, "added": 0, "reason": f"{type(exc).__name__}: {exc}"[:120]}
+
+
 @router.get("/state")
 # The request is injected by FastAPI and optional so the route can be called directly in tests.
 def state(request: Request = None, session: str | None = None,
@@ -386,11 +453,11 @@ def state(request: Request = None, session: str | None = None,
     first successful poll. ``cols``/``rows``/``fit``/``busy``/``stills`` are still accepted so a
     pane built against the old shape is not answered with a 422; they change nothing.
     """
-    # A poll is a second of the state's life. Delivery is paced by the clock, and the pane is
-    # the only thing asking while nobody is typing, so the hops land here (one a second) rather
-    # than waiting for the next turn to notice that time passed.
+    # A poll is a look, not a turn: it may show the hop the person has earned
+    # (one on entry, one per turn taken) and no more. It used to take one per
+    # poll, which spent a six-hop walk while nobody was typing.
     try:
-        plugin().core.engine.deliver_if_due()
+        plugin().core.engine.deliver_if_due(source="pane")
     except Exception:  # health: BLE001 -- a failed hop must not blank the pane
         pass
     proj = projection()

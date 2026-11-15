@@ -207,6 +207,10 @@ def test_a_state_entered_from_a_chat_lights_the_pane(monkeypatch):
     lit = [n for n in body["nodes"] if n["w"] > 0.05]
     assert lit, "a chat-entered walk that served a concept must light it"
     path = body.get("path") or []
-    spoke = HOPS[0].split("\u2192")[0].strip().split()[0]
+    import re as _re
+
+    # both ends of the hop are recorded now, cleaned of the part-of-speech suffix the walk
+    # prints, so the trail starts where the walk started
+    spoke = _re.sub(r"\s*\((?:[a-z]{1,5})\)$", "", HOPS[0].split("\u2192")[0].strip())
     assert spoke in path, f"the trail is not this walk's: {path}"
     assert "leopard" not in path, f"the trail spans earlier walks too: {path}"
