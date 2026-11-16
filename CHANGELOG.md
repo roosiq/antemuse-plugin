@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.11 — 2026-11-15
+
+- flight: leaving the cockpit files what you flew through (2026-11-15)
+
 ## 0.11.10 — 2026-11-15
 
 - pane: key the children the tab shell renders, and fail the harness on React warnings (2026-11-15)
