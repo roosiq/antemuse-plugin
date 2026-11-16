@@ -10,6 +10,7 @@ distribution at the sampling temperature. Lower means the model was on rails.
 
 What it is not: a quality measure, and not comparable across models — each
 model is normalised by itself. Use it inside one model, across conditions.
+Remote calls require an explicitly supplied NOUS_ACCESS_TOKEN.
 """
 from __future__ import annotations
 
@@ -25,6 +26,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PLUGIN = HERE.parents[1]
 sys.path.insert(0, str(PLUGIN))
+
+from experiments.token import require_nous_token  # noqa: E402
 
 import importlib.util
 
@@ -42,9 +45,8 @@ states = _load("states_run", HERE / "run.py")
 TOKENS = {}
 
 
-def _token() -> str | None:
-    d = json.load(open(os.path.expanduser("~/.hermes/auth.json")))
-    return d["providers"]["nous"].get("access_token")
+def _token() -> str:
+    return require_nous_token()
 
 
 def chat_lp(model: str, prompt: str, *, max_tokens: int = 6000, seed: int | None = None,

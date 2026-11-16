@@ -90,20 +90,26 @@ def hermes_python() -> str:
 
 
 PANE_KEEP = {"plugin.js", ".hermes-package.json"}
+#: Names older releases left in the pane directory. Only these are removed: an unknown file is
+#: somebody else's, and an installer that deletes it cannot know what it was.
+PANE_LEGACY = {"scene3d.js", "vendor", "art", "plugin.truncated.bak"}
 
 
 def clear_pane_dir(path: Path) -> list:
-    """Remove everything in the pane directory that is not the pane or the app's own marker.
+    """Remove the pane and the known debris of older releases; leave unknown files alone.
 
-    The app owns this directory, and older releases left a scene3d.js, a vendor/, an art/ tree and
-    a plugin.truncated.bak in it. Copying the new pane beside them recreates the stale-copy trap:
-    the file that matters is fresh and the bytes next to it are not. Only those two names belong.
+    Older releases left a scene3d.js, a vendor/, an art/ tree and a plugin.truncated.bak beside the
+    pane, and a stale copy next to a fresh pane is the trap this exists to stop. Anything else in
+    here belongs to the person who put it there, so it is reported, not deleted.
     """
     gone = []
     if not path.exists():
         return gone
     for child in sorted(path.iterdir()):
         if child.name in PANE_KEEP:
+            continue
+        if child.name not in PANE_LEGACY:
+            warn(f"left {child.name} in the pane dir alone (not a file this installer knows)")
             continue
         try:
             shutil.rmtree(child) if child.is_dir() else child.unlink()

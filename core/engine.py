@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import tempfile
 import threading
 import time
 from typing import Any, Dict, List, Optional
@@ -19,6 +20,8 @@ from . import history, states, storage
 logger = logging.getLogger(__name__)
 
 FILE = "state.json"
+MAX_FLIGHT_LABELS = 64
+MAX_FLIGHT_LABEL_CHARS = 64
 
 # "hand (n) → metacarpal vein (n) · took its meronym · “dorsal and palmar veins”"
 STEP_RE = re.compile(
@@ -80,16 +83,53 @@ def _blank() -> Dict[str, Any]:
     }
 
 
+def _valid_active(active: Any) -> bool:
+    return active is None or (isinstance(active, dict)
+                              and isinstance(active.get("key"), str)
+                              and bool(states.spec(active["key"])))
+
+
+def _valid_state(data: Any) -> bool:
+    """Accept only the small, stable part of the on-disk state schema."""
+    return (isinstance(data, dict)
+            and ("active" not in data or _valid_active(data["active"]))
+            and ("residue" not in data or isinstance(data["residue"], list))
+            and ("journal" not in data or isinstance(data["journal"], list))
+            and ("mood" not in data or isinstance(data["mood"], list))
+            and ("breaks" not in data or isinstance(data["breaks"], list))
+            and ("work" not in data or isinstance(data["work"], dict)))
+
+
+def _quarantine(path) -> None:
+    try:
+        path.replace(path.with_name(f"{path.name}.invalid-{int(time.time() * 1000)}"))
+    except OSError:
+        pass
+
+
 def _load() -> Dict[str, Any]:
     path = storage.data_dir() / FILE
+    good = path.with_name(f"{FILE}.last-good")
     data = _blank()
     if not path.exists():
         return data
     try:
         stored = json.loads(path.read_text())
     except Exception:
-        return data
+        stored = None
+    restored = False
+    if not _valid_state(stored):
+        _quarantine(path)
+        try:
+            stored = json.loads(good.read_text())
+        except Exception:
+            stored = None
+        if not _valid_state(stored):
+            return data
+        restored = True
     data.update(stored)
+    if restored:
+        _save(data)
     return data
 
 
@@ -170,9 +210,29 @@ def _cap_residue(data: dict) -> None:
 
 def _save(data: Dict[str, Any]) -> None:
     path = storage.data_dir() / FILE
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2))
-    tmp.replace(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(data, indent=2).encode()
+    # A process-local lock cannot coordinate separate plugin processes. A unique sibling file
+    # gives each writer a complete file to atomically publish, never another writer's temp path.
+    fd, name = tempfile.mkstemp(prefix=f".{FILE}.{os.getpid()}-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(name, path)
+        good = path.with_name(f"{FILE}.last-good")
+        fd, name = tempfile.mkstemp(prefix=f".{FILE}.good.{os.getpid()}-", dir=path.parent)
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(name, good)
+    finally:
+        try:
+            os.unlink(name)
+        except OSError:
+            pass
 
 
 DIAGNOSTIC_EVENTS = ("history", "failure", "error")
@@ -249,19 +309,23 @@ def note_flight(trail: Any, kept: Any = None, dropped: Any = None,
     """
     labels: List[str] = []
     seen: Dict[str, int] = {}
+    trimmed = False
     for raw in (trail if isinstance(trail, (list, tuple)) else []):
-        label = str(raw or "").strip()[:64]
+        label = str(raw or "").strip()[:MAX_FLIGHT_LABEL_CHARS]
         if not label:
             continue
         if label not in seen:
+            if len(labels) >= MAX_FLIGHT_LABELS:
+                trimmed = True
+                continue
             labels.append(label)
         seen[label] = seen.get(label, 0) + 1
     if not labels:
         return {"ok": True, "concepts": 0, "added": 0}
 
     def _clean(group: Any) -> List[str]:
-        return [str(x or "").strip()[:64] for x in (group if isinstance(group, (list, tuple)) else [])
-                if str(x or "").strip()]
+        return [label for raw in (group if isinstance(group, (list, tuple)) else [])
+                if (label := str(raw or "").strip()[:MAX_FLIGHT_LABEL_CHARS]) in seen]
 
     kept_clean = _clean(kept)
     dropped_clean = _clean(dropped)
@@ -273,7 +337,7 @@ def note_flight(trail: Any, kept: Any = None, dropped: Any = None,
         text += " \u00b7 dropped " + ", ".join(dropped_clean[:4])
     record = {
         "concepts": len(labels),
-        "trail": labels[:12],
+        "trail": labels,
         "kept": kept_clean[:12],
         "dropped": dropped_clean[:12],
         "hits": sum(seen.values()),
@@ -297,7 +361,10 @@ def note_flight(trail: Any, kept: Any = None, dropped: Any = None,
             history.notice(label, move="flight", session=session)
         except Exception as exc:  # health: BLE001 -- a broken ledger must not lose the note
             logger.warning("antemuse: flight not written to the ledger: %s", exc)
-    return {"ok": True, "concepts": len(labels), "added": len(labels)}
+    result = {"ok": True, "concepts": len(labels), "added": len(labels)}
+    if trimmed:
+        result["reason"] = f"trail trimmed to {MAX_FLIGHT_LABELS} labels"
+    return result
 
 
 def flight_last() -> Optional[Dict[str, Any]]:
@@ -665,6 +732,28 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
     with _LOCK:
         data = _load()
         previous = data.get("active") or {}
+        superseded = None
+        if previous:
+            # Entry has historically replaced the profile-wide state. Preserve that UX, but close
+            # the old state as an accountable ending instead of silently dropping it.
+            report = _account(data, previous)
+            data.setdefault("residue", []).append({
+                **report, "kind": "report", "turns_left": 2, "reason": "superseded",
+                "session": (previous.get("origin") or {}).get("session_id") or "",
+            })
+            _cap_residue(data)
+            data.setdefault("journal", []).append({
+                "who": "state", "state": previous["key"], "event": "report",
+                "text": report["text"], "at": time.time(), "reason": "superseded",
+                "session": data.get("session_id") or "",
+            })
+            try:
+                from . import settings
+                cap = settings.number("journal_cap")
+            except Exception:
+                cap = 60
+            data["journal"] = data["journal"][-cap:]
+            superseded = previous
         now = time.time()
         root = storage.project_root()
         # A command is not a message: on a slash command no turn arrived to remember where it
@@ -713,11 +802,13 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         data["work"] = {"turns": 0, "tools": 0, "fails": 0, "started_at": now_break}
         data["since_offer"] = None
         _save(data)
+    if superseded:
+        _record_finish(superseded, "superseded")
     # no ticker: delivery is driven by the turn and by the pane's poll (`deliver_if_due`), so a
     # background thread would only race them for the state lock
     note = ""
-    if previous and previous["key"] != spec_key:
-        note = f" (left {previous['key']}; no residue kept)"
+    if previous:
+        note = f" (left {previous['key']} · account kept)"
     # The dose is the whole promise. No ceiling, no countdown, and spec['turns'] is not
     # the count — an unstuck that owes ONE direction announces one.
     dose = (spec.get("dose") or {})
@@ -870,6 +961,9 @@ def tick(session: str | None = None) -> Dict[str, Any] | None:
             for r in (data.get("residue") or [])
         ]
         for item in data["residue"]:
+            owner = str(item.get("session") or "")
+            if owner and session and owner != str(session):
+                continue
             item["turns_left"] = int(item.get("turns_left") or 0) - 1
         data["residue"] = [r for r in data["residue"] if int(r.get("turns_left") or 0) > 0][-3:]
         _save(data)

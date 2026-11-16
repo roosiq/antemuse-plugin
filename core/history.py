@@ -224,7 +224,9 @@ def notice(term: str, move: str = "", session: str = "", kind: str = "",
                 # the evidence: which message, commit or file this sighting came from
                 conn.execute("INSERT INTO appearances(concept_id, source, ref, at) VALUES(?,?,?,?)",
                              (cid, source, str(ref)[:160], now))
-        _prune(conn, now)
+            # Keep retention in the same transaction as the sighting. Running this after the
+            # context manager rolls the deletes back when the connection closes.
+            _prune(conn, now)
     except Exception as exc:
         _note_failure(f"concept write failed · {str(exc).splitlines()[0][:70]}")
     finally:
@@ -412,8 +414,7 @@ def mark_move(state: str, started: float, ended: Optional[float] = None,
 def _prune(conn: sqlite3.Connection, now: float) -> None:
     horizon = now - RETENTION_DAYS * 86400
     conn.execute("DELETE FROM served WHERE at < ? AND used_at IS NULL", (horizon,))
-    conn.execute("""DELETE FROM concepts WHERE last_seen < ?
-                    AND id NOT IN (SELECT concept_id FROM served)""", (horizon,))
+    conn.execute("DELETE FROM concepts WHERE id NOT IN (SELECT concept_id FROM served)")
     conn.execute("""DELETE FROM concepts WHERE id IN (
                       SELECT id FROM concepts ORDER BY last_seen DESC LIMIT -1 OFFSET ?)""",
                  (MAX_CONCEPTS,))

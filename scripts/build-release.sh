@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build the installable Antemuse package: a tarball a fresh Hermes install can take as-is.
+# Build the installable Antemuse package with a provenance manifest: a fresh Hermes install can
+# take the tarball as-is, and a reviewer can identify every projection byte injected from cache.
 #
 # Only what runs ships. The evaluation corpus and experiment outputs stay in the repository —
 # they are evidence, not runtime, they are 13 MB of someone else's prose, and the install-time
@@ -19,7 +20,8 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Outside the checkout by default: the package carries 117k WordNet labels, and building inside
 # the tree puts them back under the retired-name scan.
 OUT="${1:-${ANTEMUSE_DIST:-$HOME/.cache/antemuse/dist}}"
-VERSION="$("$SRC/scripts/version.sh" 2>/dev/null || sed -n 's/^version: "\(.*\)"/\1/p' "$SRC/plugin.yaml" | head -1)"
+VERSION="$(sed -n 's/^version: "\(.*\)"/\1/p' "$SRC/plugin.yaml" | head -1)"
+[[ -n "$VERSION" ]] || { echo "FAILED: cannot read version from $SRC/plugin.yaml" >&2; exit 1; }
 NAME="antemuse-$VERSION"
 STAGE="$OUT/$NAME"
 
@@ -36,12 +38,12 @@ if command -v rsync >/dev/null 2>&1; then
   rsync -a \
     --exclude .git --exclude node_modules --exclude __pycache__ --exclude .pytest_cache \
     --exclude .venv --exclude experiments --exclude evaluation --exclude specs --exclude site \
-    --exclude dist --exclude .post-staging --exclude .antemuse \
+    --exclude plugin-catalog --exclude dist --exclude .post-staging --exclude .antemuse \
     --exclude data/meshy --exclude .work \
     "$SRC"/ "$STAGE"/
 else
   cp -a "$SRC" "$STAGE"
-  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,dist,.antemuse,.work}
+  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,plugin-catalog,dist,.antemuse,.work}
   rm -rf "$STAGE/data/meshy"
   find "$STAGE" -name __pycache__ -prune -exec rm -rf {} +
 fi
@@ -91,6 +93,36 @@ if [[ -f "$PROJ_SRC/wordnet.proj.json" && -f "$PROJ_SRC/wordnet.proj.f16" ]]; th
 else
   die "no wordnet projection at $PROJ_SRC — run tools/project_wordnet.py, then build again"
 fi
+
+# The projection is intentionally injected from the local cache rather than committed: preserve
+# its exact source and digest in the artifact, or a tarball cannot be reproduced or reviewed.
+SOURCE_COMMIT="$(git -C "$SRC" rev-parse HEAD)"
+BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+python3 - "$STAGE/BUILD-MANIFEST.json" "$SOURCE_COMMIT" "$VERSION" "$BUILT_AT" "$STAGE/assets/projection" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+manifest, source_commit, version, built_at, projection = map(Path, sys.argv[1:])
+# Keep textual values as strings after Path's platform-safe argument transport.
+source_commit, version, built_at = map(str, (source_commit, version, built_at))
+projection = Path(projection)
+assets = []
+for path in sorted(p for p in projection.rglob("*") if p.is_file()):
+    assets.append({
+        "path": path.relative_to(projection.parent.parent).as_posix(),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "size": path.stat().st_size,
+    })
+Path(manifest).write_text(json.dumps({
+    "source_commit": source_commit,
+    "version": version,
+    "built_at": built_at,
+    "injected_assets": assets,
+}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+ok "wrote BUILD-MANIFEST.json for ${#SOURCE_COMMIT}char source commit and ${VERSION}"
 
 say "validate the packed tree (the catalog gate)"
 hermes plugins validate "$STAGE" >/tmp/antemuse-validate.log 2>&1 || {

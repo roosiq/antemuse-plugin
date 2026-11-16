@@ -155,7 +155,7 @@ HTMLCanvasElement.prototype.requestPointerLock = function () {
   return Promise.reject(new DOMException('The root document of this element is not valid for pointer lock.', 'WrongDocumentError'))
 }
 window.__mk = (opts) => {
-  const payload = window.__makeGraph((opts && opts.count) || 120)
+  const payload = opts && opts.payload ? opts.payload : window.__makeGraph((opts && opts.count) || 120)
   const cv = document.getElementById('cv')
   const cockpit = createCockpit({
     ctx: { rest: (path, opts) => {
@@ -246,6 +246,17 @@ def main() -> int:
                 " return m.counts({active: {dose: 0, unit: 'picks', served: 3, tools: {mode: 'all'}}}); })()")
             check("pane: an open-ended state says you end it",
                   "you end it" in line and "to go" not in line, line)
+
+            # An old or malformed backend response is a visible unavailable map, not an exception
+            # from calling Array.prototype.filter on an object.
+            page.evaluate("window.__mk({payload: {nodes: {}}})")
+            page.wait_for_timeout(120)
+            malformed = page.evaluate("__cockpit.stats()")
+            check("data: malformed nodes payload reports map unavailable",
+                  malformed["nodes"] == 0 and "nodes must be an array" in malformed["error"],
+                  f"nodes={malformed['nodes']} error={malformed['error']!r}")
+            check("data: malformed nodes payload throws no page error", not errors, "; ".join(errors[:3]))
+            page.evaluate("__cockpit.destroy()")
 
             page.evaluate("window.__mk({count: 120})")
             page.wait_for_timeout(400)

@@ -194,3 +194,55 @@ def test_the_package_does_not_carry_drafts_or_a_work_copy():
 
     assert "--exclude data/meshy" in build
     assert "--exclude .work" in build
+    assert "--exclude plugin-catalog" in build
+
+
+def test_the_release_gates_generated_public_artifacts_before_committing():
+    """Release commits must not put unverified catalog media or notes behind a version tag."""
+    script = (ROOT / "scripts" / "release.sh").read_text(encoding="utf-8")
+    first_commit = script.index("git commit")
+    for gate in (
+        "pytest tests/ -q",
+        "tools/desktop_harness/mount.mjs",
+        "tools/cockpit_harness.py",
+        "tools/catalog_entry.py --check",
+        "tools/make_screenshots.py --check",
+    ):
+        assert gate in script[:first_commit], f"release gate missing or runs after a commit: {gate}"
+    assert "git add -A" not in script
+    assert "git add plugin.yaml __init__.py CHANGELOG.md" in script
+    assert "git add plugin-catalog/antemuse.yaml" in script
+
+
+def test_the_release_verifies_the_packed_version_and_contents():
+    script = (ROOT / "scripts" / "release.sh").read_text(encoding="utf-8")
+    for required in (
+        "plugin.yaml version",
+        "__version__",
+        "BUILD-MANIFEST.json",
+        "__pycache__",
+        ".pyc",
+        ".git",
+        ".antemuse",
+    ):
+        assert required in script, required
+
+
+def test_the_build_writes_a_provenance_manifest_for_injected_projection_files():
+    build = (ROOT / "scripts" / "build-release.sh").read_text(encoding="utf-8")
+    for required in (
+        "BUILD-MANIFEST.json",
+        "rev-parse HEAD",
+        "sha256",
+        "assets/projection",
+        "built_at",
+    ):
+        assert required in build, required
+
+
+def test_catalog_stills_describe_only_the_shipped_walk_and_explore_contract():
+    shots = (ROOT / "tools" / "make_screenshots.py").read_text(encoding="utf-8").lower()
+    for retired in ("daydream", "doomscroll", "unstuck", "a dream"):
+        assert retired not in shots, retired
+    assert "six hops" in shots
+    assert "/explore" in shots

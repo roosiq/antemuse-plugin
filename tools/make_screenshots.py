@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""Render the catalog stills from the real surfaces, not from mock-ups.
+"""Render the catalog stills from the shipped product surfaces.
 
     python3 tools/make_screenshots.py            # writes docs/screenshots/*.png
     python3 tools/make_screenshots.py --check    # exit 1 if any still is stale
 
-Three rendered files, plus one captured one:
+The catalog shows one agent state and one separate, person-driven mode:
 
 - ``banner.png``            1200x600, the catalog ``image:``
-- ``pane-walk.png``         NOT rendered here: a frame of the desktop pane, captured
-                            from the running app during a walk (it is the only
-                            visualization, and it is a GL layer the app draws)
-- ``return-account.png``    the account ``/return`` prints, in the terminal font
-- ``blocked-tool.png``      a refused tool call, message taken from
-                            ``engine.policy`` rather than retyped
+- ``pane-walk.png``         captured desktop-pane frame; this script verifies it
+                            exists but cannot recreate the host-owned GL surface
+- ``return-account.png``    the six-hop walk account ``/return`` prints
+- ``blocked-tool.png``      a walk entered with its supported ``block`` option,
+                            with the refusal taken from ``engine.policy``
 
-Every still is produced from the live engine in a temporary data home, so a
-screenshot cannot drift from the strings the plugin actually prints. Rendering is
-deterministic: same code, same bytes.
+Rendered stills use the live engine in a temporary data home.  ``--check`` never
+rewrites a tracked image: it renders in memory and compares bytes, so a successful
+check proves the committed generated assets are fresh.
 """
 from __future__ import annotations
 
@@ -69,9 +68,9 @@ def banner() -> Image.Image:
     d = ImageDraw.Draw(im)
     d.text((72, 96), "antemuse", font=_font(96), fill=INK)
     d.line((76, 214, 1124, 214), fill=AMBER, width=3)
-    d.text((72, 250), "the agent takes a walk, a daydream, a dream.", font=_font(34), fill=INK)
-    d.text((72, 306), "bounded states with host-enforced tools", font=_font(28), fill=DIM)
-    d.text((72, 350), "and an account when it comes back", font=_font(28), fill=DIM)
+    d.text((72, 250), "one walk for the agent; an explore cockpit for you.", font=_font(34), fill=INK)
+    d.text((72, 306), "six hops, one dose, then an account on return", font=_font(28), fill=DIM)
+    d.text((72, 350), "you fly /explore yourself — no dose, no provider", font=_font(28), fill=DIM)
     d.text((72, 500), "Hermes plugin · MIT · github.com/roosiq/antemuse-plugin",
            font=_font(20), fill=DIM)
     return im
@@ -103,7 +102,7 @@ def _fill(im: Image.Image, size=(1280, 720)) -> Image.Image:
 
 def return_account() -> Image.Image:
     from core import engine
-    engine.enter("daydream")
+    engine.enter("walk")
     line = engine.status().splitlines()[0]
     account = engine.stop()
     body, *rest = account.splitlines()
@@ -118,11 +117,10 @@ def return_account() -> Image.Image:
 
 def blocked_tool() -> Image.Image:
     from core import engine
-    engine.enter("daydream", block=True)
+    engine.enter("walk", block=True)
     verdict = engine.policy("read_file") or {}
     return _panel([
-        # states are open by default; the refusal exists only because this entry asked for it
-        ('state(action="enter", name="daydream", block=true)', DIM),
+        ('state(action="enter", name="walk", block=true)', DIM),
         (engine.status().splitlines()[0], AMBER),
         ("", INK),
         ("the agent calls: read_file(README.md)", INK),
@@ -130,39 +128,57 @@ def blocked_tool() -> Image.Image:
     ])
 
 
+def _png_bytes(im: Image.Image) -> bytes:
+    import io
+
+    data = io.BytesIO()
+    im.save(data, format="PNG", optimize=True)
+    return data.getvalue()
+
+
 def render_all() -> dict[str, bytes]:
-    OUT.mkdir(parents=True, exist_ok=True)
-    produced: dict[str, bytes] = {}
     with _engine_home():
-        shots = {
-            "banner.png": banner(),
-            "return-account.png": return_account(),
-            "blocked-tool.png": blocked_tool(),
+        return {
+            "banner.png": _png_bytes(banner()),
+            "return-account.png": _png_bytes(return_account()),
+            "blocked-tool.png": _png_bytes(blocked_tool()),
         }
-    for name, im in shots.items():
-        path = OUT / name
-        im.save(path, optimize=True)
-        produced[name] = path.read_bytes()
-    return produced
+
+
+def write_all(produced: dict[str, bytes]) -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    for name, data in produced.items():
+        (OUT / name).write_bytes(data)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
-    before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-              for p in OUT.glob("*.png")} if OUT.exists() else {}
     produced = render_all()
+    expected = {name: hashlib.sha256(data).hexdigest() for name, data in produced.items()}
+    actual = {
+        name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
+        for name in expected
+        if (OUT / name).is_file()
+    }
+    stale = [name for name in expected if actual.get(name) != expected[name]]
+    missing_captured = [] if (OUT / "pane-walk.png").is_file() else ["pane-walk.png"]
     if args.check:
-        after = {n: hashlib.sha256(d).hexdigest() for n, d in produced.items()}
-        stale = [n for n in after if before.get(n) != after[n]]
-        if stale:
-            print(f"regenerated (were stale): {', '.join(stale)}", file=sys.stderr)
+        if stale or missing_captured:
+            details = []
+            if stale:
+                details.append(f"generated stills stale: {', '.join(stale)}")
+            if missing_captured:
+                details.append(f"captured stills missing: {', '.join(missing_captured)}")
+            print("; ".join(details), file=sys.stderr)
             return 1
-        print("screenshots match the live surfaces")
+        print("generated stills match live surfaces; captured pane-walk.png is present")
         return 0
+    write_all(produced)
     for name, data in produced.items():
         print(f"{name:22s} {len(data)/1024:7.1f} KB  {Image.open(OUT/name).size}")
+    print("pane-walk.png           captured desktop pane (not regenerated here)")
     return 0
 
 

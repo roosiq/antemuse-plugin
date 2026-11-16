@@ -1,57 +1,40 @@
 # Contributing
 
-Antemuse is a Hermes plugin: Python for the state engine, one plain JavaScript file for both
-desktop panes (the map, and the cockpit). The repository root **is** the plugin root —
-`plugin.yaml`, `__init__.py` and `core/` sit at the top level, and Hermes loads it through
-the symlink
-`~/.hermes/plugins/antemuse` → this directory.
+Antemuse is a Hermes plugin. The repository root is the plugin root: `plugin.yaml`,
+`__init__.py`, `core/`, and `desktop/plugin.js` are loaded through
+`~/.hermes/plugins/antemuse`.
 
-## Rules that are not negotiable
+## Public contract
 
-- **No model call on entry, exit, expiry, or rendering.** That is a product rule, not a
-  performance preference: a state has to work when the model is slow or absent.
-- **A state may change what the agent can do and what it says. It may not claim to make the
-  agent more creative.** The evidence for what a state does, and its limits, is in
-  `experiments/idea-states/BENCHMARK.md`.
-- **The seven commands are the public contract.** `/walk /daydream /doomscroll /dream
-  /unstuck /explore /return`. Adding a verb means changing that contract deliberately; a
-  plural neighbour (`/states` beside `/state`) is a past defect, and the suite fails on it.
-- **One token, one meaning.** `/state` was a command that rendered a picture, and `/states`
-  was the same picture under a plural. Both are gone: `state(action="status")` is the record,
-  and the picture is the panes.
-- Plain sentences in user-facing strings. No exclamation marks, no jargon the person did not
-  bring.
-- Tests name the behaviour, not the implementation. If a test needs a private detail to
-  pass, the behaviour is under-specified.
+`__init__.py` registers exactly three public commands:
 
-## Run the suite
+- `/walk [walk]` enters the `walk` agent state.
+- `/explore` opens the person-driven concept-map mode.
+- `/return` ends the current state or exploration.
+
+`core/states.py` keeps `walk` as the only agent state. The single plugin tool is
+`state(action=...)`; the desktop pane has a map and a cockpit tab. Do not add commands
+or state names without changing this contract and its tests.
+
+No model call belongs on the state entry, exit, expiry, or rendering path. Tests should
+name observable behavior and keep plugin data under `ANTEMUSE_STATES_HOME`.
+
+## Run tests
 
 ```bash
-tools/test.sh                    # temp data home, pane harness skipped
-tools/test.sh --with-renderers   # npm ci in the harness dir, then mount the pane
-hermes plugins doctor antemuse
-hermes plugins validate . --install-deps   # what catalog CI runs
+env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) \
+  uvx --with-requirements requirements-test.txt --quiet pytest tests/ -q
 ```
 
-`tools/test.sh` drops the exported `PYTHONPATH` (it breaks collection) and points the plugin
-at a temporary data home, so a run never touches your real state.
+## Changes and pull requests
 
-## Change something
+1. Add or update the focused test with the behavior change.
+2. Run the full suite and include the command and result in the pull request.
+3. Refresh `docs/screenshots/` when a pane changes.
+4. Do not commit generated caches, local plugin data, or credentials.
 
-1. Change the behaviour and the test that names it in the same commit.
-2. Run the suite. Paste the command and its result in the pull request; a green claim without
-   a command is not evidence.
-3. If the change touches what a person sees, say what the person sees and what the agent
-   sees, and refresh the screenshot under `docs/screenshots/` if the pane changed.
-4. `./scripts/release.sh <version>` bumps the manifest, rewrites the changelog from commit
-   subjects, regenerates `plugin-catalog/antemuse.yaml` and packs a validated tarball. Do not
-   hand-edit the version fields or the catalog entry.
-
-## Commits and pull requests
-
-- One change per commit, with the reason in the message.
-- Do not commit generated assets or caches (`node_modules/`, `__pycache__/`, `dist/`).
-- The catalog entry pins a commit SHA: a version bump is a release, not a push.
+`./scripts/release.sh <version>` updates release metadata and builds the validated
+tarball. The catalog pin is a commit SHA; do not hand-edit its generated entry.
 
 ## Licence
 

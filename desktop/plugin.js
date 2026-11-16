@@ -209,8 +209,11 @@ function useStatePayload(ctx, cells) {
       )
     }
     read()
-    ctx.setInterval(read, POLL_MS)
-    return () => { alive = false }
+    const stop = ctx.setInterval(read, POLL_MS)
+    return () => {
+      alive = false
+      if (typeof stop === 'function') stop()
+    }
   }, [ctx, query])
   return { payload, error }
 }
@@ -1483,7 +1486,6 @@ function StateView({ ctx }) {
       }),
       exploring
         ? jsx('button', {
-            key: 'cockpit',
             type: 'button',
             onClick: () => { if (ctx.navigate) ctx.navigate(`/${ID}/cockpit`) },
             style: {
@@ -2566,7 +2568,8 @@ function createCockpit({ ctx, el, callbacks }) {
 
   // ---------------- payload ----------------
   const normalize = (raw) => {
-    const rows = (raw || []).filter((n) => n && typeof n.l === 'string'
+    if (!Array.isArray(raw)) throw new Error('invalid graph payload: nodes must be an array')
+    const rows = raw.filter((n) => n && typeof n.l === 'string'
       && Number.isFinite(n.x) && Number.isFinite(n.y) && Number.isFinite(n.z))
     if (!rows.length) return { nodes: [], home: { x: 0, y: 0, z: 0 } }
     let cx = 0, cy = 0, cz = 0
@@ -2618,6 +2621,10 @@ function createCockpit({ ctx, el, callbacks }) {
   }
 
   const poll = () => {
+    const reportError = (err) => {
+      state.error = String((err && err.message) || err || 'unreachable')
+      draw()
+    }
     const session = (() => {
       try {
         const atom = host && host.state && host.state.focusedSessionId
@@ -2626,13 +2633,9 @@ function createCockpit({ ctx, el, callbacks }) {
     })()
     const q = '/graph?limit=1400' + (session ? '&session=' + encodeURIComponent(session) : '')
     try {
-      Promise.resolve(ctx.rest(q)).then(
-        (payload) => { apply(payload) },
-        (err) => { state.error = String((err && err.message) || err || 'unreachable'); draw() }
-      )
+      Promise.resolve(ctx.rest(q)).then((payload) => { apply(payload) }).catch(reportError)
     } catch (e) {
-      state.error = String((e && e.message) || e || 'unreachable')
-      draw()
+      reportError(e)
     }
   }
 
@@ -4149,7 +4152,6 @@ function CockpitVerdict({ ctx, named, onVerdict }) {
   }, [label, busy])
 
   const control = (verdict, key, text) => jsx('button', {
-    key: verdict,
     type: 'button',
     disabled: !label || Boolean(busy),
     onClick: () => submit(verdict),
@@ -4165,7 +4167,7 @@ function CockpitVerdict({ ctx, named, onVerdict }) {
       opacity: label ? 1 : 0.55, outline: 'none', outlineOffset: '2px'
     },
     children: `${text} · ${key}`
-  })
+  }, verdict)
 
   return jsxs('div', {
     style: {
@@ -4174,11 +4176,11 @@ function CockpitVerdict({ ctx, named, onVerdict }) {
     },
     'aria-live': 'polite',
     children: [
-      jsx('div', { key: 'name', style: { ...LABEL, color: 'var(--ui-text-secondary, inherit)' }, children: label ? `${source} · ${label}` : 'aim at a concept' }),
-      jsxs('div', { key: 'controls', style: { display: 'flex', gap: '5px', marginTop: '5px' }, children: [
+      jsx('div', { style: { ...LABEL, color: 'var(--ui-text-secondary, inherit)' }, children: label ? `${source} · ${label}` : 'aim at a concept' }, 'name'),
+      jsxs('div', { style: { display: 'flex', gap: '5px', marginTop: '5px' }, children: [
         control('keep', 'K', 'keep'), control('trash', 'T', 'trash')
-      ] }),
-      tally ? jsx('div', { key: 'tally', style: { ...DATA, marginTop: '5px', color: 'var(--ui-text-secondary, inherit)' }, children: `kept ${tally.keep} · dropped ${tally.trash}` }) : null
+      ] }, 'controls'),
+      tally ? jsx('div', { style: { ...DATA, marginTop: '5px', color: 'var(--ui-text-secondary, inherit)' }, children: `kept ${tally.keep} · dropped ${tally.trash}` }, 'tally') : null
     ]
   })
 }
@@ -4197,42 +4199,43 @@ function AntemuseScreen({ ctx, start }) {
     { id: 'cockpit', label: copy.cockpit }
   ]
   const strip = jsx('div', {
-    key: 'strip',
     role: 'tablist',
     style: {
       display: 'flex', gap: '2px', padding: '4px 10px 0', flex: '0 0 auto',
       borderBottom: '1px solid var(--ui-stroke-secondary)'
     },
-    children: tabs.map((one) => jsx('button', {
+    children: tabs.map((one) => {
+      const { id, ...tabProps } = one
+      return jsx('button', {
       role: 'tab',
-      'aria-selected': tab === one.id,
-      tabIndex: tab === one.id ? 0 : -1,
-      onClick: () => setTab(one.id),
-      title: one.label,
+      'aria-selected': tab === id,
+      tabIndex: tab === id ? 0 : -1,
+      onClick: () => setTab(id),
+      title: tabProps.label,
       style: {
         font: 'inherit', fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase',
         padding: '5px 10px 6px', cursor: 'pointer', background: 'transparent',
-        color: tab === one.id ? 'var(--ui-text)' : 'var(--ui-text-secondary)',
+        color: tab === id ? 'var(--ui-text)' : 'var(--ui-text-secondary)',
         // The selected tab is marked by the accent rule under it, not by a filled box: on a
         // dark theme a panel-coloured pill reads as another piece of the backdrop.
         border: '0',
-        borderBottom: '2px solid ' + (tab === one.id ? 'var(--ui-accent)' : 'transparent'),
-        opacity: tab === one.id ? '1' : '0.72'
+        borderBottom: '2px solid ' + (tab === id ? 'var(--ui-accent)' : 'transparent'),
+        opacity: tab === id ? '1' : '0.72'
       },
-      children: one.label
-    }, one.id))
-  })
+      children: tabProps.label
+    }, id)
+    })
+  }, 'strip')
   return jsx('div', {
     style: { display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 },
     children: [
       strip,
       jsx('div', {
-        key: 'body',
         style: { position: 'relative', flex: '1 1 auto', minHeight: 0 },
         children: tab === 'cockpit'
-          ? jsx(CockpitPane, { key: 'cockpit', ctx, onExit: () => setTab('state') })
-          : jsx(StateView, { key: 'state', ctx })
-      })
+          ? jsx(CockpitPane, { ctx, onExit: () => setTab('state') }, 'cockpit')
+          : jsx(StateView, { ctx }, 'state')
+      }, 'body')
     ]
   })
 }
@@ -4280,12 +4283,15 @@ export function fileFlight(ctx, left) {
 
 function CockpitPane({ ctx, onExit }) {
   const cockpitRef = useRef(null)
+  const leaving = useRef(false)
 
   // Leaving is the moment the flight becomes material. A panel that closes silently is a
   // panel whose work was thrown away, which is what this used to do.
   const postFlight = (left) => fileFlight(ctx, left)
 
   const leave = () => {
+    if (leaving.current) return
+    leaving.current = true
     const took = cockpitRef.current ? cockpitRef.current.takeFlight() : null
     postFlight(took)
     if (typeof onExit === 'function') onExit()
@@ -4316,9 +4322,6 @@ function CockpitPane({ ctx, onExit }) {
       ctx,
       el,
       callbacks: {
-        // Escape takes the same road as the button: hand the flight up, then leave.
-        onFlight: (left) => postFlight(left),
-        onExit: () => { if (typeof onExit === 'function') onExit() },
         onCatch: (list) => setCaught(list.map((n) => ({ l: n.l, w: n.w }))),
         onTarget: () => {},
         onName: (label, source) => {
@@ -4350,18 +4353,16 @@ function CockpitPane({ ctx, onExit }) {
   const hint = engaged
     ? null
     : jsx('div', {
-        key: 'hint',
         style: {
           position: 'absolute', left: '50%', top: '58%', transform: 'translateX(-50%)',
           pointerEvents: 'none', textAlign: 'center', whiteSpace: 'nowrap',
           ...LABEL, letterSpacing: '0.18em'
         },
         children: 'click to capture \u00b7 w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire \u00b7 esc frees the mouse'
-      })
+      }, 'hint')
 
   const hitNotice = notice
     ? jsx('div', {
-        key: `notice-${notice.at}`,
         style: {
           position: 'absolute', left: '50%', top: '18%', transform: 'translateX(-50%)', zIndex: 2,
           pointerEvents: 'none', ...DATA, color: 'var(--ui-text, currentColor)',
@@ -4369,7 +4370,7 @@ function CockpitPane({ ctx, onExit }) {
           transition: reduced ? 'none' : 'opacity 180ms ease'
         },
         children: `${notice.source} · ${notice.label}`
-      })
+      }, `notice-${notice.at}`)
     : null
 
   const list = caught.length
@@ -4418,15 +4419,13 @@ function CockpitPane({ ctx, onExit }) {
       })
     : null
 
-  // A first-person view with no door is a trap. The tab strip is above this, but a person
-  // in the cockpit is looking at the canvas, and the cursor is hidden while they steer — so
-  // the exit is drawn where they are looking, and Escape does the same thing.
+  // The exit is drawn where a pilot is looking. Escape only releases the mouse and stays.
   const exitButton = jsx('button', {
-    key: 'exit',
     type: 'button',
     onClick: () => leave(),
-    title: 'Leave the cockpit and return to the state view (Esc)',
+    title: 'Leave the cockpit and file the flight; Escape only releases the mouse',
     'aria-label': 'Leave the cockpit',
+    'aria-description': 'Files the flight; Escape only releases the mouse',
     style: {
       position: 'absolute', right: '14px', top: '12px', zIndex: 3,
       ...LABEL, letterSpacing: '0.14em', cursor: 'pointer',
@@ -4436,14 +4435,13 @@ function CockpitPane({ ctx, onExit }) {
       color: 'var(--ui-text, currentColor)',
       border: '1px solid var(--ui-stroke-secondary, currentColor)'
     },
-    children: ['exit', jsx('span', { key: 'k', style: { opacity: '0.6' }, children: 'esc' })]
-  })
+    children: ['exit', jsx('span', { style: { opacity: '0.6' }, children: 'esc' }, 'k')]
+  }, 'exit')
 
   // Captured is a state the person has to be able to see: the cursor is hidden, and a pane
   // that silently holds the mouse is indistinguishable from one that is broken.
   const captureBadge = engaged
     ? jsx('div', {
-        key: 'captured',
         style: {
           position: 'absolute', right: '14px', top: '52px', zIndex: 3, pointerEvents: 'none',
           ...LABEL, letterSpacing: '0.14em', padding: '4px 8px 5px', borderRadius: '2px',
@@ -4451,7 +4449,7 @@ function CockpitPane({ ctx, onExit }) {
           border: '1px solid var(--ui-stroke-secondary, currentColor)'
         },
         children: 'mouse captured · esc'
-      })
+      }, 'captured')
     : null
 
   return jsxs('div', {
@@ -4460,7 +4458,6 @@ function CockpitPane({ ctx, onExit }) {
       exitButton,
       captureBadge,
       jsx('canvas', {
-        key: 'canvas',
         ref: canvasRef,
         tabIndex: 0,
         onPointerDown: () => setEngaged(true),
@@ -4469,11 +4466,10 @@ function CockpitPane({ ctx, onExit }) {
         role: 'application',
         'aria-label': 'Concept cockpit. Click once to capture the mouse; while captured, moving turns the ship and the left button fires a stream. Escape releases the mouse; the exit button leaves and files the flight. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse.',
         style: { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', cursor: 'crosshair', touchAction: 'none' }
-      }),
+      }, 'canvas'),
       hint,
       hitNotice,
       jsx(CockpitVerdict, {
-        key: 'verdict',
         ctx,
         named,
         onVerdict: (verdict) => {
@@ -4483,15 +4479,16 @@ function CockpitPane({ ctx, onExit }) {
             if (cockpitRef.current) cockpitRef.current.noteVerdict(named.label, verdict)
           }
         }
-      }),
+      }, 'verdict'),
       list,
       pickPanel
     ]
   })
 }
 
-// Kept as a named export so a harness can drive the renderer without React.
-export { createCockpit }
+// Kept as a named export so a harness can drive the renderer without React; CockpitPane is
+// exported too so the mount harness can exercise its exit control.
+export { createCockpit, CockpitPane }
 
 export default {
   id: ID,

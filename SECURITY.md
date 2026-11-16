@@ -1,47 +1,46 @@
 # Security
 
-## What this plugin can and cannot do
+## Runtime surface
 
-Antemuse runs inside the Hermes process and registers one tool (`state`), eight
-hooks, and seven slash commands. It has no network client of its own beyond the
-feed fetches named below, no credentials, no telemetry, and no self-updater.
+`__init__.py` registers `/walk`, `/explore`, and `/return`; four turn/tool hooks
+(`pre_llm_call`, `pre_tool_call`, `transform_llm_output`, `post_tool_call`); four
+session-boundary hooks; and one tool, `state(action=...)`. `core/states.py` defines
+only the `walk` agent state. `/explore` is separate, person-driven, and ends on
+`/return`.
 
-- **Credentials:** none requested, read, stored, or refreshed. There is no
-  `requires_env` and no OAuth.
-- **Network:** `doomscroll` fetches public RSS/JSON feeds with `urllib`, an 8 s
-  timeout, and no credentials. Results are cached in the plugin data dir. No
-  other runtime path makes a network call.
-- **Files read outside the plugin data dir:** `daydream` reads
-  `~/.hermes/memories/MEMORY.md` and `USER.md`; `session-scan` reads up to 300
-  recent messages from `~/.hermes/state.db`, once per session, in a background
-  thread (the `session_scan` setting disables it); walks read local WordNet/FrameNet
-  corpora through `nltk`.
-- **Files written:** the profile plugin data dir (`ANTEMUSE_STATES_HOME`
-  overrides it), and `<repo>/.antemuse/` for per-project artifacts. Nothing is
-  written to Hermes config, auth, memory, or another plugin's files.
-- **Child process:** `unstuck` and `daydream`'s greenfield measurement run
-  `git rev-list` and `git log` against the operator's project to count commits and
-  find the first one. An argv list is passed, never a shell, and nothing else is
-  done with the repository. No other runtime path spawns a process.
-- **Untrusted text:** `doomscroll` places public feed items, and `daydream` two
-  memory excerpts, in the agent's context as material to react to. They are not
-  instructions. States are open by default, so an agent inside `doomscroll` still
-  holds its tools; enter with `block: true` to close them.
-- **Dev-only scripts:** `tools/` makes network calls and spawns browsers. They
-  are never imported by plugin registration.
+The runtime imports no network client and starts no subprocess. The state path makes
+no model call. Development experiments are not imported by plugin registration.
+
+`core/history.py` may scan Hermes `state.db` through SQLite read-only mode. An
+automatic scan is limited to the previous 14 days, 300 user/assistant messages, and a
+2-second budget; it is globally limited to once per 30 minutes. It records extracted
+terms and message identifiers in the ledger, not message bodies. It does not read
+`config.yaml`, the Hermes authentication JSON file, `MEMORY.md`, or `USER.md`.
+
+## Persistence
+
+The plugin data directory (or `ANTEMUSE_STATES_HOME`) contains:
+
+- `state.json`: active state, residue, and bounded state-journal entries.
+- `recent_turns.json`: at most 24 short current-turn text entries, each capped at 400
+  characters.
+- `concepts.db`: the SQLite ledger of extracted terms, scan cursors, and related
+  metadata.
+- `walks/*.json`: user-defined walk specifications.
+- `walk_cursor.json`: walk continuation data.
+
+When a project is detected, its `.antemuse/walk_cursor.json` holds the project-local
+walk cursor. Files are created with the process's normal filesystem permission
+defaults; the plugin does not relax permissions or call `chmod`.
 
 ## Reporting
 
-Report a vulnerability privately to the maintainer rather than in a public issue:
-open a GitHub security advisory on `roosiq/antemuse-plugin`, or email the address
-on the repository profile. Include the version, the command or tool call, and
-what happened. Expect an acknowledgement within a few days.
-
-Please do not include credentials, memory files, or private session contents in
-a report.
+Report vulnerabilities privately through a GitHub security advisory for
+`roosiq/antemuse-plugin`, or to the email address on the repository profile. Include
+the version, command or tool call, and observed behavior. Do not include credentials,
+private session text, or local plugin data.
 
 ## Scope
 
-In scope: the plugin's own code, its manifest surface, the pane's data path, and the
-state file. Out of scope: Hermes itself (report upstream), `nltk` corpora, and the
-public feeds the plugin reads.
+In scope: `__init__.py`, `core/`, `desktop/`, `plugin.yaml`, and the plugin data path.
+Out of scope: Hermes itself, bundled WordNet data, and development-only experiments.

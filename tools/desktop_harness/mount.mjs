@@ -31,6 +31,7 @@ if (!existsSync(new URL('index.js', SDK))) {
 }
 
 const source = readFileSync(PLUGIN)
+const sourceText = source.toString('utf8')
 copyFileSync(PLUGIN, WORK)                     // bare imports resolve beside the copy
 const digest = createHash('sha256').update(source).digest('hex').slice(0, 12)
 
@@ -43,6 +44,8 @@ Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, co
 globalThis.HTMLElement = dom.window.HTMLElement
 globalThis.Node = dom.window.Node
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
+window.requestAnimationFrame = (fn) => window.setTimeout(() => fn(Date.now()), 16)
+window.cancelAnimationFrame = (id) => window.clearTimeout(id)
 
 const React = (await import('react')).default
 const { act } = await import('react')
@@ -62,9 +65,13 @@ function stubContext(canvas) {
     canvas, globalAlpha: 1, fillStyle: '', strokeStyle: '', lineWidth: 1,
     font: '', textAlign: '', textBaseline: '', lineJoin: '', lineCap: '',
     setTransform: noop, clearRect: noop, beginPath: noop, moveTo: noop,
-    lineTo: noop, stroke: noop, arc: noop, fill: noop,
+    save: noop, restore: noop, translate: noop, rotate: noop, rect: noop, clip: noop,
+    lineTo: noop, stroke: noop, arc: noop, ellipse: noop, fill: noop,
     quadraticCurveTo: noop, bezierCurveTo: noop, closePath: noop,
     drawImage: () => { STUB.calls.drawImage += 1 },
+    createRadialGradient: () => ({ addColorStop: noop }),
+    createPattern: () => null,
+    setLineDash: noop, strokeRect: noop, measureText: (text) => ({ width: String(text).length * 6 }),
     imageSmoothingEnabled: true, imageSmoothingQuality: 'high',
     fillRect: () => { STUB.calls.fillRect += 1 },
     fillText: () => { STUB.calls.fillText += 1 },
@@ -88,26 +95,32 @@ const sweepStrays = helpers.sweepStrays
 const PAYLOAD = {
   generated_at: 100,
   active: {
-    key: 'daydream', label: 'DAYDREAMING', walk: null,
-    contract: 'two memories · join only if it holds',
-    seconds_left: 179, total_seconds: 180, turns_left: 2,
+    key: 'walk', label: 'WALKING', walk: 'outer',
+    contract: 'work continues · the frame is elsewhere · different on return',
+    dose: 6, served: 0, unit: 'hops',
     tools: { mode: 'none', allowed: [], blocked: [] }
   },
   frame: { cols: 44, rows: 3, lines: ['  .:-=+  ', ' :#%@     ', '   .:     '] },
-  residue: { count: 2, kinds: ['daydream'] }
+  residue: { count: 2, kinds: ['walk'] }
 }
 
 function makeCtx(state) {
-  const calls = { rest: [], intervals: [] }
+  const calls = { rest: [], intervals: [], liveIntervals: new Set() }
   let stateCalls = 0
   const contributions = []
   const pages = []
   const ctx = {
     register: (c) => { contributions.push(c); return () => {} },
     registerSettingsPage: (page) => { pages.push(page); return () => {} },
-    setInterval: (fn, ms) => { calls.intervals.push({ fn, ms }); return () => {} },
+    setInterval: (fn, ms) => {
+      const interval = { fn, ms, disposed: 0 }
+      calls.intervals.push(interval)
+      calls.liveIntervals.add(interval)
+      return () => { interval.disposed += 1; calls.liveIntervals.delete(interval) }
+    },
     rest: async (path) => {
       calls.rest.push(path)
+      if (path.startsWith('/graph')) return state.graph || { nodes: [] }
       // `failAfter` answers the first N /state reads, then fails: the pane has to behave on the
       // second poll, not only on a backend that was never there.
       if (path.startsWith('/state')) {
@@ -180,7 +193,7 @@ assert.ok(registered.pages.length <= 1, 'at most one settings page')
 // story and `clock` is always empty. The assertions below are the values the plugin actually
 // returns (printed, not remembered) — the old ones described a timer this pane does not have.
 assert.equal(helpers.viewModel(PAYLOAD, null).clock, '')
-assert.equal(helpers.viewModel(PAYLOAD, null).counts, '0 picked · you end it · no tools · 2 carried')
+assert.equal(helpers.viewModel(PAYLOAD, null).counts, '6 hops to go · no tools · 2 carried')
 assert.equal(helpers.viewModel(null, new Error('x')).label, 'backend unavailable')
 assert.equal(helpers.viewModel(PAYLOAD, new Error('503')).label, 'the backend did not answer')
 assert.equal(helpers.viewModel({ active: null }, null).situation, 'idle')
@@ -272,14 +285,42 @@ assert.equal(failed.contract, '')
   assert.equal(posts.length, 0, 'a missing flight was posted as if it were one')
 }
 
+// The actual exit button is idempotent: a double click can race React's tab change, but it
+// must still file one flight and ask to leave once.
+{
+  resetBody()
+  const cockpit = makeCtx({ graph: { nodes: [] } })
+  let exits = 0
+  const node = createRoot(root())
+  await act(async () => { node.render(React.createElement(helpers.CockpitPane, { ctx: cockpit.ctx, onExit: () => { exits += 1 } })) })
+  const exit = document.querySelector('button[aria-label="Leave the cockpit"]')
+  assert.ok(exit, 'the cockpit exposes its drawn exit as a real button')
+  await act(async () => { exit.click(); exit.click() })
+  const flights = cockpit.calls.rest.filter((path) => path === '/flight')
+  assert.equal(flights.length, 1, 'two rapid exit clicks file exactly one flight')
+  assert.equal(exits, 1, 'two rapid exit clicks leave exactly once')
+  await act(async () => { node.unmount() })
+}
+
+// The exit control is the only way out: Escape releases the mouse but stays. Keep this
+// scoped to the button props so a future accessibility copy change cannot resurrect the old contract.
+const exitStart = sourceText.indexOf("const exitButton = jsx('button'")
+const exitEnd = sourceText.indexOf('  const captureBadge', exitStart)
+const exitProps = sourceText.slice(exitStart, exitEnd)
+assert.match(exitProps, /title: 'Leave the cockpit and file the flight; Escape only releases the mouse'/)
+assert.match(exitProps, /'aria-label': 'Leave the cockpit'/)
+assert.match(exitProps, /'aria-description': 'Files the flight; Escape only releases the mouse'/)
+assert.doesNotMatch(exitProps, /\bEsc(?:ape)?\b[^\n]{0,100}\b(?:leave|exit|return)\b/i,
+  'the exit button must not claim that Escape leaves')
+
 // ---- an active state, mounted ----------------------------------------------
 
 resetBody()
 const active = await mountWith({ payload: PAYLOAD })
 const text = document.body.textContent
-assert.match(text, /DAYDREAMING/)
-assert.match(text, /0 picked · you end it · no tools · 2 carried/)
-assert.match(text, /two memories · join only if it holds/)
+assert.match(text, /WALKING/)
+assert.match(text, /6 hops to go · no tools · 2 carried/)
+assert.match(text, /work continues · the frame is elsewhere · different on return/)
 const art = document.querySelector('canvas[data-antemuse-art="pane"]')
 assert.ok(art, 'the pane paints the art on its own canvas')
 assert.equal(art.getAttribute('aria-hidden'), 'true', 'art is decoration, not content')
@@ -297,6 +338,10 @@ await act(async () => { slowest.fn() })
 assert.equal(active.calls.rest.length, before + 1, 'a tick re-reads the backend')
 
 await act(async () => { active.node.unmount() })
+assert.equal(active.calls.liveIntervals.size, 0,
+  'unmount disposes every host interval instead of leaving state polling alive')
+assert.ok(active.calls.intervals.every((interval) => interval.disposed === 1),
+  'each host interval disposer runs exactly once')
 
 
 // ---- the pane, not the chat ------------------------------------------------
@@ -350,7 +395,7 @@ await act(async () => { lost.node.unmount() })
 resetBody()
 const lostAgain = await mountWith({ payload: PAYLOAD, error: 'the backend did not answer', failAfter: 2 })
 const lostTicks = lostAgain.calls.intervals.find((i) => i.ms === 900)
-assert.match(document.body.textContent, /0 picked · you end it/, 'the pane starts with a live state')
+assert.match(document.body.textContent, /6 hops to go/, 'the pane starts with a live state')
 await act(async () => { for (let i = 0; i < 3; i++) lostTicks.fn() })
 await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
 const lostText = document.body.textContent
@@ -360,11 +405,12 @@ assert.doesNotMatch(lostText, /join only if it holds/, 'nor a contract from the 
 await act(async () => { lostAgain.node.unmount() })
 
 console.error = realConsoleError
-const keyWarnings = consoleErrors.filter((m) => /unique "key"/.test(m))
-assert.deepEqual(keyWarnings, [], 'React warned that children have no keys')
+const keyWarnings = consoleErrors.filter((m) => /key/i.test(m))
+assert.deepEqual(keyWarnings, [], 'React emitted a key-related console error')
 
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
 console.log('harness: 12 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
   'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean)')
+dom.window.close()

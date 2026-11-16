@@ -731,9 +731,9 @@ def list_walks(cursor_path: Path | None = None) -> List[Dict[str, Any]]:
     return out
 
 
-#: A walk is a file in the walks directory named after it, so the name is a filename. It is
-#: model-supplied (the `walk` argument of the state tool), which makes it untrusted: anything
-#: that can hold a '/' or a '..' can point at HERMES_HOME/auth.json and be read, overwritten or
+#: A walk is a file in the walks directory named after it, so its name is a filename.
+#: Walk names are untrusted model input. Without validation, a name containing traversal
+#: segments could point at the Hermes credential file and be read, overwritten or
 #: deleted. The alphabet is deliberately narrow — no dots at all, so '..' cannot be spelled.
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 

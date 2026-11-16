@@ -19,6 +19,7 @@ experiments/activation/
 # 117k WordNet labels would trip the retired-name rule.
 assets/projection/
 dist/
+/.antemuse/
 
 # Research trees: kept on the author's disk, not published with the plugin. Raw model
 # transcripts trip the catalog's install-time security scan, and none of it is loaded at
@@ -29,6 +30,10 @@ dist/
 # checkable. The raw transcripts and run logs stay here — they are what the scanner
 # objects to, and the aggregates carry every number the report states.
 experiments/*
+!experiments/token.py
+!experiments/before-after/
+experiments/before-after/*
+!experiments/before-after/run.py
 !experiments/idea-states/
 experiments/idea-states/results-*.json
 experiments/idea-states/variation-*.json

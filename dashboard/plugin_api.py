@@ -13,6 +13,7 @@ any journal text, any candidate text.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import threading
 from pathlib import Path
@@ -436,11 +437,25 @@ def picks(body: Dict[str, Any] = Body(default=None)) -> Dict[str, Any]:
         return {"ok": False, "concepts": 0, "added": 0, "reason": f"{type(exc).__name__}: {exc}"[:120]}
 
 
+MAX_FLIGHT_BODY_BYTES = 16_384
+
+
+def _bounded_flight_body(body: Dict[str, Any] | None) -> Dict[str, Any]:
+    payload = body if isinstance(body, dict) else {}
+    try:
+        size = len(json.dumps(payload).encode())
+    except (TypeError, ValueError):
+        size = MAX_FLIGHT_BODY_BYTES + 1
+    if size > MAX_FLIGHT_BODY_BYTES:
+        raise HTTPException(status_code=413, detail="flight body exceeds 16384 bytes")
+    return payload
+
+
 @router.post("/flight")
 # The pane leaves the cockpit and hands over what it flew through. A flight is a note, not a
 # state: no turns are spent and nothing is entered — the next turn reads it as residue.
 def flight(body: Dict[str, Any] = Body(default=None)) -> Dict[str, Any]:
-    payload = body if isinstance(body, dict) else {}
+    payload = _bounded_flight_body(body)
     trail = payload.get("trail") if isinstance(payload.get("trail"), list) else []
     try:
         return plugin().core.engine.note_flight(
