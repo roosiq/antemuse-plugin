@@ -147,11 +147,16 @@ async function mountWith(state, id = 'page') {
 const registered = makeCtx({ payload: PAYLOAD })
 plugin.register(registered.ctx)
 assert.equal(plugin.id, 'antemuse')
+// Assert the contributions by id, not by the shape of the area list. The list is
+// order-and-duplicate sensitive, so it goes stale every time a route or a palette command is
+// added — it still expected the pre-cockpit five while the plugin registered seven, which made
+// this file fail on a clean mount of every release from 0.11.0 to 0.11.8.
 assert.deepEqual(
-  registered.contributions.map((c) => c.area),
-  ['panes', 'statusBar.right', 'routes', 'sidebar.nav', 'palette'],
-  'a dock pane, a chip, a route, a nav entry and a palette command'
+  registered.contributions.map((c) => c.id).sort(),
+  ['chip', 'cockpit-open', 'cockpit-page', 'nav', 'page', 'pane', 'watch'],
+  'a dock pane, a chip, a route, a nav entry, the cockpit tab and two palette commands'
 )
+assert.equal(registered.contributions.length, 7)
 const byId = Object.fromEntries(registered.contributions.map((c) => [c.id, c]))
 assert.equal(byId.page.data.path, '/antemuse', 'the page route must match what the palette opens')
 assert.equal(byId.nav.data.path, '/antemuse')
@@ -165,10 +170,13 @@ assert.ok(registered.pages.length <= 1, 'at most one settings page')
 
 // ---- pure helpers -----------------------------------------------------------
 
-assert.equal(helpers.clock(179), '2:59')
-assert.equal(helpers.clock(-5), '0:00')
-assert.equal(helpers.viewModel(PAYLOAD, null).counts, '2:59 left · 2 turn(s) · no tools · 2 carried')
+// There is no clock any more: a state ends when its dose lands, so the count is the whole
+// story and `clock` is always empty. The assertions below are the values the plugin actually
+// returns (printed, not remembered) — the old ones described a timer this pane does not have.
+assert.equal(helpers.viewModel(PAYLOAD, null).clock, '')
+assert.equal(helpers.viewModel(PAYLOAD, null).counts, '0 picked · you end it · no tools · 2 carried')
 assert.equal(helpers.viewModel(null, new Error('x')).label, 'backend unavailable')
+assert.equal(helpers.viewModel(PAYLOAD, new Error('503')).label, 'the backend did not answer')
 assert.equal(helpers.viewModel({ active: null }, null).situation, 'idle')
 // The empty pane says what to do about it, and an ended state says which one ended.
 assert.equal(helpers.viewModel({ active: null }, null).note, '/walk starts one')
@@ -185,7 +193,7 @@ resetBody()
 const active = await mountWith({ payload: PAYLOAD })
 const text = document.body.textContent
 assert.match(text, /DAYDREAMING/)
-assert.match(text, /2:59 left · 2 turn\(s\) · no tools · 2 carried/)
+assert.match(text, /0 picked · you end it · no tools · 2 carried/)
 assert.match(text, /two memories · join only if it holds/)
 const art = document.querySelector('canvas[data-antemuse-art="pane"]')
 assert.ok(art, 'the pane paints the art on its own canvas')
@@ -257,12 +265,12 @@ await act(async () => { lost.node.unmount() })
 resetBody()
 const lostAgain = await mountWith({ payload: PAYLOAD, error: 'the backend did not answer', failAfter: 2 })
 const lostTicks = lostAgain.calls.intervals.find((i) => i.ms === 900)
-assert.match(document.body.textContent, /2:59 left/, 'the pane starts with a live state')
+assert.match(document.body.textContent, /0 picked · you end it/, 'the pane starts with a live state')
 await act(async () => { for (let i = 0; i < 3; i++) lostTicks.fn() })
 await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
 const lostText = document.body.textContent
 assert.match(lostText, /the backend did not answer/)
-assert.doesNotMatch(lostText, /left ·/, 'the pane must not print a countdown beside a failed answer')
+assert.doesNotMatch(lostText, /picked ·/, 'the pane must not print a count beside a failed answer')
 assert.doesNotMatch(lostText, /join only if it holds/, 'nor a contract from the payload it could not refresh')
 await act(async () => { lostAgain.node.unmount() })
 
