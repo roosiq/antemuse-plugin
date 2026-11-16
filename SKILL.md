@@ -60,6 +60,10 @@ not a guess. Ignore it when the work is nearly done; the nudge waits ten turns.
   `engaged` flag — not the lock, and not `setPointerCapture` (it throws `InvalidStateError`).
 - A harness that grants what the app refuses proves nothing: `tools/cockpit_harness.py` stubs
   `requestPointerLock` to reject so the captured-steering path is the one exercised.
+- Every behavioural claim in a release note needs an assertion that fails when the claim is
+  false. If no mutation makes it fail, the claim is inspected, not proven — and four releases in
+  a row shipped a true-but-unpinned claim: a file-wide `count()`, a substring, a harness that was
+  never run, then a precedence rule whose assertions only covered `active: null`.
 - Entering a pane is not leaving it: every full-bleed view needs a drawn exit and a key for it.
 - Leaving the cockpit files the flight (`POST /flight`: trail in order, plus keeps and
   trashes) as residue — never as a state, and never inside `/explore`, where the state's own
