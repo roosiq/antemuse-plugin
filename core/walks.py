@@ -201,11 +201,24 @@ class WordNetGraph(Graph):
         return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
 
     def resume(self, node_id: str) -> Optional[Dict[str, Any]]:
+        """The cursor's node, or None.
+
+        `wn.synset()` answers None as well as raising for an id that is not a synset, and the
+        unattended `.name()` on that None took down a live walk with
+        `AttributeError: 'NoneType' object has no attribute 'name'`. A cursor that names
+        something WordNet cannot resolve means "start again", not "fail".
+        """
         try:
             syn = self.wn().synset(node_id)
         except Exception:
             return None
-        return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
+        if syn is None:
+            return None
+        try:
+            return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "),
+                              syn.pos(), syn.definition())
+        except Exception:
+            return None
 
     def rim(self, node: Dict[str, Any], depth: int = 2,
             budget: int = 400) -> List[Dict[str, Any]]:

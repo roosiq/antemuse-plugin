@@ -260,3 +260,55 @@ def test_the_second_resolution_point_refuses_it_too(cursor):
     """`walk_text()` reads the name off the active state, so the fallback was reachable twice."""
     with pytest.raises(ValueError):
         walks.get("no-such-walk", cursor)
+
+
+def test_a_cursor_that_names_nothing_is_a_restart_not_a_crash(cursor):
+    """`wn.synset()` answers None as well as raising, and `.name()` on that None killed a
+    live walk in the app: `AttributeError: 'NoneType' object has no attribute 'name'`,
+    recorded as `walk 'outer' produced nothing`."""
+    class Silent:
+        def synset(self, _name):
+            return None
+
+        def synsets(self, _word):
+            return []
+
+    walk = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, cursor)
+    walk.graph._wn = Silent()
+
+    assert walk.graph.resume("caste.n.01") is None
+
+
+def test_a_walk_that_cannot_resume_starts_again_instead_of_failing(cursor):
+    walk = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, cursor)
+    walk._write_cursor("not_a_synset_at_all", "")
+    walk.graph.resume = lambda _node_id: None        # the answer the guard now gives
+
+    node = walk.start_node()
+
+    assert node is not None, "a bad cursor must not leave the walk without a start"
+    assert node["id"]
+
+
+def test_the_old_resume_body_is_still_a_crash(cursor):
+    """The record of the defect, so the guard cannot be quietly dropped later.
+
+    A cursor naming something WordNet answers None for produced
+    `AttributeError: 'NoneType' object has no attribute 'name'` in the live app, which the
+    provider reported as `walk 'outer' produced nothing` and the state as `nothing arrived`.
+    """
+    class Silent:
+        def synset(self, _name):
+            return None
+
+    def old_resume(_graph, node_id):
+        syn = _graph.wn().synset(node_id)
+        return _graph._node(syn.name(), syn.lemma_names()[0].replace("_", " "),
+                            syn.pos(), syn.definition())
+
+    walk = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, cursor)
+    walk.graph._wn = Silent()
+
+    with pytest.raises(AttributeError):
+        old_resume(walk.graph, "caste.n.01")
+    assert walk.graph.resume("caste.n.01") is None, "the shipped guard did not hold"

@@ -313,6 +313,11 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
             head = (parts[0] if parts else "")[:40].rstrip(",.;:· ")
         if head and head not in trail:
             trail.append(head)
+    # The trail may hold more than the dose if an older build overspent it. Print what the
+    # header claims: the number and the list are one statement, not two.
+    dose, unit = _dose_of(states.spec(key), active)
+    if dose and len(trail) > dose:
+        trail = trail[:dose]
     body = _trail_body(trail)
     # A bare event word ("JOINED") says a thing happened but not how much of it; the tally is the
     # part of the account that is safe to state.
@@ -320,7 +325,6 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
         n = sum(1 for e in steps if str(e.get("text") or "").startswith(mark))
         if n:
             body = f"{body} · {mark.lower()} ×{n}"
-    dose, unit = _dose_of(states.spec(key), active)
     # The count is what the state delivered, capped at its dose: counting journal lines let a
     # second walk in the same chat report "11 of 6 hops".
     counted = max(int(active.get("served") or 0), len(steps))
@@ -816,6 +820,19 @@ def _last_material(key: str, data: Dict[str, Any]) -> float:
     return max(times) if times else 0.0
 
 
+def _spend(active: Dict[str, Any], n: int) -> int:
+    """Add `n` delivered units to the dose spent, and never past the dose.
+
+    A call is meant to take one unit, but a provider may hand back a batch and a pane poll
+    can arrive beside a turn: `served` reached 7 on a 6-hop walk, and the account then printed
+    "6 of 6 hops" over a list of seven. The cap belongs at the write, not in the report.
+    """
+    spent = int(active.get("served") or 0) + max(0, int(n))
+    dose = int(active.get("dose") or 0)
+    active["served"] = min(spent, dose) if dose else spent
+    return active["served"]
+
+
 def deliver_if_due(source: str = "turn") -> int:
     """Deliver the next unit of the dose.
 
@@ -936,7 +953,7 @@ def deliver_if_due(source: str = "turn") -> int:
         end_dry = False
         if active.get("key") == key:
             if material:
-                active["served"] = int(active.get("served") or 0) + len(material)
+                _spend(active, len(material))
                 active["empty"] = 0
                 active["shown"] = ([str(x) for x in (active.get("shown") or [])]
                                    + [ident or _material_key(text)

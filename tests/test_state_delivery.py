@@ -220,3 +220,57 @@ def test_a_foreign_turn_does_not_close_a_state_that_still_has_units_to_serve():
         assert engine.peek() is not None, "an unfinished state was closed by a stranger"
     finally:
         sources.PROVIDERS["walk"] = original
+
+
+def test_a_walk_cannot_serve_past_its_dose():
+    """Seven hops on a six-hop walk made the account print "6 of 6 hops" over seven lines."""
+    lines = markers(12)
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(*lines)
+    try:
+        engine.enter("walk", session="dose")
+        for _ in range(14):
+            engine.note_turn("dose")
+            engine.tick("dose")
+            engine.inject("dose")
+            engine.deliver_if_due(source="pane")
+            if engine.peek() is None:
+                break
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+    active = state_home().get("active") or {}
+    if active:
+        assert active["served"] <= active["dose"], active
+
+
+def test_the_account_counts_the_trail_it_prints():
+    """"6 of 6 hops" followed by seven hops is one statement disagreeing with itself."""
+    engine.enter("walk", session="count")
+    engine.note_turn("count")
+    with open(os.path.join(os.environ["ANTEMUSE_STATES_HOME"], "state.json")) as fh:
+        data = json.load(fh)
+    data["active"]["served"] = 7          # what an overspending build left behind
+    data["journal"].extend(
+        {"who": "state", "state": "walk", "event": "walk", "at": 9e9 + i,
+         "text": f"a{i} (n) → b{i} (n) · took its far edge"} for i in range(7))
+    with open(os.path.join(os.environ["ANTEMUSE_STATES_HOME"], "state.json"), "w") as fh:
+        json.dump(data, fh)
+
+    account = engine._account(data, data["active"])
+
+    assert "6 of 6 hops" in account["text"], account["text"]
+    assert account["text"].count("[far]") == 6, account["text"]
+
+
+def test_serving_stops_at_the_dose_even_when_a_provider_returns_a_batch():
+    engine.enter("walk", session="batch")
+    with open(os.path.join(os.environ["ANTEMUSE_STATES_HOME"], "state.json")) as fh:
+        data = json.load(fh)
+    data["active"]["served"] = data["active"]["dose"] - 1
+    with open(os.path.join(os.environ["ANTEMUSE_STATES_HOME"], "state.json"), "w") as fh:
+        json.dump(data, fh)
+
+    served = engine._spend(data["active"], 4)
+
+    assert served == data["active"]["dose"], (served, data["active"]["dose"])
