@@ -2,7 +2,7 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: 1709b4c4c76ee1d2d9e3815a00c6e383e9bd6e0c
+sha: e15aeccd410b1186ca0e6df65a25bdf6ae19c14b
 description: 'One agent state and a concept map you fly yourself. /walk changes the frame the agent works
   in without sending it anywhere: six hops out to the far rim of a concept''s neighbourhood in WordNet,
   one bought per turn, recorded for the pane and never injected into the turn, so what comes back comes
@@ -15,7 +15,7 @@ maintainer: roosiq
 tier: community
 category: desktop
 docs_url: https://github.com/roosiq/antemuse-plugin#readme
-version: "0.11.6"
+version: "0.11.7"
 requires_hermes: '>=0.21.6'
 platforms:
 - linux
@@ -42,8 +42,8 @@ known_issues:
   path, so the pane is expected to work but is unverified there.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/1709b4c4c76ee1d2d9e3815a00c6e383e9bd6e0c/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/e15aeccd410b1186ca0e6df65a25bdf6ae19c14b/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/1709b4c4c76ee1d2d9e3815a00c6e383e9bd6e0c/docs/screenshots/pane-walk.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/1709b4c4c76ee1d2d9e3815a00c6e383e9bd6e0c/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/1709b4c4c76ee1d2d9e3815a00c6e383e9bd6e0c/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/e15aeccd410b1186ca0e6df65a25bdf6ae19c14b/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/e15aeccd410b1186ca0e6df65a25bdf6ae19c14b/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/e15aeccd410b1186ca0e6df65a25bdf6ae19c14b/docs/screenshots/blocked-tool.png
