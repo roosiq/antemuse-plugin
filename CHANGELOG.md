@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.2 — 2026-11-15
+
+- package: ship the docs the README links, and stop the suite failing on a draw (2026-11-15)
+
 ## 0.11.1 — 2026-11-15
 
 - cockpit: a tab inside Antemuse, and a mouse that steers without permission (2026-11-15)
