@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import yaml
+import pytest
 
 ROOT = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, str(ROOT))
@@ -48,13 +49,23 @@ def test_the_command_count_in_the_docs_matches_the_states():
 
 def test_the_manifest_and_catalog_name_every_state():
     manifest = yaml.safe_load(_doc("plugin.yaml"))
-    catalog = yaml.safe_load(_doc("plugin-catalog/antemuse.yaml"))
-    for label, text in (("plugin.yaml", manifest["description"]),
-                        ("catalog", catalog["description"])):
+    pairs = [("plugin.yaml", manifest["description"])]
+    catalog_path = ROOT / "plugin-catalog" / "antemuse.yaml"
+    if catalog_path.exists():  # the package excludes the catalog entry; the checkout has it
+        pairs.append(("catalog", yaml.safe_load(catalog_path.read_text())["description"]))
+    for label, text in pairs:
         for key in states.STATES:
             assert key in text, f"{label}'s description never mentions {key}"
 
 
+#: The catalog entry is a repository artifact, not a package file (build-release.sh excludes it).
+needs_catalog = pytest.mark.skipif(
+    not (ROOT / "plugin-catalog" / "antemuse.yaml").exists(),
+    reason="catalog entry is not shipped in the package",
+)
+
+
+@needs_catalog
 def test_the_catalog_known_issues_do_not_promise_one_pane():
     """The cockpit is a second surface; a catalog that says 'the pane only' is wrong."""
     catalog = yaml.safe_load(_doc("plugin-catalog/antemuse.yaml"))

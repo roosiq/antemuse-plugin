@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.18 — 2026-11-16
+
+- release: the package must be able to collect its own tests (2026-11-16)
+
 ## 0.11.17 — 2026-11-16
 
 - hardening: the review's findings, fixed at their cause (2026-11-16)

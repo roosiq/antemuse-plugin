@@ -9,7 +9,10 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+pytestmark = pytest.mark.skipif(
+    shutil.which("git") is None or not (ROOT / ".git").exists(),
+    reason="not a git checkout (the release package ships without .git)",
+)
 
 
 def _tracked_paths() -> list[str]:
