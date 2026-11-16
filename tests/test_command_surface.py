@@ -42,9 +42,10 @@ def skill_actions() -> set[str]:
 
 
 def schema_actions() -> set[str]:
+    """The one tuple the enum and the rejection message are both built from."""
     src = (ROOT / "__init__.py").read_text()
-    m = re.search(r'"enum": \[([^\]]+)\]', src)
-    assert m, "no action enum in the schema"
+    m = re.search(r"ACTIONS: tuple = \(([^)]+)\)", src, re.S)
+    assert m, "no ACTIONS tuple in the plugin"
     return set(re.findall(r'"([a-z_]+)"', m.group(1)))
 
 

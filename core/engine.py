@@ -566,6 +566,13 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         if why_not:
             return f"cannot enter {spec_key} · {why_not}"
     spec = states.spec(spec_key)
+    # The walk is named at the door and never after: `walks.get()` used to turn an unknown
+    # name into `wander`, so a typo produced a real walk nobody asked for and said WALKING.
+    if spec_key == "walk" and walk:
+        from . import walks
+        wanted = str(walk).strip().lower()
+        if wanted and wanted not in walks.names():
+            return (f"no such walk: {wanted!r} · try: {', '.join(walks.names())}")
     # Convenience kwargs for the two policy arguments, so an entry can be closed
     # without building an options dict by hand. They are recorded in the same place
     # the tool handler records them, and nowhere else.

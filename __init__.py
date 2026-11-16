@@ -14,7 +14,8 @@ Surfaces:
   commands             see SKILL.md for the three verbs a person types;
                        one verb, one name — `state(action="status")` is the record, and
                        the picture is the desktop pane, never a command
-  tool                 state(action=…) — twelve actions, defined in the same place
+  tool                 state(action=…) — see ACTIONS; the schema and the
+                       rejection message both read that one tuple
 """
 from __future__ import annotations
 
@@ -44,6 +45,12 @@ else:  # flat load: this file is or is not on sys.path, but its directory is wha
 
 __version__ = "0.10.44"
 
+#: Every action this tool answers. The schema's enum and the rejection message are both
+#: built from it, because a typed-out list of actions in prose went stale: the message
+#: advertised `card` and `image`, and both answered "no such action".
+ACTIONS: tuple = ("enter", "exit", "status", "list", "walks", "walk_new", "walk_del",
+                  "break", "mood", "spark", "keep", "complete", "watch")
+
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
     "description": (
@@ -61,13 +68,10 @@ STATE_SCHEMA: Dict[str, Any] = {
     "parameters": {
         "type": "object",
         "properties": {
-            "action": {"type": "string",
-                       "enum": ["enter", "exit", "status", "list", "walks", "walk_new",
-                                "walk_del", "break", "mood", "spark", "keep", "complete",
-                                "watch"]},
+            "action": {"type": "string", "enum": list(ACTIONS)},
             "name": {"type": "string",
                      "description": "Agent state to enter: walk. /explore is person-driven and is entered with its command."},
-            "walk": {"type": "string", "description": "Which walk to traverse: wander, upward, downward, lateral, or one you saved."},
+            "walk": {"type": "string", "description": ("Which walk to traverse. Default outer. action='walks' lists every name; an unknown name is refused rather than replaced, so read the list instead of guessing.")},
             "goal": {"type": "string",
                      "description": "For action='spark': what the run is for. The person sees counts, never candidates."},
             "verdict": {"type": "string", "enum": ["love", "like", "trash"],
@@ -177,6 +181,11 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
             return ("cannot enter with method, seed, or budget · experimental methods are off "
                     "(plugins.entries.antemuse.settings.experimental.enabled: true)")
         walk_name = a.get("walk")
+        name = str(a.get("name") or "").lower()
+        # `/explore` is person-driven: no dose, no provider, and only the person can end it.
+        # The schema says so; the handler used to enter it anyway on the agent's word.
+        if name == "explore":
+            return "explore is person-driven · the person types /explore"
         if walk_name and not walks.valid_name(str(walk_name)):
             return (f"cannot enter · walk names are lowercase letters, digits, '-' and '_' "
                     f"(got '{walk_name}')")
@@ -229,8 +238,7 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         return _pane_only()
     # An unrecognised action used to fall through to the status picture, so a caller
     # that mistyped got art instead of an answer. Say what exists.
-    return ("no such action: " + repr(action) + ". try: enter, exit, status, list, break, "
-            "mood, walks, walk_new, walk_del, spark, keep, complete, watch, card, image.")
+    return ("no such action: " + repr(action) + ". try: " + ", ".join(ACTIONS) + ".")
 
 
 # ------------------------------------------------------------------ hooks

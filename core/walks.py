@@ -728,8 +728,20 @@ def _walk_file(name: str, cursor_path: Path | None = None) -> Path:
     return path
 
 
+def names(cursor_path: Path | None = None) -> List[str]:
+    """Every walk a person can name: the built-ins, then any saved beside them."""
+    cursor_path = cursor_path or cursor_path_default()
+    seen: List[str] = []
+    for walk in list_walks(cursor_path):
+        name = str(walk.get("name") or "")
+        if name and name not in seen:
+            seen.append(name)
+    return seen
+
+
 def get(name: str, cursor_path: Path | None = None) -> GraphWalk:
     cursor_path = cursor_path or cursor_path_default()
+    name = str(name or "").strip().lower() or "wander"
     if name in BUILTIN:
         return GraphWalk({"name": name, **BUILTIN[name]}, cursor_path)
     path = _walk_file(name, cursor_path)
@@ -737,7 +749,10 @@ def get(name: str, cursor_path: Path | None = None) -> GraphWalk:
         spec = json.loads(path.read_text())
         spec.setdefault("name", name)
         return GraphWalk(spec, cursor_path)
-    return GraphWalk({"name": "wander", **BUILTIN["wander"]}, cursor_path)
+    # A name that does not exist used to become `wander` in silence, so a typo entered a
+    # state whose walk was not the one asked for and reported success. Refuse it where it
+    # is resolved; the callers that pass a real name never see this.
+    raise ValueError(f"no such walk: {name!r} · try: {', '.join(names(cursor_path))}")
 
 
 def save(spec: Dict[str, Any], cursor_path: Path | None = None) -> Dict[str, Any]:

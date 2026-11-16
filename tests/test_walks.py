@@ -54,8 +54,11 @@ def test_manual_walk_continues_from_its_cursor(cursor):
     assert "a" not in second.split(" → ")[0]
 
 
-def test_unknown_walk_falls_back_to_wander(cursor):
-    assert walks.get("nope", cursor).name == "wander"
+def test_an_unknown_walk_is_refused_not_silently_replaced(cursor):
+    """It used to become `wander`, so a typo entered a walk nobody asked for and said WALKING."""
+    with pytest.raises(ValueError) as err:
+        walks.get("nope", cursor)
+    assert "no such walk" in str(err.value)
 
 
 def test_builtin_names_cannot_be_overwritten(cursor):
@@ -171,7 +174,7 @@ def test_a_walk_name_cannot_reach_outside_the_walks_directory(cursor):
     outside.write_text('{"token": "must survive"}')
 
     bad = ["../auth", "../../auth", "..", ".", "a/b", "..\\auth", "/etc/passwd",
-           "walk.json/../../auth", "x" * 65, "", ".. /auth", "a/.b"]
+           "walk.json/../../auth", "x" * 65, ".. /auth", "a/.b"]
     for name in bad:
         with pytest.raises(ValueError):
             walks.get(name, cursor)
@@ -179,6 +182,9 @@ def test_a_walk_name_cannot_reach_outside_the_walks_directory(cursor):
             walks.save({"name": name, "graph": "manual", "edges": {"a": ["b"]}}, cursor)
         with pytest.raises(ValueError):
             walks.remove(name, cursor)
+    # No name at all is not a traversal: it means the default walk, which is what the
+    # provider asks for when a state recorded none.
+    assert walks.get("", cursor).name == "wander"
 
     assert outside.read_text() == '{"token": "must survive"}'
     assert not (cursor.parent / "walks" / "..json").exists()
@@ -230,7 +236,9 @@ def test_a_command_enters_the_normalised_name(cursor):
         def get_config(self, key, default=None):
             return default
 
-    walks.save({"name": "Outward Sky", "graph": "manual", "edges": {"a": ["b"]}}, cursor)
+    # Saved where the engine looks, not beside the fixture's cursor file: the entry now
+    # checks the name against the walks that exist, so both must read the same directory.
+    walks.save({"name": "Outward Sky", "graph": "manual", "edges": {"a": ["b"]}})
     ctx = Ctx()
     module.register(ctx)
     from core import engine
@@ -248,5 +256,7 @@ def test_a_valid_name_still_saves_and_removes(cursor):
         assert walks.remove(name, cursor) is True
 
 
-def test_an_unknown_walk_still_falls_back_to_wander(cursor):
-    assert walks.get("no-such-walk", cursor).name == "wander"
+def test_the_second_resolution_point_refuses_it_too(cursor):
+    """`walk_text()` reads the name off the active state, so the fallback was reachable twice."""
+    with pytest.raises(ValueError):
+        walks.get("no-such-walk", cursor)

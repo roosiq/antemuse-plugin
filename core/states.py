@@ -85,13 +85,16 @@ def waiting(key: str) -> str:
 
 
 def palette() -> str:
-    """The agent-state list: one state and the way out."""
+    """The agent-state list: one state, the person-driven map, and the way out."""
     walk = STATES["walk"]
     return "\n".join([
         "AGENT STATE",
         f"  /walk       {walk['dose']['n']} {walk['dose']['unit']} · all tools",
         f"             {walk['contract']}",
         "  /return     end the current state and keep the residue",
+        "",
+        "PERSON-DRIVEN",
+        "  /explore    you fly the map yourself · no dose, no provider · ends on /return",
         "",
         "  a walk ends when its dose is delivered; no clock: nothing expires on time",
     ])
