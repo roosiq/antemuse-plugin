@@ -51,6 +51,21 @@ not a guess. Ignore it when the work is nearly done; the nudge waits ten turns.
 ## Rules
 
 - Never enter a state to avoid work; enter it to change what the work looks like.
+- Never encode a defect in a test, and never assert a substring as if it were behaviour:
+  `assert js.count("onExit()") >= 2` passed with the Escape call deleted, because the button
+  and the teardown also call it. Slice to the branch, or drive it in a harness.
+- Verify the environment the app actually runs in. The packaged pane refuses
+  `requestPointerLock()` with `WrongDocumentError: The root document of this element is not
+  valid for pointer lock`, so steering rides document-level pointer events with a sticky
+  `engaged` flag — not the lock, and not `setPointerCapture` (it throws `InvalidStateError`).
+- A harness that grants what the app refuses proves nothing: `tools/cockpit_harness.py` stubs
+  `requestPointerLock` to reject so the captured-steering path is the one exercised.
+- Entering a pane is not leaving it: every full-bleed view needs a drawn exit and a key for it.
+- Leaving the cockpit files the flight (`POST /flight`: trail in order, plus keeps and
+  trashes) as residue — never as a state, and never inside `/explore`, where the state's own
+  tally already reaches the agent.
+- A new backend route is not live until the gateway restarts; say so instead of claiming the
+  wire works.
 - A walk is ambient: keep working. The walked path is scenery, not a hint, and
   no walk material is injected into the working turn.
 - When the state ends, say what it left behind. Residue is the only output.
@@ -87,6 +102,23 @@ is on.
   available under every state.
 - Any promotion of a method is gated on protected comparative evaluation under
   the governing spec.
+
+## Verifying a release
+
+The thing that ships is the tarball, not the checkout:
+
+```bash
+T=$(mktemp -d); tar -C $T -xzf ~/.cache/antemuse/dist/antemuse-<v>.tar.gz
+cd $T/antemuse-<v>
+env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) uvx --with-requirements requirements-test.txt --quiet pytest tests/ -q
+npm ci --silent --prefix tools/desktop_harness && node tools/desktop_harness/mount.mjs
+```
+
+Two harnesses exist and they are different: `tools/desktop_harness/mount.mjs` (node/jsdom,
+mounts the whole pane) and `tools/cockpit_harness.py` (Playwright, drives `createCockpit`).
+Citing one while shipping the other is how a broken harness survived four releases — the jsdom
+one asserted the registration by the *shape* of the area list, so it died on a clean mount of
+every release from 0.11.0 to 0.11.8.
 
 ## Verifying in this environment
 
