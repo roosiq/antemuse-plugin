@@ -198,6 +198,14 @@ assert.equal(
 )
 assert.equal(helpers.viewModel({ active: null, last: { state: 'walk' } }, null).note,
   'walk ended · /walk again')
+// The receipt yields to what is actually happening. Both flight assertions above pass
+// `active: null`, so promoting the receipt above the `error || active` guard passed the whole
+// harness — the code was right and the precedence was unpinned.
+const F = { concepts: 3, kept: ['harpoon'], trail: ['harpoon'] }
+assert.equal(helpers.viewModel({ active: { label: 'WALKING' }, flight: F }, null).note, '',
+  'a running state must win over the last flight')
+assert.equal(helpers.viewModel({ active: null, flight: F }, new Error('503')).note, '',
+  'a failed poll must win over the last flight')
 assert.equal(helpers.viewModel({ active: null, last: { state: 'walk' } }, null).note, 'walk ended · /walk again')
 // A failed answer is not a claim about now: no clock, no counts, no contract beside an error.
 const failed = helpers.viewModel(PAYLOAD, new Error('503'))
