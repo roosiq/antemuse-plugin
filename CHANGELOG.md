@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.20 — 2026-11-16
+
+- walk graphs are interchangeable: a declared provider, not WordNet (2026-11-16)
+
 ## 0.11.19 — 2026-11-16
 
 - cockpit: touch, reduced motion, and a ground that follows the theme (2026-11-16)
