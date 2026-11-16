@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.1 — 2026-11-15
+
+- cockpit: a tab inside Antemuse, and a mouse that steers without permission (2026-11-15)
+- docs: drop the Unreleased section 0.11.0 already carries (2026-11-15)
+
 ## 0.11.0 — 2026-11-15
 
 - walk: stop the dose at the dose, and survive a cursor that names nothing (2026-11-15)
