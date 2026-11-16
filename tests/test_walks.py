@@ -312,3 +312,21 @@ def test_the_old_resume_body_is_still_a_crash(cursor):
     with pytest.raises(AttributeError):
         old_resume(walk.graph, "caste.n.01")
     assert walk.graph.resume("caste.n.01") is None, "the shipped guard did not hold"
+
+
+def test_the_outer_walk_never_falls_back_to_a_neighbour(cursor):
+    """`outer` promises distance; when the far search has nothing, it restarts instead.
+
+    This is what made the shipped suite flaky: `far_from` could come back empty, the walk
+    stepped to a neighbour, and a test that asserts "far edge or picked up again" failed on a
+    draw. The fallback belonged in the walk, not in the test.
+    """
+    walk = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, cursor)
+    walk.graph.far_from = lambda _node, samples=32, avoid=None: None       # a rim with nothing in it
+
+    steps = walk.step(4)
+
+    assert steps, "the walk produced nothing at all"
+    for line in steps:
+        assert "picked up again" in line or "the walk stops" in line, line
+        assert "took its far edge" not in line, line

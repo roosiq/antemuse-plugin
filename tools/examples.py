@@ -16,6 +16,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 OUT = ROOT / "docs" / "EXAMPLES.md"
+# The hint this file carries ("run tools/examples.py") has to work in a package where
+# nothing under docs/ existed yet: writing into a missing directory answered
+# FileNotFoundError and the advice became a dead end.
+
 
 # (title, command, kind)
 SCENARIOS = (
@@ -134,6 +138,10 @@ def main() -> int:
             return 0
         print("docs/EXAMPLES.md is missing or stale: run tools/examples.py")
         return 1
+    # The hint this file prints ("run tools/examples.py") has to work in a package where
+    # nothing under docs/ exists: writing into a missing directory raised
+    # FileNotFoundError and turned the advice into a dead end.
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(build(), encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}")
     return 0

@@ -36,11 +36,11 @@ if command -v rsync >/dev/null 2>&1; then
   rsync -a \
     --exclude .git --exclude node_modules --exclude __pycache__ --exclude .pytest_cache \
     --exclude .venv --exclude experiments --exclude evaluation --exclude specs --exclude site \
-    --exclude docs --exclude dist --exclude .post-staging --exclude .antemuse \
+    --exclude dist --exclude .post-staging --exclude .antemuse \
     "$SRC"/ "$STAGE"/
 else
   cp -a "$SRC" "$STAGE"
-  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,docs,dist,.antemuse}
+  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,dist,.antemuse}
   find "$STAGE" -name __pycache__ -prune -exec rm -rf {} +
 fi
 # The pane is the only thing the desktop loads. The baked scenes were deleted from the renderer
@@ -49,6 +49,34 @@ fi
 rm -rf "$STAGE/desktop/art" "$STAGE/desktop/vendor" "$STAGE/desktop/scene3d.js"
 find "$STAGE/desktop" -name '*.bak' -delete 2>/dev/null || true
 ok "staged $(du -sh "$STAGE" | cut -f1)"
+
+# Every local link a shipped document makes must resolve inside the package. The README
+# pointed at docs/EXAMPLES.md for three releases while the packer dropped docs/ entirely, and
+# the test that checked the README only ever looked for the string, never for the file.
+say "links in the shipped documents"
+python3 - "$STAGE" <<'PY'
+import re, sys
+from pathlib import Path
+
+stage = Path(sys.argv[1])
+broken = []
+for doc in ("README.md", "TESTING.md", "CONTRIBUTING.md", "SKILL.md", "SECURITY.md"):
+    path = stage / doc
+    if not path.exists():
+        continue
+    for target in re.findall(r"\]\((?!https?:|#|mailto:)([^)]+)\)", path.read_text(encoding="utf-8")):
+        target = target.split("#", 1)[0].strip()
+        if not target:
+            continue
+        if not (stage / target).exists():
+            broken.append(f"{doc} -> {target}")
+if broken:
+    print("\n  FAILED: shipped documents link files the package does not carry:")
+    for one in broken:
+        print(f"    {one}")
+    sys.exit(1)
+print("  ok    every local link resolves inside the package")
+PY
 
 # The projection travels WITH the package but not in the repository: it carries 117k WordNet
 # labels, and the retired-name rule forbids those words anywhere in the tree. It is built by

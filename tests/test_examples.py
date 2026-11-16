@@ -23,6 +23,9 @@ def test_the_readme_points_at_the_generated_examples():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "docs/EXAMPLES.md" in readme, "the README must link the generated examples"
     assert "## What it looks like in use" in readme
+    # The link was in the README for three releases while the packer dropped docs/ entirely,
+    # so a reader of the artifact followed it into nothing.
+    assert (ROOT / "docs" / "EXAMPLES.md").exists(), "the README links a file that is not here"
 
 
 def test_no_example_quotes_a_random_seed():

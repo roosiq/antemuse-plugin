@@ -613,13 +613,30 @@ class GraphWalk:
                     continue
             elif mode == "far":
                 skip = far_fresh(node, avoid=[prev_id])
-                if skip is not None:
+                if skip is None:
+                    # `outer` promises distance, and a neighbour step is the one thing it must
+                    # not do. When the far search comes back empty — a synset with no usable
+                    # rim, or a pool that is all visited — restart from somewhere else and say
+                    # so, in the same words a dead end already uses.
+                    restart = self.graph.random_node(self.relations)
+                    if restart is None or restart["id"] == node["id"]:
+                        out.append(f"{node['label']} · nothing far from here — the walk stops")
+                        break
                     hops += 1
-                    if skip["label"] not in trail:
-                        trail.append(skip["label"])
-                    out.append(line(node, skip, "took its far edge", jumped=True))
-                    prev_id, node = node["id"], skip
+                    if restart["label"] not in trail:
+                        trail.append(restart["label"])
+                    remember(restart)
+                    out.append(f"{node['label']} → {restart['label']} "
+                               f"({restart['pos'] or 'thing'}) · picked up again after a dead end"
+                               + back(jumped=True) + visited(restart))
+                    prev_id, node = node["id"], restart
                     continue
+                hops += 1
+                if skip["label"] not in trail:
+                    trail.append(skip["label"])
+                out.append(line(node, skip, "took its far edge", jumped=True))
+                prev_id, node = node["id"], skip
+                continue
             options = [(rel, n) for rel, n in self.graph.edges(node) if rel in self.relations]
             if not options:
                 # a dead end is not the end of the walk unless the graph is exhausted.
