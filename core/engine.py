@@ -354,7 +354,7 @@ def _record_finish(active: Dict[str, Any], ending: str, served: int | None = Non
             pass
 
 
-def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
+def _expire(data: Dict[str, Any], now: float | None = None, foreign: bool = False) -> bool:
     """Close a state whose dose is already delivered.
 
     There is no clock in this decision. A state ends because its dose arrived and the agent
@@ -374,7 +374,13 @@ def _expire(data: Dict[str, Any], now: float | None = None) -> bool:
     # Served is not shown: this runs before the block is built, so closing here threw away the
     # last unit of every state and asked the model to react to material it had never seen.
     if _unit != "turns" and int(active.get("seen") or 0) < served:
-        return False
+        # The block that marks a dose seen can only be built for the session that owns the
+        # state. A pane poll may serve the whole dose, and if the owning conversation never
+        # speaks again, `seen` never catches up: the state stayed open at "0 hops left" while
+        # every other conversation wore its annotation, and nothing could end it but /return.
+        # A turn from a different session is proof the owner is gone, not the owner arriving.
+        if not foreign:
+            return False
     report = _account(data, active)
     data["residue"].append({**report, "kind": "report", "turns_left": 2,
                             "reason": "complete",
@@ -1074,8 +1080,13 @@ def inject(session: str | None = None) -> str | None:
     """
     # A turn from another chain does not get to spend this state's dose, and does not get to
     # expire it: delivery is what the *receiving* turn is reacting to, so fetching material for
-    # a turn that will not see it only burns a unit.
+    # a turn that will not see it only burns a unit. It may close one whose dose is already
+    # served and whose owner has not come back — see `_expire(foreign=True)`.
     if not _owns_state(session):
+        with _LOCK:
+            data = _load()
+            if data.get("active"):
+                _expire(data, foreign=True)
         return None
     deliver_if_due()
     with _LOCK:

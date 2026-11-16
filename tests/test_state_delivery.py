@@ -171,3 +171,52 @@ def test_a_provider_failure_line_is_not_material():
 
 def test_walk_dose_is_six_hops():
     assert states.STATES["walk"]["dose"] == {"unit": "hops", "n": 6}
+
+
+def test_a_state_whose_session_never_returns_does_not_hold_its_dose_open():
+    """Entered in A, the whole dose served by a pane poll, then A stops talking.
+
+    `seen` can only be advanced by a block built for A, so it stayed at zero while `served`
+    climbed past the dose: the state hung at "0 hops left" forever, and because a state is
+    policy-global, every other conversation wore its annotation. A turn from B is proof A is
+    gone, and it must close the state rather than leave it open for nobody.
+    """
+    lines = markers()
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(*lines)
+    try:
+        engine.enter("walk", session="A")
+        engine.note_turn("A")
+        for _ in range(10):                      # a pane poll, serving ahead
+            engine.deliver_if_due()
+            engine.tick(None)
+        active = engine._load()["active"]
+        assert active["served"] >= active["dose"], active
+        assert int(active.get("seen") or 0) < active["served"], "the dose must be unseen"
+
+        engine.note_turn("B")
+        assert engine.inject("B") is None
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+    assert engine.peek() is None, "a foreign turn left the state open"
+    reasons = [(r.get("reason"), r.get("kind")) for r in state_home()["residue"]]
+    assert ("complete", "report") in reasons, reasons
+
+
+def test_a_foreign_turn_does_not_close_a_state_that_still_has_units_to_serve():
+    """The escape hatch is for an unshown dose, not for any state someone else walks in on."""
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(*markers())
+    try:
+        engine.enter("walk", session="A")
+        engine.note_turn("A")
+        engine.tick("A")
+        engine.inject("A")
+        assert engine._load()["active"]["served"] < engine._load()["active"]["dose"]
+
+        engine.note_turn("B")
+        engine.inject("B")
+        assert engine.peek() is not None, "an unfinished state was closed by a stranger"
+    finally:
+        sources.PROVIDERS["walk"] = original

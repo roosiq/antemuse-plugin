@@ -5,6 +5,8 @@ together; the catalog entry is generated from the manifest at release time.
 
 ## Unreleased
 
+- engine: a state whose dose is fully served but was never shown no longer stays open forever — `seen` can only be advanced by a block built for the session that owns the state, so a walk entered in one conversation, served by a pane poll, and then never spoken to again hung at "0 hops left" while every other conversation wore its annotation; a turn from a different session now closes it (2026-11-15)
+
 - tool: a walk name that does not exist is refused instead of silently becoming `wander` — `walks.get()` raised nothing before, so a typo entered a real walk nobody asked for and answered `WALKING · 6 hops …`; the name is now checked in `engine.enter()` before anything is written (2026-11-15)
 - tool: `state(action='card')` used to recommend `card` and `image`, neither of which exists, so following the advice looped; the schema enum and the rejection sentence are now both built from one `ACTIONS` tuple (2026-11-15)
 - tool: the agent can no longer enter `/explore` (`explore is person-driven · the person types /explore`), which its own parameter description already claimed; the command still enters it (2026-11-15)
