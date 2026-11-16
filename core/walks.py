@@ -171,8 +171,17 @@ class Graph:
         raise NotImplementedError
 
     def resume(self, node_id: str) -> Optional[Dict[str, Any]]:
+        """Pick a walk back up — including from a cursor written before ids were namespaced.
+
+        Cursors on disk from older releases hold a bare key ("design", "carousel.n.01"). A
+        namespaced id is checked first; a bare id is handed to the provider as its own key, so an
+        upgrade resumes the walk it was in instead of silently starting a new one.
+        """
         key = self.key(node_id)
-        return self.resolve(key) if key is not None else None
+        if key is None:
+            raw = str(node_id or "").strip()
+            key = raw if raw and ":" not in raw else None
+        return self.resolve(key) if key else None
 
     def far_from(self, node: Dict[str, Any], samples: int = 32,
                  avoid: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
@@ -533,20 +542,49 @@ class GraphWalk:
             return self.graph.random_node(self.roles)
         # `continue` with no cursor, and the new `project` mode, draw from the mix:
         # 50 % the repository, 30 % the conversation, 20 % deliberately unrelated.
+        first_usable = None
+        for candidate in self._seed_candidates():
+            resolved = candidate
+            if resolved is not None:
+                if "far" not in self.graph.capabilities or self.jump not in ("far", "vault", "orbit", "composite", "run:3"):
+                    self._seed_marker = getattr(self, "_pending_marker", "")
+                    return resolved
+                # A jump walk needs somewhere to jump to. A seed whose rim is empty ends the walk
+                # on its first line ("nothing far from here"), which is honest but useless when the
+                # next candidate would have walked — so take the first seed that can actually move.
+                if self.graph.far_from(resolved, samples=32, avoid=[]) is not None:
+                    self._seed_marker = getattr(self, "_pending_marker", "")
+                    return resolved
+                if first_usable is None:
+                    first_usable = resolved
+        if first_usable is not None:
+            self._seed_marker = getattr(self, "_pending_marker", "")
+            return first_usable
+        return self.graph.random_node(self.roles)
+
+    def _seed_candidates(self):
+        """The seeded start nodes, in tier order, each carrying the marker of the seed it came from.
+
+        A candidate can be a ledger id ("project:hermes"); the term after the namespace is what a
+        graph can resolve. A candidate that resolves nothing is skipped rather than ending the walk.
+        """
+        self._pending_marker = ""
+        graph = self.graph
+        if graph is None:
+            return
         try:
             from . import seeding
             for seed in seeding.candidates("walk", when=time.time(),
                                            exclude=self._used_terms(),
                                            goal=str((self.seed_spec or {}).get("goal") or "")):
-                resolved = self.graph.resolve(seed["term"])
+                resolved = graph.resolve(seed["term"])
+                if resolved is None and ":" in str(seed["term"]):
+                    resolved = graph.resolve(str(seed["term"]).rsplit(":", 1)[-1])
                 if resolved is not None:
-                    # the marker is claimed only when the seed was actually used: a
-                    # journal that says "project:antemuse" over a random start is a lie
-                    self._seed_marker = seeding.marker(seed)
-                    return resolved
+                    self._pending_marker = seeding.marker(seed)
+                    yield resolved
         except Exception:
-            pass
-        return self.graph.random_node(self.roles)
+            return
 
     def _used_terms(self) -> List[str]:
         try:
