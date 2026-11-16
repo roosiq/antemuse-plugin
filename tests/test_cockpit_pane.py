@@ -344,3 +344,23 @@ def test_the_cockpit_names_the_current_concept_and_records_a_verdict():
         "verdicts are posted with a relative fetch that fails in the packaged app"
     assert "ctx.rest('/picks', { method: 'POST', body: payload })" in PLUGIN.read_text(), \
         "picks are posted with a relative fetch that fails in the packaged app"
+
+
+def test_the_cockpit_has_a_door():
+    """A first-person view with no exit is a trap: tab in, and nothing gets you out.
+
+    Escape used to only release the pointer — so in a pane that never held one, the key did
+    nothing at all, and there was no button, no key and no hint. Both are now wired, and the
+    control is drawn rather than only described.
+    """
+    js = PLUGIN.read_text()
+
+    assert "onExit" in js, "the cockpit has no way to ask to be left"
+    assert js.count("onExit()") >= 2, "Escape and the button must both exit"
+    assert "esc exits" in js, "the hint line never mentions the way out"
+    # the button lives in the pane's own chrome, not in a comment
+    assert "aria-label': 'Leave the cockpit'" in js
+
+    block = js[js.index("function CockpitPane("):]
+    block = block[:block.index("export { createCockpit }")]
+    assert "type: 'button'" in block, "the exit is not a real control"

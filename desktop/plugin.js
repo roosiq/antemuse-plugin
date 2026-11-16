@@ -2434,6 +2434,7 @@ function createCockpit({ ctx, el, callbacks }) {
   // A counter alone cannot say what the person acted on. These names are an
   // interaction readout for the pane; a failed verdict route must never affect flight.
   const onName = callbacks && callbacks.onName ? callbacks.onName : () => {}
+  const onExit = callbacks && callbacks.onExit ? callbacks.onExit : () => {}
   let lastNamed = ''
   const nameNode = (node, source) => {
     if (!node || !node.l) return
@@ -3847,13 +3848,15 @@ function createCockpit({ ctx, el, callbacks }) {
     else if (k === '0' || k === 'home') { resetFlight() }
     else if (k === 'c') { state.catchList = []; onCatch([]); draw() }
     else if (k === 'escape') {
+      // Escape is the way out, in the order a person expects it: drop the pointer if we
+      // have it, then leave the cockpit. It used to only release the pointer, so a pane
+      // with no capture to release swallowed the key and there was no exit at all.
       if (lockActive()) { try { doc.exitPointerLock() } catch (e) { /* gone */ } }
-      if (held !== null) {
-        held = null
-        state.firing = false
-        el.style.cursor = 'crosshair'
-        draw()
-      }
+      state.firing = false
+      held = null
+      drag = null
+      try { el.style.cursor = 'crosshair' } catch (e) { /* gone */ }
+      onExit()
     }
   }
   const onKeyUp = (ev) => {
@@ -4167,14 +4170,16 @@ function AntemuseScreen({ ctx, start }) {
       strip,
       jsx('div', {
         style: { position: 'relative', flex: '1 1 auto', minHeight: 0 },
-        children: tab === 'cockpit' ? jsx(CockpitPane, { ctx }) : jsx(StateView, { ctx })
+        children: tab === 'cockpit'
+          ? jsx(CockpitPane, { ctx, onExit: () => setTab('state') })
+          : jsx(StateView, { ctx })
       })
     ]
   })
 }
 
 /** The pane: a canvas, and the catches/selection as real text beside it. */
-function CockpitPane({ ctx }) {
+function CockpitPane({ ctx, onExit }) {
   const canvasRef = useRef(null)
   const [caught, setCaught] = useState([])
   const [picks, setPicks] = useState([])
@@ -4201,6 +4206,7 @@ function CockpitPane({ ctx }) {
       ctx,
       el,
       callbacks: {
+        onExit: () => { if (typeof onExit === 'function') onExit() },
         onCatch: (list) => setCaught(list.map((n) => ({ l: n.l, w: n.w }))),
         onTarget: () => {},
         onName: (label, source) => {
@@ -4236,7 +4242,7 @@ function CockpitPane({ ctx }) {
           pointerEvents: 'none', textAlign: 'center', whiteSpace: 'nowrap',
           ...LABEL, letterSpacing: '0.18em'
         },
-        children: 'w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire'
+        children: 'w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire \u00b7 esc exits'
       })
 
   const hitNotice = notice
@@ -4297,9 +4303,31 @@ function CockpitPane({ ctx }) {
       })
     : null
 
+  // A first-person view with no door is a trap. The tab strip is above this, but a person
+  // in the cockpit is looking at the canvas, and the cursor is hidden while they steer — so
+  // the exit is drawn where they are looking, and Escape does the same thing.
+  const exitButton = jsx('button', {
+    key: 'exit',
+    type: 'button',
+    onClick: () => { if (typeof onExit === 'function') onExit() },
+    title: 'Leave the cockpit and return to the state view (Esc)',
+    'aria-label': 'Leave the cockpit',
+    style: {
+      position: 'absolute', right: '14px', top: '12px', zIndex: 3,
+      ...LABEL, letterSpacing: '0.14em', cursor: 'pointer',
+      display: 'flex', alignItems: 'center', gap: '6px',
+      padding: '5px 9px 6px', borderRadius: '2px',
+      background: 'var(--ui-panel-background, transparent)',
+      color: 'var(--ui-text, currentColor)',
+      border: '1px solid var(--ui-stroke-secondary, currentColor)'
+    },
+    children: ['exit', jsx('span', { key: 'k', style: { opacity: '0.6' }, children: 'esc' })]
+  })
+
   return jsxs('div', {
     style: { position: 'relative', width: '100%', height: '100%', minHeight: '240px', overflow: 'hidden' },
     children: [
+      exitButton,
       jsx('canvas', {
         key: 'canvas',
         ref: canvasRef,
@@ -4308,7 +4336,7 @@ function CockpitPane({ ctx }) {
         onFocus: () => setEngaged(true),
         onBlur: () => setEngaged(false),
         role: 'application',
-        'aria-label': 'Concept cockpit. Hold the left mouse button or F to fire a stream of shots; right-drag or click to capture the mouse to look. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse.',
+        'aria-label': 'Concept cockpit. Hold the left mouse button or F to fire a stream of shots; right-drag or click to capture the mouse to look. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse and leaves the cockpit.',
         style: { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', cursor: 'crosshair', touchAction: 'none' }
       }),
       hint,

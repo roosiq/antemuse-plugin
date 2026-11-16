@@ -32,7 +32,7 @@ is "done" on a claim alone.
   (roll 1.08 rad), `flight: it coasts after the throttle is cut` (0.197 units).
 
 ## T5 — Pointer capture with a safe release
-- [x] Click captures; `movementX/Y` steer; `Escape` releases; `destroy()` releases
+- [x] Press owns the pointer (document-level moves steer); `Escape` releases and leaves the cockpit; a drawn `exit · esc` button does the same; `destroy()` releases
 - [x] Drag-look retained as the fallback when capture is refused
 - Evidence: `test_the_mouse_can_be_captured_and_released`; harness drag-look path.
 

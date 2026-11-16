@@ -46,7 +46,8 @@ Camera state is `{x, y, z, yaw, pitch, roll, speed, vx, vy, vz}`.
 Two paths, same handler:
 
 - **Pointer capture** — first click requests pointer lock; relative `movementX/Y`
-  steer, the reticle is the aim, `Escape` releases, and `destroy()` releases too so
+  steer, the reticle is the aim, `Escape` releases and exits (a drawn button does the
+  same), and `destroy()` releases too so
   the pane can never trap the app.
 - **Drag-look** — fallback when a host refuses capture (and what the harness uses).
 
