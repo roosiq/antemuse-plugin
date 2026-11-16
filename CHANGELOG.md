@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.6 — 2026-11-15
+
+- cockpit: a way out, drawn and on the key people try first (2026-11-15)
+
 ## 0.11.5 — 2026-11-15
 
 - package: stop shipping drafts and a work copy, and stop re-downloading WordNet (2026-11-15)
