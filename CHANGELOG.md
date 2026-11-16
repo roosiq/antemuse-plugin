@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.16 — 2026-11-15
+
+- flight: the fallback door says why too (2026-11-15)
+- release: name the pinned commit, not its parent (2026-11-15)
+- skill: a silent catch hides the reason, not the failure (2026-11-15)
+
 ## 0.11.15 — 2026-11-15
 
 - flight: stop swallowing the reason, and fix the window I shadowed (2026-11-15)
