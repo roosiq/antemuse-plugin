@@ -233,7 +233,10 @@ class WordNetGraph(Graph):
         frontier = [self._node(start.name(), start.lemma_names()[0].replace("_", " "),
                                start.pos(), start.definition())]
         out: List[Dict[str, Any]] = []
-        for _ in range(max(1, depth)):
+        # `depth=2` means two steps out, so the one-step ring is walked but not returned: it
+        # was included, which is why `outer` could land on a direct neighbour of the node it
+        # left (`hand → digital arteries`) and why its own test failed on some draws.
+        for level in range(1, max(1, depth) + 1):
             nxt: List[Dict[str, Any]] = []
             for cur in frontier:
                 for _rel, child in self.edges(cur):
@@ -241,7 +244,8 @@ class WordNetGraph(Graph):
                         continue
                     seen.add(child["id"])
                     nxt.append(child)
-                    out.append(child)
+                    if level >= 2:
+                        out.append(child)
                     if len(seen) >= budget:
                         return out
             frontier = nxt
@@ -263,12 +267,10 @@ class WordNetGraph(Graph):
         skip = set(avoid or []) | {node["id"]}
         cands = [c for c in self.rim(node, depth=2) if c["id"] not in skip]
         if not cands:
-            # A synset with no relations has no rim; one edge out is still a hop
-            # and still explainable, so it is better than standing still.
-            cands = [c for _rel, c in self.edges(node) if c["id"] not in skip]
-            if not cands:
-                return None
-            return RNG.choice(cands)
+            # No rim is not a reason to step: "one edge out is still a hop" made `outer`
+            # serve a neighbour, which is the one thing a walk named for distance must not
+            # do. Say there is nothing far, and let the walk restart and report it.
+            return None
         try:
             cur = self.wn().synset(node["id"])
         except Exception:
@@ -634,7 +636,7 @@ class GraphWalk:
                         trail.append(restart["label"])
                     remember(restart)
                     out.append(f"{node['label']} → {restart['label']} "
-                               f"({restart['pos'] or 'thing'}) · picked up again after a dead end"
+                               f"({restart['pos'] or 'thing'}) · picks up again after a dead end"
                                + back(jumped=True) + visited(restart))
                     prev_id, node = node["id"], restart
                     continue
@@ -658,7 +660,7 @@ class GraphWalk:
                     trail.append(restart["label"])
                 remember(restart)
                 out.append(f"{node['label']} → {restart['label']} "
-                           f"({restart['pos'] or 'thing'}) · picked up again after a dead end"
+                           f"({restart['pos'] or 'thing'}) · picks up again after a dead end"
                            + back(jumped=True) + visited(restart))
                 prev_id, node = node["id"], restart
                 continue

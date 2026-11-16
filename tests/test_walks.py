@@ -332,5 +332,5 @@ def test_the_outer_walk_never_falls_back_to_a_neighbour(cursor):
 
     assert steps, "the walk produced nothing at all"
     for line in steps:
-        assert "picked up again" in line or "the walk stops" in line, line
+        assert "picks up again" in line or "the walk stops" in line, line
         assert "took its far edge" not in line, line
