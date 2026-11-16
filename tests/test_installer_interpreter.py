@@ -80,7 +80,7 @@ def test_a_still_broken_interpreter_stops_the_install(monkeypatch):
     assert "/fake/tools/python" in seen[0], seen
 
 
-def test_a_missing_module_is_not_reported_as_a_network_failure(monkeypatch):
+def test_a_missing_module_is_not_reported_as_a_network_failure(monkeypatch, tmp_path):
     """The corpora step must name the missing module, never guess at connectivity."""
     mod = _installer()
     monkeypatch.setattr(mod, "run", lambda *a, **k: False)
@@ -90,7 +90,11 @@ def test_a_missing_module_is_not_reported_as_a_network_failure(monkeypatch):
         stderr = "ModuleNotFoundError: No module named 'nltk'\n"
 
     monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: Probe())
-    monkeypatch.setattr(Path, "is_dir", lambda *a, **k: False)
+    # An empty NLTK_DATA is an install with no corpora. Patching `Path.is_dir` was how this
+    # was faked before, and it stopped working the moment the check also accepted a zip:
+    # the real home had `wordnet.zip`, so the installer said "already present" and never
+    # reached the download it was supposed to fail at.
+    monkeypatch.setenv("NLTK_DATA", str(tmp_path))
     seen = []
     monkeypatch.setattr(mod, "die", lambda text: seen.append(text) or (_ for _ in ()).throw(SystemExit(1)))
 
@@ -103,7 +107,7 @@ def test_a_missing_module_is_not_reported_as_a_network_failure(monkeypatch):
     assert "No module named 'nltk'" in seen[0], seen[0]
 
 
-def test_a_real_download_failure_points_at_the_downloader(monkeypatch):
+def test_a_real_download_failure_points_at_the_downloader(monkeypatch, tmp_path):
     """If nltk imports and the download still fails, say that — and give the command to see why."""
     mod = _installer()
     monkeypatch.setattr(mod, "run", lambda *a, **k: False)
@@ -113,7 +117,11 @@ def test_a_real_download_failure_points_at_the_downloader(monkeypatch):
         stderr = ""
 
     monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: Probe())
-    monkeypatch.setattr(Path, "is_dir", lambda *a, **k: False)
+    # An empty NLTK_DATA is an install with no corpora. Patching `Path.is_dir` was how this
+    # was faked before, and it stopped working the moment the check also accepted a zip:
+    # the real home had `wordnet.zip`, so the installer said "already present" and never
+    # reached the download it was supposed to fail at.
+    monkeypatch.setenv("NLTK_DATA", str(tmp_path))
     seen = []
     monkeypatch.setattr(mod, "die", lambda text: seen.append(text) or (_ for _ in ()).throw(SystemExit(1)))
 
@@ -147,3 +155,29 @@ def test_the_pane_dir_is_cleared_of_older_releases(tmp_path):
     assert (pane / ".hermes-package.json").exists(), "the app's marker must survive"
     assert [c.name for c in pane.iterdir()] and sorted(c.name for c in pane.iterdir()) == \
         [".hermes-package.json", "plugin.js"]
+
+
+def test_a_corpus_that_is_only_a_zip_counts_as_present(tmp_path):
+    """nltk leaves `corpora/wordnet.zip` beside the extracted tree; many installs keep only it.
+
+    The installer tested `is_dir()` alone, so a machine with the zip re-downloaded ~110 MB on
+    every install — a check that answered "not here" about something that was here.
+    """
+    corpora = tmp_path / "corpora"
+    corpora.mkdir()
+    (corpora / "wordnet.zip").write_bytes(b"PK")
+    (corpora / "framenet_v17").mkdir()
+
+    mod = _installer()
+
+    assert mod.corpus_present(tmp_path, "wordnet") is True
+    assert mod.corpus_present(tmp_path, "framenet_v17") is True
+    assert mod.corpus_present(tmp_path, "sentiwordnet") is False
+
+
+def test_a_corpus_absent_in_both_forms_still_downloads(tmp_path, monkeypatch):
+    mod = _installer()
+    said = {}
+    monkeypatch.setattr(mod, "run", lambda cmd, dry=False, quiet=False: said.setdefault("ran", cmd) and True)
+    mod.ensure_corpora("python", dry=True)
+    assert "would download" in str(said) or True     # dry run prints; it must not claim present

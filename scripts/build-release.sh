@@ -37,10 +37,12 @@ if command -v rsync >/dev/null 2>&1; then
     --exclude .git --exclude node_modules --exclude __pycache__ --exclude .pytest_cache \
     --exclude .venv --exclude experiments --exclude evaluation --exclude specs --exclude site \
     --exclude dist --exclude .post-staging --exclude .antemuse \
+    --exclude data/meshy --exclude .work \
     "$SRC"/ "$STAGE"/
 else
   cp -a "$SRC" "$STAGE"
-  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,dist,.antemuse}
+  rm -rf "$STAGE"/{.git,node_modules,experiments,evaluation,specs,site,dist,.antemuse,.work}
+  rm -rf "$STAGE/data/meshy"
   find "$STAGE" -name __pycache__ -prune -exec rm -rf {} +
 fi
 # The pane is the only thing the desktop loads. The baked scenes were deleted from the renderer

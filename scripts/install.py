@@ -142,11 +142,22 @@ def ensure_deps(py: str, dry: bool) -> None:
             f"plugin's hooks run on. Set HERMES_PY to that interpreter and re-run.")
 
 
+def corpus_present(nltk_dir: Path, name: str) -> bool:
+    """Whether nltk already has this corpus, unpacked *or* as the zip it downloads.
+
+    `nltk.download` leaves `corpora/wordnet.zip` beside the extracted tree, and plenty of
+    installs keep only the zip. Testing `is_dir()` alone called those absent and re-fetched
+    ~110 MB on every install.
+    """
+    corpora = nltk_dir / "corpora"
+    return (corpora / name).is_dir() or (corpora / f"{name}.zip").is_file()
+
+
 def ensure_corpora(py: str, dry: bool) -> None:
     """Step 2: the wordnet and framenet corpora the projection needs."""
     say("2. nltk corpora (wordnet, framenet)")
     nltk_dir = Path(os.environ.get("NLTK_DATA") or Path.home() / "nltk_data")
-    if (nltk_dir / "corpora" / "wordnet").is_dir() and (nltk_dir / "corpora" / "framenet_v17").is_dir():
+    if corpus_present(nltk_dir, "wordnet") and corpus_present(nltk_dir, "framenet_v17"):
         ok(f"already present in {nltk_dir}")
         return
     if dry:

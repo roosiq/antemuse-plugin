@@ -185,3 +185,12 @@ def test_the_catalog_entry_travels_with_what_it_describes():
     assert held["version"] == manifest["version"], (held["version"], manifest["version"])
     assert len(str(held["sha"])) == 40, held["sha"]
     assert held["platforms"] == manifest["platforms"], (held["platforms"], manifest["platforms"])
+
+
+def test_the_package_does_not_carry_drafts_or_a_work_copy():
+    """641K of `.glb` drafts nothing loads, and a duplicate `plugin.js` under `.work/`, used to
+    ship inside the tarball. They are build evidence, not runtime."""
+    build = (ROOT / "scripts" / "build-release.sh").read_text(encoding="utf-8")
+
+    assert "--exclude data/meshy" in build
+    assert "--exclude .work" in build
