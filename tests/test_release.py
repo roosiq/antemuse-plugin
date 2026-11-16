@@ -250,7 +250,13 @@ def test_the_build_writes_a_provenance_manifest_for_injected_projection_files():
 
 def test_catalog_stills_describe_only_the_shipped_walk_and_explore_contract():
     shots = (ROOT / "tools" / "make_screenshots.py").read_text(encoding="utf-8").lower()
+    catalog = (ROOT / "tools" / "catalog_entry.py").read_text(encoding="utf-8").lower()
     for retired in ("daydream", "doomscroll", "unstuck", "a dream"):
         assert retired not in shots, retired
     assert "six hops" in shots
     assert "/explore" in shots
+    # The map pane and cockpit are externally captured rendering surfaces: their
+    # pixels belong to their browser/desktop harnesses, not Pillow's text stills.
+    assert '"cockpit.png"' in shots
+    assert "cockpit.png             captured chromium cockpit harness" in shots
+    assert '"cockpit.png"' in catalog

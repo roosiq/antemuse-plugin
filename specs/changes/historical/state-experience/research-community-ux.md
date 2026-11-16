@@ -1,3 +1,5 @@
+SUPERSEDED 2026-11-16 — this spec describes the retired multi-state product; see one-state-and-verdict.
+
 # Community plugin UX — research
 
 Change id: `state-experience` (research annex)

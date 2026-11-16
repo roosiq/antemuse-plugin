@@ -391,6 +391,38 @@ def test_the_cockpit_has_a_door():
     assert "esc frees the mouse" in hint, "the hint line never says what Escape does"
 
 
+def test_the_cockpit_has_touch_controls_and_a_light_ground():
+    """Touch-first pilots need named, full-size controls without a separate palette.
+
+    The ground must follow the host background's resolved brightness; naming a
+    light/dark theme is brittle because the desktop permits arbitrary themes.
+    """
+    block = cockpit_block()
+    for needle in (
+        "function cockpitTheme(",
+        "ground: ['--ui-background', '--background'",
+        "const ground = read(THEME_VARS.ground)",
+        "ground: ground || glass",
+        "c2d.fillStyle = theme.ground",
+        "function TouchControls",
+        "matchMedia('(pointer: coarse)')",
+        "onTouchFirst",
+        "touch-steer-left",
+        "touch-steer-right",
+        "touch-fire",
+        "touch-release",
+        "minWidth: '44px'",
+        "minHeight: '44px'",
+        "maxWidth: 'calc(100% - 20px)'",
+        "dragged: false",
+        "TOUCH_TAP_SLOP",
+        "touchPointer",
+    ):
+        assert needle in block, f"missing touch/light contract: {needle!r}"
+    assert "if (!reduced && (keys.size" in block, "reduced motion must stop the free-running loop"
+    assert "ground: theme.ground" in block, "the resolved ground is not observable to the harness"
+
+
 def test_the_mouse_stays_captured_after_the_button_is_released():
     """Capture must be sticky. Steering that only worked while the button was down reads as
     "mouse capture is not working" to anyone who clicks once and then moves."""

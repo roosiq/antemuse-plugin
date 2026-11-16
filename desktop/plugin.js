@@ -1,21 +1,4 @@
-// Antemuse — the state a turn is governed by, as glyphs and counts.
-//
-// Loaded from ~/.hermes/plugins/antemuse/desktop/plugin.js (the unified agent
-// plugin's desktop half) or copies of it under desktop-plugins/. Everything it
-// shows comes from `GET /api/plugins/antemuse/state`, served by this plugin's
-// own Python backend, which renders the same luminance-ramp art the CLI draws.
-// This file samples nothing and invents nothing: if the backend is not mounted,
-// it says so instead of drawing an empty box.
-//
-// The state is drawn *behind the chat it governs*, as a layer this plugin owns:
-// a fixed, click-through <div> holding one <pre> of glyphs, appended to the body
-// from a title-bar mount point. The shell has no plugin-facing chat background
-// (its own backdrop is a boolean toggling one statue image), and atlas-style
-// plugins solve this the same way — own the layer, own its cleanup.
-//
-// The layer is scoped to the focused conversation, not the profile: it reads
-// host.state.focusedSessionId and host.state.busy, so two chats can differ and a
-// chat with no state still paints `idle`.
+// Antemuse desktop plugin: state pane and concept cockpit.
 
 import {
   PANES_AREA,
@@ -2260,35 +2243,13 @@ function ChatBackdrop({ ctx }) {
 
 // ---------------------------------------------------------------- the cockpit
 //
-// A first-person view of the SAME `/graph` payload the pane draws: the same
-// labels, the same stored 3D positions, the same firing weights and the same
-// walk trail. Nothing is invented here — a concept with no projection is not in
-// the payload and cannot be flown to, and a node is only hot because the ledger
-// says it fired.
-//
-// Why a second surface instead of a camera mode in the map: the map answers
-// "what is near what", which wants an orbit. This answers "what is over there",
-// which wants a heading. Both read the one route, so they cannot disagree.
-//
-// Raw canvas 2D, no library: the desktop half is one file and the host resolves
-// no third-party module. Geometry is a plain pinhole projection.
+// One first-person view of the same `/graph` payload.
 
 // ---------------------------------------------------------------- brand
-//
-// The one place in this file allowed to name a colour. Values are sampled from
-// the public Nous surfaces (the site body is the electric blue, type is paper,
-// the only counterpoints are neon and yellow). Everything inside the cockpit
-// block refers to these names, so a repaint is one edit here and the colour
-// guard in tests/test_cockpit_pane.py can still fail a stray literal.
-// The cockpit takes its colours from the app, not from a palette of its own:
-// these are the host's theme variables, and every literal left in this file is
-// the tube itself (black raster, black vignette), never a brand hue.
-// Candidate names per role, first match wins. The app has moved these around:
-// recent builds expose --ui-*, this one resolves accent/stroke as --ui-* but
-// keeps ground and text on --background/--foreground, and older themes put the
-// text on --ui-text-secondary. Listing every known name means the pane reads the
-// theme instead of silently falling back to black and white.
+// Theme colours are resolved from the host; tube-only literals are neutral.
 const THEME_VARS = {
+  // Ground tracks the host background across arbitrary themes.
+  ground: ['--ui-background', '--background', '--ui-panel-background', '--sidebar'],
   glass: ['--ui-panel-background', '--ui-background', '--background', '--sidebar'],
   text: ['--ui-text', '--foreground', '--color-foreground', '--ui-text-secondary'],
   dim: ['--ui-text-secondary', '--muted-foreground', '--color-muted-foreground', '--ui-text'],
@@ -2358,16 +2319,8 @@ const MAP_RADIUS = 1.9
  *  the instruments and the shots scale with the glass. */
 const uiScale = (glassWidth) => Math.max(1, Math.min(2.4, glassWidth / 1280))
 
-/** Theme colours, read from the host once per mount. Never a hardcoded colour. */
 function cockpitTheme(el, doc, win) {
-  // Read the host's theme, once per mount. The cockpit is an instrument inside
-  // the app, so it borrows the app's palette rather than painting its own: the
-  // only literals below describe the tube (black raster, black vignette).
-  // Theme variables are often declared as color-mix(), which getComputedStyle
-  // hands back unresolved. So resolve them the way the app does: paint a probe
-  // with the variable and read the resulting colour. A sentinel value tells us
-  // when the variable is simply not defined.
-  // A grey sentinel on purpose: even this probe value asserts no hue.
+  // Resolve CSS variables through a probe.
   const SENTINEL = 'rgb(1, 1, 1)'
   let probe = null
   if (typeof doc !== 'undefined' && doc.body) {
@@ -2384,15 +2337,16 @@ function cockpitTheme(el, doc, win) {
     }
     return ''
   }
-  // Fallbacks are neutral on purpose: if the host exposes nothing, the pane
-  // still has to be readable, and grey is the one colour that asserts nothing.
   const text = read(THEME_VARS.text) || '#ffffff'
   const glass = read(THEME_VARS.glass) || '#000000'
+  const ground = read(THEME_VARS.ground)
   const stroke = read(THEME_VARS.stroke)
   const accent = read(THEME_VARS.accent)
   const ink = read(THEME_VARS.ink)
   if (probe && probe.parentNode) probe.parentNode.removeChild(probe)
   return {
+    // Background, not theme-name sniffing: preserves the app's light/dark ground.
+    ground: ground || glass,
     glass: glass,
     ink: ink || glass,
     text: text,
@@ -2446,6 +2400,7 @@ function createCockpit({ ctx, el, callbacks }) {
   // interaction readout for the pane; a failed verdict route must never affect flight.
   const onName = callbacks && callbacks.onName ? callbacks.onName : () => {}
   const onExit = callbacks && callbacks.onExit ? callbacks.onExit : () => {}
+  const onTouchFirst = callbacks && callbacks.onTouchFirst ? callbacks.onTouchFirst : () => {}
   let lastNamed = ''
   const nameNode = (node, source) => {
     if (!node || !node.l) return
@@ -2728,7 +2683,8 @@ function createCockpit({ ctx, el, callbacks }) {
     // A tube, not a brand surface. Flat green-black ground, phosphor speckle,
     // and scanlines: the beam is a raster and it shows.
     c2d.save()
-    c2d.fillStyle = theme.glass
+    // Host background under the tube keeps a light app light; chrome still uses panel glass.
+    c2d.fillStyle = theme.ground
     c2d.fillRect(0, 0, w, h)
     drawGrain(w, h)
     c2d.restore()
@@ -3515,11 +3471,15 @@ function createCockpit({ ctx, el, callbacks }) {
 
     draw()
     state.frames += 1
-    if (keys.size || Math.abs(state.cam.speed) > 0.01 || state.net.active || state.firing
-        || state.bullets.length || state.bursts.length) raf = win.requestAnimationFrame(tick)
+    if (!reduced && (keys.size || Math.abs(state.cam.speed) > 0.01 || state.net.active || state.firing
+        || state.bullets.length || state.bursts.length)) raf = win.requestAnimationFrame(tick)
   }
 
-  const schedule = () => { if (!raf && !stopped) raf = win.requestAnimationFrame(tick) }
+  const schedule = () => {
+    // Reduced motion renders one frame per explicit input.
+    if (!raf && !stopped && !reduced) raf = win.requestAnimationFrame(tick)
+    else if (reduced && !stopped) tick(last ? last + 16 : 16)
+  }
 
   const resetFlight = () => {
     Object.assign(state.cam, {
@@ -3775,6 +3735,8 @@ function createCockpit({ ctx, el, callbacks }) {
   // that only worked while the button was down is not what a cockpit does — a person clicks
   // once, then moves the mouse and expects to turn.
   let engaged = false
+  let touchPointer = null
+  const TOUCH_TAP_SLOP = 10
   let pointerNote = ''
   const lockActive = () => {
     try { return !!doc.pointerLockElement && doc.pointerLockElement === el } catch (e) { return false }
@@ -3787,6 +3749,14 @@ function createCockpit({ ctx, el, callbacks }) {
     schedule()
   }
   const onDown = (ev) => {
+    // Touch drag turns; tap fires.
+    if (ev.pointerType === 'touch') {
+      onTouchFirst()
+      touchPointer = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, dragged: false }
+      try { el.setPointerCapture(ev.pointerId) } catch (e) { /* document moves remain a fallback */ }
+      if (typeof el.focus === 'function') { try { el.focus() } catch (e) { /* gone */ } }
+      return
+    }
     // Keys only reach this pane once it holds focus. A pane that is displayed
     // but not focused looks completely dead: nothing flies, nothing fires.
     if (typeof el.focus === 'function') { try { el.focus() } catch (e) { /* gone */ } }
@@ -3829,6 +3799,13 @@ function createCockpit({ ctx, el, callbacks }) {
     el.style.cursor = 'none'
   }
   const onMove = (ev) => {
+    if (ev.pointerType === 'touch' && touchPointer && ev.pointerId === touchPointer.id) {
+      const dx = ev.clientX - touchPointer.x, dy = ev.clientY - touchPointer.y
+      if (Math.abs(dx) + Math.abs(dy) > TOUCH_TAP_SLOP) touchPointer.dragged = true
+      touchPointer.x = ev.clientX; touchPointer.y = ev.clientY
+      steer(dx, dy)
+      return
+    }
     if (ownsPointer() || drag) return       // steering is the document's business (see onDocMove)
     if (!drag) {
       const r = el.getBoundingClientRect()
@@ -3866,6 +3843,13 @@ function createCockpit({ ctx, el, callbacks }) {
     }
   }
   const onUp = (ev) => {
+    if (ev.pointerType === 'touch' && touchPointer && ev.pointerId === touchPointer.id) {
+      const tap = !touchPointer.dragged
+      touchPointer = null
+      try { el.releasePointerCapture(ev.pointerId) } catch (e) { /* gone */ }
+      if (tap) shootAt(view.cx, view.cy)
+      return
+    }
     // Release the trigger. No click-to-select: the shot is the whole interaction.
     state.firing = false
     drag = null
@@ -3898,6 +3882,7 @@ function createCockpit({ ctx, el, callbacks }) {
       if (lockActive()) { try { doc.exitPointerLock() } catch (e) { /* gone */ } }
       state.firing = false
       held = null
+      touchPointer = null
       engaged = false
       drag = null
       try { el.style.cursor = 'crosshair' } catch (e) { /* gone */ }
@@ -4000,6 +3985,8 @@ function createCockpit({ ctx, el, callbacks }) {
       hits: Object.keys(state.hits).length,
       target: state.target,
       error: state.error,
+      reduced,
+      ground: theme.ground,
       size: { w: view.w, h: view.h, dpr: view.dpr },
       cam: {
         x: state.cam.x, y: state.cam.y, z: state.cam.z,
@@ -4031,8 +4018,13 @@ function createCockpit({ ctx, el, callbacks }) {
       const c = toCam(shot, basis())
       return c.z > 0.05 ? { ...project(c), z: c.z, world: [shot.x, shot.y, shot.z], life: shot.life } : null
     }).filter(Boolean),
-    key: (k) => { keys.add(k); schedule() },
-    unkey: (k) => keys.delete(k),
+    key: (k) => {
+      keys.add(k)
+      if (k === 'f' && !state.firing) { state.firing = true; shootAt(view.cx, view.cy) }
+      schedule()
+    },
+    unkey: (k) => { keys.delete(k); if (k === 'f') state.firing = false },
+    releasePointer: () => onKey({ key: 'Escape', preventDefault: () => {} }),
     home: resetFlight,
     /** Where a label currently lands on the glass — used to aim a harness click. */
     screenOf: (label) => {
@@ -4281,6 +4273,50 @@ export function fileFlight(ctx, left) {
   return null
 }
 
+// Touch controls are DOM buttons for accessibility.
+function TouchControls({ cockpitRef, onRelease }) {
+  const press = (key) => () => { if (cockpitRef.current) cockpitRef.current.key(key) }
+  const release = (key) => () => { if (cockpitRef.current) cockpitRef.current.unkey(key) }
+  const button = (id, label, key, text) => jsx('button', {
+    type: 'button', id, 'aria-label': label, 'aria-keyshortcuts': key.toUpperCase(),
+    onPointerDown: (event) => { event.preventDefault(); press(key)() },
+    onPointerUp: release(key), onPointerCancel: release(key), onPointerLeave: release(key),
+    style: {
+      minWidth: '44px', minHeight: '44px', padding: '8px 10px', touchAction: 'none',
+      background: 'var(--ui-panel-background, transparent)', color: 'var(--ui-text, currentColor)',
+      border: '1px solid var(--ui-stroke-secondary, currentColor)', borderRadius: '2px',
+      font: `600 10px ${FONT.label}`, letterSpacing: '0.12em', cursor: 'pointer'
+    }, children: text
+  }, id)
+  return jsxs('div', {
+    'aria-label': 'Touch flight controls',
+    style: {
+      position: 'absolute', left: '10px', right: '10px', bottom: '10px', zIndex: 4,
+      display: 'flex', justifyContent: 'space-between', gap: '8px', maxWidth: 'calc(100% - 20px)',
+      pointerEvents: 'auto', boxSizing: 'border-box'
+    },
+    children: [
+      jsxs('div', { style: { display: 'flex', gap: '8px' }, children: [
+        button('touch-steer-left', 'Turn left (Left Arrow)', 'arrowleft', 'left'),
+        button('touch-steer-right', 'Turn right (Right Arrow)', 'arrowright', 'right')
+      ] }, 'turn'),
+      jsxs('div', { style: { display: 'flex', gap: '8px' }, children: [
+        button('touch-fire', 'Fire (F)', 'f', 'fire'),
+        jsx('button', {
+          type: 'button', id: 'touch-release', 'aria-label': 'Release pointer (Escape)', 'aria-keyshortcuts': 'Escape',
+          onClick: onRelease,
+          style: {
+            minWidth: '44px', minHeight: '44px', padding: '8px 10px', touchAction: 'manipulation',
+            background: 'var(--ui-panel-background, transparent)', color: 'var(--ui-text, currentColor)',
+            border: '1px solid var(--ui-stroke-secondary, currentColor)', borderRadius: '2px',
+            font: `600 10px ${FONT.label}`, letterSpacing: '0.12em', cursor: 'pointer'
+          }, children: 'release'
+        }, 'release')
+      ] }, 'actions')
+    ]
+  }, 'touch-controls')
+}
+
 function CockpitPane({ ctx, onExit }) {
   const cockpitRef = useRef(null)
   const leaving = useRef(false)
@@ -4302,7 +4338,22 @@ function CockpitPane({ ctx, onExit }) {
   const [named, setNamed] = useState(null)
   const [notice, setNotice] = useState(null)
   const [engaged, setEngaged] = useState(false)
+  const [touchFirst, setTouchFirst] = useState(false)
   const reduced = reducedMotion(typeof window === 'undefined' ? {} : window)
+
+  useEffect(() => {
+    const win = typeof window === 'undefined' ? null : window
+    if (!win || !win.matchMedia) return undefined
+    const media = win.matchMedia('(pointer: coarse)')
+    const apply = () => setTouchFirst(Boolean(media.matches))
+    apply()
+    if (typeof media.addEventListener === 'function') media.addEventListener('change', apply)
+    else if (typeof media.addListener === 'function') media.addListener(apply)
+    return () => {
+      if (typeof media.removeEventListener === 'function') media.removeEventListener('change', apply)
+      else if (typeof media.removeListener === 'function') media.removeListener(apply)
+    }
+  }, [])
 
   useEffect(() => {
     if (!notice) return undefined
@@ -4329,7 +4380,8 @@ function CockpitPane({ ctx, onExit }) {
           setNamed(event)
           setNotice(event)
         },
-        onPicks: (list) => setPicks(list.slice(0, 30))
+        onPicks: (list) => setPicks(list.slice(0, 30)),
+        onTouchFirst: () => setTouchFirst(true)
       }
     })
     // The cockpit is a page the user navigated to, so it takes the keyboard when
@@ -4452,6 +4504,13 @@ function CockpitPane({ ctx, onExit }) {
       }, 'captured')
     : null
 
+  const touchControls = touchFirst
+    ? jsx(TouchControls, {
+        cockpitRef,
+        onRelease: () => { if (cockpitRef.current) cockpitRef.current.releasePointer() }
+      }, 'touch-controls')
+    : null
+
   return jsxs('div', {
     style: { position: 'relative', width: '100%', height: '100%', minHeight: '240px', overflow: 'hidden' },
     children: [
@@ -4469,6 +4528,7 @@ function CockpitPane({ ctx, onExit }) {
       }, 'canvas'),
       hint,
       hitNotice,
+      touchControls,
       jsx(CockpitVerdict, {
         ctx,
         named,

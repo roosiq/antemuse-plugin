@@ -86,7 +86,7 @@ def render(pin: str | None = None) -> str:
         "image": f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/banner.png",
         "screenshots": [
             f"https://raw.githubusercontent.com/roosiq/antemuse-plugin/{sha}/docs/screenshots/{n}"
-            for n in ("pane-walk.png", "return-account.png", "blocked-tool.png")
+            for n in ("pane-walk.png", "cockpit.png", "return-account.png", "blocked-tool.png")
         ],
     }
     text = yaml.safe_dump(entry, sort_keys=False, allow_unicode=True, width=100)

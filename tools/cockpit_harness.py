@@ -131,14 +131,23 @@ PAGE = """<!doctype html>
   --ui-stroke-secondary:#3b3b3b; --ui-accent:#d2643f; --ui-panel-background:#131313;
 }
 html,body{margin:0;height:100%;background:#0e0e0e}
-#box{width:900px;height:560px;position:relative}
+#box{width:min(900px,100vw);height:560px;position:relative}
+/* The real CockpitPane puts this control above the canvas. The rendering harness
+   owns the canvas directly, so it mirrors the shipped control to capture the
+   complete cockpit surface (including its only exit) for catalog review. */
+#exit{position:absolute;right:14px;top:12px;z-index:3;display:flex;align-items:center;gap:6px;
+  padding:5px 9px 6px;border-radius:2px;background:var(--ui-panel-background,transparent);
+  color:var(--ui-text,currentColor);border:1px solid var(--ui-stroke-secondary,currentColor);
+  font:600 10px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.14em;
+  text-transform:uppercase}
+#exit span{opacity:.6}
 /* the pane styles the canvas this way; without it a canvas feeds its own
    width attribute back into its layout box */
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 </style>
 </head>
 <body>
-<div id="box"><canvas id="cv" tabindex="0"></canvas></div>
+<div id="box"><button id="exit" type="button" aria-label="Leave the cockpit">exit <span>esc</span></button><canvas id="cv" tabindex="0"></canvas></div>
 <script type="module">
 import plugin from './plugin.js'
 import { createCockpit } from './plugin.js'
@@ -208,7 +217,10 @@ def main() -> int:
         httpd, url = serve(tmp)
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
-            page = browser.new_page(viewport={"width": 1200, "height": 800}, device_scale_factor=2)
+            # Catalog capture is a complete 1600x900 browser surface; the cockpit itself
+            # remains its shipped 900x560 pane inside it, including the DOM exit control.
+            page = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+            page.emulate_media(reduced_motion="no-preference")
             errors: list[str] = []
             page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
             page.on("pageerror", lambda e: errors.append(str(e)))
@@ -265,10 +277,16 @@ def main() -> int:
             check("data: lit count survives", stats["lit"] == 11, f"lit={stats['lit']}")
             check("data: the walk trail is carried", stats["path"] == 4, f"path={stats['path']}")
 
+            # The real desktop pane must fit a phone-width viewport without a horizontal scroll.
+            overflow = page.evaluate("document.documentElement.scrollWidth > window.innerWidth")
+            check("touch: 390px viewport has no horizontal overflow", not overflow,
+                  f"scrollWidth={page.evaluate('document.documentElement.scrollWidth')} innerWidth={page.evaluate('window.innerWidth')}")
+
             # canvas tracks its box (attributes, not CSS)
             box = page.evaluate("(() => { const c=document.getElementById('cv'); return {w:c.width,h:c.height,cw:c.clientWidth,ch:c.clientHeight}; })()")
-            check("canvas: backing store follows the pane box", box["w"] == box["cw"] * 2 and box["h"] == box["ch"] * 2,
-                  f"{box}")
+            dpr = page.evaluate("window.devicePixelRatio")
+            check("canvas: backing store follows the pane box", box["w"] == round(box["cw"] * dpr) and box["h"] == round(box["ch"] * dpr),
+                  f"{box} dpr={dpr}")
 
             # something was actually painted
             painted = page.evaluate("""() => {
@@ -282,6 +300,20 @@ def main() -> int:
                 return n;
             }""")
             check("render: the glass has ink on it", painted > 500, f"{painted} opaque px")
+
+            # Capture the calm, fully normalized cockpit before interaction moves the ship or
+            # starts firing: this is the catalog still and must keep the drawn reticle/readout
+            # plus the DOM exit button visible at the harness viewport.
+            shot = os.environ.get("COCKPIT_SHOT")
+            if shot:
+                # Keep the normal mobile exercise intact, but take the catalog still from
+                # the exact 1600x900 Chromium surface promised by this option.
+                page.set_viewport_size({"width": 1600, "height": 900})
+                page.wait_for_timeout(120)
+                page.screenshot(path=shot, scale="css")
+                page.set_viewport_size({"width": 390, "height": 844})
+                page.wait_for_timeout(120)
+                print(f"shot: {shot}")
 
             # throttle moves the ship along its heading
             before = page.evaluate("__cockpit.stats().cam")
@@ -299,7 +331,8 @@ def main() -> int:
             page.evaluate("document.getElementById('box').style.width = '520px'")
             page.wait_for_timeout(300)
             resized = page.evaluate("(() => { const c=document.getElementById('cv'); return {w:c.width,cw:c.clientWidth,h:c.height}; })()")
-            check("canvas: ResizeObserver refits the backing store", resized["w"] == resized["cw"] * 2, f"{resized}")
+            dpr = page.evaluate("window.devicePixelRatio")
+            check("canvas: ResizeObserver refits the backing store", resized["w"] == round(resized["cw"] * dpr), f"{resized} dpr={dpr}")
 
             # shooting: hold the trigger, bullets travel, arrivals raise interest
             page.evaluate("__cockpit.home()")
@@ -464,11 +497,6 @@ def main() -> int:
             else:
                 check("shoot: a click fires at the pointer", False, "the node was behind the ship")
 
-            shot = os.environ.get("COCKPIT_SHOT")
-            if shot:
-                page.screenshot(path=shot)
-                print(f"shot: {shot}")
-
             # leaving: the flight is handed over, not thrown away. A cockpit that closes
             # silently is a cockpit whose work was wasted.
             page.evaluate("__cockpit.home()")
@@ -496,6 +524,43 @@ def main() -> int:
                 check("exit: the trail is waiting to be taken",
                       target["label"] in (taken.get("trail") or []), f"trail={taken.get('trail')}")
                 check("exit: taking it empties it", not page.evaluate("__cockpit.takeFlight().trail"), "trail kept")
+
+            # Reduced motion is not merely read: Chromium emulates the preference, the
+            # cockpit renders its initial static frame, explicit steering advances one frame,
+            # and waiting does not free-run another requestAnimationFrame loop.
+            page.evaluate("__cockpit.destroy()")
+            page.emulate_media(reduced_motion="reduce")
+            page.evaluate("window.__mk({count: 120})")
+            page.wait_for_timeout(140)
+            reduced_a = page.evaluate("__cockpit.stats()")
+            page.wait_for_timeout(260)
+            reduced_b = page.evaluate("__cockpit.stats()")
+            yaw_a = reduced_b["cam"]["yaw"]
+            page.evaluate("__cockpit.key('arrowright')")
+            page.wait_for_timeout(80)
+            reduced_c = page.evaluate("__cockpit.stats()")
+            page.wait_for_timeout(260)
+            reduced_d = page.evaluate("__cockpit.stats()")
+            page.evaluate("__cockpit.unkey('arrowright')")
+            check("reduced motion: renders a static initial frame",
+                  reduced_a["reduced"] is True and reduced_a["frames"] >= 1,
+                  f"reduced={reduced_a['reduced']} frames={reduced_a['frames']}")
+            check("reduced motion: frame loop does not free-run",
+                  reduced_a["frames"] == reduced_b["frames"] and reduced_c["frames"] == reduced_d["frames"],
+                  f"{reduced_a['frames']} -> {reduced_b['frames']} -> {reduced_c['frames']} -> {reduced_d['frames']}")
+            check("reduced motion: steering still responds",
+                  abs(reduced_c["cam"]["yaw"] - yaw_a) > 0.001,
+                  f"{yaw_a:.4f} -> {reduced_c['cam']['yaw']:.4f}")
+
+            # Ground derives from the resolved app background, not a theme name. Recreate
+            # after setting a light background so the mount-time palette is exercised.
+            page.evaluate("__cockpit.destroy(); document.documentElement.style.setProperty('--ui-background', '#f4f4f4'); document.documentElement.style.setProperty('--ui-panel-background', '#e8e8e8')")
+            page.emulate_media(reduced_motion="no-preference")
+            page.evaluate("window.__mk({count: 120})")
+            page.wait_for_timeout(140)
+            light_ground = page.evaluate("__cockpit.stats().ground")
+            check("theme: light background reaches the cockpit ground",
+                  light_ground in {"rgb(244, 244, 244)", "rgb(232, 232, 232)"}, f"ground={light_ground}")
 
             # frames stop after destroy
             page.evaluate("__cockpit.destroy()")

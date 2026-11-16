@@ -9,6 +9,8 @@ The catalog shows one agent state and one separate, person-driven mode:
 - ``banner.png``            1200x600, the catalog ``image:``
 - ``pane-walk.png``         captured desktop-pane frame; this script verifies it
                             exists but cannot recreate the host-owned GL surface
+- ``cockpit.png``           captured 1600x900 Chromium cockpit harness frame;
+                            this script verifies it exists but cannot recreate canvas + DOM
 - ``return-account.png``    the six-hop walk account ``/return`` prints
 - ``blocked-tool.png``      a walk entered with its supported ``block`` option,
                             with the refusal taken from ``engine.policy``
@@ -163,7 +165,8 @@ def main() -> int:
         if (OUT / name).is_file()
     }
     stale = [name for name in expected if actual.get(name) != expected[name]]
-    missing_captured = [] if (OUT / "pane-walk.png").is_file() else ["pane-walk.png"]
+    captured = ("pane-walk.png", "cockpit.png")
+    missing_captured = [name for name in captured if not (OUT / name).is_file()]
     if args.check:
         if stale or missing_captured:
             details = []
@@ -173,12 +176,13 @@ def main() -> int:
                 details.append(f"captured stills missing: {', '.join(missing_captured)}")
             print("; ".join(details), file=sys.stderr)
             return 1
-        print("generated stills match live surfaces; captured pane-walk.png is present")
+        print("generated stills match live surfaces; captured pane-walk.png and cockpit.png are present")
         return 0
     write_all(produced)
     for name, data in produced.items():
         print(f"{name:22s} {len(data)/1024:7.1f} KB  {Image.open(OUT/name).size}")
     print("pane-walk.png           captured desktop pane (not regenerated here)")
+    print("cockpit.png             captured Chromium cockpit harness (not regenerated here)")
     return 0
 
 

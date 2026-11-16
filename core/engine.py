@@ -686,7 +686,7 @@ def take_break(choice: str | None = None) -> str:
 
 
 def settle() -> None:
-    """On load: expire a state whose clock ran out, leave a live one alone.
+    """On load: expire a state whose dose is delivered and conversation is gone.
 
     Registration happens in every new process, so this cannot be a turn
     (that would spend a turn per CLI invocation) and must not be a clear

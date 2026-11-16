@@ -1,3 +1,5 @@
+SUPERSEDED 2026-11-16 — this release plan shipped; see one-state-and-verdict.
+
 # Release 0.11.0 — the listing catches up with the product
 
 Change id: `release-0.11.0`

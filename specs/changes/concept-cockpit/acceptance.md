@@ -94,14 +94,11 @@ Ledger:
   client against a copy of the ledger, not from the app.
 - **Pointer lock inside Electron.** Wired and released correctly in Chromium; the Electron
   capture path has not been driven.
-- **Light theme.** Only the dark palette has been observed; the theme chains have fallbacks
-  but there is no light-mode screenshot.
-- **Typing with the cockpit open.** Keys are document-level by design (a pane that loses
-  focus must keep flying), but no test types into the app's composer while it is mounted.
-- **Touch and narrow viewports.** No on-screen thrust or net controls exist in the
-  cockpit, and 390×844 has not been measured. Both were claimed in an earlier draft of
-  `tasks.md` T8 and are not built.
-- **Reduced motion.** The code reads `prefers-reduced-motion`; nothing verifies what
-  changes when it is on.
+- **Light theme.** The cockpit now derives its ground from the resolved
+  `--ui-background`; Playwright verifies `rgb(244, 244, 244)` under a light fixture.
+- **Touch and narrow viewports.** Coarse pointer mounts named 44px touch controls,
+  while the 390px Playwright run reports no horizontal overflow.
+- **Reduced motion.** Playwright emulates `reduce`; it verifies a static initial
+  frame, no free-running loop, and a responsive one-frame steer.
 - **Pick-list ordering across a reload.** `state.hits` is session-local; the ledger write
   is not, so the map remembers and the list does not.

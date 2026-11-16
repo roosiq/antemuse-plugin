@@ -1,3 +1,5 @@
+SUPERSEDED 2026-11-16 — this release plan shipped; see one-state-and-verdict.
+
 # Adversarial review — Sonnet 5.5
 
 Run 2026-11-14 against the uncommitted working tree, read-only, 60 turns:

@@ -51,6 +51,6 @@
 
 ## Not done
 
-- [ ] Browser screenshot of the DOM panels (harness renders canvas only)
-- [ ] Verify the pane in the running app after a plugin reload
-- [ ] Decide whether the ground should be dimmed when the app theme is light
+- [ ] **DEFERRED — no live desktop-app verification in this repository task; retain for a running-app pass.** Browser screenshot of the DOM panels (harness renders canvas only)
+- [ ] **DEFERRED — no live desktop-app verification in this repository task; retain for a running-app pass.** Verify the pane in the running app after a plugin reload
+- [x] **DONE — host-theme test and cockpit harness exercise a resolved `#f4f4f4` ground; no dimming is applied.** Decide whether the ground should be dimmed when the app theme is light

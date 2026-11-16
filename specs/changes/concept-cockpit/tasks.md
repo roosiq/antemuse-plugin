@@ -73,12 +73,14 @@ is "done" on a claim alone.
   `test_the_cockpit_flies_like_a_ship_not_a_camera`; harness `lifecycle: destroy() stops
   the loop`, `lifecycle: no errors during the run`.
 
-- [ ] **Reduced motion is read but not verified.** The code branches on the media query;
-  no check asserts what the net or the bullet stream does when it is on. The earlier
-  draft of this task claimed a harness check that does not exist.
-- [ ] **No touch controls.** The cockpit has no on-screen thrust or net buttons and no
-  two-finger mapping; a phone-sized viewport has not been measured. An earlier draft of
-  this task claimed both.
+- [x] **Reduced motion is verified.** Playwright emulates `prefers-reduced-motion:
+  reduce`: the initial frame renders, waiting leaves its frame count unchanged,
+  and an explicit arrow steer advances one static frame without a loop.
+- [x] **Touch-first controls and narrow view are verified.** Coarse-pointer or observed
+  touch shows named 44px left/right, fire, and release controls; canvas drag turns,
+  a tap fires once, and the 390px browser harness reports no horizontal overflow.
+- [x] **Light-theme ground follows `--ui-background`.** It uses the resolved host
+  background rather than a theme name; the harness resolves `rgb(244, 244, 244)`.
 
 ## T9 — Guards, harness and review artifact
 - [x] `tools/cockpit_harness.py` (behaviour checks, driven against the shipped module)

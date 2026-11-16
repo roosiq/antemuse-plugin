@@ -1,3 +1,5 @@
+SUPERSEDED 2026-11-16 — this spec describes the retired multi-state product; see one-state-and-verdict.
+
 # State experience — tasks
 
 Change id: `state-experience`

@@ -46,6 +46,11 @@ globalThis.Node = dom.window.Node
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 window.requestAnimationFrame = (fn) => window.setTimeout(() => fn(Date.now()), 16)
 window.cancelAnimationFrame = (id) => window.clearTimeout(id)
+window.matchMedia = (query) => ({
+  matches: query === '(pointer: coarse)',
+  media: query,
+  addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}
+})
 
 const React = (await import('react')).default
 const { act } = await import('react')
@@ -299,6 +304,28 @@ assert.equal(failed.contract, '')
   const flights = cockpit.calls.rest.filter((path) => path === '/flight')
   assert.equal(flights.length, 1, 'two rapid exit clicks file exactly one flight')
   assert.equal(exits, 1, 'two rapid exit clicks leave exactly once')
+  await act(async () => { node.unmount() })
+}
+
+// Touch-first devices get real controls with the existing key equivalents. They sit at the
+// bottom, away from the exit (top right), and their bounded strip cannot widen a 390px pane.
+{
+  resetBody()
+  const cockpit = makeCtx({ graph: { nodes: [] } })
+  const node = createRoot(root())
+  await act(async () => { node.render(React.createElement(helpers.CockpitPane, { ctx: cockpit.ctx, onExit: () => {} })) })
+  const controls = ['touch-steer-left', 'touch-steer-right', 'touch-fire', 'touch-release']
+  for (const id of controls) {
+    const control = document.getElementById(id)
+    assert.ok(control, `touch control ${id} is missing`)
+    assert.ok(control.getAttribute('aria-label'), `${id} lacks an accessible name`)
+    assert.equal(control.style.minWidth, '44px', `${id} is narrower than a 44px target`)
+    assert.equal(control.style.minHeight, '44px', `${id} is shorter than a 44px target`)
+  }
+  const strip = document.querySelector('[aria-label="Touch flight controls"]')
+  assert.equal(strip.style.maxWidth, 'calc(100% - 20px)', 'touch strip can overflow a narrow pane')
+  assert.equal(document.querySelector('button[aria-label="Leave the cockpit"]').style.top, '12px')
+  assert.equal(strip.style.bottom, '10px', 'touch controls must not overlap the exit or readout')
   await act(async () => { node.unmount() })
 }
 

@@ -12,6 +12,7 @@ Related material:
 
 - `docs/design/` — visual and interaction design.
 - `docs/design/APP_FLOW.md` — the drawn state lifecycle.
-- `specs/changes/` — historical change records and their acceptance evidence.
+- `specs/changes/` — active change records and acceptance evidence; superseded records live under
+  `specs/changes/historical/`.
 
 If a product spec and the code disagree, the spec is stale until proven otherwise.
