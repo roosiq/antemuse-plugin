@@ -186,6 +186,18 @@ assert.equal(helpers.viewModel(PAYLOAD, new Error('503')).label, 'the backend di
 assert.equal(helpers.viewModel({ active: null }, null).situation, 'idle')
 // The empty pane says what to do about it, and an ended state says which one ended.
 assert.equal(helpers.viewModel({ active: null }, null).note, '/walk starts one')
+// A flight is the one thing a person did with their own hands, so the idle pane says it landed
+// instead of asking them to start a state they did not want.
+assert.equal(
+  helpers.viewModel({ active: null, flight: { concepts: 3, kept: ['harpoon'], trail: ['harpoon'] } }, null).note,
+  'last flight · 3 concept(s) · kept 1'
+)
+assert.equal(
+  helpers.viewModel({ active: null, flight: { concepts: 2, kept: [], trail: ['a', 'b'] } }, null).note,
+  'last flight · 2 concept(s)'
+)
+assert.equal(helpers.viewModel({ active: null, last: { state: 'walk' } }, null).note,
+  'walk ended · /walk again')
 assert.equal(helpers.viewModel({ active: null, last: { state: 'walk' } }, null).note, 'walk ended · /walk again')
 // A failed answer is not a claim about now: no clock, no counts, no contract beside an error.
 const failed = helpers.viewModel(PAYLOAD, new Error('503'))

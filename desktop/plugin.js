@@ -149,6 +149,10 @@ export function viewModel(payload, error) {
   // about a map that was still drawing the last state's firings, and nothing about how to start
   // one; the note answers whichever of those applies.
   const last = (payload && payload.last) || null
+  // A flight is work, and the pane that took it is the one place a person can see it landed.
+  // The cockpit says nothing after it closes, so this is the receipt: what was flown, and how
+  // much of it they kept.
+  const flight = (payload && payload.flight) || null
   return {
     situation: situation(payload, error),
     // One honest string, not a category plus a footnote: the label is what a person reads at
@@ -156,7 +160,12 @@ export function viewModel(payload, error) {
     // the server instead of at their sign-in. Before the first answer there is nothing to name —
     // the pane used to print "no state" for a question it had not asked yet.
     label: error ? whyFailed(error) : active ? String(active.label || '') : (payload ? copy.idle : ''),
-    note: error || active ? '' : (last && last.state ? `${last.state} ended · /walk again` : copy.start),
+    note: error || active
+      ? ''
+      : flight && flight.concepts
+        ? `last flight \u00b7 ${flight.concepts} concept(s)` +
+          (flight.kept && flight.kept.length ? ` \u00b7 kept ${flight.kept.length}` : '')
+        : (last && last.state ? `${last.state} ended \u00b7 /walk again` : copy.start),
     // A count is a claim about now. Under a failed poll it is a claim about the last time the
     // pane could see, printed beside an error — the screenshot that says "the backend did not
     // answer · 1:31 left" is the pane contradicting itself. Nothing is counted when the answer
