@@ -8,7 +8,13 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("antemuse_experiment_token", ROOT / "experiments" / "token.py")
+TOKEN_PATH = ROOT / "experiments" / "token.py"
+if not TOKEN_PATH.exists():
+    pytest.skip(
+        "experiments/ is repository-only and not shipped in the package",
+        allow_module_level=True,
+    )
+SPEC = importlib.util.spec_from_file_location("antemuse_experiment_token", TOKEN_PATH)
 if SPEC is None or SPEC.loader is None:  # pragma: no cover - the file is repository source
     raise ImportError("cannot load experiments/token.py")
 TOKEN = importlib.util.module_from_spec(SPEC)

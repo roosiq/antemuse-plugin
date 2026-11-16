@@ -96,6 +96,17 @@ for asset in assets:
         raise SystemExit(f"invalid injected asset record: {asset!r}")
 PY
   ok "BUILD-MANIFEST.json is present in the tarball and extracted tree"
+
+  # The source tree passing means nothing if the package cannot collect its own tests: a test that
+  # imports repository-only code (experiments/, specs/) errors at collection in the tarball, which
+  # is exactly the tree a reviewer runs. Run the shipped suite from the extracted package.
+  local packed_state
+  packed_state="$(mktemp -d)"
+  ( cd "$extract/$package" && env -u PYTHONPATH ANTEMUSE_STATES_HOME="$packed_state" \
+      uvx --with-requirements requirements-test.txt --quiet pytest tests/ -q ) ||
+    die "the extracted package cannot run its own test suite"
+  rm -rf "$packed_state"
+  ok "the extracted package runs its own suite"
 }
 
 run_release_gates
