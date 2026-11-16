@@ -5,9 +5,9 @@ is "done" on a claim alone.
 
 ## T1 — Pane, page, nav and command registration
 - [x] `createCockpit` exported from `desktop/plugin.js`
-- [x] Pane `cockpit` (`placement: 'main'`), page `/{ID}/cockpit`, sidebar row,
+- [x] Tab `cockpit` inside the Antemuse page (`/{ID}`), deep link `/{ID}/cockpit`,
       ⌘K command, copy keys `cockpit`, `cockpitOpen`
-- Evidence: `tests/test_cockpit_pane.py::test_the_cockpit_is_a_pane_a_page_a_nav_row_and_a_command`;
+- Evidence: `tests/test_cockpit_pane.py::test_the_cockpit_is_a_tab_inside_antemuse`;
   esbuild parses the bundle; installed copy byte-identical to source.
 
 ## T2 — Data contract over the existing `/graph`

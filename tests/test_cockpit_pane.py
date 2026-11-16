@@ -36,17 +36,38 @@ def test_the_status_chip_carries_the_dose_not_only_a_label():
     assert "picked" in js
 
 
-def test_the_cockpit_is_a_pane_a_page_a_nav_row_and_a_command():
+def test_the_cockpit_is_a_tab_inside_antemuse():
+    """One plugin is one product: the cockpit is a tab beside the state, not a second nav row.
+
+    It used to register its own full-height pane and its own sidebar entry, which put two
+    things called Antemuse in the sidebar and made a person choose before they could compare.
+    """
     js = PLUGIN.read_text()
+
+    assert "function AntemuseScreen(" in js, "the page that holds both tabs is gone"
+    assert js.count("area: SIDEBAR_NAV_AREA") == 1, "the cockpit got its own sidebar row back"
+    assert "id: 'cockpit-nav'," not in js
+    assert js.count("area: PANES_AREA") == 1, "the cockpit registered its own full-height pane again"
     for needle in (
-        "id: 'cockpit',",
         "id: 'cockpit-page',",
-        "id: 'cockpit-nav',",
         "id: 'cockpit-open',",
         "path: `/${ID}/cockpit`",
-        "render: () => jsx(CockpitPane, { ctx })",
+        "render: () => jsx(AntemuseScreen, { ctx, start: 'cockpit' })",
+        "render: () => jsx(AntemuseScreen, { ctx, start: 'state' })",
     ):
         assert needle in js, f"the cockpit registration lost {needle!r}"
+
+
+def test_the_page_shows_both_tabs_and_a_tab_is_a_button():
+    js = PLUGIN.read_text()
+    block = js[js.index("function AntemuseScreen("):]
+    block = block[:block.index("\n}\n")]
+
+    assert "copy.state" in block and "copy.cockpit" in block
+    assert "role: 'tab'" in block and "'aria-selected'" in block
+    assert "setTab(" in block, "a tab that cannot be chosen is a label"
+    # theme variables only: a tab strip is chrome, not a colour scheme
+    assert "#" not in block.replace("#fff", ""), "a literal colour in the tab strip"
 
 
 def test_the_cockpit_reads_the_one_graph_route_and_invents_no_positions():

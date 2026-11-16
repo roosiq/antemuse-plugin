@@ -35,7 +35,7 @@ the state you are already in.
 ## The panes
 
 The picture lives in two desktop panes and nowhere else: the Antemuse pane draws
-the map, and the cockpit pane flies it in first person for `/explore`. In chat a
+the map, and the cockpit tab flies it in first person for `/explore`. In chat a
 state posts its account as text, on entry, without media. There is no terminal
 takeover and no image frame: `/state` is not a command, and a terminal reads the
 same text record the chat gets.

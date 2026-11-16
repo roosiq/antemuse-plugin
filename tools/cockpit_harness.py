@@ -310,11 +310,19 @@ def main() -> int:
                 check("shoot: holding fires a stream", mid["shots"] >= before + 2, f"shots={mid['shots']}")
                 check("shoot: shots exist in flight", mid["bullets"] > 0, f"bullets={mid['bullets']}")
                 check("shoot: the trigger is held", mid["firing"] is True, f"firing={mid['firing']}")
+                # Capture without pointer lock: the browser may refuse the lock, and the pane
+                # used to be unsteerable when it did. Holding the button must steer the ship
+                # and must own the pointer, or "the mouse does nothing" is the only report a
+                # person can give.
+                check("look: holding owns the pointer", mid["pointer"] is True, f"pointer={mid['pointer']}")
                 page.mouse.up()
                 page.wait_for_timeout(1400)
                 st = page.evaluate("__cockpit.stats()")
                 picks = page.evaluate("__cockpit.picks()")
                 check("shoot: the trigger releases", st["firing"] is False, f"firing={st['firing']}")
+                # Steering is proven in the running app rather than here: headless Chromium
+                # grants pointer lock, which reports movementX itself and is a different path
+                # from the captured one this pane has to carry when a host refuses the lock.
                 check("shoot: an arriving shot picks a concept", st["picks"] >= 1, f"picks={st['picks']}")
                 filed = page.evaluate("(window.__restPosts || []).filter(p => p.path === '/picks').flatMap(p => (p.body && p.body.picks) || [])")
                 check("shoot: the picks are filed with the plugin", len(filed) >= 1,

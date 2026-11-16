@@ -49,6 +49,7 @@ const copy = {
   pane: 'Antemuse',
   cockpit: 'Cockpit',
   cockpitOpen: 'Open concept cockpit',
+  state: 'State',
   idle: 'no state',
   // The empty pane is a dead end without this: a person who opens it and finds a dark map has
   // nothing to act on. One command, not five — the label above this line already says there is
@@ -3738,8 +3739,21 @@ function createCockpit({ ctx, el, callbacks }) {
   // will not hand over the pointer. Escape always gives the mouse back.
   let drag = null
   let captured = false
+  // Pointer lock is the way a cockpit reads, but the host is not obliged to grant it: a pane
+  // that asks and is refused looks completely dead — the mouse that should be steering the ship
+  // only reports hover. So capture is owned here as well: a pointer captured with
+  // `setPointerCapture` keeps sending moves after the cursor leaves the canvas, which is the
+  // whole of what steering needs, and needs no permission from anyone.
+  let held = null
   const lockActive = () => {
     try { return !!doc.pointerLockElement && doc.pointerLockElement === el } catch (e) { return false }
+  }
+  const ownsPointer = () => lockActive() || held !== null
+  const steer = (dx, dy) => {
+    if (!dx && !dy) return
+    state.cam.yaw += dx * 0.0026
+    state.cam.pitch = Math.max(-1.15, Math.min(1.15, state.cam.pitch - dy * 0.0022))
+    schedule()
   }
   const onDown = (ev) => {
     // Keys only reach this pane once it holds focus. A pane that is displayed
@@ -3758,18 +3772,20 @@ function createCockpit({ ctx, el, callbacks }) {
     if (aimed) nameNode(aimed, 'click')
     state.firing = true
     shootAt(ax, ay)
+    // Ask for the lock, and take the pointer either way. A refused lock used to leave the pane
+    // steerable only by right-drag, which is not a cockpit.
     if (el.requestPointerLock && !lockActive()) {
-      try { el.requestPointerLock() } catch (e) { /* a host may refuse; drag still works */ }
+      try { el.requestPointerLock() } catch (e) { /* a host may refuse; capture carries it */ }
     }
+    // The pointer is tracked here rather than captured. `setPointerCapture` raises
+    // InvalidStateError whenever the pointer is not in the state the browser wants, and a pane
+    // that has asked and been refused is a pane where the mouse does nothing. Document-level
+    // moves are always delivered, which is all steering needs.
+    if (held === null) held = { id: ev.pointerId, x: ev.clientX, y: ev.clientY }
+    el.style.cursor = 'none'
   }
   const onMove = (ev) => {
-    if (lockActive()) {
-      // captured: relative movement, no cursor, no drag bookkeeping
-      state.cam.yaw += (ev.movementX || 0) * 0.0026
-      state.cam.pitch = Math.max(-1.15, Math.min(1.15, state.cam.pitch - (ev.movementY || 0) * 0.0022))
-      schedule()
-      return
-    }
+    if (ownsPointer() || drag) return       // steering is the document's business (see onDocMove)
     if (!drag) {
       const r = el.getBoundingClientRect()
       const ax = ev.clientX - r.left, ay = ev.clientY - r.top
@@ -3785,17 +3801,31 @@ function createCockpit({ ctx, el, callbacks }) {
       if (nearest && distance <= 18) nameNode(nearest, 'hover')
       return
     }
-    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y
-    drag.moved += Math.abs(dx) + Math.abs(dy)
-    state.cam.yaw += dx * 0.0032
-    state.cam.pitch = Math.max(-1.15, Math.min(1.15, state.cam.pitch - dy * 0.0026))
-    drag.x = ev.clientX; drag.y = ev.clientY
-    schedule()
+  }
+  // Steering, wherever the pointer is. A locked pointer reports movements; a held one reports
+  // the delta from its last position; a right-drag reports its own. All three land here so none
+  // of them depends on the pointer staying inside the canvas.
+  const onDocMove = (ev) => {
+    if (lockActive()) { steer(ev.movementX || 0, ev.movementY || 0); return }
+    if (drag) {
+      const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y
+      drag.moved += Math.abs(dx) + Math.abs(dy)
+      drag.x = ev.clientX; drag.y = ev.clientY
+      steer(dx * 1.23, dy * 1.18)          // the drag rate the pane has always used
+      return
+    }
+    if (held) {
+      const dx = ev.movementX || (ev.clientX - held.x)
+      const dy = ev.movementY || (ev.clientY - held.y)
+      held.x = ev.clientX; held.y = ev.clientY
+      steer(dx, dy)
+    }
   }
   const onUp = (ev) => {
     // Release the trigger. No click-to-select: the shot is the whole interaction.
     state.firing = false
     drag = null
+    if (held !== null) { held = null; el.style.cursor = lockActive() ? 'none' : 'crosshair' }
   }
   const onLockChange = () => {
     captured = lockActive()
@@ -3816,7 +3846,15 @@ function createCockpit({ ctx, el, callbacks }) {
     if (k === ' ') { ev.preventDefault(); state.net = { active: true, t: 0, landed: false, reach: 1.25 }; state.catchList = []; onCatch([]); schedule() }
     else if (k === '0' || k === 'home') { resetFlight() }
     else if (k === 'c') { state.catchList = []; onCatch([]); draw() }
-    else if (k === 'escape' && lockActive()) { try { doc.exitPointerLock() } catch (e) { /* gone */ } }
+    else if (k === 'escape') {
+      if (lockActive()) { try { doc.exitPointerLock() } catch (e) { /* gone */ } }
+      if (held !== null) {
+        held = null
+        state.firing = false
+        el.style.cursor = 'crosshair'
+        draw()
+      }
+    }
   }
   const onKeyUp = (ev) => {
     const k = String(ev.key || '').toLowerCase()
@@ -3852,6 +3890,13 @@ function createCockpit({ ctx, el, callbacks }) {
   doc.addEventListener('keydown', onKeyDoc)
   doc.addEventListener('keyup', onKeyUpDoc)
   doc.addEventListener('pointerlockchange', onLockChange)
+  // The browser can drop a capture on its own (window blur, a host re-layout). Treat that as
+  // the trigger releasing, so a lost capture cannot leave the ship firing forever.
+  // A press that starts outside the canvas and ends on it must not leave the trigger on.
+  const onUpDoc = (ev) => { if (held || drag) onUp(ev) }
+  doc.addEventListener('pointermove', onDocMove)
+  doc.addEventListener('pointerup', onUpDoc)
+  doc.addEventListener('pointercancel', onUpDoc)
 
   // panes are resized constantly by sash drags: track the box, not a mount size
   let ro = null
@@ -3899,6 +3944,9 @@ function createCockpit({ ctx, el, callbacks }) {
       shots: state.shotsFired,
       bullets: state.bullets.length,
       firing: state.firing,
+      // Whether the pane owns the pointer — by lock or by capture — because "the mouse does
+      // nothing" and "the mouse is steering a ship that is not moving" look identical on film.
+      pointer: ownsPointer(),
       hits: Object.keys(state.hits).length,
       target: state.target,
       error: state.error,
@@ -3947,6 +3995,9 @@ function createCockpit({ ctx, el, callbacks }) {
       el.removeEventListener('pointercancel', onUp)
       el.removeEventListener('keydown', onKey)
       el.removeEventListener('keyup', onKeyUp)
+      doc.removeEventListener('pointermove', onDocMove)
+      doc.removeEventListener('pointerup', onUpDoc)
+      doc.removeEventListener('pointercancel', onUpDoc)
       doc.removeEventListener('keydown', onKeyDoc)
       doc.removeEventListener('keyup', onKeyUpDoc)
       doc.removeEventListener('pointerlockchange', onLockChange)
@@ -4072,6 +4123,56 @@ function CockpitVerdict({ ctx, named, onVerdict }) {
   })
 }
 
+
+/** The page: the state and the cockpit as two tabs of one screen.
+ *
+ * The cockpit used to be a second entry in the sidebar and a second full-height pane, which
+ * made two products out of one plugin. It is a way of reading the same state, so it is a tab
+ * beside it — one nav row, one page, one place to look.
+ */
+function AntemuseScreen({ ctx, start }) {
+  const [tab, setTab] = useState(start === 'cockpit' ? 'cockpit' : 'state')
+  const tabs = [
+    { id: 'state', label: copy.state },
+    { id: 'cockpit', label: copy.cockpit }
+  ]
+  const strip = jsx('div', {
+    role: 'tablist',
+    style: {
+      display: 'flex', gap: '2px', padding: '4px 10px 0', flex: '0 0 auto',
+      borderBottom: '1px solid var(--ui-stroke-secondary)'
+    },
+    children: tabs.map((one) => jsx('button', {
+      role: 'tab',
+      'aria-selected': tab === one.id,
+      tabIndex: tab === one.id ? 0 : -1,
+      onClick: () => setTab(one.id),
+      title: one.label,
+      style: {
+        font: 'inherit', fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase',
+        padding: '5px 10px 6px', cursor: 'pointer', background: 'transparent',
+        color: tab === one.id ? 'var(--ui-text)' : 'var(--ui-text-secondary)',
+        // The selected tab is marked by the accent rule under it, not by a filled box: on a
+        // dark theme a panel-coloured pill reads as another piece of the backdrop.
+        border: '0',
+        borderBottom: '2px solid ' + (tab === one.id ? 'var(--ui-accent)' : 'transparent'),
+        opacity: tab === one.id ? '1' : '0.72'
+      },
+      children: one.label
+    }, one.id))
+  })
+  return jsx('div', {
+    style: { display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 },
+    children: [
+      strip,
+      jsx('div', {
+        style: { position: 'relative', flex: '1 1 auto', minHeight: 0 },
+        children: tab === 'cockpit' ? jsx(CockpitPane, { ctx }) : jsx(StateView, { ctx })
+      })
+    ]
+  })
+}
+
 /** The pane: a canvas, and the catches/selection as real text beside it. */
 function CockpitPane({ ctx }) {
   const canvasRef = useRef(null)
@@ -4114,8 +4215,12 @@ function CockpitPane({ ctx }) {
     // it mounts. Otherwise the first frame is a still picture and every key looks
     // broken until the user happens to click it.
     const focusTimer = setTimeout(() => { try { el.focus() } catch (e) { /* gone */ } }, 80)
+    // The same read-only handle the harness uses, exposed in the running app: a canvas-only
+    // pane gives no way to tell "the pointer is not captured" from "the ship is not moving".
+    try { window.__cockpit = cockpit } catch (e) { /* no window */ }
     return () => {
       if (focusTimer) clearTimeout(focusTimer)
+      try { if (window.__cockpit === cockpit) delete window.__cockpit } catch (e) { /* gone */ }
       cockpit.destroy()
     }
   }, [ctx])
@@ -4253,7 +4358,7 @@ export default {
       id: 'page',
       area: ROUTES_AREA,
       data: { path: `/${ID}` },
-      render: () => jsx(StateView, { ctx })
+      render: () => jsx(AntemuseScreen, { ctx, start: 'state' })
     })
     ctx.register({
       id: 'nav',
@@ -4261,28 +4366,14 @@ export default {
       order: 60,
       data: { codicon: 'pulse', label: copy.pane, path: `/${ID}` }
     })
-    // The cockpit is the same route read from a heading instead of from above.
-    // It is its own pane (a full-height tab) because a first-person view in a
-    // 320px rail is a letterbox, and its own page because a pane can sit in a
-    // collapsed tab when the layout gets tight.
-    ctx.register({
-      id: 'cockpit',
-      area: PANES_AREA,
-      title: copy.cockpit,
-      data: { placement: 'main', collapsible: true, minWidth: '420px', minHeight: '300px' },
-      render: () => jsx(CockpitPane, { ctx })
-    })
+    // The cockpit is the same screen read from a heading instead of from above: a tab inside
+    // Antemuse, not a second product with its own nav row. Its own route stays so a deep link
+    // and the palette command still land, opening on that tab.
     ctx.register({
       id: 'cockpit-page',
       area: ROUTES_AREA,
       data: { path: `/${ID}/cockpit` },
-      render: () => jsx(CockpitPane, { ctx })
-    })
-    ctx.register({
-      id: 'cockpit-nav',
-      area: SIDEBAR_NAV_AREA,
-      order: 61,
-      data: { codicon: 'rocket', label: copy.cockpit, path: `/${ID}/cockpit` }
+      render: () => jsx(AntemuseScreen, { ctx, start: 'cockpit' })
     })
     ctx.register({
       id: 'cockpit-open',
