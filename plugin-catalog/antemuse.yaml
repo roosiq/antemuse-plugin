@@ -2,16 +2,20 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: b19cca81d5a5ff90553e1ad715f042b9a3564a83
-description: 'The agent takes a walk, daydreams, dreams, doomscrolls, or gets unstuck — or you fly the concept map
-  yourself in /explore: a bounded change to how it works, with a dose rather than a duration. Walks step through
-  WordNet, dreams recombine FrameNet roles, daydreams draw on stored memories, doomscrolls on live feeds. No model
-  calls on the state path.'
+sha: 4ebf454e5f3356055ff6c8b1e78a27a4d6c295ca
+description: 'One agent state and a concept map you fly yourself. /walk changes the frame the agent works
+  in without sending it anywhere: six hops out to the far rim of a concept''s neighbourhood in WordNet,
+  one bought per turn, recorded for the pane and never injected into the turn, so what comes back comes
+  from somewhere it would not have reached. In /explore you fly the same graph yourself and the plugin
+  only records what you pick. The cockpit names the concept under your reticle, and keep/trash judgements
+  are written to the ledger and counted by tools/hit_rate.py. No model calls on the state path. Disclosure
+  — By default, once per session, reads the last 14 days of your Hermes session messages (read-only) so
+  the walk steers away from concepts you have already met (turn off with the `session_scan` setting).'
 maintainer: roosiq
 tier: community
-category: general
+category: desktop
 docs_url: https://github.com/roosiq/antemuse-plugin#readme
-version: "0.10.44"
+version: "0.11.0"
 requires_hermes: '>=0.21.6'
 platforms:
 - linux
@@ -32,15 +36,14 @@ capabilities:
   provides_middleware: []
   requires_env: []
 known_issues:
-- The picture is two desktop panes — the Antemuse map, and the cockpit `/explore` is flown in. Chat
-  carries no visualization and a terminal gets the same text record; there is no terminal takeover
-  since 0.10.30.
+- The picture is two desktop panes — the Antemuse map, and the cockpit /explore is flown in. Chat carries
+  no visualization and a terminal gets the same text record; there is no terminal takeover since 0.10.30.
 - 'Windows: the installer and runtime are pure Python and the suite passes on Linux; there is no Windows-specific
   path, so the pane is expected to work but is unverified there.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/b19cca81d5a5ff90553e1ad715f042b9a3564a83/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/4ebf454e5f3356055ff6c8b1e78a27a4d6c295ca/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/b19cca81d5a5ff90553e1ad715f042b9a3564a83/docs/screenshots/pane-walk.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/b19cca81d5a5ff90553e1ad715f042b9a3564a83/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/b19cca81d5a5ff90553e1ad715f042b9a3564a83/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/4ebf454e5f3356055ff6c8b1e78a27a4d6c295ca/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/4ebf454e5f3356055ff6c8b1e78a27a4d6c295ca/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/4ebf454e5f3356055ff6c8b1e78a27a4d6c295ca/docs/screenshots/blocked-tool.png
