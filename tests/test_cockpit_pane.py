@@ -374,3 +374,23 @@ def test_the_cockpit_has_a_door():
     hint = js[js.index("const hint = engaged"):]
     hint = hint[:hint.index("const hitNotice")]
     assert "esc exits" in hint, "the hint line never mentions the way out"
+
+
+def test_the_mouse_stays_captured_after_the_button_is_released():
+    """Capture must be sticky. Steering that only worked while the button was down reads as
+    "mouse capture is not working" to anyone who clicks once and then moves."""
+    js = PLUGIN.read_text()
+
+    assert "let engaged = false" in js
+    capture = js[js.index("const onDown = (ev) => {"):]
+    capture = capture[:capture.index("const onMove = (ev) => {")]
+    assert "engaged = true" in capture, "a press never captures"
+    assert "pointerNote" in capture, "a refused pointer lock leaves no evidence of why"
+
+    move = js[js.index("const onDocMove = (ev) => {"):]
+    move = move[:move.index("const onUpDoc")]
+    assert "if (engaged)" in move, "steering still requires the button to be held"
+
+    release = js[js.index("const onUp = (ev) => {"):]
+    release = release[:release.index("const onLockChange = () => {")]
+    assert "engaged = false" not in release, "releasing the button drops the capture"

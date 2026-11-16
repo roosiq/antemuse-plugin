@@ -3746,10 +3746,15 @@ function createCockpit({ ctx, el, callbacks }) {
   // `setPointerCapture` keeps sending moves after the cursor leaves the canvas, which is the
   // whole of what steering needs, and needs no permission from anyone.
   let held = null
+  // Capture is sticky: one press takes the mouse, and it stays taken until Escape. Steering
+  // that only worked while the button was down is not what a cockpit does — a person clicks
+  // once, then moves the mouse and expects to turn.
+  let engaged = false
+  let pointerNote = ''
   const lockActive = () => {
     try { return !!doc.pointerLockElement && doc.pointerLockElement === el } catch (e) { return false }
   }
-  const ownsPointer = () => lockActive() || held !== null
+  const ownsPointer = () => lockActive() || engaged
   const steer = (dx, dy) => {
     if (!dx && !dy) return
     state.cam.yaw += dx * 0.0026
@@ -3776,13 +3781,26 @@ function createCockpit({ ctx, el, callbacks }) {
     // Ask for the lock, and take the pointer either way. A refused lock used to leave the pane
     // steerable only by right-drag, which is not a cockpit.
     if (el.requestPointerLock && !lockActive()) {
-      try { el.requestPointerLock() } catch (e) { /* a host may refuse; capture carries it */ }
+      try {
+        const asked = el.requestPointerLock()
+        // Chromium returns a promise here and rejects it when the page is not allowed to
+        // lock (an Electron pane without the permission, a sandboxed frame). Recording the
+        // reason is what tells "disabled by the host" apart from "our request was wrong".
+        if (asked && typeof asked.catch === 'function') {
+          asked.catch((err) => {
+            pointerNote = `${(err && err.name) || 'Error'}: ${(err && err.message) || 'refused'}`
+          })
+        }
+      } catch (e) {
+        pointerNote = `${(e && e.name) || 'Error'}: ${(e && e.message) || 'threw'}`
+      }
     }
-    // The pointer is tracked here rather than captured. `setPointerCapture` raises
-    // InvalidStateError whenever the pointer is not in the state the browser wants, and a pane
-    // that has asked and been refused is a pane where the mouse does nothing. Document-level
-    // moves are always delivered, which is all steering needs.
-    if (held === null) held = { id: ev.pointerId, x: ev.clientX, y: ev.clientY }
+    // The pointer is held by this pane's own accounting, not by an API: `setPointerCapture`
+    // raises InvalidStateError whenever the browser is not in the mood, and a pane that has
+    // asked and been refused is a pane where the mouse does nothing. Document-level moves are
+    // always delivered, which is all steering needs.
+    engaged = true
+    held = { x: ev.clientX, y: ev.clientY }
     el.style.cursor = 'none'
   }
   const onMove = (ev) => {
@@ -3815,7 +3833,7 @@ function createCockpit({ ctx, el, callbacks }) {
       steer(dx * 1.23, dy * 1.18)          // the drag rate the pane has always used
       return
     }
-    if (held) {
+    if (engaged) {
       const dx = ev.movementX || (ev.clientX - held.x)
       const dy = ev.movementY || (ev.clientY - held.y)
       held.x = ev.clientX; held.y = ev.clientY
@@ -3826,7 +3844,7 @@ function createCockpit({ ctx, el, callbacks }) {
     // Release the trigger. No click-to-select: the shot is the whole interaction.
     state.firing = false
     drag = null
-    if (held !== null) { held = null; el.style.cursor = lockActive() ? 'none' : 'crosshair' }
+    el.style.cursor = ownsPointer() ? 'none' : 'crosshair'
   }
   const onLockChange = () => {
     captured = lockActive()
@@ -3854,6 +3872,7 @@ function createCockpit({ ctx, el, callbacks }) {
       if (lockActive()) { try { doc.exitPointerLock() } catch (e) { /* gone */ } }
       state.firing = false
       held = null
+      engaged = false
       drag = null
       try { el.style.cursor = 'crosshair' } catch (e) { /* gone */ }
       onExit()
@@ -3950,6 +3969,8 @@ function createCockpit({ ctx, el, callbacks }) {
       // Whether the pane owns the pointer — by lock or by capture — because "the mouse does
       // nothing" and "the mouse is steering a ship that is not moving" look identical on film.
       pointer: ownsPointer(),
+      lock: lockActive(),
+      pointerNote,
       hits: Object.keys(state.hits).length,
       target: state.target,
       error: state.error,
@@ -4242,7 +4263,7 @@ function CockpitPane({ ctx, onExit }) {
           pointerEvents: 'none', textAlign: 'center', whiteSpace: 'nowrap',
           ...LABEL, letterSpacing: '0.18em'
         },
-        children: 'w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire \u00b7 esc exits'
+        children: 'click to capture \u00b7 w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire \u00b7 esc exits'
       })
 
   const hitNotice = notice
@@ -4324,10 +4345,26 @@ function CockpitPane({ ctx, onExit }) {
     children: ['exit', jsx('span', { key: 'k', style: { opacity: '0.6' }, children: 'esc' })]
   })
 
+  // Captured is a state the person has to be able to see: the cursor is hidden, and a pane
+  // that silently holds the mouse is indistinguishable from one that is broken.
+  const captureBadge = engaged
+    ? jsx('div', {
+        key: 'captured',
+        style: {
+          position: 'absolute', right: '14px', top: '52px', zIndex: 3, pointerEvents: 'none',
+          ...LABEL, letterSpacing: '0.14em', padding: '4px 8px 5px', borderRadius: '2px',
+          color: 'var(--ui-text-secondary, currentColor)',
+          border: '1px solid var(--ui-stroke-secondary, currentColor)'
+        },
+        children: 'mouse captured · esc'
+      })
+    : null
+
   return jsxs('div', {
     style: { position: 'relative', width: '100%', height: '100%', minHeight: '240px', overflow: 'hidden' },
     children: [
       exitButton,
+      captureBadge,
       jsx('canvas', {
         key: 'canvas',
         ref: canvasRef,
@@ -4336,7 +4373,7 @@ function CockpitPane({ ctx, onExit }) {
         onFocus: () => setEngaged(true),
         onBlur: () => setEngaged(false),
         role: 'application',
-        'aria-label': 'Concept cockpit. Hold the left mouse button or F to fire a stream of shots; right-drag or click to capture the mouse to look. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse and leaves the cockpit.',
+        'aria-label': 'Concept cockpit. Click once to capture the mouse; while captured, moving turns the ship and the left button fires a stream. Escape releases and leaves. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse and leaves the cockpit.',
         style: { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', cursor: 'crosshair', touchAction: 'none' }
       }),
       hint,

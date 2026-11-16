@@ -148,6 +148,12 @@ window.addEventListener('error', (e) => window.__errors.push(String(e.message)))
 const log = []
 for (const k of Object.keys(plugin || {})) log.push(k)
 window.__exports = log
+// The packaged app refuses pointer lock with WrongDocumentError ("the root document of this
+// element is not valid for pointer lock"), so the harness refuses it too: otherwise headless
+// Chromium grants the lock and the captured-steering path is never exercised.
+HTMLCanvasElement.prototype.requestPointerLock = function () {
+  return Promise.reject(new DOMException('The root document of this element is not valid for pointer lock.', 'WrongDocumentError'))
+}
 window.__mk = (opts) => {
   const payload = window.__makeGraph((opts && opts.count) || 120)
   const cv = document.getElementById('cv')
@@ -328,6 +334,28 @@ def main() -> int:
                       page.evaluate("window.__exited || 0") > exited,
                       f"__exited={page.evaluate('window.__exited || 0')}")
                 check("exit: Escape stops the trigger", after["firing"] is False, f"firing={after['firing']}")
+
+                # Capture is sticky: a press takes the mouse and releasing the button must not
+                # give it back. Steering that needs the button held is what a person reports
+                # as "the mouse does nothing".
+                box = page.evaluate("(() => { const r = document.querySelector('canvas').getBoundingClientRect();"
+                                    " return { x: r.x, y: r.y, w: r.width, h: r.height } })()")
+                cx, cy = box["x"] + box["w"] / 2, box["y"] + box["h"] / 2
+                page.mouse.move(cx, cy)
+                page.mouse.down()
+                page.wait_for_timeout(120)
+                page.mouse.up()
+                page.wait_for_timeout(120)
+                check("look: the press keeps the pointer", page.evaluate("__cockpit.stats().pointer") is True,
+                      "released the capture on mouseup")
+                y0 = page.evaluate("__cockpit.stats().cam.yaw")
+                page.mouse.move(cx + 150, cy + 40, steps=6)
+                page.wait_for_timeout(120)
+                y1 = page.evaluate("__cockpit.stats().cam.yaw")
+                check("look: moving with no button held still turns the ship",
+                      abs(y1 - y0) > 0.05, f"{y0:.3f} -> {y1:.3f}")
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(100)
                 page.wait_for_timeout(1400)
                 st = page.evaluate("__cockpit.stats()")
                 picks = page.evaluate("__cockpit.picks()")
