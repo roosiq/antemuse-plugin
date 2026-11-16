@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.9 — 2026-11-15
+
+- harness: the shipped jsdom mount passes again, and drift now fails the suite (2026-11-15)
+
 ## 0.11.8 — 2026-11-15
 
 - cockpit: capture is sticky, and the refusal finally has a name (2026-11-15)
