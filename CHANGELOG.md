@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.15 — 2026-11-15
+
+- flight: stop swallowing the reason, and fix the window I shadowed (2026-11-15)
+
 ## 0.11.14 — 2026-11-15
 
 - cockpit: escape frees the mouse, the button leaves and files (2026-11-15)
