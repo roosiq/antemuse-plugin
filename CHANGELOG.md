@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.4 — 2026-11-15
+
+- walk: the rim is two steps out, and a far hop is never a neighbour (2026-11-15)
+
 ## 0.11.3 — 2026-11-15
 
 - walk: give the restart a few draws, and let a genuine stop be the last line (2026-11-15)
