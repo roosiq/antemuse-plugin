@@ -236,6 +236,18 @@ assert.equal(failed.contract, '')
   helpers.fileFlight(ctx, { trail: [], kept: [], dropped: [] })
   assert.equal(posts.length, 2, 'an empty flight was dropped instead of filed')
 
+  // The outcome is readable, not swallowed: the pane's exit must not be blocked by a lost
+  // note, but "quiet" once made a 404 look exactly like a success. This is the field the
+  // packaged app exposes to answer "did it file?".
+  await helpers.fileFlight({ session: 's', rest: () => Promise.reject(new Error('404: {"detail":"Not Found"}')) },
+    { trail: ['harpoon'] })
+  assert.equal(window.__flightPost.ok, false, 'a rejected post was recorded as success')
+  assert.match(String(window.__flightPost.detail), /404/, 'the reason was not recorded')
+  assert.deepEqual(window.__flightPost.payload.trail, ['harpoon'])
+
+  await helpers.fileFlight(ctx, { trail: ['lighthouse'] })
+  assert.equal(window.__flightPost.ok, true, 'a successful post was not recorded')
+
   // No cockpit, no note — a call without a flight must not post a phantom.
   posts.length = 0
   helpers.fileFlight(ctx, null)

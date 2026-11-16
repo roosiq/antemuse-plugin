@@ -4249,12 +4249,21 @@ export function fileFlight(ctx, left) {
     trail: left.trail || [], kept: left.kept || [], dropped: left.dropped || [],
     session: (ctx && ctx.session) || ''
   }
+  // A failed note is deliberately quiet — the exit must not be blocked by a lost one — but
+  // "quiet" made a broken wire indistinguishable from a working one, so the outcome is kept
+  // where a person (or a probe) can ask for it.
+  const where = typeof window === 'undefined' ? null : window
+  const record = (ok, detail) => {
+    try { if (where) where.__flightPost = { ok, at: Date.now(), payload, detail } } catch (e) { /* gone */ }
+  }
   try {
     if (ctx && typeof ctx.rest === 'function') {
-      return Promise.resolve(ctx.rest('/flight', { method: 'POST', body: payload })).catch(() => {})
+      return Promise.resolve(ctx.rest('/flight', { method: 'POST', body: payload }))
+        .then((res) => { record(true, res); return res })
+        .catch((err) => { record(false, String(err && err.message ? err.message : err)); })
     }
-    if (typeof win.fetch === 'function') {
-      return win.fetch(`/api/plugins/${ID}/flight`, {
+    if (where && typeof where.fetch === 'function') {
+      return where.fetch(`/api/plugins/${ID}/flight`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload)
