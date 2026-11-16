@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.12 — 2026-11-15
+
+- pane: show the flight you just flew (2026-11-15)
+- skill: the verification rules this release learned the hard way (2026-11-15)
+
 ## 0.11.11 — 2026-11-15
 
 - flight: leaving the cockpit files what you flew through (2026-11-15)
