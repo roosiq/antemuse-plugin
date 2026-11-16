@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.3 — 2026-11-15
+
+- walk: give the restart a few draws, and let a genuine stop be the last line (2026-11-15)
+
 ## 0.11.2 — 2026-11-15
 
 - package: ship the docs the README links, and stop the suite failing on a draw (2026-11-15)
