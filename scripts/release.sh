@@ -21,7 +21,9 @@ rm -f plugin.yaml.bak __init__.py.bak
 python3 tools/changelog.py
 git add -A && git commit -q -m "$VERSION: release"
 python3 tools/catalog_entry.py
-git add -A && git commit -q -m "catalog entry for $(git rev-parse --short=12 HEAD~1)"
+# HEAD is the version-bump commit and it is what the entry pins; HEAD~1 named the code
+# commit, so the history claimed a pin the file never had.
+git add -A && git commit -q -m "catalog entry for $(git rev-parse --short=12 HEAD)"
 bash scripts/build-release.sh
 printf '\nrelease %s\n  pinned: %s\n  entry : %s\n' "$VERSION" \
   "$(sed -n 's/^sha: //p' plugin-catalog/antemuse.yaml)" "$(git rev-parse --short=12 HEAD)"
