@@ -3,6 +3,16 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.0 — 2026-11-15
+
+- walk: stop the dose at the dose, and survive a cursor that names nothing (2026-11-15)
+- engine: close a state whose owner never came back (2026-11-15)
+- tool: refuse what does not exist, and stop recommending it (2026-11-15)
+- manifest: session_scan does not light the map (2026-11-15)
+- docs: describe the product that exists (2026-11-15)
+- cockpit: name the concept, then keep it or drop it (2026-11-15)
+- one agent state: walk, and a ledger that can count a verdict (2026-11-15)
+
 ## Unreleased
 
 - engine: a state whose dose is fully served but was never shown no longer stays open forever — `seen` can only be advanced by a block built for the session that owns the state, so a walk entered in one conversation, served by a pane poll, and then never spoken to again hung at "0 hops left" while every other conversation wore its annotation; a turn from a different session now closes it (2026-11-15)
