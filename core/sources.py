@@ -5,9 +5,9 @@ import importlib.util
 from typing import List
 
 
-def ready(kind: str) -> str | None:
-    """Why the walk cannot run, or None when its WordNet graph is available."""
-    if kind != "walk":
+def ready(kind: str, graph_name: str = "wordnet") -> str | None:
+    """Why the selected walk graph cannot run, or None when it is locally available."""
+    if kind != "walk" or graph_name != "wordnet":
         return None
     if importlib.util.find_spec("nltk") is None:
         return ("nltk is not importable in the interpreter Hermes runs. "

@@ -21,9 +21,21 @@ import random
 import time
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
+# Unseeded walks retain their old entropy. A seeded generator is made per walk so
+# two walks with the same cursor and seed replay the same choices.
 RNG = random.SystemRandom()
+ROLE_VOCABULARY = {"general", "specific", "part", "whole", "lateral", "sequence"}
+MAX_GRAPH_NODES = 400
+MAX_GRAPH_EDGES = 1200
+WORDNET_SOURCE = "Princeton WordNet 3.0"
+WORDNET_LICENCE = "WordNet License"
+
+
+def _rng() -> random.Random:
+    seed = os.environ.get("ANTEMUSE_GRAPH_SEED")
+    return random.Random(seed) if seed is not None else RNG
 
 HOME = Path.home()
 
@@ -52,7 +64,7 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
     "outer": {
         "title": "Outer — jumps to the farthest concept each step, not the nearest",
         "graph": "wordnet",
-        "relations": ALL_RELATIONS,
+        "roles": ["general", "specific", "part", "whole", "lateral"],
         "jump": "far",
         "seed": {"mode": "continue"},
         "avoid_backtrack": False,
@@ -60,28 +72,28 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
     "wander": {
         "title": "Wander — every WordNet edge, no direction",
         "graph": "wordnet",
-        "relations": ALL_RELATIONS,
+        "roles": ["general", "specific", "part", "whole", "lateral"],
         "seed": {"mode": "continue"},
         "avoid_backtrack": True,
     },
     "upward": {
         "title": "Upward — hypernyms and wholes only, toward the general",
         "graph": "wordnet",
-        "relations": ["hypernym", "holonym"],
+        "roles": ["general", "whole"],
         "seed": {"mode": "continue"},
         "avoid_backtrack": False,
     },
     "downward": {
         "title": "Downward — hyponyms and parts only, toward the specific",
         "graph": "wordnet",
-        "relations": ["hyponym", "meronym"],
+        "roles": ["specific", "part"],
         "seed": {"mode": "continue"},
         "avoid_backtrack": False,
     },
     "composite": {
         "title": "Composite — every navigation in one walk: run, far, vault, orbit, near",
         "graph": "wordnet",
-        "relations": ALL_RELATIONS,
+        "roles": ["general", "specific", "part", "whole", "lateral"],
         "jump": "composite",
         "samples": 48,
         "seed": {"mode": "continue"},
@@ -90,7 +102,7 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
     "vault": {
         "title": "Vault — two far jumps per step: the graph it lands in is not the one it left",
         "graph": "wordnet",
-        "relations": ALL_RELATIONS,
+        "roles": ["general", "specific", "part", "whole", "lateral"],
         "jump": "vault",
         "samples": 64,
         "seed": {"mode": "continue"},
@@ -99,7 +111,7 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
     "run3": {
         "title": "Run3 — three adjacent edges reported as one arc, so the step covers distance",
         "graph": "wordnet",
-        "relations": ALL_RELATIONS,
+        "roles": ["general", "specific", "part", "whole", "lateral"],
         "jump": "run:3",
         "seed": {"mode": "continue"},
         "avoid_backtrack": True,
@@ -107,7 +119,7 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
     "orbit": {
         "title": "Orbit — one near edge, then one far jump, alternating",
         "graph": "wordnet",
-        "relations": ALL_RELATIONS,
+        "roles": ["general", "specific", "part", "whole", "lateral"],
         "jump": "orbit",
         "samples": 48,
         "seed": {"mode": "continue"},
@@ -116,7 +128,7 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
     "lateral": {
         "title": "Lateral — similars, also-sees and opposites, never up or down",
         "graph": "wordnet",
-        "relations": ["similar", "also", "antonym"],
+        "roles": ["lateral"],
         "seed": {"mode": "continue"},
         "avoid_backtrack": True,
     },
@@ -125,25 +137,45 @@ BUILTIN: Dict[str, Dict[str, Any]] = {
 
 # --------------------------------------------------------------------- graphs
 
+class GraphLoadError(Exception):
+    """A named, non-fatal graph failure that a walk can say in its own voice."""
+    def __init__(self, mode: str, detail: str = "") -> None:
+        self.mode, self.detail = mode, detail
+        super().__init__(f"{mode}: {detail}")
+
+
 class Graph:
-    """A graph a walk can move on. Subclasses supply nodes and named edges."""
+    """A declared walk-graph contract. Providers never rely on ``hasattr``."""
     name = "graph"
+    relations: Dict[str, str] = {}
+    capabilities: set[str] = set()
+    size: Dict[str, int] = {"nodes": 0, "edges": 0}
+    source = ""
+    licence = ""
+
+    def node(self, key: str, label: str | None = None, pos: str = "", gloss: str = "") -> Dict[str, Any]:
+        return {"id": f"{self.name}:{key}", "label": label or key, "pos": pos,
+                "gloss": gloss, "source": self.source, "licence": self.licence}
+
+    def key(self, node_id: str) -> str | None:
+        prefix = f"{self.name}:"
+        return node_id[len(prefix):] if str(node_id).startswith(prefix) else None
 
     def resolve(self, word: str) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
 
-    def random_node(self, relations: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
+    def random_node(self, relation_roles: Optional[set[str]] = None) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
 
     def edges(self, node: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
         raise NotImplementedError
 
     def resume(self, node_id: str) -> Optional[Dict[str, Any]]:
-        return self.resolve(node_id)
+        key = self.key(node_id)
+        return self.resolve(key) if key is not None else None
 
     def far_from(self, node: Dict[str, Any], samples: int = 32,
                  avoid: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
-        """Graphs without distance say so, rather than pretending to jump."""
         return None
 
 
@@ -153,97 +185,102 @@ _GLOSS_STOP = {"the", "a", "an", "of", "or", "and", "to", "in", "by", "for", "wi
 
 
 def _content_words(text: str) -> set:
-    import re
     return {w for w in re.findall(r"[a-z]{4,}", str(text).lower()) if w not in _GLOSS_STOP}
-
-
-def _node(id_: str, label: str, pos: str = "", gloss: str = "", **extra) -> Dict[str, Any]:
-    return {"id": id_, "label": label, "pos": pos, "gloss": gloss, **extra}
 
 
 class WordNetGraph(Graph):
     name = "wordnet"
-    _node = staticmethod(_node)
+    relations = {"hypernym": "general", "hyponym": "specific", "holonym": "whole",
+                 "meronym": "part", "similar": "lateral", "also": "lateral", "antonym": "lateral"}
+    capabilities = {"far", "resume", "gloss", "seeds"}
+    size = {"nodes": 117659, "edges": 0}
+    source, licence = WORDNET_SOURCE, WORDNET_LICENCE
     SEEDS = ["walk", "dream", "light", "river", "memory", "door", "signal", "salt",
              "night", "hand", "stone", "weather"]
 
-    def __init__(self) -> None:
+    def __init__(self, **_kwargs: Any) -> None:
         self._wn = None
-        self._words: Optional[List[str]] = None
+        self.rng = _rng()
 
     def wn(self):
         if self._wn is None:
-            from nltk.corpus import wordnet as wn
-            self._wn = wn
+            try:
+                from nltk.corpus import wordnet as wn
+                # Force a real lookup here so missing corpus data has a named failure.
+                wn.synsets("walk")
+                self._wn = wn
+            except Exception as exc:
+                raise GraphLoadError("unavailable", "WordNet data is unavailable") from exc
         return self._wn
 
-    def resolve(self, word: str) -> Optional[Dict[str, Any]]:
-        syns = self.wn().synsets(word.replace(" ", "_"))
-        if not syns:
-            return None
-        syn = syns[0]
-        return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
+    def _from_synset(self, syn: Any) -> Dict[str, Any]:
+        return self.node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
 
-    def random_node(self, relations: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Pick a start that can actually move in the walk's chosen directions."""
-        pool = []
+    def resolve(self, word: str) -> Optional[Dict[str, Any]]:
+        try:
+            syns = self.wn().synsets(str(word).replace(" ", "_"))
+            return self._from_synset(syns[0]) if syns else None
+        except GraphLoadError:
+            raise
+        except Exception:
+            return None
+
+    def random_node(self, relation_roles: Optional[set[str]] = None) -> Optional[Dict[str, Any]]:
+        pool: List[Dict[str, Any]] = []
         for word in self.SEEDS:
-            try:
-                syn = self.wn().synsets(word)[0]
-            except Exception:
+            node = self.resolve(word)
+            if node is None:
                 continue
-            if relations:
-                rels = {r for r, _ in self.edges(self._node(syn.name(), word))}
-                if not rels & set(relations):
-                    continue
-            pool.append(syn)
-        syn = RNG.choice(pool) if pool else self.wn().synsets(RNG.choice(self.SEEDS))[0]
-        return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "), syn.pos(), syn.definition())
+            if relation_roles and not any(self.relations.get(rel) in relation_roles for rel, _ in self.edges(node)):
+                continue
+            pool.append(node)
+        return self.rng.choice(pool) if pool else None
 
     def resume(self, node_id: str) -> Optional[Dict[str, Any]]:
-        """The cursor's node, or None.
-
-        `wn.synset()` answers None as well as raising for an id that is not a synset, and the
-        unattended `.name()` on that None took down a live walk with
-        `AttributeError: 'NoneType' object has no attribute 'name'`. A cursor that names
-        something WordNet cannot resolve means "start again", not "fail".
-        """
+        # Legacy cursors held bare synset ids; accepting those lets old walks restart safely.
+        key = self.key(node_id) or str(node_id)
         try:
-            syn = self.wn().synset(node_id)
+            syn = self.wn().synset(key)
+            return self._from_synset(syn) if syn is not None else None
+        except GraphLoadError:
+            raise
         except Exception:
             return None
+
+    def edges(self, node: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
+        key = self.key(str(node.get("id") or "")) or str(node.get("id") or "")
+        try:
+            syn = self.wn().synset(key)
+        except GraphLoadError:
+            raise
+        except Exception:
+            return []
         if syn is None:
-            return None
-        try:
-            return self._node(syn.name(), syn.lemma_names()[0].replace("_", " "),
-                              syn.pos(), syn.definition())
-        except Exception:
-            return None
+            return []
+        probes = {
+            "hypernym": lambda s: s.hypernyms(), "hyponym": lambda s: s.hyponyms(),
+            "holonym": lambda s: s.part_holonyms() + s.member_holonyms() + s.substance_holonyms(),
+            "meronym": lambda s: s.part_meronyms() + s.member_meronyms() + s.substance_meronyms(),
+            "similar": lambda s: getattr(s, "similar_tos", lambda: [])(), "also": lambda s: s.also_sees(),
+            "antonym": lambda s: [a.synset() for l in s.lemmas() for a in l.antonyms()],
+        }
+        out: List[Tuple[str, Dict[str, Any]]] = []
+        for rel, fn in probes.items():
+            try:
+                out.extend((rel, self._from_synset(target)) for target in fn(syn) if target is not None)
+            except Exception:
+                continue
+        return out
 
-    def rim(self, node: Dict[str, Any], depth: int = 2,
-            budget: int = 400) -> List[Dict[str, Any]]:
-        """Nodes two relation-steps out — the neighbourhood's edge, not the dictionary."""
-        try:
-            start = self.wn().synset(node["id"])
-        except Exception:
-            return []
-        if start is None:
-            return []
-        seen = {start.name()}
-        frontier = [self._node(start.name(), start.lemma_names()[0].replace("_", " "),
-                               start.pos(), start.definition())]
-        out: List[Dict[str, Any]] = []
-        # `depth=2` means two steps out, so the one-step ring is walked but not returned: it
-        # was included, which is why `outer` could land on a direct neighbour of the node it
-        # left (`hand → digital arteries`) and why its own test failed on some draws.
+    def rim(self, node: Dict[str, Any], depth: int = 2, budget: int = 400) -> List[Dict[str, Any]]:
+        seen, frontier, out = {node["id"]}, [node], []
         for level in range(1, max(1, depth) + 1):
-            nxt: List[Dict[str, Any]] = []
+            nxt = []
             for cur in frontier:
                 for _rel, child in self.edges(cur):
                     if child["id"] in seen:
                         continue
-                    seen.add(child["id"])
-                    nxt.append(child)
+                    seen.add(child["id"]); nxt.append(child)
                     if level >= 2:
                         out.append(child)
                     if len(seen) >= budget:
@@ -255,110 +292,148 @@ class WordNetGraph(Graph):
 
     def far_from(self, node: Dict[str, Any], samples: int = 32,
                  avoid: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
-        """The farthest node on the rim: two steps out, as far as that goes.
-
-        This used to sample uniformly from `wordnet.words()` and keep the least
-        similar, which guaranteed an unrelated word — `idea → zebra-tailed
-        lizard → Hydra` is what that policy is. A jump is now the outer rim of
-        the connected neighbourhood: never a direct neighbour, always reachable
-        within two relation steps, and chosen from the farthest of a sample so
-        two walks do not take the same hop.
-        """
         skip = set(avoid or []) | {node["id"]}
-        cands = [c for c in self.rim(node, depth=2) if c["id"] not in skip]
+        cands = [c for c in self.rim(node) if c["id"] not in skip]
         if not cands:
-            # No rim is not a reason to step: "one edge out is still a hop" made `outer`
-            # serve a neighbour, which is the one thing a walk named for distance must not
-            # do. Say there is nothing far, and let the walk restart and report it.
             return None
+        key = self.key(node["id"]) or node["id"]
         try:
-            cur = self.wn().synset(node["id"])
+            cur = self.wn().synset(key)
         except Exception:
             cur = None
-        if cur is None:
-            return RNG.choice(cands)
-        pool = cands if len(cands) <= samples else RNG.sample(cands, samples)
-        # Of the rim, prefer the hops whose own definition does not already reuse
-        # the words of the one we are leaving: siblings under the same parent are
-        # "distance" that reads as a restatement.
-        mine = _content_words(node.get("gloss") or "")
-        fresh = [c for c in pool if not (_content_words(c.get("gloss") or "") & mine)]
-        pool = fresh or pool
+        pool = cands if len(cands) <= samples else self.rng.sample(cands, samples)
+        fresh = [c for c in pool if not (_content_words(c.get("gloss") or "") & _content_words(node.get("gloss") or ""))]
         scored: List[Tuple[float, Dict[str, Any]]] = []
-        for cand in pool:
+        for cand in fresh or pool:
             try:
-                cand_syn = self.wn().synset(cand["id"])
-                sim = cur.path_similarity(cand_syn) if cand_syn is not None else None
+                cand_syn = self.wn().synset(self.key(cand["id"]) or cand["id"])
+                sim = cur.path_similarity(cand_syn) if cur and cand_syn else None
             except Exception:
                 sim = None
             scored.append((0.0 if sim is None else float(sim), cand))
-        scored.sort(key=lambda t: t[0])
-        # Among the farthest few, not the single farthest: a fixed answer would
-        # make every walk of a node identical, and this walk is supposed to move.
-        edge = scored[:max(1, min(6, len(scored)))]
-        return RNG.choice(edge)[1]
-
-
-    def edges(self, node: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
-        """Named edges out of a node; none when the id is not a synset.
-
-        A cursor learned by an older version can hold a label instead of a
-        synset name. Asking WordNet for that returns None and every probe then
-        raised `'NoneType' object has no attribute '_hypernyms'`, which a walk
-        surfaced as material. An id that does not resolve has no edges.
-        """
-        try:
-            syn = self.wn().synset(node["id"])
-        except Exception:
-            return []                       # a malformed name is not a node
-        if syn is None:
-            return []
-        probes = {
-            "hypernym": lambda s: s.hypernyms(),
-            "hyponym": lambda s: s.hyponyms(),
-            "holonym": lambda s: s.part_holonyms() + s.member_holonyms() + s.substance_holonyms(),
-            "meronym": lambda s: s.part_meronyms() + s.member_meronyms() + s.substance_meronyms(),
-            "similar": lambda s: getattr(s, "similar_tos", lambda: [])(),
-            "also": lambda s: s.also_sees(),
-            "antonym": lambda s: [a.synset() for l in s.lemmas() for a in l.antonyms()],
-        }
-        out: List[Tuple[str, Dict[str, Any]]] = []
-        for rel, fn in probes.items():
-            try:
-                for t in fn(syn):
-                    if t is not None:
-                        out.append((rel, self._node(t.name(), t.lemma_names()[0].replace("_", " "),
-                                                    t.pos(), t.definition())))
-            except Exception:
-                continue
-        return out
+        scored.sort(key=lambda item: item[0])
+        return self.rng.choice(scored[:max(1, min(6, len(scored)))])[1]
 
 
 class ManualGraph(Graph):
-    """A user-authored graph: an adjacency list in the walk's own file."""
+    """A walk-local adjacency graph retained for backwards-compatible user walks."""
     name = "manual"
+    relations = {"next": "sequence"}
+    capabilities = {"resume", "gloss", "seeds"}
+    source, licence = "User-authored walk", "User supplied"
 
-    def __init__(self, edges: Dict[str, List[str]], labels: Optional[Dict[str, Dict[str, str]]] = None):
-        self.edges_map = {k: list(v) for k, v in (edges or {}).items()}
+    def __init__(self, edges: Dict[str, List[str]] | None = None,
+                 labels: Optional[Dict[str, Dict[str, str]]] = None, **_kwargs: Any) -> None:
+        self.edges_map = {str(k): list(v) for k, v in (edges or {}).items()}
         self.labels = labels or {}
+        self.size = {"nodes": len(self.edges_map), "edges": sum(len(v) for v in self.edges_map.values())}
+        self.rng = _rng()
 
     def _mk(self, key: str) -> Dict[str, Any]:
         meta = self.labels.get(key, {})
-        return _node(key, meta.get("label", key), meta.get("pos", ""), meta.get("gloss", ""))
+        return self.node(key, meta.get("label", key), meta.get("pos", ""), meta.get("gloss", ""))
 
     def resolve(self, word: str) -> Optional[Dict[str, Any]]:
-        key = word.strip().lower()
+        key = self.key(str(word)) or str(word).strip().lower()
         return self._mk(key) if key in self.edges_map else None
 
-    def random_node(self, relations: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
-        return self._mk(RNG.choice(list(self.edges_map))) if self.edges_map else None
+    def random_node(self, relation_roles: Optional[set[str]] = None) -> Optional[Dict[str, Any]]:
+        choices = [key for key, values in self.edges_map.items()
+                   if values and (not relation_roles or "sequence" in relation_roles)]
+        return self._mk(self.rng.choice(choices)) if choices else None
 
     def edges(self, node: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
-        rel = "next"
-        return [(rel, self._mk(n)) for n in self.edges_map.get(node["id"], [])]
+        key = self.key(str(node.get("id") or ""))
+        return [("next", self._mk(str(n))) for n in self.edges_map.get(key or "", [])]
 
 
-GRAPHS = {"wordnet": WordNetGraph, "manual": ManualGraph}
+class CorpusGraph(Graph):
+    """An explicit, local corpus graph; no co-occurrence or runtime derivation."""
+    name = "corpus"
+    capabilities = {"resume", "gloss", "seeds"}
+
+    def __init__(self, corpus_name: str = "", **_kwargs: Any) -> None:
+        self.rng = _rng()
+        self.corpus_name = str(corpus_name or "").strip()
+        if not self.corpus_name:
+            raise GraphLoadError("unavailable", "no corpus graph named")
+        path = _data_dir() / "graphs" / f"{self.corpus_name}.json"
+        try:
+            raw = json.loads(path.read_text())
+        except Exception as exc:
+            raise GraphLoadError("unavailable", f"corpus '{self.corpus_name}' is unavailable") from exc
+        if not isinstance(raw, dict) or str(raw.get("name") or "") != self.corpus_name or not raw.get("source") or not raw.get("licence"):
+            raise GraphLoadError("unavailable", f"corpus '{self.corpus_name}' needs matching name, source and licence")
+        self.source, self.licence = str(raw["source"]), str(raw["licence"])
+        nodes, edges = raw.get("nodes") or {}, raw.get("edges") or []
+        if not isinstance(nodes, dict) or not isinstance(edges, list):
+            raise GraphLoadError("unavailable", f"corpus '{self.corpus_name}' has invalid explicit edges")
+        if len(nodes) > MAX_GRAPH_NODES or len(edges) > MAX_GRAPH_EDGES:
+            raise GraphLoadError("too_large", f"corpus '{self.corpus_name}' exceeds {MAX_GRAPH_NODES} nodes or {MAX_GRAPH_EDGES} edges")
+        self.nodes = {str(key): (meta if isinstance(meta, dict) else {}) for key, meta in nodes.items()}
+        self.edges_map: Dict[str, List[Tuple[str, str]]] = {key: [] for key in self.nodes}
+        self.relations = {}
+        for edge in edges:
+            if not isinstance(edge, dict):
+                raise GraphLoadError("unavailable", "corpus edges must be explicit objects")
+            src, dst, relation = str(edge.get("from") or ""), str(edge.get("to") or ""), str(edge.get("relation") or "")
+            role = str(edge.get("role") or ("sequence" if relation in {"next", "follows", "contains"} else "lateral"))
+            if src not in self.nodes or dst not in self.nodes or not relation or role not in ROLE_VOCABULARY:
+                raise GraphLoadError("unavailable", "corpus edge is invalid")
+            self.edges_map[src].append((relation, dst)); self.relations[relation] = role
+        self.size = {"nodes": len(self.nodes), "edges": len(edges)}
+        if not self.nodes or not any(self.edges_map.values()):
+            raise GraphLoadError("empty", f"corpus '{self.corpus_name}' has no usable edges")
+
+    def _mk(self, key: str) -> Dict[str, Any]:
+        meta = self.nodes[key]
+        return self.node(key, str(meta.get("label") or key), str(meta.get("pos") or ""), str(meta.get("gloss") or ""))
+
+    def resolve(self, word: str) -> Optional[Dict[str, Any]]:
+        key = self.key(str(word)) or str(word).strip()
+        if key not in self.nodes:
+            key = next((k for k, meta in self.nodes.items() if str(meta.get("label") or k).lower() == str(word).lower()), "")
+        return self._mk(key) if key in self.nodes else None
+
+    def random_node(self, relation_roles: Optional[set[str]] = None) -> Optional[Dict[str, Any]]:
+        choices = [key for key, edges in self.edges_map.items() if any(
+            not relation_roles or self.relations[relation] in relation_roles for relation, _ in edges)]
+        return self._mk(self.rng.choice(choices)) if choices else None
+
+    def edges(self, node: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
+        key = self.key(str(node.get("id") or ""))
+        return [(relation, self._mk(dst)) for relation, dst in self.edges_map.get(key or "", [])]
+
+
+GRAPH_REGISTRY: Dict[str, Type[Graph]] = {}
+GRAPHS = GRAPH_REGISTRY  # compatibility alias; providers now register through the validation path.
+
+
+def register_graph(name: str, provider: Type[Graph]) -> None:
+    key = str(name).strip().lower()
+    if not key or key != getattr(provider, "name", None):
+        raise ValueError("a graph provider name must match its registry key")
+    GRAPH_REGISTRY[key] = provider
+
+
+def unregister_graph(name: str) -> None:
+    GRAPH_REGISTRY.pop(str(name).strip().lower(), None)
+
+
+def _unknown_graph(name: str) -> ValueError:
+    return ValueError(f"unknown graph '{name}' (known: {', '.join(GRAPH_REGISTRY)})")
+
+
+def make_graph(name: str, **kwargs: Any) -> Graph:
+    key = str(name or "wordnet").strip().lower()
+    provider = GRAPH_REGISTRY.get(key)
+    if provider is None:
+        raise _unknown_graph(key)
+    return provider(**kwargs)
+
+
+for _provider in (WordNetGraph, ManualGraph, CorpusGraph):
+    register_graph(_provider.name, _provider)
 
 
 # ----------------------------------------------------------------------- walk
@@ -370,13 +445,24 @@ class GraphWalk:
         self.spec = dict(spec)
         self.name = str(spec.get("name") or "wander")
         self.cursor_path = cursor_path
-        self.graph_name = spec.get("graph", "wordnet")
-        if self.graph_name == "manual":
-            self.graph: Graph = ManualGraph(spec.get("edges", {}), spec.get("labels"))
+        self.graph_name = str(spec.get("graph", "wordnet")).lower()
+        self.rng = _rng()
+        try:
+            self.graph = make_graph(self.graph_name, edges=spec.get("edges", {}), labels=spec.get("labels"),
+                                    corpus_name=spec.get("corpus") or spec.get("name", ""))
+            self.graph_error: GraphLoadError | None = None
+        except GraphLoadError as exc:
+            self.graph = None  # loaded lazily enough that a state can say the failure, not crash
+            self.graph_error = exc
+        if self.graph is not None:
+            self.roles = set(spec.get("roles") or [])
+            if self.roles - ROLE_VOCABULARY:
+                raise ValueError(f"unknown graph roles: {', '.join(sorted(self.roles - ROLE_VOCABULARY))}")
+            self.relations = list(spec.get("relations") or [relation for relation, role in self.graph.relations.items()
+                                                             if not self.roles or role in self.roles])
         else:
-            self.graph = GRAPHS[self.graph_name]()
-        default_rel = ["next"] if self.graph_name == "manual" else ALL_RELATIONS
-        self.relations = spec.get("relations") or default_rel
+            self.roles = set(spec.get("roles") or [])
+            self.relations = list(spec.get("relations") or [])
         self.avoid_backtrack = bool(spec.get("avoid_backtrack", True))
         self.seed_spec = spec.get("seed") or {"mode": "continue"}
         self.jump = spec.get("jump")
@@ -417,7 +503,16 @@ class GraphWalk:
         self.cursor_path.write_text(json.dumps(data))
 
     # -- where we are
+    def _failure(self) -> str:
+        if self.graph_error is not None:
+            return f"walk unavailable · graph '{self.graph_name}' {self.graph_error.mode} · {self.graph_error.detail}"
+        if self.jump in {"far", "vault", "orbit", "composite"} and (self.graph is None or "far" not in self.graph.capabilities):
+            return f"walk unavailable · graph '{self.graph_name}' cannot jump (no_far) · use wander or supply far_from"
+        return ""
+
     def start_node(self) -> Optional[Dict[str, Any]]:
+        if self.graph is None:
+            return None
         mode = (self.seed_spec or {}).get("mode", "continue")
         # a seed places the first step; after that the walk continues from its cursor
         cur = self._read_cursor().get("node")
@@ -433,9 +528,9 @@ class GraphWalk:
             return self.graph.resolve(str(self.seed_spec.get("node", "")))
         if mode == "word":
             return (self.graph.resolve(str(self.seed_spec.get("word", "")))
-                    or self.graph.random_node(self.relations))
+                    or self.graph.random_node(self.roles))
         if mode == "random":
-            return self.graph.random_node(self.relations)
+            return self.graph.random_node(self.roles)
         # `continue` with no cursor, and the new `project` mode, draw from the mix:
         # 50 % the repository, 30 % the conversation, 20 % deliberately unrelated.
         try:
@@ -451,7 +546,7 @@ class GraphWalk:
                     return resolved
         except Exception:
             pass
-        return self.graph.random_node(self.relations)
+        return self.graph.random_node(self.roles)
 
     def _used_terms(self) -> List[str]:
         try:
@@ -461,9 +556,12 @@ class GraphWalk:
 
     def step(self, steps: int = 1) -> List[str]:
         self._seed_marker = ""
+        failure = self._failure()
+        if failure:
+            return [failure]
         node = self.start_node()
         if node is None:
-            return [f"walk unavailable · graph '{self.graph_name}' has no starting node"]
+            return [f"walk unavailable · graph '{self.graph_name}' empty · has no starting node"]
         prev_id = self._read_cursor().get("prev", "")
         prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
         # The goal is distant *and connected*: distance without a path back is noise. The
@@ -506,7 +604,7 @@ class GraphWalk:
             if not cands:
                 return None
             fresh = [c for c in cands if unseen(c[1] if isinstance(c, tuple) else c)]
-            return RNG.choice(fresh) if fresh else RNG.choice(cands)
+            return self.rng.choice(fresh) if fresh else self.rng.choice(cands)
 
         def far_fresh(node_, avoid=None, tries: int = 5):
             """`far_from` returns one node; ask a few times so there is something to choose."""
@@ -542,15 +640,18 @@ class GraphWalk:
                 # so a running walk lit nothing while serving a concept per hop.
                 origin = engine.current_origin() or {}
                 history.notice(str(node_.get("label") or ""), move="walk",
-                               session=str(origin.get("session_id") or ""))
+                               session=str(origin.get("session_id") or ""), kind=self.graph_name,
+                               key=str(node_.get("id") or ""), provenance_source=str(node_.get("source") or ""),
+                               licence=str(node_.get("licence") or ""))
             except Exception:
                 pass
 
         def line(a, b, how, jumped: bool = False):
             gloss = (b.get("gloss") or "").split(";")[0][:90]
             remember(b)
+            graph_tag = f" · {self.graph_name}" if self.graph_name != "wordnet" else ""
             return (f"{a['label']} ({a['pos'] or 'thing'}) → {b['label']} "
-                    f"({b['pos'] or 'thing'}) · {how}"
+                    f"({b['pos'] or 'thing'}) · {how}{graph_tag}"
                     + (f" · “{gloss}”" if gloss else "") + back(jumped) + visited(b))
 
         def mode_at(n):
@@ -602,7 +703,7 @@ class GraphWalk:
                                 if r in self.relations and c["id"] != walked]
                         if not opts:
                             break
-                        rel, nxt = RNG.choice(opts)
+                        rel, nxt = self.rng.choice(opts)
                         rels.append(rel)
                         walked, chain = chain[-1]["id"], chain + [nxt]
                     if len(chain) > 2:
@@ -678,14 +779,15 @@ class GraphWalk:
                     prev_id, node = node["id"], restart
                     continue
             choice = pick([(r, n) for r, n in (forward or options)])
-            rel, nxt = choice if choice else RNG.choice(forward or options)
+            rel, nxt = choice if choice else self.rng.choice(forward or options)
             gloss = (nxt.get("gloss") or "").split(";")[0][:90]
             hops += 1
             if nxt["label"] not in trail:
                 trail.append(nxt["label"])
             remember(nxt)
             out.append(f"{node['label']} ({node['pos'] or 'thing'}) → {nxt['label']} ({nxt['pos'] or 'thing'})"
-                       f" · took its {rel}" + (f" · “{gloss}”" if gloss else "") + back()
+                       f" · took its {rel}" + (f" · {self.graph_name}" if self.graph_name != "wordnet" else "")
+                       + (f" · “{gloss}”" if gloss else "") + back()
                        + visited(nxt))
             prev_id, node = node["id"], nxt
         if out and prefix:
@@ -794,7 +896,25 @@ def get(name: str, cursor_path: Path | None = None) -> GraphWalk:
     raise ValueError(f"no such walk: {name!r} · try: {', '.join(names(cursor_path))}")
 
 
-def save(spec: Dict[str, Any], cursor_path: Path | None = None) -> Dict[str, Any]:
+def _graph_requirements(spec: Dict[str, Any]) -> None:
+    graph_name = str(spec.get("graph") or "wordnet").strip().lower()
+    if graph_name not in GRAPH_REGISTRY:
+        raise _unknown_graph(graph_name)
+    jump = spec.get("jump")
+    if jump in {"far", "vault", "orbit", "composite"} and "far" not in GRAPH_REGISTRY[graph_name].capabilities:
+        raise ValueError(f"graph '{graph_name}' cannot jump (no_far) · use wander or supply far_from")
+
+
+def entry_error(name: str, cursor_path: Path | None = None) -> str:
+    """The capability failure an entry point can return before it starts a state."""
+    try:
+        walk = get(name, cursor_path)
+    except (ValueError, GraphLoadError) as exc:
+        return str(exc)
+    return walk._failure().replace("walk unavailable · ", "")
+
+
+def save(spec: Dict[str, Any], cursor_path: Path | None = None, validate: bool = True) -> Dict[str, Any]:
     cursor_path = cursor_path or cursor_path_default()
     name = str(spec.get("name") or "").strip().lower().replace(" ", "-")
     if not name:
@@ -802,6 +922,8 @@ def save(spec: Dict[str, Any], cursor_path: Path | None = None) -> Dict[str, Any
     if name in BUILTIN:
         raise ValueError(f"'{name}' is a built-in walk; pick another name")
     spec = dict(spec, name=name)
+    if validate:
+        _graph_requirements(spec)
     if spec.get("graph") == "manual" and not spec.get("edges"):
         raise ValueError("graph 'manual' needs an 'edges' map")
     directory = walks_dir(cursor_path)

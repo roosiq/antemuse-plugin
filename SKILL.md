@@ -18,9 +18,9 @@ A state is a bounded change to how the agent behaves, not a place it goes.
 /walk [graph]        /explore        /return
 ```
 
-That is the whole command surface — three verbs, nothing else. `walk` is the only
-state the agent enters: six hops, one bought per turn, recorded for the pane and
-never injected into the turn. `/explore` is the one state a person drives: it has
+That is the whole command surface — three verbs, nothing else. `/walk` is the only
+state the agent enters: six hops on its declared graph provider (WordNet by default), one bought
+per turn, recorded for the pane and never injected into the turn. `/explore` is the one state a person drives: it has
 no dose and no end of its own, the cockpit is the map, and what you keep is
 counted (`K` keeps, `T` drops, `tools/hit_rate.py` reports the rate). It closes
 when they type `/return`, and the account names the concepts they picked, by count. A person's own

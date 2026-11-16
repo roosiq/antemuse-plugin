@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS concepts (
     kind TEXT NOT NULL,
     key TEXT NOT NULL,
     label TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT '',
+    licence TEXT NOT NULL DEFAULT '',
     first_seen REAL NOT NULL,
     last_seen REAL NOT NULL,
     times INTEGER NOT NULL DEFAULT 1,
@@ -132,6 +134,11 @@ def _connect() -> Optional[sqlite3.Connection]:
         path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(path), timeout=3.0)
         conn.executescript(SCHEMA)
+        # Old ledgers predate walk-graph provenance. Additive migration keeps them readable.
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(concepts)")}
+        for name in ("source", "licence"):
+            if name not in columns:
+                conn.execute(f"ALTER TABLE concepts ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
         return conn
     except Exception as exc:
         _note_failure(f"concept ledger unavailable · {str(exc).splitlines()[0][:80]}")
@@ -197,7 +204,7 @@ def active_session() -> str:
 
 def notice(term: str, move: str = "", session: str = "", kind: str = "",
            key: str = "", at: Optional[float] = None, ref: str = "",
-           source: str = "message") -> None:
+           source: str = "message", provenance_source: str = "", licence: str = "") -> None:
     """Record one sighting. Cheap, idempotent per (kind, key), and never raises."""
     now = at or time.time()
     session = session or active_session()
@@ -211,11 +218,13 @@ def notice(term: str, move: str = "", session: str = "", kind: str = "",
     try:
         with conn:
             conn.execute(
-                """INSERT INTO concepts(kind, key, label, first_seen, last_seen, times)
-                   VALUES(?,?,?,?,?,1)
+                """INSERT INTO concepts(kind, key, label, source, licence, first_seen, last_seen, times)
+                   VALUES(?,?,?,?,?,?,?,1)
                    ON CONFLICT(kind, key) DO UPDATE SET
-                     last_seen=excluded.last_seen, times=times+1""",
-                (kind, key, label[:MAX_TERM], now, now))
+                     last_seen=excluded.last_seen, times=times+1,
+                     source=CASE WHEN excluded.source != '' THEN excluded.source ELSE source END,
+                     licence=CASE WHEN excluded.licence != '' THEN excluded.licence ELSE licence END""",
+                (kind, key, label[:MAX_TERM], provenance_source if kind else "", licence if kind else "", now, now))
             cid = conn.execute("SELECT id FROM concepts WHERE kind=? AND key=?",
                                (kind, key)).fetchone()[0]
             conn.execute("INSERT INTO served(concept_id, move, session, at) VALUES(?,?,?,?)",

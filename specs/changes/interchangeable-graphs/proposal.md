@@ -1,7 +1,7 @@
 # Interchangeable concept graphs
 
 Change id: `interchangeable-graphs`
-Status: **proposed — gate 1, no code written**
+Status: **implemented — 2026-11-16 (v0.11.20)**
 
 ## The situation
 
@@ -117,8 +117,8 @@ the graph name when it is not `wordnet`, because "we walked a corpus you gave us
 
 **R7 — the corpus provider.** A file-per-graph format in `$ANTEMUSE_STATES_HOME/graphs/`:
 `{"name": "onboarding", "source": "...", "licence": "...", "nodes": {...}, "edges": [...]}` with
-co-occurrence or explicit edges, capped by the same limits as the ledger graph. It must pass the
-provider contract tests without special cases in the engine.
+explicit edges, capped by the same limits as the ledger graph. It must pass the provider contract
+tests without special cases in the engine.
 
 **R8 — limits.** Providers declare `size` and load lazily; a graph over the cap is rejected at load
 with a message, never truncated silently. WordNet's 117,659 synsets remain an offline projection, not
@@ -174,10 +174,10 @@ walk paragraph stops implying WordNet is the only graph.
   and the examples reproducible, and makes a real walk repeatable — which some users will like and
   others will read as "it's the same walk every time". It is opt-in by env var for exactly that
   reason.
-- **A corpus graph invites graphs that are not meaningfully connected.** Co-occurrence edges are
-  cheap and often trivial. The failure is honest (R12 wording) but the product risk is that a bad
-  corpus produces bad walks and the user blames the walk. `specs/product/states.md` says this
-  plainly instead of hiding it.
+- **A corpus graph invites paths that are only as meaningful as the corpus.** Explicit edges can
+  still encode a weak or misleading relationship. The failure is honest (R12 wording), but the
+  product risk is that a bad corpus produces bad walks and the user blames the walk.
+  `specs/product/states.md` says this plainly instead of hiding it.
 - **Provenance adds a field to every node**, which touches the node shape used by the pane's payload
   builder if it is ever shared. It is not shared today; the spec forbids making it shared in this
   change.
@@ -186,9 +186,14 @@ walk paragraph stops implying WordNet is the only graph.
 
 1. **Corpus edges**: derive co-occurrence automatically from supplied text, or require explicit
    edges (the `manual` format already does this)? Automatic is friendlier and much weaker.
+   **Decision (2026-11-16):** Require explicit edges. The corpus provider does not derive runtime
+   co-occurrence edges.
 2. **Scope of R7**: is a corpus provider in scope for this release, or should this change land only
    the interface + capability/provenance/determinism rules, with the corpus provider as its own
    follow-up? The interface is verifiable with a test-only stub; the corpus provider is what proves
    it in public.
+   **Decision (2026-11-16):** The corpus provider is in scope for this change.
 3. **Third-party providers (Tier 3)**: manifest-declared factory path with a sandbox rule, or
    forever out of scope? I would keep it out and say so, so nobody designs for it.
+   **Decision (2026-11-16):** Tier 3 manifest-declared factory providers are out of scope for this
+   change.

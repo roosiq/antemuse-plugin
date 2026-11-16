@@ -19,6 +19,8 @@ provider or dose, the person selects concepts, and only `/return` ends it.
 | `/walk` | 6 hops | open by default | none | complete, dry, failed, or returned |
 | `/explore` | open | open | the person's picks are accounted, not injected | returned |
 
+A walk moves on its declared graph provider: the bundled provider is WordNet; a corpus graph moves on the user's own material and its path is only as meaningful as that corpus; when the provider is not WordNet, the journal and account name it.
+
 A walk ends `complete` only after all six hops have been delivered and shown. It ends
 `dry` after no new material is available, and `failed` when its provider cannot
 produce material. Each ending writes exactly one account and one `moves` ledger row.

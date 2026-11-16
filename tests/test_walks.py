@@ -129,13 +129,19 @@ def test_an_outer_hop_is_a_jump_but_never_an_unrelated_word(cursor):
     graph = walks.WordNetGraph()
     node = graph.resolve("hand")
     assert node is not None
-    cur = wn.synset(node["id"])
+    cur = wn.synset(graph.key(node["id"]) or node["id"])
 
     def sim(other):
         if other is None:
             return None
-        v = cur.path_similarity(wn.synset(other["id"]))
-        return None if v is None else float(v)
+        try:
+            cand_syn = wn.synset(graph.key(other["id"]) or other["id"])
+            if cand_syn is None:
+                return None
+            v = cur.path_similarity(cand_syn)
+            return None if v is None else float(v)
+        except Exception:
+            return None
 
     steps = [sim(graph.resume(child["id"])) for _rel, child in graph.edges(node)]
     steps = [s for s in steps if s is not None]

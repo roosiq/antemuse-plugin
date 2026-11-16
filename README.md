@@ -2,8 +2,7 @@
 
 **Take a walk while the work continues.**
 
-Antemuse has one agent state: **walk**. A walk follows six WordNet hops while the
-agent continues the task with its tools open. The path is visible in the pane but is
+Antemuse has one agent state: **walk**. A walk follows six hops on its declared graph provider (WordNet by default) while the agent continues the task with its tools open. The path is visible in the pane but is
 not injected as material; it changes the frame, not the facts in the next reply.
 
 `/explore` is separate. It is person-driven: the cockpit shows the concept map, the

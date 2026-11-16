@@ -99,7 +99,7 @@ def test_an_old_cursor_is_not_where_you_left_off():
     path.write_text(json.dumps({"outer": {"node": old, "prev": "", "at": time.time()}}))
     fresh = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, path)
     again = fresh.start_node()
-    assert again is not None and again["id"] == old, "a cursor from this sitting still resumes"
+    assert again is not None and again["id"] == f"wordnet:{old}", "a cursor from this sitting still resumes"
 
 
 def test_a_walk_that_raises_serves_no_material(monkeypatch):

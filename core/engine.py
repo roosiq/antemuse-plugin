@@ -710,7 +710,14 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         return f"no such state. try: {', '.join(states.STATES)}"
     from . import sources
     if spec_key != "explore":
-        why_not = sources.ready(spec_key)
+        graph_name = "wordnet"
+        if spec_key == "walk" and walk:
+            try:
+                from . import walks
+                graph_name = str(walks.get(str(walk).strip().lower()).graph_name)
+            except Exception:
+                pass
+        why_not = sources.ready(spec_key, graph_name)
         if why_not:
             return f"cannot enter {spec_key} · {why_not}"
     spec = states.spec(spec_key)
@@ -721,6 +728,10 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         wanted = str(walk).strip().lower()
         if wanted and wanted not in walks.names():
             return (f"no such walk: {wanted!r} · try: {', '.join(walks.names())}")
+        if wanted:
+            problem = walks.entry_error(wanted)
+            if problem:
+                return f"WALKING · {problem}"
     # Convenience kwargs for the two policy arguments, so an entry can be closed
     # without building an options dict by hand. They are recorded in the same place
     # the tool handler records them, and nowhere else.

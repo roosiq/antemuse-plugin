@@ -14,5 +14,6 @@ Related material:
 - `docs/design/APP_FLOW.md` — the drawn state lifecycle.
 - `specs/changes/` — active change records and acceptance evidence; superseded records live under
   `specs/changes/historical/`.
+  - `interchangeable-graphs/` — approved and in progress: interchangeable walk graph providers.
 
 If a product spec and the code disagree, the spec is stale until proven otherwise.
