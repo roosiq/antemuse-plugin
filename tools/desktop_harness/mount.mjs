@@ -248,6 +248,24 @@ assert.equal(failed.contract, '')
   await helpers.fileFlight(ctx, { trail: ['lighthouse'] })
   assert.equal(window.__flightPost.ok, true, 'a successful post was not recorded')
 
+  // The fallback branch: a host with no `ctx.rest` posts through `window.fetch`, and that door
+  // has to say why it failed too — it is the one a plugin without the host helper reaches.
+  {
+    const seen = []
+    const realFetch = window.fetch
+    window.fetch = (url, opts) => { seen.push({ url, opts }); return Promise.reject(new Error('503 misconfigured')) }
+    await helpers.fileFlight({}, { trail: ['harpoon'] })
+    assert.equal(seen.length, 1, 'the fallback never posted')
+    assert.match(String(seen[0].url), /\/api\/plugins\/antemuse\/flight$/)
+    assert.equal(window.__flightPost.ok, false, 'the fallback swallowed a refusal')
+    assert.match(String(window.__flightPost.detail), /503/, 'the fallback did not keep the reason')
+
+    window.fetch = (url, opts) => { seen.push({ url, opts }); return Promise.resolve({ ok: true }) }
+    await helpers.fileFlight({}, { trail: ['lighthouse'] })
+    assert.equal(window.__flightPost.ok, true, 'the fallback hid a success')
+    window.fetch = realFetch
+  }
+
   // No cockpit, no note — a call without a flight must not post a phantom.
   posts.length = 0
   helpers.fileFlight(ctx, null)

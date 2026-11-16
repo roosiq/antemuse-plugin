@@ -4263,11 +4263,16 @@ export function fileFlight(ctx, left) {
         .catch((err) => { record(false, String(err && err.message ? err.message : err)); })
     }
     if (where && typeof where.fetch === 'function') {
+      // The same record on the branch a host reaches when it has no `ctx.rest`: this is the
+      // fallback that exists *because* the primary door can be missing, so leaving it silent
+      // meant the one path most likely to fail was the one that never said why.
       return where.fetch(`/api/plugins/${ID}/flight`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload)
-      }).catch(() => {})
+      })
+        .then((res) => { record(true, res); return res })
+        .catch((err) => { record(false, String(err && err.message ? err.message : err)); })
     }
   } catch (e) { /* a note that cannot be filed must not stop the exit */ }
   return null
