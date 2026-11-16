@@ -213,6 +213,35 @@ assert.equal(failed.counts, '', 'stale counts must not sit under an error')
 assert.equal(failed.clock, '')
 assert.equal(failed.contract, '')
 
+// ---- the flight is filed by the exit, and only by the exit ------------------
+//
+// Escape hands the mouse back and stays, so the drawn button is the only door out, and
+// `fileFlight` is the only writer. The cockpit itself cannot be mounted here (jsdom has no
+// canvas backend), so the posting is exercised as the function the button calls; that the
+// button reaches it is asserted in tests/test_cockpit_pane.py.
+
+{
+  const posts = []
+  const ctx = { session: 's-harness', rest: (path, opts) => { posts.push({ path, opts }); return Promise.resolve({ ok: true }) } }
+  helpers.fileFlight(ctx, { trail: ['harpoon', 'lighthouse'], kept: ['harpoon'], dropped: ['lighthouse'] })
+  assert.equal(posts.length, 1, 'the exit did not file the flight')
+  assert.equal(posts[0].path, '/flight')
+  assert.equal(posts[0].opts.method, 'POST')
+  assert.deepEqual(posts[0].opts.body.trail, ['harpoon', 'lighthouse'])
+  assert.deepEqual(posts[0].opts.body.kept, ['harpoon'])
+  assert.equal(posts[0].opts.body.session, 's-harness')
+
+  // A flight nobody touched still posts: the server treats an empty trail as nothing to file,
+  // and the pane should not be the thing deciding what counts as work.
+  helpers.fileFlight(ctx, { trail: [], kept: [], dropped: [] })
+  assert.equal(posts.length, 2, 'an empty flight was dropped instead of filed')
+
+  // No cockpit, no note — a call without a flight must not post a phantom.
+  posts.length = 0
+  helpers.fileFlight(ctx, null)
+  assert.equal(posts.length, 0, 'a missing flight was posted as if it were one')
+}
+
 // ---- an active state, mounted ----------------------------------------------
 
 resetBody()

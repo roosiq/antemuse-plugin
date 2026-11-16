@@ -347,7 +347,8 @@ def test_the_cockpit_names_the_current_concept_and_records_a_verdict():
 
 
 def test_the_cockpit_has_a_door():
-    """A first-person view with no exit is a trap: tab in, and nothing gets you out.
+    """There are two doors and they do different things: Escape returns the mouse, the
+    drawn button leaves and files the flight.
 
     Escape used to only release the pointer — so in a pane that never held one, the key did
     nothing at all, and there was no button, no key and no hint. The first version of this
@@ -357,11 +358,14 @@ def test_the_cockpit_has_a_door():
     """
     js = PLUGIN.read_text()
 
-    # 1. the Escape branch itself must leave, not merely stop the pointer
+    # 1. Escape hands the mouse back and stays: capture is sticky, so it is the only key that
+    #    returns the cursor without ending the flight. The exit is the drawn button.
     branch = js[js.index("k === 'escape'"):]
     branch = branch[:branch.index("const onKeyUp")]
-    assert "onExit()" in branch, "Escape releases the pointer but never leaves the cockpit"
+    assert "engaged = false" in branch, "Escape leaves the mouse captured"
     assert "state.firing = false" in branch, "Escape leaves the trigger on"
+    assert "onExit()" not in branch, "Escape skips straight past the cockpit"
+    assert "onFlight" not in branch, "Escape filed the flight instead of handing the mouse back"
 
     # 2. the drawn control is a real button wired to the same exit
     button = js[js.index("const exitButton = "):]
@@ -375,11 +379,16 @@ def test_the_cockpit_has_a_door():
     leave = leave[:leave.index("const exitButton = ")]
     assert "takeFlight()" in leave and "postFlight(took)" in leave, "the exit throws the flight away"
     assert "onExit()" in leave, "the exit does not leave"
+    # the posting itself is a function, so a harness without a canvas can open it
+    file_fn = js[js.index("export function fileFlight("):]
+    file_fn = file_fn[:file_fn.index("function CockpitPane(")]
+    assert "ctx.rest('/flight'" in file_fn, "the flight is posted nowhere"
+    assert "method: 'POST'" in file_fn
 
     # 3. the idle hint names it, so the key is discoverable without clicking
     hint = js[js.index("const hint = engaged"):]
     hint = hint[:hint.index("const hitNotice")]
-    assert "esc exits" in hint, "the hint line never mentions the way out"
+    assert "esc frees the mouse" in hint, "the hint line never says what Escape does"
 
 
 def test_the_mouse_stays_captured_after_the_button_is_released():

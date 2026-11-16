@@ -331,10 +331,15 @@ def main() -> int:
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(120)
                 after = page.evaluate("__cockpit.stats()")
-                check("exit: Escape asks to be left",
-                      page.evaluate("window.__exited || 0") > exited,
+                # Escape returns the mouse and nothing else: capture is sticky, so this is the
+                # only key that gives the cursor back without ending the flight.
+                check("escape: the mouse is handed back", after["pointer"] is False, f"pointer={after['pointer']}")
+                check("escape: it does not leave",
+                      page.evaluate("window.__exited || 0") == exited,
                       f"__exited={page.evaluate('window.__exited || 0')}")
-                check("exit: Escape stops the trigger", after["firing"] is False, f"firing={after['firing']}")
+                check("escape: it stops the trigger", after["firing"] is False, f"firing={after['firing']}")
+                check("escape: it files nothing", not page.evaluate("window.__flights || []"),
+                      f"flights={page.evaluate('window.__flights || []')}")
 
                 # Capture is sticky: a press takes the mouse and releasing the button must not
                 # give it back. Steering that needs the button held is what a person reports
@@ -473,13 +478,13 @@ def main() -> int:
                 page.wait_for_timeout(200)
                 page.mouse.up()
                 page.wait_for_timeout(150)
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(150)
-                flights = page.evaluate("window.__flights || []")
-                check("exit: the flight is handed over", len(flights) == 1, f"flights={len(flights)}")
-                check("exit: the trail names what was hit",
-                      bool(flights) and target["label"] in (flights[0].get("trail") or []),
-                      f"trail={flights[0].get('trail') if flights else None}")
+                # The button in the pane is the exit, and it is not in this DOM: what this
+                # harness can hold is that the flight is still there to be taken, with the label
+                # that was hit. The button's own wiring is asserted in tools/desktop_harness.
+                taken = page.evaluate("__cockpit.takeFlight()")
+                check("exit: the trail is waiting to be taken",
+                      target["label"] in (taken.get("trail") or []), f"trail={taken.get('trail')}")
+                check("exit: taking it empties it", not page.evaluate("__cockpit.takeFlight().trail"), "trail kept")
 
             # frames stop after destroy
             page.evaluate("__cockpit.destroy()")

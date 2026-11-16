@@ -3888,18 +3888,17 @@ function createCockpit({ ctx, el, callbacks }) {
     else if (k === '0' || k === 'home') { resetFlight() }
     else if (k === 'c') { state.catchList = []; onCatch([]); draw() }
     else if (k === 'escape') {
-      // Escape is the way out, in the order a person expects it: drop the pointer if we
-      // have it, then leave the cockpit. It used to only release the pointer, so a pane
-      // with no capture to release swallowed the key and there was no exit at all.
+      // Escape hands the mouse back and nothing else. Capture is sticky now, so this is the
+      // only key that gives the cursor back without ending the flight — leaving it to also
+      // exit meant a person who wanted their mouse back lost the view they were looking at.
+      // The exit button is the exit: it is drawn in the corner and it files the flight.
       if (lockActive()) { try { doc.exitPointerLock() } catch (e) { /* gone */ } }
       state.firing = false
       held = null
       engaged = false
       drag = null
       try { el.style.cursor = 'crosshair' } catch (e) { /* gone */ }
-      const left = takeFlight()
-      if (left.trail.length) { try { callbacks && callbacks.onFlight && callbacks.onFlight(left) } catch (e) { /* gone */ } }
-      onExit()
+      draw()
     }
   }
   const onKeyUp = (ev) => {
@@ -4239,29 +4238,38 @@ function AntemuseScreen({ ctx, start }) {
 }
 
 /** The pane: a canvas, and the catches/selection as real text beside it. */
+/**
+ * File a flight. Escape hands the mouse back and stays, so the drawn exit button is the only
+ * door that leaves — which makes this the only place a flight is written down, and worth a
+ * function a harness can call without mounting a canvas.
+ */
+export function fileFlight(ctx, left) {
+  if (!left) return null
+  const payload = {
+    trail: left.trail || [], kept: left.kept || [], dropped: left.dropped || [],
+    session: (ctx && ctx.session) || ''
+  }
+  try {
+    if (ctx && typeof ctx.rest === 'function') {
+      return Promise.resolve(ctx.rest('/flight', { method: 'POST', body: payload })).catch(() => {})
+    }
+    if (typeof win.fetch === 'function') {
+      return win.fetch(`/api/plugins/${ID}/flight`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {})
+    }
+  } catch (e) { /* a note that cannot be filed must not stop the exit */ }
+  return null
+}
+
 function CockpitPane({ ctx, onExit }) {
   const cockpitRef = useRef(null)
 
   // Leaving is the moment the flight becomes material. A panel that closes silently is a
   // panel whose work was thrown away, which is what this used to do.
-  const postFlight = (left) => {
-    if (!left || !left.trail || !left.trail.length) return
-    const payload = {
-      trail: left.trail, kept: left.kept, dropped: left.dropped,
-      session: (ctx && ctx.session) || ''
-    }
-    try {
-      if (ctx && typeof ctx.rest === 'function') {
-        Promise.resolve(ctx.rest('/flight', { method: 'POST', body: payload })).catch(() => {})
-      } else if (typeof win.fetch === 'function') {
-        win.fetch(`/api/plugins/${ID}/flight`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {})
-      }
-    } catch (e) { /* a note that cannot be filed must not stop the exit */ }
-  }
+  const postFlight = (left) => fileFlight(ctx, left)
 
   const leave = () => {
     const took = cockpitRef.current ? cockpitRef.current.takeFlight() : null
@@ -4334,7 +4342,7 @@ function CockpitPane({ ctx, onExit }) {
           pointerEvents: 'none', textAlign: 'center', whiteSpace: 'nowrap',
           ...LABEL, letterSpacing: '0.18em'
         },
-        children: 'click to capture \u00b7 w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire \u00b7 esc exits'
+        children: 'click to capture \u00b7 w/s throttle \u00b7 a/d bank \u00b7 arrows turn \u00b7 f fire \u00b7 esc frees the mouse'
       })
 
   const hitNotice = notice
@@ -4445,7 +4453,7 @@ function CockpitPane({ ctx, onExit }) {
         onFocus: () => setEngaged(true),
         onBlur: () => setEngaged(false),
         role: 'application',
-        'aria-label': 'Concept cockpit. Click once to capture the mouse; while captured, moving turns the ship and the left button fires a stream. Escape releases and leaves. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse and leaves the cockpit.',
+        'aria-label': 'Concept cockpit. Click once to capture the mouse; while captured, moving turns the ship and the left button fires a stream. Escape releases the mouse; the exit button leaves and files the flight. W and S throttle, A and D bank, arrow keys turn and pitch, space opens the net, 0 returns home, Escape releases the mouse.',
         style: { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', cursor: 'crosshair', touchAction: 'none' }
       }),
       hint,
