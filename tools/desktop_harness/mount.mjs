@@ -142,6 +142,12 @@ async function mountWith(state, id = 'page') {
   return { ...wired, node }
 }
 
+// A React warning is a defect that ships quietly: the pane mounts, every assertion passes,
+// and the console says the children have no keys. Collect them and fail on them.
+const consoleErrors = []
+const realConsoleError = console.error
+console.error = (...args) => { consoleErrors.push(args.map(String).join(' ')); realConsoleError(...args) }
+
 // ---- registration -----------------------------------------------------------
 
 const registered = makeCtx({ payload: PAYLOAD })
@@ -273,6 +279,10 @@ assert.match(lostText, /the backend did not answer/)
 assert.doesNotMatch(lostText, /picked ·/, 'the pane must not print a count beside a failed answer')
 assert.doesNotMatch(lostText, /join only if it holds/, 'nor a contract from the payload it could not refresh')
 await act(async () => { lostAgain.node.unmount() })
+
+console.error = realConsoleError
+const keyWarnings = consoleErrors.filter((m) => /unique "key"/.test(m))
+assert.deepEqual(keyWarnings, [], 'React warned that children have no keys')
 
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))

@@ -4161,6 +4161,7 @@ function AntemuseScreen({ ctx, start }) {
     { id: 'cockpit', label: copy.cockpit }
   ]
   const strip = jsx('div', {
+    key: 'strip',
     role: 'tablist',
     style: {
       display: 'flex', gap: '2px', padding: '4px 10px 0', flex: '0 0 auto',
@@ -4190,10 +4191,11 @@ function AntemuseScreen({ ctx, start }) {
     children: [
       strip,
       jsx('div', {
+        key: 'body',
         style: { position: 'relative', flex: '1 1 auto', minHeight: 0 },
         children: tab === 'cockpit'
-          ? jsx(CockpitPane, { ctx, onExit: () => setTab('state') })
-          : jsx(StateView, { ctx })
+          ? jsx(CockpitPane, { key: 'cockpit', ctx, onExit: () => setTab('state') })
+          : jsx(StateView, { key: 'state', ctx })
       })
     ]
   })
@@ -4281,6 +4283,7 @@ function CockpitPane({ ctx, onExit }) {
 
   const list = caught.length
     ? jsx('ul', {
+        key: 'catch',
         className: 'antemuse-cockpit-catch',
         style: {
           position: 'absolute', left: '18px', bottom: '84px', margin: 0, padding: '6px 10px 7px',
