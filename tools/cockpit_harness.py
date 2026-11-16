@@ -160,7 +160,8 @@ window.__mk = (opts) => {
     el: cv,
     callbacks: {
       onCatch: (list) => { window.__caught = list.map(n => n.l) },
-      onTarget: (node) => { window.__locked = node ? node.l : null }
+      onTarget: (node) => { window.__locked = node ? node.l : null },
+      onExit: () => { window.__exited = (window.__exited || 0) + 1 }
     }
   })
   window.__cockpit = cockpit
@@ -316,6 +317,17 @@ def main() -> int:
                 # person can give.
                 check("look: holding owns the pointer", mid["pointer"] is True, f"pointer={mid['pointer']}")
                 page.mouse.up()
+                # The way out is behaviour, not a string in a file: Escape must ask the pane to
+                # be left, and must not leave the trigger on. A test that only looked for the
+                # word "onExit" stayed green with this call deleted.
+                exited = page.evaluate("window.__exited || 0")
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(120)
+                after = page.evaluate("__cockpit.stats()")
+                check("exit: Escape asks to be left",
+                      page.evaluate("window.__exited || 0") > exited,
+                      f"__exited={page.evaluate('window.__exited || 0')}")
+                check("exit: Escape stops the trigger", after["firing"] is False, f"firing={after['firing']}")
                 page.wait_for_timeout(1400)
                 st = page.evaluate("__cockpit.stats()")
                 picks = page.evaluate("__cockpit.picks()")

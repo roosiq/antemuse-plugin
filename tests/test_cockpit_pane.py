@@ -350,17 +350,27 @@ def test_the_cockpit_has_a_door():
     """A first-person view with no exit is a trap: tab in, and nothing gets you out.
 
     Escape used to only release the pointer — so in a pane that never held one, the key did
-    nothing at all, and there was no button, no key and no hint. Both are now wired, and the
-    control is drawn rather than only described.
+    nothing at all, and there was no button, no key and no hint. The first version of this
+    test counted `onExit()` across the whole file and passed with the Escape call deleted,
+    because the button and the teardown also call it. Both checks are now scoped to the code
+    they are about.
     """
     js = PLUGIN.read_text()
 
-    assert "onExit" in js, "the cockpit has no way to ask to be left"
-    assert js.count("onExit()") >= 2, "Escape and the button must both exit"
-    assert "esc exits" in js, "the hint line never mentions the way out"
-    # the button lives in the pane's own chrome, not in a comment
-    assert "aria-label': 'Leave the cockpit'" in js
+    # 1. the Escape branch itself must leave, not merely stop the pointer
+    branch = js[js.index("k === 'escape'"):]
+    branch = branch[:branch.index("const onKeyUp")]
+    assert "onExit()" in branch, "Escape releases the pointer but never leaves the cockpit"
+    assert "state.firing = false" in branch, "Escape leaves the trigger on"
 
-    block = js[js.index("function CockpitPane("):]
-    block = block[:block.index("export { createCockpit }")]
-    assert "type: 'button'" in block, "the exit is not a real control"
+    # 2. the drawn control is a real button wired to the same exit
+    button = js[js.index("const exitButton = "):]
+    button = button[:button.index("return jsxs(")]
+    assert "type: 'button'" in button, "the exit is not a real control"
+    assert "aria-label': 'Leave the cockpit'" in button
+    assert "onClick:" in button and "onExit()" in button, "the door is drawn but not hinged"
+
+    # 3. the idle hint names it, so the key is discoverable without clicking
+    hint = js[js.index("const hint = engaged"):]
+    hint = hint[:hint.index("const hitNotice")]
+    assert "esc exits" in hint, "the hint line never mentions the way out"
