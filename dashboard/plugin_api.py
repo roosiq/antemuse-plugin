@@ -436,6 +436,21 @@ def picks(body: Dict[str, Any] = Body(default=None)) -> Dict[str, Any]:
         return {"ok": False, "concepts": 0, "added": 0, "reason": f"{type(exc).__name__}: {exc}"[:120]}
 
 
+@router.post("/flight")
+# The pane leaves the cockpit and hands over what it flew through. A flight is a note, not a
+# state: no turns are spent and nothing is entered — the next turn reads it as residue.
+def flight(body: Dict[str, Any] = Body(default=None)) -> Dict[str, Any]:
+    payload = body if isinstance(body, dict) else {}
+    trail = payload.get("trail") if isinstance(payload.get("trail"), list) else []
+    try:
+        return plugin().core.engine.note_flight(
+            trail, kept=payload.get("kept"), dropped=payload.get("dropped"),
+            session=str(payload.get("session") or ""))
+    except Exception as exc:  # health: BLE001 -- a lost note must not break the exit
+        return {"ok": False, "concepts": 0, "added": 0,
+                "reason": f"{type(exc).__name__}: {exc}"[:120]}
+
+
 @router.get("/state")
 # The request is injected by FastAPI and optional so the route can be called directly in tests.
 def state(request: Request = None, session: str | None = None,
@@ -464,6 +479,10 @@ def state(request: Request = None, session: str | None = None,
     watch = plugin().core.engine.watch_state()
     payload = proj.project(watch, None)
     payload["picture"] = "pane"
+    try:
+        payload["flight"] = plugin().core.engine.flight_last()
+    except Exception:  # health: BLE001 -- a missing note is not a broken poll
+        payload["flight"] = None
     payload["plugin"] = _LOADED_VERSION          # the build this process actually loaded
     payload["server"] = f"{Path(__file__).stat().st_mtime_ns}"
     if with_graph:

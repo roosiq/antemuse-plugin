@@ -167,6 +167,7 @@ window.__mk = (opts) => {
     callbacks: {
       onCatch: (list) => { window.__caught = list.map(n => n.l) },
       onTarget: (node) => { window.__locked = node ? node.l : null },
+      onFlight: (left) => { (window.__flights = window.__flights || []).push(left) },
       onExit: () => { window.__exited = (window.__exited || 0) + 1 }
     }
   })
@@ -451,6 +452,34 @@ def main() -> int:
             if shot:
                 page.screenshot(path=shot)
                 print(f"shot: {shot}")
+
+            # leaving: the flight is handed over, not thrown away. A cockpit that closes
+            # silently is a cockpit whose work was wasted.
+            page.evaluate("__cockpit.home()")
+            page.wait_for_timeout(250)
+            target = page.evaluate("""() => {
+                const r = document.getElementById('cv').getBoundingClientRect()
+                for (let i = 0; i < 900; i++) {
+                  const s = __cockpit.screenOf('concept-' + i)
+                  if (s && s.x > r.left + 40 && s.y > r.top + 40 && s.x < r.right - 40 && s.y < r.bottom - 40) {
+                    return { label: 'concept-' + i, x: s.x, y: s.y }
+                  }
+                }
+                return null
+            }""")
+            if target:
+                page.mouse.move(target["x"], target["y"])
+                page.mouse.down()
+                page.wait_for_timeout(200)
+                page.mouse.up()
+                page.wait_for_timeout(150)
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(150)
+                flights = page.evaluate("window.__flights || []")
+                check("exit: the flight is handed over", len(flights) == 1, f"flights={len(flights)}")
+                check("exit: the trail names what was hit",
+                      bool(flights) and target["label"] in (flights[0].get("trail") or []),
+                      f"trail={flights[0].get('trail') if flights else None}")
 
             # frames stop after destroy
             page.evaluate("__cockpit.destroy()")

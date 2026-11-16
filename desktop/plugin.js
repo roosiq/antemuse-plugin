@@ -3709,6 +3709,9 @@ function createCockpit({ ctx, el, callbacks }) {
       }
       if (hitNode) {
         state.hits[hitNode.l] = (state.hits[hitNode.l] || 0) + 1
+        // The trail keeps the order it was flown: order is the only thing a route has that a
+        // bag of concepts does not.
+        if (flight.trail.indexOf(hitNode.l) < 0) flight.trail.push(hitNode.l)
         state.target = hitNode.l
         onTarget(hitNode)
         onName(hitNode.l, 'hit')
@@ -3746,6 +3749,16 @@ function createCockpit({ ctx, el, callbacks }) {
   // `setPointerCapture` keeps sending moves after the cursor leaves the canvas, which is the
   // whole of what steering needs, and needs no permission from anyone.
   let held = null
+  // What this flight touched, in order, plus the verdicts given while flying. Handed over on
+  // exit so the agent gets the result instead of the plugin throwing it away.
+  const flight = { trail: [], kept: [], dropped: [] }
+  const takeFlight = () => {
+    const out = { trail: flight.trail.slice(), kept: flight.kept.slice(), dropped: flight.dropped.slice() }
+    flight.trail.length = 0
+    flight.kept.length = 0
+    flight.dropped.length = 0
+    return out
+  }
   // Capture is sticky: one press takes the mouse, and it stays taken until Escape. Steering
   // that only worked while the button was down is not what a cockpit does — a person clicks
   // once, then moves the mouse and expects to turn.
@@ -3875,6 +3888,8 @@ function createCockpit({ ctx, el, callbacks }) {
       engaged = false
       drag = null
       try { el.style.cursor = 'crosshair' } catch (e) { /* gone */ }
+      const left = takeFlight()
+      if (left.trail.length) { try { callbacks && callbacks.onFlight && callbacks.onFlight(left) } catch (e) { /* gone */ } }
       onExit()
     }
   }
@@ -3981,6 +3996,19 @@ function createCockpit({ ctx, el, callbacks }) {
         speed: Math.hypot(state.cam.vx, state.cam.vy, state.cam.vz)
       }
     }),
+    /** Everything this flight touched, in order, with the verdicts — and then forget it. */
+    takeFlight: () => takeFlight(),
+    /** A keep or a trash given while flying. Verdicts are the product metric, so they ride along. */
+    noteVerdict: (label, verdict) => {
+      const name = String(label || '')
+      if (!name) return
+      const into = verdict === 'keep' ? flight.kept : (verdict === 'trash' ? flight.dropped : null)
+      if (!into) return
+      const other = verdict === 'keep' ? flight.dropped : flight.kept
+      const i = other.indexOf(name)
+      if (i >= 0) other.splice(i, 1)
+      if (into.indexOf(name) < 0) into.push(name)
+    },
     // Test seams: a harness drives the same functions the input handlers do.
     apply,
     resolveNet: () => resolveNet(basis()),
@@ -4203,6 +4231,34 @@ function AntemuseScreen({ ctx, start }) {
 
 /** The pane: a canvas, and the catches/selection as real text beside it. */
 function CockpitPane({ ctx, onExit }) {
+  const cockpitRef = useRef(null)
+
+  // Leaving is the moment the flight becomes material. A panel that closes silently is a
+  // panel whose work was thrown away, which is what this used to do.
+  const postFlight = (left) => {
+    if (!left || !left.trail || !left.trail.length) return
+    const payload = {
+      trail: left.trail, kept: left.kept, dropped: left.dropped,
+      session: (ctx && ctx.session) || ''
+    }
+    try {
+      if (ctx && typeof ctx.rest === 'function') {
+        Promise.resolve(ctx.rest('/flight', { method: 'POST', body: payload })).catch(() => {})
+      } else if (typeof win.fetch === 'function') {
+        win.fetch(`/api/plugins/${ID}/flight`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {})
+      }
+    } catch (e) { /* a note that cannot be filed must not stop the exit */ }
+  }
+
+  const leave = () => {
+    const took = cockpitRef.current ? cockpitRef.current.takeFlight() : null
+    postFlight(took)
+    if (typeof onExit === 'function') onExit()
+  }
   const canvasRef = useRef(null)
   const [caught, setCaught] = useState([])
   const [picks, setPicks] = useState([])
@@ -4229,6 +4285,8 @@ function CockpitPane({ ctx, onExit }) {
       ctx,
       el,
       callbacks: {
+        // Escape takes the same road as the button: hand the flight up, then leave.
+        onFlight: (left) => postFlight(left),
         onExit: () => { if (typeof onExit === 'function') onExit() },
         onCatch: (list) => setCaught(list.map((n) => ({ l: n.l, w: n.w }))),
         onTarget: () => {},
@@ -4247,7 +4305,9 @@ function CockpitPane({ ctx, onExit }) {
     // The same read-only handle the harness uses, exposed in the running app: a canvas-only
     // pane gives no way to tell "the pointer is not captured" from "the ship is not moving".
     try { window.__cockpit = cockpit } catch (e) { /* no window */ }
+    cockpitRef.current = cockpit
     return () => {
+      cockpitRef.current = null
       if (focusTimer) clearTimeout(focusTimer)
       try { if (window.__cockpit === cockpit) delete window.__cockpit } catch (e) { /* gone */ }
       cockpit.destroy()
@@ -4333,7 +4393,7 @@ function CockpitPane({ ctx, onExit }) {
   const exitButton = jsx('button', {
     key: 'exit',
     type: 'button',
-    onClick: () => { if (typeof onExit === 'function') onExit() },
+    onClick: () => leave(),
     title: 'Leave the cockpit and return to the state view (Esc)',
     'aria-label': 'Leave the cockpit',
     style: {
@@ -4386,7 +4446,11 @@ function CockpitPane({ ctx, onExit }) {
         ctx,
         named,
         onVerdict: (verdict) => {
-          if (named && named.label) setNamed({ ...named, source: verdict, at: Date.now() })
+          if (named && named.label) {
+            setNamed({ ...named, source: verdict, at: Date.now() })
+            // A keep or a trash given in flight belongs to the flight, not just to the readout.
+            if (cockpitRef.current) cockpitRef.current.noteVerdict(named.label, verdict)
+          }
         }
       }),
       list,

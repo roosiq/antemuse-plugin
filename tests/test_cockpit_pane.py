@@ -368,7 +368,13 @@ def test_the_cockpit_has_a_door():
     button = button[:button.index("return jsxs(")]
     assert "type: 'button'" in button, "the exit is not a real control"
     assert "aria-label': 'Leave the cockpit'" in button
-    assert "onClick:" in button and "onExit()" in button, "the door is drawn but not hinged"
+    assert "onClick:" in button and "leave()" in button, "the door is drawn but not hinged"
+
+    # 2b. leaving files the flight before it goes: the button and Escape hand over the trail
+    leave = js[js.index("const leave = () => {"):]
+    leave = leave[:leave.index("const exitButton = ")]
+    assert "takeFlight()" in leave and "postFlight(took)" in leave, "the exit throws the flight away"
+    assert "onExit()" in leave, "the exit does not leave"
 
     # 3. the idle hint names it, so the key is discoverable without clicking
     hint = js[js.index("const hint = engaged"):]

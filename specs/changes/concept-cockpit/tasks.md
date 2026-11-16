@@ -33,6 +33,7 @@ is "done" on a claim alone.
 
 ## T5 — Pointer capture with a safe release
 - [x] Press owns the pointer (document-level moves steer); `Escape` releases and leaves the cockpit; a drawn `exit · esc` button does the same; `destroy()` releases
+- [x] Leaving hands the flight over: `POST /flight` with the trail in flight order, plus the keeps and trashes given while flying. A flight is a note, not a state — it costs no turns, never touches `active`, appears in the next turn as residue, and `/state` returns it as `flight`
 - [x] Drag-look retained as the fallback when capture is refused
 - Evidence: `test_the_mouse_can_be_captured_and_released`; harness drag-look path.
 

@@ -12,7 +12,7 @@ import os
 import re
 import threading
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from . import history, states, storage
 
@@ -233,6 +233,77 @@ def note_pick(labels: List[str], session: str = "") -> Dict[str, Any]:
             except Exception as exc:  # health: BLE001 -- a broken ledger must not lose the count
                 logger.warning("antemuse: pick not written to the ledger: %s", exc)
     return {"ok": True, "concepts": len(seen), "added": added}
+
+
+def note_flight(trail: Any, kept: Any = None, dropped: Any = None,
+                session: str = "") -> Dict[str, Any]:
+    """Write down what a person flew through in the cockpit.
+
+    A flight is a *note*, not a state: it costs no turns, it never touches `active`, and the
+    next turn reads it as residue. Before this, a flight outside `/explore` was the one thing
+    the plugin produced and threw away — `note_pick()` answers `not exploring` and the cockpit
+    became a tab, so flying without entering a state is the ordinary case.
+
+    The trail keeps the order it was flown: order is the only thing a route has that a bag of
+    concepts does not. Repeats are counted but not repeated in the sentence.
+    """
+    labels: List[str] = []
+    seen: Dict[str, int] = {}
+    for raw in (trail if isinstance(trail, (list, tuple)) else []):
+        label = str(raw or "").strip()[:64]
+        if not label:
+            continue
+        if label not in seen:
+            labels.append(label)
+        seen[label] = seen.get(label, 0) + 1
+    if not labels:
+        return {"ok": True, "concepts": 0, "added": 0}
+
+    def _clean(group: Any) -> List[str]:
+        return [str(x or "").strip()[:64] for x in (group if isinstance(group, (list, tuple)) else [])
+                if str(x or "").strip()]
+
+    kept_clean = _clean(kept)
+    dropped_clean = _clean(dropped)
+    text = "you flew the map: " + " \u2192 ".join(labels[:8]) + (" \u2026" if len(labels) > 8 else "")
+    # Verdicts are the product metric, so they ride in the same sentence as the route.
+    if kept_clean:
+        text += " \u00b7 kept " + ", ".join(kept_clean[:4])
+    if dropped_clean:
+        text += " \u00b7 dropped " + ", ".join(dropped_clean[:4])
+    record = {
+        "concepts": len(labels),
+        "trail": labels[:12],
+        "kept": kept_clean[:12],
+        "dropped": dropped_clean[:12],
+        "hits": sum(seen.values()),
+        "at": time.time()
+    }
+    with _LOCK:
+        data = _load()
+        # Counts, never prose, and never a claim that a state is running: the note is what the
+        # next turn reacts to, and it expires like any other residue.
+        data.setdefault("residue", []).append({
+            "kind": "flight", "text": text, "turns_left": 2, "at": record["at"],
+            "state": None, "session": str(session or "")
+        })
+        _cap_residue(data)
+        data["last_flight"] = record
+        _save(data)
+    # The map should notice what a person chose with their own hands, whether or not a state was
+    # open. This is the row that moves the weights; `move="flight"` keeps the provenance honest.
+    for label in labels:
+        try:
+            history.notice(label, move="flight", session=session)
+        except Exception as exc:  # health: BLE001 -- a broken ledger must not lose the note
+            logger.warning("antemuse: flight not written to the ledger: %s", exc)
+    return {"ok": True, "concepts": len(labels), "added": len(labels)}
+
+
+def flight_last() -> Optional[Dict[str, Any]]:
+    """What the last cockpit flight was, as counts — `/state` shows it, the pane draws it."""
+    with _LOCK:
+        return _load().get("last_flight")
 
 
 def note_verdict(label: str, verdict: str, session: str = "") -> Dict[str, Any]:
