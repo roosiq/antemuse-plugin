@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.8 — 2026-11-15
+
+- cockpit: capture is sticky, and the refusal finally has a name (2026-11-15)
+
 ## 0.11.7 — 2026-11-15
 
 - door: make the exit test able to fail, and check the way out by pressing Escape (2026-11-15)
