@@ -69,7 +69,12 @@ not a guess. Ignore it when the work is nearly done; the nudge waits ten turns.
   trashes) as residue — never as a state, and never inside `/explore`, where the state's own
   tally already reaches the agent.
 - A new backend route is not live until the gateway restarts; say so instead of claiming the
-  wire works.
+  wire works. Diagnose a silent client→server call by driving the packaged app and reading the
+  refusal (`404 {"detail":"Not Found"}` meant the route, not the client).
+- Never swallow an error you would have to explain later: `.catch(() => {})` made a refused
+  flight indistinguishable from a filed one. Keep the outcome where a person can read it.
+- A module-level helper cannot use a component-local `window`; resolve it where it is used, or
+  the fallback path throws ReferenceError into the same silent catch.
 - A walk is ambient: keep working. The walked path is scenery, not a hint, and
   no walk material is injected into the working turn.
 - When the state ends, say what it left behind. Residue is the only output.
