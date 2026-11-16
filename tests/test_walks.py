@@ -105,7 +105,11 @@ def test_the_outer_walk_jumps_instead_of_stepping(cursor):
     steps = walk.step(6)
     # A dead end restarts the walk instead of stopping it, and that restart is a hop
     # too — it says so in its own words. What must never appear is a plain step.
-    assert all("far edge" in s or "picks up again" in s for s in steps), steps
+    # A graph with nothing left to restart into stops and says so — that line is a terminal
+    # condition, not a hop, so it may only ever be the last one.
+    assert all("far edge" in s or "picks up again" in s for s in steps[:-1]), steps[:-1]
+    assert ("far edge" in steps[-1] or "picks up again" in steps[-1]
+            or "the walk stops" in steps[-1]), steps[-1]
 
     graph = walks.WordNetGraph()
     node = graph.resume(wn.synsets("hand")[0].name())

@@ -618,8 +618,15 @@ class GraphWalk:
                     # not do. When the far search comes back empty — a synset with no usable
                     # rim, or a pool that is all visited — restart from somewhere else and say
                     # so, in the same words a dead end already uses.
-                    restart = self.graph.random_node(self.relations)
-                    if restart is None or restart["id"] == node["id"]:
+                    # Two or three draws, because `random_node` can land on the node the
+                    # walk is standing on and one unlucky draw is not a dead graph.
+                    restart = None
+                    for _ in range(3):
+                        drew = self.graph.random_node(self.relations)
+                        if drew is not None and drew["id"] != node["id"]:
+                            restart = drew
+                            break
+                    if restart is None:
                         out.append(f"{node['label']} · nothing far from here — the walk stops")
                         break
                     hops += 1
