@@ -76,15 +76,24 @@ def draw_frame(pos: dict, edges: list, active: dict, width: int, height: int):
     img = Image.new("RGB", (width, height), (6, 6, 8))
     draw = ImageDraw.Draw(img, "RGBA")
 
+    # The mesh is the map's body, not decoration: at 26/255 it was invisible, which reads as
+    # "the picture has no structure" rather than "the lines are quiet".
     for a, b in edges:
         if a in pos and b in pos:
-            draw.line([tuple(pos[a]), tuple(pos[b])], fill=(90, 90, 100, 26), width=1)
+            draw.line([tuple(pos[a]), tuple(pos[b])], fill=(116, 118, 132, 84), width=1)
 
     live = {label: slot for label, slot in active.items() if label in pos}
     for label, p in pos.items():
         if label in live:
             continue
         draw.ellipse([p[0] - 1.4, p[1] - 1.4, p[0] + 1.4, p[1] + 1.4], fill=(120, 120, 130, 90))
+
+    # An edge with firing at both ends is the strongest thing this picture can say: draw it
+    # warm and clearly, above the quiet mesh and under the nodes.
+    live_keys = set(live)
+    for a, b in edges:
+        if a in live_keys and b in live_keys:
+            draw.line([tuple(pos[a]), tuple(pos[b])], fill=(205, 176, 120, 168), width=1)
 
     glow = Image.new("RGB", (width, height), (0, 0, 0))
     gdraw = ImageDraw.Draw(glow, "RGBA")
