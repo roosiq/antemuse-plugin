@@ -233,11 +233,16 @@ def graph(session: str = "", limit: int = 1400):
     # served a new concept, and the memo answered the old picture for the rest of its three
     # seconds: every poll in a test showed lit 0 while three servings were already recorded.
     try:
-        stamp = (_core_module("activation")._rows("SELECT MAX(at) FROM served") or [[0]])[0][0] or 0
+        # `at` is REAL, but two servings inside one clock tick can carry the same value, and a
+        # stamp that cannot tell them apart answers the old picture for the rest of the memo
+        # window: six hops served, one lit. The row count cannot collide with itself.
+        _row = (_core_module("activation")._rows("SELECT MAX(at), COUNT(*) FROM served")
+                or [[0, 0]])[0]
+        stamp = (float(_row[0] or 0), int(_row[1] or 0))
     except Exception:  # health: BLE001 -- no ledger is a fact, not a failure
-        stamp = 0
+        stamp = (0.0, 0)
     want = (session, int(limit), str(engine_state.get("key") or ""),
-            float(engine_state.get("entered_at") or 0.0), float(stamp),
+            float(engine_state.get("entered_at") or 0.0), stamp,
             str((_last_finished(_residue) or {}).get("state") or ""))
     if (_GRAPH_MEMO.get("want") == want and _GRAPH_MEMO.get("payload") is not None
             and _time.time() - float(_GRAPH_MEMO.get("at") or 0) < 3.0):
