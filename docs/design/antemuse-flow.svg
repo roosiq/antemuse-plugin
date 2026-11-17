@@ -12,7 +12,7 @@
 <text x="1242" y="180" font-size="12.5" fill="#f2cf8f" letter-spacing="2.4" font-weight="600">THE AGENT TURN</text>
 <text x="1242" y="196" font-size="11.5" fill="#6b7c8d">where the block lands</text>
 <text x="32" y="62" font-size="30" font-weight="600" fill="#efe9d8">Antemuse — the functional flow</text>
-<text x="32" y="90" font-size="14" fill="#93a3b4">one agent state, one dose, one account · drawn from core/engine.py, core/states.py and __init__.py at 0.10.44</text>
+<text x="32" y="90" font-size="14" fill="#93a3b4">five agent states, one at a time, each dose-bounded · drawn from core/engine.py, core/states.py and __init__.py at 0.11.20</text>
 <text x="32" y="112" font-size="12.5" fill="#6b7c8d">solid arrows are the ordinary path · dashed arrows are the return path · orange boxes are known gaps</text>
 <rect x="1460" y="40" width="12" height="12" rx="3" fill="#101823" stroke="#233041"/>
 <text x="1480" y="51" font-size="12" fill="#93a3b4">a component</text>

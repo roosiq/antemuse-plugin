@@ -330,8 +330,8 @@ def build() -> str:
         f'<text x="32" y="62" font-size="30" font-weight="600" fill="{INK}">'
         f'Antemuse — the functional flow</text>',
         f'<text x="32" y="90" font-size="14" fill="{MUTED}">'
-        f'one agent state, one dose, one account · drawn from core/engine.py, core/states.py and '
-        f'__init__.py at 0.10.44</text>',
+        f'five agent states, one at a time, each dose-bounded · drawn from core/engine.py, core/states.py and '
+        f'__init__.py at 0.11.20</text>',
         f'<text x="32" y="112" font-size="12.5" fill="{DIM}">'
         f'solid arrows are the ordinary path · dashed arrows are the return path · '
         f'orange boxes are known gaps</text>',

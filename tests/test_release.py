@@ -248,11 +248,14 @@ def test_the_build_writes_a_provenance_manifest_for_injected_projection_files():
         assert required in build, required
 
 
-def test_catalog_stills_describe_only_the_shipped_walk_and_explore_contract():
+def test_catalog_stills_describe_the_shipped_state_contract():
     shots = (ROOT / "tools" / "make_screenshots.py").read_text(encoding="utf-8").lower()
     catalog = (ROOT / "tools" / "catalog_entry.py").read_text(encoding="utf-8").lower()
-    for retired in ("daydream", "doomscroll", "unstuck", "a dream"):
-        assert retired not in shots, retired
+    from core import states
+
+    assert "five bounded states" in shots
+    for key in states.STATES:
+        assert key in shots, key
     assert "six hops" in shots
     assert "/explore" in shots
     # The map pane and cockpit are externally captured rendering surfaces: their

@@ -40,7 +40,7 @@ def test_a_state_does_not_take_tools_away_unless_asked():
     engine.enter("walk")
     assert engine.policy("terminal") is None
     assert engine.policy("write_file") is None
-    assert "Tools are open in this state." in (engine.inject() or "")
+    assert "Tools are open in this state" in (engine.inject() or "")
 
 
 def test_an_entry_may_narrow_the_set_without_editing_the_state():
@@ -173,6 +173,7 @@ def test_unknown_state_is_refused():
 
 
 def test_every_state_declares_a_contract_and_a_residue():
-    assert set(states.STATES) == {"walk"}
-    spec = states.STATES["walk"]
-    assert spec["contract"] and spec["residue"] and spec["directive"]
+    assert set(states.STATES) == {"walk", "daydream", "doomscroll", "dream", "unstuck"}
+    for key, spec in states.STATES.items():
+        assert spec["contract"] and spec["residue"] and spec["directive"], key
+        assert spec["label"] and spec["dose"], key

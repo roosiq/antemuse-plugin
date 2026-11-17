@@ -2,12 +2,12 @@
 
 ## The claim
 
-**Antemuse gives the agent a walk when the work needs a different frame.**
+**Antemuse gives the agent five bounded states when the work needs a different frame.**
 
-The walk moves six WordNet hops while the agent keeps doing the task. The path is
-visible in the pane but does not become prompt material: the product changes the
-frame without pretending that the hop words are evidence or that a model has found a
-better answer.
+`walk` moves six WordNet hops while the agent keeps doing the task. `daydream` pairs
+recorded memories, `doomscroll` supplies a gated feed lane, `dream` recombines local
+git subjects, and `unstuck` names one history-and-graph direction. Each state has a
+dose, not a timer, and ends with an account.
 
 `/explore` is separate and person-driven. It gives the person a concept map to fly;
 the plugin records what they choose and names those picks on `/return`.
@@ -16,19 +16,20 @@ the plugin records what they choose and names those picks on `/return`.
 
 - Not better ideas by measurement.
 - Not a creativity scorer, a game, a generative model, or a replacement for thinking.
-- Not a source of private-memory or live-feed material on the state path.
+- Not a source of private-memory or live-feed material outside the labelled, bounded state
+  contracts.
 - Not a timer or an automatic break system.
 
 ## Card copy
 
-> One agent state for creative work: `/walk` takes six WordNet hops while work
-> continues. The pane shows the path; the agent receives no hop material as evidence.
-> `/explore` remains a person-driven concept map. No model calls on the state path.
+> Five dose-bounded agent states: `/walk`, `/daydream`, `/doomscroll`, `/dream`,
+> and `/unstuck`. `/explore` remains a person-driven concept map. No model calls on
+> the state path.
 
 ## README opening
 
-> **Antemuse** — take a walk while the work continues.
-> One agent state, six WordNet hops, and a separate person-driven concept map.
+> **Antemuse** — five bounded states while the work continues.
+> Walk, daydream, doomscroll, dream, and unstuck; plus a separate person-driven concept map.
 
 ## Voice rules
 

@@ -94,10 +94,10 @@ def test_the_command_still_enters_the_person_driven_map():
     assert out.startswith("EXPLORING"), out
 
 
-def test_the_palette_names_the_three_verbs():
+def test_the_palette_names_every_registered_state_and_the_person_driven_verbs():
     from core import states
 
     text = states.palette()
 
-    for verb in ("/walk", "/explore", "/return"):
+    for verb in (*[f"/{key}" for key in states.STATES], "/explore", "/return"):
         assert verb in text, f"{verb} is missing from the state list"

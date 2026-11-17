@@ -48,7 +48,7 @@ fourth named two verbs.
 - `test_the_agent_cannot_enter_the_person_driven_map`.
 - `test_the_command_still_enters_the_person_driven_map` — the refusal belongs to the tool;
   `engine.enter("explore")` still answers `EXPLORING …`.
-- `test_the_palette_names_the_three_verbs`.
+- `test_the_palette_names_every_registered_state_and_the_person_driven_verbs`.
 
 Rewritten tests that encoded the defect rather than being loosened: `test_walks.py`'s two
 fall-back-to-wander tests now assert a refusal, and the traversal test keeps its eleven hostile

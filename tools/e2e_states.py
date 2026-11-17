@@ -27,7 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-STATES = ["walk"]
+STATES = ["walk", "daydream", "doomscroll", "dream", "unstuck"]
 # `/explore` is person-driven: it has no dose to spend and is covered separately.
 NOT_DRIVEN = ["explore"]
 MAX_TURNS = 14
@@ -104,7 +104,8 @@ def run_state(key: str) -> dict:
     out["entered"] = str(entered)[:200]
     # the entry line is the state's own voice ("WALKING · 3 min · 6 turn(s) · ..."), not the word
     # ACTIVE; what matters is that it reports the state it was asked for
-    verb = {"walk": "WALKING"}[key]
+    from core import states as _states
+    verb = _states.STATES[key]["label"]
     if verb not in str(entered).upper():
         out["problems"].append(f"entry did not report {verb}: {entered!r}")
 
@@ -134,6 +135,10 @@ def run_state(key: str) -> dict:
 
     data = engine._load() if hasattr(engine, "_load") else {}
     out["journal_tail"] = [e.get("text", "")[:160] for e in (data.get("journal") or [])][-6:]
+    # The account is the line the state speaks when it ends; a test can assert on it without
+    # parsing the journal, and a failure reason must be visible in it.
+    reports = [e for e in (data.get("journal") or []) if e.get("event") == "report"]
+    out["account"] = str((reports[-1] or {}).get("text", ""))[:240] if reports else ""
 
     conn = _ledger(home)
     # delivery files rows under the *current* session, which in a headless run is empty; the

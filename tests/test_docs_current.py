@@ -38,13 +38,15 @@ def test_every_state_is_a_command_in_every_doc_that_lists_commands():
             assert f"/{key}" in body, f"{name} never mentions the /{key} command"
 
 
-def test_the_command_count_in_the_docs_matches_the_states():
-    """One agent-state command plus `/return`; `/explore` remains person-driven."""
-    states_word = WORDS[len(states.STATES)]
-    assert "The three commands" in _doc("README.md"), \
-        "README's heading is not 'The three commands'"
-    assert "one agent state" in _doc("README.md"), \
-        "README does not say there is one agent state"
+def test_the_command_count_in_the_docs_matches_the_registry():
+    """Every registered state plus person-driven explore and the shared return command."""
+    command_count = len(states.STATES) + 2
+    assert f"## The {WORDS[command_count]} commands" in _doc("README.md"), \
+        f"README's heading does not say {WORDS[command_count]} commands"
+    state_phrase = (f"{WORDS[len(states.STATES)]} agent state"
+                    if len(states.STATES) == 1 else f"{WORDS[len(states.STATES)]} agent states")
+    assert state_phrase in _doc("README.md"), \
+        f"README does not say there are {state_phrase}"
 
 
 def test_the_manifest_and_catalog_name_every_state():

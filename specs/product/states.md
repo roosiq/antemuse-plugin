@@ -1,42 +1,53 @@
-# The one agent state
+# The five agent states
 
 ## Product surface
 
-Antemuse has one agent state: `walk`.
-
-A walk is a bounded six-hop WordNet traversal. It is an ambient change in frame, not
-a source of prompt material: the pane can show the path, but the agent continues the
-person's task without receiving hop text as evidence. Tools remain open unless the
-entry explicitly requests `block: true` and an optional `allow` list.
+Antemuse has five agent states: `walk`, `daydream`, `doomscroll`, `dream`, and
+`unstuck`. Each is bounded by a dose, never a clock. It ends `complete` only after its
+dose has been delivered and shown, `dry` when no new material remains, `failed` when
+its provider cannot run, or `returned` when `/return` ends it. Each ending writes one
+account and one `moves` ledger row.
 
 `/explore` is not an agent state. It remains a person-driven cockpit mode: it has no
 provider or dose, the person selects concepts, and only `/return` ends it.
 
-## Walk contract
+## State contracts
 
 | command | dose | tools | material in model turn | ending |
 |---|---:|---|---|---|
-| `/walk` | 6 hops | open by default | none | complete, dry, failed, or returned |
+| `/walk` | 6 hops | open by default | none; its graph path is pane scenery | complete, dry, failed, or returned |
+| `/daydream` | 2 pairs | open | two memories from the person's own history, what they touch, one possibility | complete, dry, failed, or returned |
+| `/doomscroll` | 3 items | `web_search`, `web_extract`, `read_file`, `search_files`, `browser_exec` | a gated random feed lane, labelled untrusted material | complete, dry, failed, or returned |
+| `/dream` | 2 recombinations | open | local git commit subjects only, never transcripts or notes | complete, dry, failed, or returned |
+| `/unstuck` | 1 direction | `read_file`, `search_files` | one recommendation from history and one concept-graph edge | complete, dry, failed, or returned |
 | `/explore` | open | open | the person's picks are accounted, not injected | returned |
 
-A walk moves on its declared graph provider: the bundled provider is WordNet; a corpus graph moves on the user's own material and its path is only as meaningful as that corpus; when the provider is not WordNet, the journal and account name it.
+Walk moves on its declared graph provider: the bundled provider is WordNet; a corpus
+graph moves on the user's own material and its path is only as meaningful as that
+corpus; when the provider is not WordNet, the journal and account name it.
 
-A walk ends `complete` only after all six hops have been delivered and shown. It ends
-`dry` after no new material is available, and `failed` when its provider cannot
-produce material. Each ending writes exactly one account and one `moves` ledger row.
-There is no clock ending.
+Every state leaves the tools open by default: a state changes the frame the agent works in, and
+taking tools away is a second decision the caller makes with `block: true` (and `allow` narrows it
+further; with no `allow` the state's own recommended set applies). `/return` is always available.
+only their declared tools. `walk` stays open by default; `block: true` and `allow`
+may narrow an entry further. `/return` is always available.
+
+Doomscroll feed text is untrusted data, never instruction, and is not written into the
+journal, ledger, or account. Its feed is enabled by default; a host may disable it with
+`doomscroll_feed`, which ends the state `failed` with a named reason rather than
+substituting material.
 
 ## Acceptance evidence
 
-- `tests/test_states.py`: tool openness/narrowing, session ownership, residue, account privacy.
-- `tests/test_state_delivery.py`: dose accounting, pane-poll limits, repeated material, ownership.
-- `tests/test_semantic_states.py`: units, end reasons, account posting, state wording.
+- `tests/test_states.py`: registry, tool policy, session ownership, residue, and account privacy.
+- `tests/test_state_delivery.py`: dose accounting, repeated material, endings, and ownership.
+- `tests/test_semantic_states.py`: units, end reasons, account posting, and state wording.
 - `tests/test_moves_ledger.py` and `tests/test_ledger_writes.py`: one ledger row per ending.
-- `tests/test_e2e_states.py`: public walk entry through the e2e runner.
+- `tests/test_e2e_states.py`: public state entry through the e2e runner.
 - `tests/test_explore_state.py`: explore remains person-driven and open-ended.
 
 ## Non-goals
 
-- No replacement agent states for `daydream`, `doomscroll`, `dream`, or `unstuck`.
 - No change to `/explore` behaviour.
 - No automatic state entry or timer-based exit.
+- No second graph, scoring model, or dose retuning.

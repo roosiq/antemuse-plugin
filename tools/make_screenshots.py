@@ -4,7 +4,7 @@
     python3 tools/make_screenshots.py            # writes docs/screenshots/*.png
     python3 tools/make_screenshots.py --check    # exit 1 if any still is stale
 
-The catalog shows one agent state and one separate, person-driven mode:
+The catalog shows five agent states and one separate, person-driven mode:
 
 - ``banner.png``            1200x600, the catalog ``image:``
 - ``pane-walk.png``         captured desktop-pane frame; this script verifies it
@@ -70,9 +70,9 @@ def banner() -> Image.Image:
     d = ImageDraw.Draw(im)
     d.text((72, 96), "antemuse", font=_font(96), fill=INK)
     d.line((76, 214, 1124, 214), fill=AMBER, width=3)
-    d.text((72, 250), "one walk for the agent; an explore cockpit for you.", font=_font(34), fill=INK)
-    d.text((72, 306), "six hops, one dose, then an account on return", font=_font(28), fill=DIM)
-    d.text((72, 350), "you fly /explore yourself — no dose, no provider", font=_font(28), fill=DIM)
+    d.text((72, 250), "five bounded states for the agent; an explore cockpit for you.", font=_font(34), fill=INK)
+    d.text((72, 306), "walk · six hops · daydream · doomscroll · dream · unstuck", font=_font(28), fill=DIM)
+    d.text((72, 350), "each dose ends in an account · you fly /explore yourself", font=_font(28), fill=DIM)
     d.text((72, 500), "Hermes plugin · MIT · github.com/roosiq/antemuse-plugin",
            font=_font(20), fill=DIM)
     return im

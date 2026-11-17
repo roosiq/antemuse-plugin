@@ -48,7 +48,7 @@ counts measure the machine; verdicts measure the idea.
 ## The state machine
 
 ```
-                            /walk                     /explore
+                            /walk /daydream /doomscroll /dream /unstuck   /explore
                               │                          │
                               ▼                          ▼
                      machine-led state          person-led state
@@ -62,7 +62,9 @@ counts measure the machine; verdicts measure the idea.
                           residue (report) + next turn's opening
 ```
 
-- `walk` is the only machine-led state: six hops, one bought per turn.
+- The five agent states are machine-led: `walk` delivers six hops; `daydream` two
+  memory pairs; `doomscroll` three feed items; `dream` two recombinations; and
+  `unstuck` one direction.
 - It ends itself four ways — complete, dry, failed, or an explicit `/return` — and reports which
   one it was.
 - `explore` is person-led and ends one way, and its account names the person's own picks.

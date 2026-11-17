@@ -1,3 +1,9 @@
+SUPERSEDED — 2026-11-16
+
+The 2026-11-09 owner note declined the one-state cut. `restore-four-states` restores
+daydream, doomscroll, dream, and unstuck beside walk; it is the active record for this
+surface. Historical proposal preserved below unchanged.
+
 # One state, and a way to judge it
 
 ## Why

@@ -1,28 +1,31 @@
 # Worked examples
 
 Examples are generated from the engine by `tools/examples.py`, never written by hand.
-They show the two current surfaces: the agent's one walk state and the person-driven
-explore mode.
+They show one worked example for every agent state: `walk`, `daydream`, `doomscroll`,
+`dream`, and `unstuck`.
 
 ## Format
 
 ```text
 Situation: what the person is doing
-Command:   /walk or /explore
-Path:      a walk's recorded hops, or the person's own picks
-Account:   the line written when the mode ends
+Command:   one state command
+Material:  the provider output, where the state has material
+Account:   the line written when the state ends
 ```
 
 A walk has no arrival block: its path is scenery and is not injected into the model
-turn. Explore has no agent-provided material: the person's picks are what its account
-reports.
+turn. Daydream, doomscroll, dream, and unstuck show provider material. Doomscroll's
+feed text is shown only in its labelled untrusted block and is never persisted.
 
 ## Current scenarios
 
 | # | Situation | Command | What it demonstrates |
 |---|---|---|---|
-| 1 | A familiar roadmap needs distance | `/walk` | A six-hop path changes the frame while work continues. |
-| 2 | You want to look around yourself | `/explore` | The person chooses concepts and `/return` names the picks. |
+| 1 | Distance while work continues | `/walk` | A six-hop path changes the frame while work continues. |
+| 2 | Two memories make a possibility | `/daydream` | Recorded personal turns meet and point at one possibility. |
+| 3 | Three useless things from the feed | `/doomscroll` | Gated public feed material is distraction, not instruction. |
+| 4 | The day recombines across projects | `/dream` | Local git subjects connect without reading transcripts. |
+| 5 | One direction breaks the stall | `/unstuck` | History and a graph edge ground one next move. |
 
 ## Generation
 
@@ -32,7 +35,7 @@ python3 tools/examples.py --check
 ```
 
 The generator drives the engine in a fresh temporary home and writes
-`docs/EXAMPLES.md`. Its check confirms both scenarios are present and avoids a
+`docs/EXAMPLES.md`. Its check confirms every state scenario is present and avoids a
 hand-written, stale example.
 
 ## Acceptance

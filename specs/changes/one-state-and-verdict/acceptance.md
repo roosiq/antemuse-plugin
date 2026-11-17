@@ -1,3 +1,8 @@
+SUPERSEDED — 2026-11-16
+
+The 2026-11-09 owner note declined the one-state cut. See `../restore-four-states/`;
+historical acceptance evidence is preserved below.
+
 # Acceptance — one state, and a way to judge it
 
 Every line is a command that was run on this tree.

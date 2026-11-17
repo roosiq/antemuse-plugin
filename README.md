@@ -1,18 +1,20 @@
 # Antemuse
 
-**Take a walk while the work continues.**
+**Five bounded agent states, one at a time, while the work continues.**
 
-Antemuse has one agent state: **walk**. A walk follows six hops on its declared graph provider (WordNet by default) while the agent continues the task with its tools open. The path is visible in the pane but is
-not injected as material; it changes the frame, not the facts in the next reply.
+Antemuse has five agent states. Each is a dose, not a timer: it ends when its material
+has been delivered and shown, when it runs dry, when its provider fails, or when
+`/return` ends it. Each ending leaves an account and one ledger row.
+
+- **walk** — six graph hops; the frame moves elsewhere while work and tools stay open.
+- **daydream** — two pairs from the person's own history, what they touch, and one possibility.
+- **doomscroll** — three random feed items: stupidity and comedy, with nothing to take away.
+- **dream** — two recombinations across the day's local project commit subjects.
+- **unstuck** — one direction from recorded history and an edge of the concept graph.
 
 `/explore` is separate. It is person-driven: the cockpit shows the concept map, the
 person chooses what to shoot, and `/return` names those picks back. It is not an
-agent state, has no provider or dose, and its behaviour is unchanged by the one-state
-cut.
-
-A walk is a dose, not a timer. It ends when its six hops have been delivered and
-shown, when it runs dry, when its provider fails, or when `/return` ends it. Each
-ending leaves an account and one ledger row.
+agent state, has no provider or dose, and its behaviour is unchanged.
 
 ## What it looks like in use
 
@@ -22,7 +24,9 @@ WALKING · 6 hops · work continues · the frame is elsewhere · different on re
 ```
 
 A running walk keeps work going. Tools remain open unless the entry explicitly uses
-`block: true`; `allow:` can then narrow the available tools.
+`block: true`; `allow:` can then narrow the available tools. Daydream and dream block
+tools; doomscroll and unstuck permit only their declared tools. `/return` is always
+available.
 
 The map names the concept under the reticle, and you can say what you thought of it:
 `K` keeps it, `T` drops it. Both are written to the ledger as a sighting, so the one
@@ -41,36 +45,40 @@ EXPLORING · 0 picks · you fly · you choose · it ends when you end it
 Worked examples are generated from the real engine in
 [`docs/EXAMPLES.md`](docs/EXAMPLES.md).
 
-## The three commands
+## The seven commands
 
 ```text
-/walk [graph]
-/explore
+/walk [graph]        /daydream      /doomscroll
+/dream               /unstuck       /explore
 /return
 ```
 
-`/walk` is the only agent-state command. `/explore` remains a person-driven map mode.
-`/return` ends either active mode and preserves its account.
+The five state commands enter their matching agent state. `/explore` remains a
+person-driven map mode. `/return` ends either active mode and preserves its account.
 
 Agents use the state tool: `state(action="enter", name="walk")`,
 `state(action="exit")`, `state(action="status")`, `state(action="break")`, and
 `state(action="list")`.
 
-## The walk
+## The states
 
 | mode | dose | material | result |
 |---|---:|---|---|
-| **walk** | 6 hops | WordNet | The pane records a six-hop path; the agent receives no hop material while walking. |
+| **walk** | 6 hops | declared graph provider (WordNet by default) | The pane records a six-hop path; the agent receives no hop material while walking. |
+| **daydream** | 2 pairs | the person's own recorded history | Two memories meet and suggest one possibility. |
+| **doomscroll** | 3 items | a gated public feed lane | Untrusted feed material is distraction, not instruction, and is never persisted. |
+| **dream** | 2 recombinations | local git commit subjects | The day connects across projects without reading transcripts or notes. |
+| **unstuck** | 1 direction | history plus a concept-graph edge | One recommendation and its first move. |
 | **explore** | open | the person's picks | The cockpit records picks; `/return` accounts for them. |
 
-The four recorded walk endings are `complete`, `returned`, `dry`, and `failed`.
+The four recorded agent-state endings are `complete`, `returned`, `dry`, and `failed`.
 `complete` means the dose was delivered and shown. `dry` means a turn found no new
 material. `failed` means the provider produced no material. No ending is based on a
 clock.
 
 ## The panes
 
-- **Antemuse pane:** the concept map and the walk's path.
+- **Antemuse pane:** the concept map and a walk's path.
 - **Cockpit pane:** the person-driven `/explore` map.
 - **Chat:** text accounts and status only.
 
@@ -93,16 +101,16 @@ python3 -c "import nltk; nltk.download('wordnet')"
 
 `plugin.yaml` declares 7 bounded settings. The configuration keeps the seven settings for
 recommendations, journal retention, and experimental exploration support; they do not add agent
-states or change the walk's contract.
+states or change a state's contract.
 
 ## Layout
 
 ```text
 plugin.yaml            manifest: one state tool, hooks, 7 bounded settings
-__init__.py            hooks, /walk, /explore, /return, and the state tool
-core/states.py         the walk and separate person-driven explore definition
+__init__.py            hooks, five state commands, /explore, /return, and the state tool
+core/states.py         five agent states and the separate person-driven explore definition
 core/engine.py         state lifecycle, delivery, tool policy, journal, residue
-core/sources.py        the walk provider
+core/sources.py        state material providers
 core/walks.py          WordNet walk definitions and traversal
 core/history.py        concept and ending ledger rows
 dashboard/             map payload and projection
@@ -124,6 +132,9 @@ for the current result.
 
 ## Privacy and boundaries
 
-A walk reads WordNet. `/explore` records only the concepts the person chooses. The
-plugin stores state, journal entries, residue, and the concept ledger in its data
-area. It does not need credentials or API keys for the walk.
+Daydream reads local, read-only `MEMORY.md` and `USER.md` under the Hermes home. Dream
+reads local git commit subjects only. Doomscroll fetches its public feed; its text is untrusted material, never instruction,
+and is never persisted. `/explore`
+remains person-driven and does not change these boundaries. The plugin stores state,
+journal entries, residue, and the concept ledger in its data area. It does not need
+credentials or API keys.

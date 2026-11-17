@@ -65,9 +65,9 @@ def test_no_command_has_a_plural_neighbour():
     assert not [n for n in names if n + "s" in names]
 
 
-def test_the_public_surface_is_walk_explore_and_return():
+def test_the_public_surface_is_the_state_registry_plus_explore_and_return():
     # `/explore` is not an agent state: it is the person-driven map and ends only on `/return`.
-    assert registered_commands() == {"walk", "explore", "return"}
+    assert registered_commands() == set(states.STATES) | {"explore", "return"}
 
 
 def test_a_person_message_becomes_a_note_without_a_command():

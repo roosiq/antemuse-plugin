@@ -31,8 +31,16 @@ def _provider(*lines):
 
 
 def test_every_state_declares_a_dose():
-    assert set(states.STATES) == {"walk"}
-    assert states.STATES["walk"]["dose"] == {"unit": "hops", "n": 6}
+    assert set(states.STATES) == {"walk", "daydream", "doomscroll", "dream", "unstuck"}
+    want = {
+        "walk": {"unit": "hops", "n": 6},
+        "daydream": {"unit": "pairs", "n": 2},
+        "doomscroll": {"unit": "items", "n": 3},
+        "dream": {"unit": "recombinations", "n": 2},
+        "unstuck": {"unit": "directions", "n": 1},
+    }
+    for key, dose in want.items():
+        assert states.STATES[key]["dose"] == dose, key
 
 
 def test_an_early_completion_is_a_completion_not_an_expiry():
@@ -95,7 +103,10 @@ def test_every_ending_speaks_in_the_state_that_ended():
     text = states.after("walk")
     assert len(text) > 40
     assert "walk" in text.lower()
-    assert len({states.after(k) for k in states.STATES}) == 1
+    # Each state closes in its own words: five states, five instructions, no shared template.
+    closings = {k: states.after(k) for k in states.STATES}
+    assert len(set(closings.values())) == len(states.STATES), closings
+    assert all(len(v) > 40 for v in closings.values()), closings
 
 
 def test_the_pane_counts_the_dose_in_the_states_own_unit():

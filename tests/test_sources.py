@@ -12,9 +12,9 @@ sys.path.insert(0, str(ROOT))
 from core import sources, states  # noqa: E402
 
 
-def test_only_walk_has_a_provider():
-    assert sources.PROVIDERS == {"walk": sources.walk_text}
+def test_every_state_has_its_own_provider():
     assert set(sources.PROVIDERS) == set(states.STATES)
+    assert all(callable(fn) for fn in sources.PROVIDERS.values())
 
 
 def test_ready_ignores_non_walk_names():

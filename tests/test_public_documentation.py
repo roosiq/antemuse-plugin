@@ -37,15 +37,17 @@ def test_security_document_names_the_current_runtime_surface_and_storage():
         assert fact in security
 
 
-def test_contributing_lists_only_the_three_public_commands():
+def test_contributing_lists_the_registry_backed_public_commands():
     contributing = (ROOT / "CONTRIBUTING.md").read_text().lower()
-    for command in ("/walk", "/explore", "/return"):
+    from core import states
+
+    for command in (*[f"/{key}" for key in states.STATES], "/explore", "/return"):
         assert command in contributing
-    for retired in ("daydream", "doomscroll", "unstuck", "dream"):
-        assert retired not in contributing
 
 
-def test_security_document_drops_retired_commands():
+def test_security_document_discloses_every_active_state():
     security = (ROOT / "SECURITY.md").read_text().lower()
-    for retired in ("daydream", "doomscroll", "unstuck", "dream"):
-        assert retired not in security
+    from core import states
+
+    for key in states.STATES:
+        assert key in security

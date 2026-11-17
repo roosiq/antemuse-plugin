@@ -1,4 +1,4 @@
-"""Antemuse — the agent can take a walk; people can explore the map.
+"""Antemuse — agents can take bounded states; people can explore the map.
 
 A state is a temporary change to how the agent behaves, not a place it goes:
 
@@ -11,8 +11,8 @@ Surfaces:
   pre_llm_call         inject the active state into the turn
   pre_tool_call        block tools the state forbids
   transform_llm_output make the state visible on the reply
-  commands             see SKILL.md for the three verbs a person types;
-                       one verb, one name — `state(action="status")` is the record, and
+  commands             see SKILL.md for seven commands: five state verbs,
+                       /explore, and /return; one verb, one name —
                        the picture is the desktop pane, never a command
   tool                 state(action=…) — see ACTIONS; the schema and the
                        rejection message both read that one tuple
@@ -54,13 +54,13 @@ ACTIONS: tuple = ("enter", "exit", "status", "list", "walks", "walk_new", "walk_
 STATE_SCHEMA: Dict[str, Any] = {
     "name": "state",
     "description": (
-        "Enter or leave the walk state for the agent itself. "
-        "state(action='enter', name='walk') changes what shape your next replies take until "
-        "the walk's dose is delivered. state(action='exit') ends it and keeps the residue. "
-        "state(action='status') reports whether a walk is running. state(action='break') "
-        "recommends a walk and state(action='break', name='walk') takes it; "
-        "state(action='mood', feeling='stuck') records how the work feels. "
-        "state(action='list') shows the walk and the way out. The separate /explore command "
+        "Enter or leave one of the five bounded agent states: walk, daydream, doomscroll, "
+        "dream, or unstuck. state(action='enter', name='walk'|'daydream'|'doomscroll'|'dream'|"
+        "'unstuck') changes what shape your next replies take until the state's dose is delivered. "
+        "state(action='exit') ends it and keeps the residue. state(action='status') reports the "
+        "active state. state(action='break') recommends a state and state(action='break', "
+        "name='walk') takes it; state(action='mood', feeling='stuck') records how the work feels. "
+        "state(action='list') shows all five states and the way out. The separate /explore command "
         "is person-driven: it has no dose or provider and ends only on /return. "
         "Walks are user-definable: state(action='walks') lists them, "
         "state(action='walk_new') saves one, state(action='walk_del') removes your own."
@@ -70,7 +70,8 @@ STATE_SCHEMA: Dict[str, Any] = {
         "properties": {
             "action": {"type": "string", "enum": list(ACTIONS)},
             "name": {"type": "string",
-                     "description": "Agent state to enter: walk. /explore is person-driven and is entered with its command."},
+                     "description": ("Agent state to enter: walk, daydream, doomscroll, dream, or "
+                                     "unstuck. /explore is person-driven and is entered with its command.")},
             "walk": {"type": "string", "description": ("Which walk to traverse. Default outer. action='walks' lists every name; an unknown name is refused rather than replaced, so read the list instead of guessing.")},
             "goal": {"type": "string",
                      "description": "For action='spark': what the run is for. The person sees counts, never candidates."},
@@ -478,7 +479,7 @@ def _enter(key: str, minutes: int | None = None):
             if arg.isdigit():
                 return (f"states are not timed. /{key} takes no number; it ends when its "
                         f"dose is delivered.")
-            # /walk upward → walk that graph.
+            # Only /walk accepts a named graph; the other states take no argument.
             if key != "walk":
                 return f"only /walk takes a walk name (got '{arg}')"
             if not walks.valid_name(arg):
@@ -707,9 +708,9 @@ def register(ctx) -> None:
             name=key,
             handler=_enter(key),
             description=f"Enter the {key} state ({states.STATES[key]['contract']})",
-            # No minutes anywhere: a state has a dose, and `/explore` has neither a dose nor
-            # a duration. The hint says what an argument can be, not how long it lasts.
-            args_hint="[walk]",
+            # States have doses, while /explore has neither a dose nor a duration.
+            # Only /walk accepts a graph name.
+            args_hint="[walk]" if key == "walk" else "",
             argument_mode="text",
         )
 
@@ -724,8 +725,8 @@ def register(ctx) -> None:
     ctx.register_command(name="return", handler=_return,
                          description="End the current state and keep its residue")
 
-    # One agent state and a way out; /explore is registered separately because the person,
-    # rather than the agent, drives it and decides when it ends.
+    # Five agent states and a shared way out; /explore is registered separately because the
+    # person, rather than the agent, drives it and decides when it ends.
 
 
     try:
@@ -733,7 +734,7 @@ def register(ctx) -> None:
         ctx.register_skill(
             "antemuse",
             Path(__file__).resolve().parent / "SKILL.md",
-            description="Take a walk state or explore the map yourself.",
+            description="Take a bounded agent state or explore the map yourself.",
         )
     except Exception:
         pass

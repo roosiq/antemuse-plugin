@@ -137,8 +137,10 @@ def _plugin():
 def test_the_commands_are_registered():
     ctx = _Ctx()
     _plugin().register(ctx)
-    assert set(ctx.commands) == {"walk", "explore", "return"}, (
-        "the public surface is walk, person-driven explore, and the way out"
+    from core import states
+
+    assert set(ctx.commands) == set(states.STATES) | {"explore", "return"}, (
+        "the state registry, person-driven explore, and the shared way out are public"
     )
     assert {"spark", "keep"} <= set(ctx.tools["state"]["schema"]["parameters"]
                                      ["properties"]["action"]["enum"])

@@ -1,13 +1,13 @@
 ---
 name: antemuse
-description: Take and leave the one agent state (walk) and the person-driven map (explore). Use when the user asks the agent to step away from the desk, work at a distance, or when a state is already active and governs this turn.
+description: Take and leave five bounded agent states — walk, daydream, doomscroll, dream, and unstuck — alongside the person-driven map (explore). Use when the user asks the agent to step away from the desk, work at a distance, or when a state is already active and governs this turn.
 ---
 
 # Antemuse
 
 A state is a bounded change to how the agent behaves, not a place it goes.
 
-- `tools` — what it may still touch (a walk takes nothing)
+- `tools` — what it may still touch (walk stays open; daydream and dream take tools away)
 - `directive` — injected into the turn it governs
 - `contract` — the one line the reply is held to
 - `residue` — what it carries back when the state ends
@@ -15,15 +15,20 @@ A state is a bounded change to how the agent behaves, not a place it goes.
 ## Entering and leaving
 
 ```
-/walk [graph]        /explore        /return
+/walk [graph]        /daydream      /doomscroll
+/dream               /unstuck       /explore
+/return
 ```
 
-That is the whole command surface — three verbs, nothing else. `/walk` is the only
-state the agent enters: six hops on its declared graph provider (WordNet by default), one bought
-per turn, recorded for the pane and never injected into the turn. `/explore` is the one state a person drives: it has
-no dose and no end of its own, the cockpit is the map, and what you keep is
-counted (`K` keeps, `T` drops, `tools/hit_rate.py` reports the rate). It closes
-when they type `/return`, and the account names the concepts they picked, by count. A person's own
+That is the whole command surface — seven verbs. `/walk` follows six hops on its
+declared graph provider (WordNet by default), one bought per turn, recorded for the
+pane and never injected into the turn. `/daydream` lets two memories meet and name one
+possibility; `/doomscroll` delivers three random feed items without turning them into a
+lesson; `/dream` recombines local commit subjects across the day; `/unstuck` names one
+direction from history and the concept graph. `/explore` is person-driven: it has no
+dose and no end of its own, the cockpit is the map, and what you keep is counted (`K`
+keeps, `T` drops, `tools/hit_rate.py` reports the rate). It closes when the person types
+`/return`, and the account names the concepts they picked, by count. A person's own
 message is journalled as a note automatically while a state runs, so there is no
 `/note`; the recommendation arrives in the turn by itself, so there is no `/watch`.
 
@@ -78,8 +83,8 @@ not a guess. Ignore it when the work is nearly done; the nudge waits ten turns.
 - A walk is ambient: keep working. The walked path is scenery, not a hint, and
   no walk material is injected into the working turn.
 - When the state ends, say what it left behind. Residue is the only output.
-- A state that blocks tools also blocks you; `/return` is always available and is
-  exempt from the block.
+- Tools stay open unless the entry asks for `block: true`; when it does, the state's own
+  recommended set applies and `allow` narrows it. `/return` is always available and exempt.
 
 ## Experimental development (not runtime-active)
 
