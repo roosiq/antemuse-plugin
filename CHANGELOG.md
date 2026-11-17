@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.21 — 2026-11-16
+
+- docs: regenerate the blocked-tool still for the five-state surface (2026-11-16)
+- states: daydream, doomscroll, dream and unstuck are back, with the UX defects the old build shipped (2026-11-16)
+- walk: a cursor and a seed survive the namespacing (2026-11-16)
+
 ## 0.11.20 — 2026-11-16
 
 - walk graphs are interchangeable: a declared provider, not WordNet (2026-11-16)

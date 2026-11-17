@@ -64,7 +64,10 @@ def test_a_walk_never_lands_where_it_has_already_stood():
     path = os.path.join(cursor, "c.json")
     with open(path, "w") as fh:
         json.dump({"outer": {"node": wn.synsets("design")[0].name(), "prev": "", "at": 0}}, fh)
-    walk = walks.GraphWalk({"name": "outer", **walks.BUILTIN["outer"]}, __import__("pathlib").Path(path))
+    # Fixed start: the property under test is "no repeats", not which seed the tier picked.
+    # Ambient seeding made this test pass or fail with the working directory.
+    spec = dict(walks.BUILTIN["outer"], name="outer", seed={"mode": "fixed", "node": "design"})
+    walk = walks.GraphWalk(spec, __import__("pathlib").Path(path))
     steps = walk.step(5)
     chain = []
     for line in steps:
