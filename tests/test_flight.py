@@ -85,3 +85,42 @@ def test_a_flight_route_that_gets_nonsense_does_not_500():
     client = _client()
     body = client.post("/api/plugins/antemuse/flight", json={"trail": "harpoon"}).json()
     assert body["concepts"] == 0
+
+
+def test_leaving_the_cockpit_sends_the_concepts_to_the_chat():
+    """The exit is the person handing their choices back, so the chat gets a line it can
+    answer — not only residue the next turn happens to read."""
+    import dashboard.plugin_api as api
+
+    # The route reaches the engine through the plugin object, not through `api`'s own import:
+    # register on the exact instance that note_flight() will run in, or the poster is never seen.
+    route_engine = api.plugin().core.engine
+    spoken: list[str] = []
+    route_engine.set_notifier(lambda text: spoken.append(text) or True)
+    try:
+        client = _client()
+        client.post("/api/plugins/antemuse/flight",
+                    json={"trail": ["harpoon", "lighthouse", "orchard"],
+                          "kept": ["harpoon"], "session": "s-flight-speak"})
+    finally:
+        route_engine.set_notifier(None)
+
+    assert len(spoken) == 1, f"expected one message, got {spoken}"
+    line = spoken[0]
+    assert line.startswith("left the cockpit"), line
+    assert "3 concepts" in line, line
+    assert "harpoon \u2192 lighthouse \u2192 orchard" in line, line
+    assert "[seed=" not in line and "s-flight-speak" not in line, line
+
+
+def test_a_flight_with_no_concepts_says_nothing():
+    import dashboard.plugin_api as api
+
+    route_engine = api.plugin().core.engine
+    spoken: list[str] = []
+    route_engine.set_notifier(lambda text: spoken.append(text) or True)
+    try:
+        _client().post("/api/plugins/antemuse/flight", json={"trail": [], "session": "s-quiet"})
+    finally:
+        route_engine.set_notifier(None)
+    assert spoken == [], f"nothing was flown, so nothing is said: {spoken}"

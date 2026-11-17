@@ -356,7 +356,15 @@ def note_flight(trail: Any, kept: Any = None, dropped: Any = None,
         })
         _cap_residue(data)
         data["last_flight"] = record
+        # Leaving the cockpit is the person handing their choices back to the chat, so the
+        # concepts are posted as a message they can see and the agent can answer — not only
+        # stored as residue for the next turn to find. Bounded, in flight order, no badges.
+        spoken = "left the cockpit \u00b7 " + str(record["concepts"]) + " concept" + \
+            ("" if record["concepts"] == 1 else "s") + " \u00b7 " + \
+            " \u2192 ".join(labels[:4]) + (" \u2026" if len(labels) > 4 else "")
+        data["say"] = (data.get("say") or [])[-3:] + [{"text": spoken, "at": record["at"]}]
         _save(data)
+    flush_say()
     # The map should notice what a person chose with their own hands, whether or not a state was
     # open. This is the row that moves the weights; `move="flight"` keeps the provenance honest.
     for label in labels:

@@ -71,8 +71,9 @@ not a guess. Ignore it when the work is nearly done; the nudge waits ten turns.
   never run, then a precedence rule whose assertions only covered `active: null`.
 - Entering a pane is not leaving it: every full-bleed view needs a drawn exit and a key for it.
 - Leaving the cockpit files the flight (`POST /flight`: trail in order, plus keeps and
-  trashes) as residue — never as a state, and never inside `/explore`, where the state's own
-  tally already reaches the agent.
+  trashes) as residue — never as a state — and posts one line into the conversation
+  (`left the cockpit · N concepts · a → b → c`) so the person's choices come back to the chat
+  they are in, not only to the next turn's context.
 - A new backend route is not live until the gateway restarts; say so instead of claiming the
   wire works. Diagnose a silent client→server call by driving the packaged app and reading the
   refusal (`404 {"detail":"Not Found"}` meant the route, not the client).
