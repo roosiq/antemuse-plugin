@@ -188,6 +188,19 @@ assert.equal(byId.nav.data.path, '/antemuse')
 assert.equal(registered.contributions[0].id, 'pane')
 assert.equal(registered.contributions[0].data.placement, 'right', 'the art gets its own dock pane')
 assert.equal(registered.contributions[0].data.collapsible, true)
+
+// The picture a state asks for: one rule, four answers. Asserted on the real export so a
+// state added to the registry without a picture cannot pass by drawing idle.
+const { sceneFor } = helpers
+assert.equal(sceneFor(null, false), 'idle', 'no state, nothing running: idle')
+assert.equal(sceneFor(null, true), 'work', 'a turn running with no state: work')
+assert.equal(sceneFor({ key: 'doomscroll', served: 0 }, false), 'bare',
+  'a state that has fired nothing must not be drawn as idle')
+assert.equal(sceneFor({ key: 'doomscroll', served: 1 }, false), 'doomscroll',
+  'a state with material draws its own field')
+assert.equal(sceneFor({ key: 'unstuck', served: 1 }, false), 'unstuck',
+  'unstuck has a picture; it used to fall back to idle')
+console.log('PASS  scene: four answers, one rule')
 // The settings page is optional and another writer is currently moving it; what
 // must hold is that the plugin never offers more than one.
 assert.ok(registered.pages.length <= 1, 'at most one settings page')

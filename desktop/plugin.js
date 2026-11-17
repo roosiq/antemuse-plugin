@@ -1605,13 +1605,27 @@ function cellNoise(x, y) {
   return ((h ^ (h >> 16)) >>> 0) / 4294967295
 }
 
+// The field is a picture of material, not of a mood. `bare` is "nothing fired yet"; a state
+// missing from this table drew `idle`, which is how unstuck became invisible for a release.
 const SCENES = {
+  bare:       { strands: 0, speed: 0.0,   width: 0.0, head: 0.0 },
   idle:       { strands: 3, speed: 0.085, width: 2.4, head: 0.0 },
   work:       { strands: 6, speed: 0.330, width: 2.2, head: 0.0 },
   walk:       { strands: 4, speed: 0.240, width: 2.6, head: 0.9 },
   daydream:   { strands: 5, speed: 0.150, width: 2.4, head: 0.5 },
   dream:      { strands: 5, speed: 0.115, width: 2.8, head: 1.0 },
-  doomscroll: { strands: 6, speed: 0.370, width: 2.2, head: 0.9 }
+  doomscroll: { strands: 6, speed: 0.370, width: 2.2, head: 0.9 },
+  unstuck:    { strands: 2, speed: 0.190, width: 2.9, head: 0.6 }
+}
+
+// Which picture a state asks for — one rule, in one place, so it can be asserted:
+// idle (nothing running) | work (turn, no state) | bare (state, nothing fired) | its field.
+export function sceneFor(active, busy) {
+  const key = active && active.key ? String(active.key) : ''
+  if (!key) return busy ? 'work' : 'idle'
+  const served = Number((active && active.served) || 0)
+  if (served <= 0) return 'bare'
+  return SCENES[key] && SCENES[key].strands > 0 ? key : 'idle'
 }
 
 
@@ -1679,6 +1693,8 @@ function buildPart(part) {
 // different speeds: `walk` is a receding corridor, `doomscroll` a grille the
 // camera is stuck behind, `dream` one tall prism with a ring going round it.
 const COMPOSITIONS = {
+  // Nothing fired is a real answer, not a missing value — hence ?? below, not ||.
+  bare: [],
   idle: [
     { kind: 'box', w: 3.0, t: 0.62, d: 2.0, c: 0.42, pos: [0, 0, 0], warm: 0.35, cold: 0.55 },
     { kind: 'ring', r: 2.05, pos: [0, 0, 0], rot: [1.05, 0, 0], cold: 0.8, spin: 0.10 }
@@ -1953,7 +1969,7 @@ export function createArt(canvas, { dark = true, strength = 0.12, front = false 
     sample.setTransform(SS, 0, 0, SS, 0, 0)
     sample.lineJoin = 'round'
     sample.lineCap = 'round'
-    const comp = COMPOSITIONS[scene] || COMPOSITIONS.idle
+    const comp = COMPOSITIONS[scene] ?? COMPOSITIONS.idle
     drawScene(sample, w, h, time, comp, spec(), dark)
 
     // Pass 1: the scene, at quarter resolution. The downscale is the threshold —
@@ -2094,7 +2110,6 @@ function ChatBackdrop({ ctx }) {
     handle.art.appendChild(canvas)
     const art = createArt(canvas, { dark: handle.dark, strength: handle.strength, front: handle.placement === 'front' })
     let scene3d = null
-    let art3dError = null
     // Bounded diagnostics for the app's own devtools. Nothing here grows.
     const probe = (window.__antemuse = { frames: 0, glyphs: 0, errors: [], scene: null, mode: 'strands' })
 
@@ -2157,8 +2172,7 @@ function ChatBackdrop({ ctx }) {
         (payload) => {
           if (stopped) return
           const active = payload && payload.active
-          const name = (active && active.key) || (busy ? 'work' : 'idle')
-          art.setScene(SCENES[name] ? name : 'idle')
+          art.setScene(sceneFor(active, busy))
           probe.scene = art.stats().scene
           probe.state = { active: Boolean(active), busy }
         },
@@ -2173,23 +2187,11 @@ function ChatBackdrop({ ctx }) {
     // is therefore not importable here, vendored or not, and the 3D is done in
     // this file with plain projection maths instead. This block is kept as the
     // seam where a host-provided three would go.
-    Promise.reject(new Error('3d runs in-file')).then((m) => {
-      if (stopped) return
-      try {
-        scene3d = m.createScene3D({
-          width: handle.layer.clientWidth || win.innerWidth || 960,
-          height: handle.layer.clientHeight || win.innerHeight || 800,
-          dark: handle.dark
-        })
-        handle.art.replaceChildren(scene3d.domElement)
-        scene3d.render(0.016, 0)
-        probe.mode = 'ascii3d'
-      } catch (e) {
-        art3dError = String((e && e.message) || e)
-        probe.mode = 'strands'
-        probe.errors = probe.errors.concat('3d: ' + art3dError).slice(-3)
-      }
-    }, () => { probe.mode = 'solid' })
+    // The 3D kit is unreachable by design: a runtime plugin may only import the SDK and
+    // react, so this file's own projection draws. `scene3d` stays null for the day a host
+    // exposes a renderer; the branch that used to sit here could never run (it hung off a
+    // rejected promise) and only looked live.
+    probe.mode = 'strands'
 
     if (reducedMotion(win)) {
       // A still picture, not a frozen timer.
