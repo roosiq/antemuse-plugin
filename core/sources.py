@@ -216,11 +216,31 @@ def scroll_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fals
 
 
 def _graph_edge(root: Path) -> str:
-    """Use the active graph-provider interface, not a second graph implementation."""
+    """One edge from the active graph provider, over concepts this person actually has.
+
+    The first version read the *folder name* — `antemuse-plugin` -> "antemuse", "plugin" — which
+    resolves to nothing in WordNet, so `unstuck` was advertised and unreachable in every real
+    home. The material that does exist is the concept ledger: what the agent has already been
+    working on. Folder terms stay as a last resort.
+    """
     from . import walks
     try:
         graph = walks.make_graph("wordnet")
-        terms = [part.lower() for part in re.findall(r"[A-Za-z]{4,}", root.name)] or ["project"]
+        terms: List[str] = []
+        try:
+            from . import history
+
+            conn = history._connect()
+            if conn is not None:
+                try:
+                    terms = [str(row[0]) for row in conn.execute(
+                        "SELECT label FROM concepts ORDER BY times DESC, last_seen DESC LIMIT 24"
+                    )]
+                finally:
+                    conn.close()
+        except Exception:
+            terms = []
+        terms += [part.lower() for part in re.findall(r"[A-Za-z]{4,}", root.name)] or ["project"]
         for term in terms:
             node = graph.resolve(term)
             if node is None:
