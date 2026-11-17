@@ -29,9 +29,22 @@ def _scene_keys() -> set[str]:
     return set(re.findall(r"^  (\w+):\s+\{ strands:", table, re.M))
 
 
-def test_every_agent_state_has_a_picture():
-    missing = set(states.STATES) - _scene_keys()
-    assert not missing, f"states with no picture in the pane (they draw idle): {sorted(missing)}"
+def _no_field() -> set[str]:
+    found = re.search(r"const NO_FIELD = new Set\(\[([^\]]*)\]\)", SOURCE)
+    return set(re.findall(r"'([a-z]+)'", found.group(1))) if found else set()
+
+
+def test_every_agent_state_has_a_picture_or_a_reason_not_to():
+    """A state either has a field or says why it has none. Silence is what hid unstuck."""
+    missing = set(states.STATES) - _scene_keys() - _no_field()
+    assert not missing, f"states with no picture and no reason (they draw idle): {sorted(missing)}"
+
+
+def test_the_only_stateless_picture_is_the_one_that_must_not_draw_material():
+    assert _no_field() == {"doomscroll"}, (
+        "feed text is untrusted and never persisted, so doomscroll draws nothing; "
+        "any other state in this set is a picture that went missing"
+    )
 
 
 def test_nothing_fired_is_its_own_picture():

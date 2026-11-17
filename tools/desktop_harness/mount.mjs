@@ -196,8 +196,10 @@ assert.equal(sceneFor(null, false), 'idle', 'no state, nothing running: idle')
 assert.equal(sceneFor(null, true), 'work', 'a turn running with no state: work')
 assert.equal(sceneFor({ key: 'doomscroll', served: 0 }, false), 'bare',
   'a state that has fired nothing must not be drawn as idle')
-assert.equal(sceneFor({ key: 'doomscroll', served: 1 }, false), 'doomscroll',
+assert.equal(sceneFor({ key: 'daydream', served: 1 }, false), 'daydream',
   'a state with material draws its own field')
+assert.equal(sceneFor({ key: 'doomscroll', served: 3 }, false), 'bare',
+  'feed text is never drawn: doomscroll has no field even with material')
 assert.equal(sceneFor({ key: 'unstuck', served: 1 }, false), 'unstuck',
   'unstuck has a picture; it used to fall back to idle')
 console.log('PASS  scene: four answers, one rule')

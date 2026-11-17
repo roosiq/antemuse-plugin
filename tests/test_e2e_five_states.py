@@ -71,10 +71,12 @@ def run(key: str, session: str, **entry) -> dict:
             blocks.append(block)
         if not _active_key():
             break
+    account = ""
     if _active_key():
-        engine.stop(session, reason="dose")
+        account = engine.stop(session, reason="dose")
     rows = [row for row in _moves() if row[0] == key]
-    return {"entry": said, "blocks": blocks, "row": rows[-1] if rows else None}
+    return {"entry": said, "blocks": blocks, "account": account,
+            "row": rows[-1] if rows else None}
 
 
 @pytest.fixture(autouse=True)
@@ -117,6 +119,8 @@ def test_walk_end_to_end():
     _assert_ends_well("walk", out)
     assert out["row"][1] in ("complete", "dry")
     assert out["row"][2] > 0, "a walk to WordNet should always serve at least one hop"
+    assert "[seed=" not in out["account"], (
+        f"the walk's seed marker reached the person's account: {out['account']!r}")
 
 
 def test_daydream_end_to_end():
@@ -239,6 +243,24 @@ def test_unstuck_works_once_the_map_has_an_edge():
     _assert_block("unstuck", out["blocks"][0])
     _assert_ends_well("unstuck", out)
     assert out["row"][1] in ("complete", "dry")
+
+
+def test_a_walk_line_from_a_seeded_start_keeps_its_badge_out_of_the_account():
+    """The badge appears only when a walk started from a ledger seed, so a live run caught it
+    once and no test did. Pin the stripper directly instead of hoping the seed recurs."""
+    engine.enter("walk", session="seed-leak")
+    data = json.loads((storage.data_dir() / "state.json").read_text())
+    active = data.get("active") or {}
+    data.setdefault("journal", []).append({
+        "who": "state", "state": "walk", "event": "walk",
+        "at": (active.get("entered_at") or 0) + 1,
+        "text": "[seed=conversation:recorded] record→ticket [far]",
+    })
+    active["served"] = 1
+    (storage.data_dir() / "state.json").write_text(json.dumps(data))
+    said = engine.stop("seed-leak", reason="dose")
+    assert "[seed=" not in said, f"the seed badge reached the account: {said!r}"
+    assert "record→ticket" in said, said
 
 
 @pytest.mark.parametrize("key", list(states.STATES))

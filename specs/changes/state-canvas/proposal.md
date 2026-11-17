@@ -42,13 +42,16 @@ that outgrew it.
 2. `bare` is a real picture: zero strands, empty composition (`??`, not `||`, so an empty list is
    an answer rather than a missing value).
 3. `unstuck` has a field, so no registry state falls back to `idle`.
-4. Parity is pinned from both sides: `tests/test_pane_scenes.py` reads the real file and compares
+4. Doomscroll is `NO_FIELD`: its feed text is untrusted and never persisted, so it must not
+   become lit cells. It drew a scene that rendered zero lit pixels — the worst of both, a picture
+   claimed and nothing on it. It is now `bare` with the strip carrying the count.
+5. Parity is pinned from both sides: `tests/test_pane_scenes.py` reads the real file and compares
    it to `core.states.STATES`; `tools/desktop_harness/mount.mjs` asserts the four answers on the
    real export.
 5. A dead branch was removed: the 3D kit hung off `Promise.reject(...).then(...)` and could never
    run, so it looked live and was not. `probe.mode` is `strands`, which is the truth.
 
-Proofs: removing `unstuck` from the table fails `test_every_agent_state_has_a_picture`
+Proofs: removing `unstuck` from the table fails `test_every_agent_state_has_a_picture_or_a_reason_not_to`
 (`states with no picture in the pane (they draw idle): ['unstuck']`); removing the `served <= 0`
 branch fails the harness (`a state that has fired nothing must not be drawn as idle`). Both
 restored, suite green (893 passed, 3 skipped), harness 12 properties PASS.

@@ -1614,15 +1614,20 @@ const SCENES = {
   walk:       { strands: 4, speed: 0.240, width: 2.6, head: 0.9 },
   daydream:   { strands: 5, speed: 0.150, width: 2.4, head: 0.5 },
   dream:      { strands: 5, speed: 0.115, width: 2.8, head: 1.0 },
-  doomscroll: { strands: 6, speed: 0.370, width: 2.2, head: 0.9 },
   unstuck:    { strands: 2, speed: 0.190, width: 2.9, head: 0.6 }
 }
 
 // Which picture a state asks for — one rule, in one place, so it can be asserted:
 // idle (nothing running) | work (turn, no state) | bare (state, nothing fired) | its field.
+// A state whose material is never a concept has no picture to draw. Doomscroll's feed text
+// must not become lit cells (untrusted, never persisted), so it stays bare even after it has
+// served: the strip carries the count, the canvas stays empty.
+const NO_FIELD = new Set(['doomscroll'])
+
 export function sceneFor(active, busy) {
   const key = active && active.key ? String(active.key) : ''
   if (!key) return busy ? 'work' : 'idle'
+  if (NO_FIELD.has(key)) return 'bare'
   const served = Number((active && active.served) || 0)
   if (served <= 0) return 'bare'
   return SCENES[key] && SCENES[key].strands > 0 ? key : 'idle'
@@ -1718,12 +1723,6 @@ const COMPOSITIONS = {
     { kind: 'box', w: 0.78, t: 1.5, d: 0.78, c: 0.18, pos: [0, 0, 0], warm: 0.45, cold: 0.5 },
     { kind: 'ring', r: 1.62, pos: [0, 0.1, 0], rot: [1.35, 0, 0.15], cold: 0.95, spin: 0.06 }
   ],
-  doomscroll: [
-    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, 0.95, 0], warm: 0.7, cold: 0.2 },
-    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, 0.35, 0.15], warm: 0.2, cold: 0.8 },
-    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, -0.25, 0], warm: 0.3, cold: 0.6 },
-    { kind: 'bar', len: 5.4, thick: 0.22, pos: [0, -0.85, 0.1], warm: 0.8, cold: 0.15 }
-  ]
 }
 
 const CAMERA = { fov: 38, dist: 4.6, pitch: 0.30 }

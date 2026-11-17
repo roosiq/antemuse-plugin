@@ -443,7 +443,10 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
              if e.get("who") == "state" and not _is_failure_line(str(e.get("text") or ""))]
     trail: List[str] = []
     for e in steps:
-        text = str(e.get("text") or "")
+        text = re.sub(r"\[seed=[^\]]*\]\s*", "", str(e.get("text") or ""))
+        # A walk line can carry the seed it started from ("[seed=conversation:recorded]") and the
+        # jump it used. The jump is part of the move; the seed is an internal marker and it
+        # reached the person's account, which is exactly the leak the entry line already avoids.
         step = STEP_RE.match(text)
         if step:
             head = f"{step.group('a')}→{step.group('b')} [{step.group('rel')}]"
