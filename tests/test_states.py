@@ -11,7 +11,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["ANTEMUSE_STATES_HOME"] = tempfile.mkdtemp(prefix="states-test-")
 
-from core import engine, sources, states  # noqa: E402
+from core import engine, recall, sources, states  # noqa: E402
 
 
 def setup_function(_):
@@ -177,3 +177,36 @@ def test_every_state_declares_a_contract_and_a_residue():
     for key, spec in states.STATES.items():
         assert spec["contract"] and spec["residue"] and spec["directive"], key
         assert spec["label"] and spec["dose"], key
+
+
+def test_a_dream_names_the_concepts_it_served():
+    """The landing line is what the person reads. A count of "2 recombinations" says something
+    happened; the labels say what it was about, and they come from the ledger, not the prose."""
+    for line in ("A recorded turn about a harbor crane and its rusted cable.",
+                 "Another turn about a ticket queue and a paper lantern.",
+                 "A third turn about a diesel generator and a coil of rope."):
+        recall.remember(line)
+    engine.enter("dream", session="S-DREAM-NAMES")
+    for _ in range(2):
+        engine.note_turn("S-DREAM-NAMES")
+        engine.inject("S-DREAM-NAMES")
+    said = engine.stop("S-DREAM-NAMES", reason="dose") or ""
+    assert "concepts: " in said, said
+    labels = said.split("concepts: ", 1)[1].strip().rstrip(".").strip()
+    assert len(labels) > 3, said
+
+
+def test_daydream_keeps_its_count_and_names_nothing():
+    """Daydream's material is the person's own recorded turns. Naming the concepts would put
+    their memory text back in front of them, so it reports how many joined, never which."""
+    for line in ("A recorded turn about a harbor crane and its rusted cable.",
+                 "Another turn about a ticket queue and a paper lantern.",
+                 "A third turn about a diesel generator and a coil of rope."):
+        recall.remember(line)
+    engine.enter("daydream", session="S-DAY-QUIET")
+    for _ in range(2):
+        engine.note_turn("S-DAY-QUIET")
+        engine.inject("S-DAY-QUIET")
+    said = engine.stop("S-DAY-QUIET", reason="dose") or ""
+    assert "concepts: " not in said, said
+    assert "harbor crane" not in said and "paper lantern" not in said, said

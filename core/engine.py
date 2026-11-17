@@ -483,6 +483,14 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
             body = f"{body} · {mark.lower()} ×{n}"
     # The count is what the state delivered, capped at its dose: counting journal lines let a
     # second walk in the same chat report "11 of 6 hops".
+    # The concepts themselves, where naming them is honest. Walk already names its hops. Dream
+    # and unstuck work from tasks and the map, so their labels are the state's own output and
+    # belong in the chat. Daydream reads the person's recorded turns — naming those concepts
+    # would put their own memory text back in front of them, so it stays a count. Doomscroll's
+    # feed is untrusted and never spoken.
+    said = _concepts_said(active) if key in ("dream", "unstuck") else ""
+    if said:
+        body = f"{body} · concepts: {said}"
     counted = max(int(active.get("served") or 0), len(steps))
     served = min(dose, counted) if dose else counted
     return {
@@ -490,6 +498,33 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
         "text": f"{key} · {served} of {dose} {unit} · {body}" + _why(active),
         "steps": served,
     }
+
+
+def _concepts_said(active: Dict[str, Any], limit: int = 4) -> str:
+    """The concept labels this state served, in order, as a short phrase.
+
+    Labels only: the ledger stores concepts, not the prose they came from. A missing ledger is
+    not a failure to report — the account already stands without it.
+    """
+    # The provider runs at entry, so its served rows can be stamped just before `started`:
+    # a strict window hid the one row that mattered and the account named nothing.
+    since = float(active.get("started") or active.get("entered_at") or 0) - 2.0
+    key = str(active.get("key") or "")
+    try:
+        from . import history
+        rows = history._connect().execute(
+            "SELECT c.label FROM served s JOIN concepts c ON c.id = s.concept_id "
+            "WHERE s.move = ? AND s.at >= ? ORDER BY s.at ASC", (key, since)).fetchall()
+    except Exception:  # health: BLE001 -- an account without the labels is still an account
+        return ""
+    labels: List[str] = []
+    for label in (r[0] for r in rows):
+        if label and label not in labels:
+            labels.append(str(label))
+    if not labels:
+        return ""
+    short = ", ".join(labels[:limit])
+    return short + ("…" if len(labels) > limit else "")
 
 
 def _why(active: Dict[str, Any]) -> str:

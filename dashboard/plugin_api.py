@@ -241,9 +241,12 @@ def graph(session: str = "", limit: int = 1400):
         stamp = (float(_row[0] or 0), int(_row[1] or 0))
     except Exception:  # health: BLE001 -- no ledger is a fact, not a failure
         stamp = (0.0, 0)
+    # `served` is in the key as well as the ledger stamp: a hop that lands inside the memo
+    # window changes the count even when the timestamps collide, and a stale picture of a walk
+    # is the defect this whole key exists to prevent.
     want = (session, int(limit), str(engine_state.get("key") or ""),
-            float(engine_state.get("entered_at") or 0.0), stamp,
-            str((_last_finished(_residue) or {}).get("state") or ""))
+            float(engine_state.get("entered_at") or 0.0), int(engine_state.get("served") or 0),
+            stamp, str((_last_finished(_residue) or {}).get("state") or ""))
     if (_GRAPH_MEMO.get("want") == want and _GRAPH_MEMO.get("payload") is not None
             and _time.time() - float(_GRAPH_MEMO.get("at") or 0) < 3.0):
         return _GRAPH_MEMO["payload"]
