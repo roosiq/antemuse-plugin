@@ -1605,8 +1605,7 @@ function cellNoise(x, y) {
   return ((h ^ (h >> 16)) >>> 0) / 4294967295
 }
 
-// The field is a picture of material, not of a mood. `bare` is "nothing fired yet"; a state
-// missing from this table drew `idle`, which is how unstuck became invisible for a release.
+// `bare` is "nothing fired yet"; a state missing here drew `idle` — how unstuck vanished.
 const SCENES = {
   bare:       { strands: 0, speed: 0.0,   width: 0.0, head: 0.0 },
   idle:       { strands: 3, speed: 0.085, width: 2.4, head: 0.0 },
@@ -1617,12 +1616,18 @@ const SCENES = {
   unstuck:    { strands: 2, speed: 0.190, width: 2.9, head: 0.6 }
 }
 
-// Which picture a state asks for — one rule, in one place, so it can be asserted:
-// idle (nothing running) | work (turn, no state) | bare (state, nothing fired) | its field.
-// A state whose material is never a concept has no picture to draw. Doomscroll's feed text
-// must not become lit cells (untrusted, never persisted), so it stays bare even after it has
-// served: the strip carries the count, the canvas stays empty.
+// Which picture a state asks for — one rule, assertable: idle | work | bare | its field.
+// Feed text is untrusted and never persisted, so doomscroll has no field even after serving:
+// the strip carries the count, the canvas stays empty.
 const NO_FIELD = new Set(['doomscroll'])
+
+// A finished state keeps its picture for two polls (the residue's count), so a one-dose state
+// is visible at all.
+export function holdScene(held, active, busy) {
+  if (active && active.key) return { scene: sceneFor(active, busy), held: { key: active.key, polls: 0 } }
+  if (held && held.polls < 2) return { scene: sceneFor({ key: held.key, served: 1 }, busy), held: { key: held.key, polls: held.polls + 1 } }
+  return { scene: sceneFor(active, busy), held: null }
+}
 
 export function sceneFor(active, busy) {
   const key = active && active.key ? String(active.key) : ''
@@ -1694,11 +1699,9 @@ function buildPart(part) {
   return part._mesh
 }
 
-// Composition per state. These are different objects, not the same object at
-// different speeds: `walk` is a receding corridor, `doomscroll` a grille the
-// camera is stuck behind, `dream` one tall prism with a ring going round it.
+// Composition per state: different objects, not one object at different speeds.
 const COMPOSITIONS = {
-  // Nothing fired is a real answer, not a missing value — hence ?? below, not ||.
+  // Nothing fired is an answer, not a missing value: hence ?? below.
   bare: [],
   idle: [
     { kind: 'box', w: 3.0, t: 0.62, d: 2.0, c: 0.42, pos: [0, 0, 0], warm: 0.35, cold: 0.55 },
@@ -2051,8 +2054,7 @@ export function createLayer(doc, win, { strength = LAYER.defaultStrength } = {})
       (placement === 'behind' ? '-1' : '2147483646') + ';background:' +
       (placement === 'behind' ? surf.colour : 'transparent') + ';'
 
-  // A slot, not a canvas: either the 3D family (three + AsciiEffect) or the
-  // Canvas2D strands fill it, and the layer does not care which.
+  // A slot, not a canvas: the 3D family or the Canvas2D strands fill it.
   const art = doc.createElement('div')
   art.setAttribute(LAYER.attr, 'art')
   art.style.cssText = 'position:absolute;inset:0;overflow:hidden;'
@@ -2158,6 +2160,7 @@ function ChatBackdrop({ ctx }) {
 
     // The state is slow (it changes when a turn starts, not every frame), so the
     // poll only chooses the scene. The picture itself never waits on HTTP.
+    let held = null
     const poll = () => {
       if (stopped) return
       const st = art.stats()
@@ -2170,8 +2173,9 @@ function ChatBackdrop({ ctx }) {
       ctx.rest('/state' + q).then(
         (payload) => {
           if (stopped) return
-          const active = payload && payload.active
-          art.setScene(sceneFor(active, busy))
+          const step = holdScene(held, payload && payload.active, busy)
+          held = step.held
+          art.setScene(step.scene)
           probe.scene = art.stats().scene
           probe.state = { active: Boolean(active), busy }
         },

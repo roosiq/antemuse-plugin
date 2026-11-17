@@ -70,5 +70,10 @@ def test_the_selection_is_not_a_second_literal():
     """The poll must ask the rule, not repeat the table lookup inline."""
     poll = SOURCE[SOURCE.index("const poll = () =>"):]
     poll = poll[: poll.index("probe.state")]
-    assert "art.setScene(sceneFor(active, busy))" in poll
+    assert "art.setScene(step.scene)" in poll
+    assert "holdScene(held," in poll, "the poll must ask the rule, not rebuild it"
     assert "SCENES[" not in poll, "the poll grew its own copy of the table again"
+    # A finished state keeps its picture for two polls, so a one-dose state is visible at all.
+    hold = SOURCE[SOURCE.index("export function holdScene("):]
+    hold = hold[: hold.index("\n}")]
+    assert "held.polls < 2" in hold, "the ending frame is not held"

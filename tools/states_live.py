@@ -71,9 +71,12 @@ PAGE = """<!doctype html>
 </head><body>
 <canvas id="art" width="640" height="400"></canvas>
 <script type="module">
-import { createArt, sceneFor } from '/desktop/plugin.js'
-const art = createArt(document.getElementById('art'), { dark: true })
-window.__harness = { art, sceneFor }
+import { createArt, sceneFor, holdScene } from '/desktop/plugin.js'
+const canvas = document.getElementById('art')
+const art = createArt(canvas, { dark: true })
+// createArt draws into a buffer sized by resize(); without it the field is a wash.
+art.resize(canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio || 1)
+window.__harness = { art, sceneFor, holdScene }
 window.__ready = true
 </script>
 </body></html>
@@ -203,7 +206,7 @@ def main() -> int:
             painted = page.evaluate("""(s) => {
                 const { art } = window.__harness
                 art.setScene(s)
-                for (let i = 0; i < 6; i++) art.render(1 / 60)
+                for (let i = 0; i < 40; i++) art.render(1 / 30)
                 const c = document.getElementById('art')
                 const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data
                 let lit = 0
@@ -233,6 +236,8 @@ def main() -> int:
 
             stop = json.loads(u.urlopen(u.Request(f"{base}/api/stop?session=live", method="POST"),
                                         timeout=10).read())["said"]
+            # After the state ended, does its picture survive the poll that reports "nothing"?
+            held = page.evaluate("() => window.__harness.holdScene({key: '%s', polls: 0}, null, false).scene" % key)
             rows.append({
                 "state": key,
                 "entered": entered,
@@ -242,6 +247,7 @@ def main() -> int:
                 "pane_served": ((state or {}).get("active") or {}).get("served"),
                 "pane_dose": ((state or {}).get("active") or {}).get("dose"),
                 "scene": painted["scene"],
+                "scene_after_end": held,
                 "frames": painted["frames"],
                 "ink_pct": round(100.0 * painted["lit"] / painted["total"], 2),
                 "after_input_frames": after.get("frames"),
@@ -256,7 +262,7 @@ def main() -> int:
     for r in rows:
         print(f"{r['state'].ljust(width)}  {r['scene']:<10}  {r['ink_pct']:>5}  "
               f"{r['after_input_frames']:>5}  {str(r['pane_served'])}/{str(r['pane_dose']):<3}  "
-              f"{'entered' if r['entered'] else 'refused'}")
+              f"{'entered' if r['entered'] else 'refused'}  (held: {r['scene_after_end']})")
         print(f"    chat : {r['chat_entry']}")
         print(f"    end  : {r['chat_account']}")
         if r["errors"]:

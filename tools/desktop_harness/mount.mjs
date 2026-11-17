@@ -203,6 +203,17 @@ assert.equal(sceneFor({ key: 'doomscroll', served: 3 }, false), 'bare',
 assert.equal(sceneFor({ key: 'unstuck', served: 1 }, false), 'unstuck',
   'unstuck has a picture; it used to fall back to idle')
 console.log('PASS  scene: four answers, one rule')
+
+// A finished state keeps its picture for two polls: that is the only way a one-dose state
+// (/unstuck) is ever visible, since it ends on the turn it serves.
+const { holdScene } = helpers
+assert.deepEqual(holdScene(null, { key: 'unstuck', served: 1 }, false),
+  { scene: 'unstuck', held: { key: 'unstuck', polls: 0 } }, 'a running state is drawn at once')
+assert.deepEqual(holdScene({ key: 'unstuck', polls: 0 }, null, false),
+  { scene: 'unstuck', held: { key: 'unstuck', polls: 1 } }, 'the ending frame is held')
+assert.deepEqual(holdScene({ key: 'unstuck', polls: 2 }, null, false),
+  { scene: 'idle', held: null }, 'and then it lets go (two polls, the residue count)')
+console.log('PASS  scene: the ending frame is held for two polls')
 // The settings page is optional and another writer is currently moving it; what
 // must hold is that the plugin never offers more than one.
 assert.ok(registered.pages.length <= 1, 'at most one settings page')
