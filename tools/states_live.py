@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Drive the real art pane in a real browser with a real mouse and keyboard.
+"""Drive the pane's FALLBACK canvas in a real browser with a real mouse and keyboard.
+
+Read this before believing the screenshots: the pane sets this canvas to `idle` on purpose
+("the canvas is a neutral ground now: the only picture is the activation itself"), and paints
+the activation map instead — a JPEG still of the lit concept map, or the turnable `graph3d`
+surface built from `/graph`. What this harness mounts is the strand/box kit the pane keeps as a
+fallback for a surface with no WebGL and no stills. It is NOT what a person sees in the app.
+
+The real picture is `tools/activation_render.py --move <state>`, which draws the same map the
+stills are made from, out of the ledger's own served rows.
 
 The desktop app shell is not on this host (it lives on the operator's machine), so this
 harness reproduces the two things the pane actually is: an HTTP backend running the real
@@ -258,6 +267,8 @@ def main() -> int:
     server.shutdown()
 
     width = max(len(r["state"]) for r in rows)
+    print("canvas below is the FALLBACK kit, not the pane's picture "
+          "(the pane paints the activation map: tools/activation_render.py)")
     print(f"{'state'.ljust(width)}  scene       ink%   frames  pane  chat")
     for r in rows:
         print(f"{r['state'].ljust(width)}  {r['scene']:<10}  {r['ink_pct']:>5}  "
