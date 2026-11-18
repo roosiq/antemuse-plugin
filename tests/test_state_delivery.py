@@ -316,3 +316,30 @@ def test_the_turn_that_spends_the_last_hop_carries_the_ending():
     # react — that is the model's copy, not a second announcement.)
     reports = [r for r in engine._load()["residue"] if r.get("kind") == "report"]
     assert len(reports) == 1, reports
+
+
+def test_the_reply_that_follows_a_finish_says_it_ended():
+    """The ending rides on the answer, once.
+
+    The host poster is not a display guarantee: in a live chat it accepted `WALKING ended · …`
+    and marked the account told while nothing appeared. `transform_llm_output` is the channel
+    that cannot be swallowed, so the reply that follows a finish carries the line — and only
+    that one reply, not every reply in the residue window.
+    """
+    lines = markers()
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(*lines)
+    try:
+        engine.enter("walk", session="annot")
+        for _ in range(6):
+            engine.note_turn("annot")
+            engine.inject("annot")
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+    first = engine.annotate("here is my answer") or ""
+    assert "here is my answer" in first, "the answer must not be rewritten"
+    assert "walking ended · walk · 6 of 6 hops" in first, first
+
+    second = engine.annotate("another answer")
+    assert second is None, "the ending is said once, not on every reply after it"

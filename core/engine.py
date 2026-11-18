@@ -1583,13 +1583,32 @@ def policy(tool_name: str) -> Dict[str, Any] | None:
 
 
 def annotate(text: str) -> str | None:
-    """transform_llm_output: make the state visible without rewriting the answer."""
+    """transform_llm_output: make the state visible without rewriting the answer.
+
+    Two states to draw: one running, one that has just ended. The ending is drawn here, in the
+    reply itself, because the host's own message poster is not a display guarantee: in a real
+    chat it accepted the finish line and marked the account told while nothing appeared on
+    screen. This is the one channel that cannot be swallowed — it travels with the answer.
+    """
     with _LOCK:
         data = _load()
         _expire(data)
         active = data.get("active")
+        ended = None
+        if not active:
+            for entry in reversed(data.get("residue") or []):
+                if (entry.get("kind") == "report" and not entry.get("annotated")
+                        and int(entry.get("turns_left") or 0) > 0):
+                    ended = entry
+                    break
+            if ended is not None:
+                ended["annotated"] = True
+                _save(data)
     if not active:
-        return None
+        if ended is None:
+            return None
+        label = (states.spec(str(ended.get("state") or "")).get("label") or "state").lower()
+        return f"{text}\n\n— {label} ended · {ended.get('text', '')}"
     spec = states.spec(active["key"])
     return f"{text}\n\n— {spec['label'].lower()} · {_left_phrase(active)} · /return to come back"
 
