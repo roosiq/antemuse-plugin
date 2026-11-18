@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.26 — 2026-11-17
+
+- walk: one corpus, one lock, and a failure that names itself (2026-11-17)
+
 ## 0.11.25 — 2026-11-17
 
 - state: a late delivery writes nothing, and WordNet says what broke (2026-11-17)
