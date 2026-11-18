@@ -588,16 +588,7 @@ class GraphWalk:
         if self.graph is None:
             return None
         def can_move(node_) -> bool:
-            """A start node with no edge out is a walk that cannot take its first step.
-
-            A project word resolves happily in WordNet and then has nothing on it — "hermes" is a
-            proper noun with no hypernym in this graph — and the walk spent its whole dose printing
-            the same "no edge — the walk stops" line. A seed is only usable if the walk can leave it.
-            """
-            try:
-                return any(rel in self.relations for rel, _ in self.graph.edges(node_))
-            except Exception:
-                return True
+            return self._can_move(node_)
 
         mode = (self.seed_spec or {}).get("mode", "continue")
         # a seed places the first step; after that the walk continues from its cursor
@@ -647,8 +638,21 @@ class GraphWalk:
         # Nothing usable was seeded: draw a node the walk can actually leave.
         return self._movable_start(can_move)
 
-    def _movable_start(self, can_move) -> Optional[Dict[str, Any]]:
+    def _can_move(self, node_) -> bool:
+        """A node with no edge out is a walk that cannot take its first step.
+
+        A project word resolves happily in WordNet and then has nothing on it — "hermes" is a
+        proper noun with no hypernym in this graph — and the walk spent its whole dose printing
+        the same "no edge — the walk stops" line. A start is only usable if the walk can leave it.
+        """
+        try:
+            return any(rel in self.relations for rel, _ in self.graph.edges(node_))
+        except Exception:
+            return True
+
+    def _movable_start(self, can_move=None) -> Optional[Dict[str, Any]]:
         """A node the walk can leave, or the plain draw when the graph has nothing better."""
+        can_move = can_move or self._can_move
         for _ in range(12):
             drew = self.graph.random_node(self.roles)
             if drew is not None and can_move(drew):
@@ -909,7 +913,7 @@ class GraphWalk:
                     if restart is None:
                         # Last resort: a fresh movable start. The gate caught this twice — from
                         # "doddle" both restart passes exhausted and the walk stopped at hop 2.
-                        fresh_start = self._movable_start(can_move)
+                        fresh_start = self._movable_start()
                         if fresh_start is not None and fresh_start["id"] != node["id"]:
                             restart = fresh_start
                     if restart is None:
