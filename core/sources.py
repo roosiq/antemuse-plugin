@@ -60,13 +60,35 @@ def ready(kind: str, graph_name: str = "wordnet") -> str | None:
             "Run: python3 -c \"import nltk; nltk.download('wordnet')\"")
 
 
+def _hop_key(line: str) -> str:
+    """The hop a walk line reports: the arrow and the two labels, without the gloss."""
+    head = str(line or "").split(" · ")[0]
+    head = re.sub(r"^\[seed=[^\]]*\]\s*", "", head)
+    head = re.sub(r"\([^)]*\)", "", head)          # the same hop may or may not name its parts
+    return " ".join(head.split()).lower()
+
+
 def walk_text(steps: int = 1) -> List[str]:
-    """Run the selected walk; a path is recorded but never injected as material."""
+    """Run the selected walk; a path is recorded but never injected as material.
+
+    A walk must move. When the graph hands back the hop it just served — a two-node cycle, a stub
+    synset that can only go back, a restart that lands where it stood — the walk sets out fresh
+    instead of serving the repeat. The engine counts a repeat as drained material, and that is how
+    a six-hop walk ended at two claiming "nothing new arrived".
+    """
     from . import engine, walks
     active = engine.watch_state().get("active") or {}
     name = str(active.get("walk") or "wander")
+    recent = [_hop_key(str(x)) for x in (active.get("shown") or [])][-3:]
     try:
-        return walks.get(name).step(steps)
+        walk = walks.get(name)
+        out = walk.step(steps)
+        for _ in range(2):
+            if not out or _hop_key(out[0]) not in recent:
+                return out
+            walk.reset()                      # same hop again: set out from somewhere else
+            out = walk.step(steps)
+        return out
     except Exception as exc:
         try:
             engine.record("state", f"walk '{name}' failed · "

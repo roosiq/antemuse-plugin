@@ -198,6 +198,7 @@ def _content_words(text: str) -> set:
     return {w for w in re.findall(r"[a-z]{4,}", str(text).lower()) if w not in _GLOSS_STOP}
 
 
+_STEP_LOCK = threading.RLock()
 _WN_LOCK = threading.RLock()
 _WN: Any = None
 
@@ -556,13 +557,16 @@ class GraphWalk:
         cur = self._cursors().get(self.name)
         return cur if isinstance(cur, dict) else {}
 
-    def _write_cursor(self, node_id: str, prev: str, used: Optional[List[str]] = None) -> None:
+    def _write_cursor(self, node_id: str, prev: str, used: Optional[List[str]] = None,
+                      pairs: Optional[List[str]] = None) -> None:
         data = self._cursors()
         entry = {"node": node_id, "prev": prev, "at": time.time()}
         if used:
             # remembering what this walk has already started from is what keeps two
             # entries in the same repository from opening on the same word
             entry["used"] = [t for t in dict.fromkeys(used) if t][-12:]
+        if pairs:
+            entry["pairs"] = [p for p in dict.fromkeys(pairs) if p][-16:]
         data[self.name] = entry
         self.cursor_path.parent.mkdir(parents=True, exist_ok=True)
         self.cursor_path.write_text(json.dumps(data))
@@ -654,6 +658,13 @@ class GraphWalk:
             return []
 
     def step(self, steps: int = 1) -> List[str]:
+        # One stepper at a time. A turn and a pane poll arriving together read the same cursor,
+        # took the same edge, and served the same hop twice while the cursor advanced once — the
+        # duplicate then counted as "repeated" and closed a six-hop walk as dry at two.
+        with _STEP_LOCK:
+            return self._step(steps)
+
+    def _step(self, steps: int = 1) -> List[str]:
         self._seed_marker = ""
         failure = self._failure()
         if failure:
@@ -661,7 +672,18 @@ class GraphWalk:
         node = self.start_node()
         if node is None:
             return [f"walk unavailable · graph '{self.graph_name}' empty · has no starting node"]
-        prev_id = self._read_cursor().get("prev", "")
+        cur = self._read_cursor()
+        prev_id = cur.get("prev", "")
+        # What this walk has already walked. A two-hop cycle used to be re-served as "material",
+        # and two identical hops in a row ended a six-hop walk as `dry` at two: the account read
+        # "nothing new arrived" when the truth was "the walk could not move". A pair already
+        # taken is a cycle, not distance.
+        recent_pairs = [str(x) for x in (cur.get("pairs") or [])][-16:]
+        taken = set(recent_pairs)
+        moved: List[str] = []
+
+        def fresh_pair(a, b) -> bool:
+            return f"{a['id']}→{b['id']}" not in taken and f"{b['id']}→{a['id']}" not in taken
         prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
         # The goal is distant *and connected*: distance without a path back is noise. The
         # anchor is the concept the walk set out from — the task's own, when a task seed
@@ -731,7 +753,12 @@ class GraphWalk:
                 pass
             return ""
 
+        stood: List[str] = [node["id"]]
+
         def remember(node_) -> None:
+            ident = str(node_.get("id") or "")
+            if ident and (not stood or stood[-1] != ident):
+                stood.append(ident)
             try:
                 from . import engine, history
                 # The session the state belongs to, not an empty string: the pane asks
@@ -815,6 +842,8 @@ class GraphWalk:
                     continue
             elif mode == "far":
                 skip = far_fresh(node, avoid=[prev_id])
+                if skip is not None and not fresh_pair(node, skip):
+                    skip = None          # the same jump twice is a cycle, not distance
                 if skip is None:
                     # `outer` promises distance, and a neighbour step is the one thing it must
                     # not do. When the far search comes back empty — a synset with no usable
@@ -823,9 +852,9 @@ class GraphWalk:
                     # Two or three draws, because `random_node` can land on the node the
                     # walk is standing on and one unlucky draw is not a dead graph.
                     restart = None
-                    for _ in range(3):
+                    for _ in range(6):
                         drew = self.graph.random_node(self.relations)
-                        if drew is not None and drew["id"] != node["id"]:
+                        if drew is not None and drew["id"] != node["id"] and fresh_pair(node, drew):
                             restart = drew
                             break
                     if restart is None:
@@ -848,10 +877,27 @@ class GraphWalk:
                 continue
             options = [(rel, n) for rel, n in self.graph.edges(node) if rel in self.relations]
             if not options:
-                # a dead end is not the end of the walk unless the graph is exhausted.
-                # The restart is a hop and says so: a diagnostic line in the material
-                # ("dead end — no hyponym edge") reads to a turn like a concept that arrived.
-                restart = self.graph.random_node(self.relations)
+                # A dead end is not the end of the walk, and it must not be a line that repeats
+                # verbatim either: a stub synset with no edge out used to emit the same "the walk
+                # stops" sentence forever, the engine counted the repetition as drained material,
+                # and a six-hop walk ended at two claiming nothing new had arrived. Move first —
+                # restart somewhere with edges, or step back the way we came — and only stop when
+                # the graph itself has nowhere to go.
+                restart = None
+                for _ in range(8):
+                    drew = self.graph.random_node(self.relations)
+                    if drew is None or drew["id"] == node["id"]:
+                        continue
+                    if not any(rel in self.relations for rel, _ in self.graph.edges(drew)):
+                        continue
+                    if not fresh_pair(node, drew):
+                        continue
+                    restart = drew
+                    break
+                if restart is None and prev_id:
+                    came_from = self.graph.resume(prev_id)
+                    if came_from is not None and came_from["id"] != node["id"]:
+                        restart = came_from
                 if restart is None or restart["id"] == node["id"]:
                     out.append(f"{node['label']} · no {', '.join(self.relations)} edge — the walk stops")
                     break
@@ -877,7 +923,28 @@ class GraphWalk:
                                f"picks up again" + back(jumped=True) + visited(restart))
                     prev_id, node = node["id"], restart
                     continue
-            choice = pick([(r, n) for r, n in (forward or options)])
+            pool = [(r, n) for r, n in (forward or options)]
+            fresh = [(r, n) for r, n in pool if fresh_pair(node, n)]
+            if not fresh:
+                # Every edge from here has been walked already. Restart, so a six-hop walk is six
+                # hops instead of the same two forever.
+                restart = None
+                for _ in range(6):
+                    drew = self.graph.random_node(self.relations)
+                    if drew is not None and drew["id"] != node["id"] and fresh_pair(node, drew):
+                        restart = drew
+                        break
+                if restart is not None:
+                    hops += 1
+                    if restart["label"] not in trail:
+                        trail.append(restart["label"])
+                    remember(restart)
+                    out.append(f"{node['label']} → {restart['label']} "
+                               f"({restart['pos'] or 'thing'}) · this way is walked out, so the walk "
+                               f"picks up again" + back(jumped=True) + visited(restart))
+                    prev_id, node = node["id"], restart
+                    continue
+            choice = pick([(r, n) for r, n in (fresh or pool)])
             rel, nxt = choice if choice else self.rng.choice(forward or options)
             gloss = (nxt.get("gloss") or "").split(";")[0][:90]
             hops += 1
@@ -891,7 +958,10 @@ class GraphWalk:
             prev_id, node = node["id"], nxt
         if out and prefix:
             out[0] = prefix + out[0]
-        self._write_cursor(node["id"], prev_id, used=self._used_terms() + ([self._seed_marker.split(":", 1)[1]] if getattr(self, "_seed_marker", "") else []))
+        walked_pairs = [f"{a}→{b}" for a, b in zip(stood, stood[1:])]
+        self._write_cursor(node["id"], prev_id,
+                           used=self._used_terms() + ([self._seed_marker.split(":", 1)[1]] if getattr(self, "_seed_marker", "") else []),
+                           pairs=(recent_pairs + walked_pairs)[-16:])
         return out
 
     def describe(self) -> Dict[str, Any]:

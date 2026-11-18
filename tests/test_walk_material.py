@@ -167,3 +167,38 @@ def test_a_pane_cannot_spend_a_walk_before_the_person_speaks():
         if original is not None:
             sources.PROVIDERS["walk"] = original
         engine.clear()
+
+
+def test_a_walk_that_repeats_its_last_hop_sets_out_again(monkeypatch):
+    """The engine counts a repeat as drained material, so a walk must never repeat.
+
+    A walk served `jog→motion`, then could not leave it: every later delivery handed back the same
+    line, `served` climbed to 2, and the state closed as `dry` — "nothing new arrived" — with four
+    hops unspent. `walk_text` now resets the walk and steps again when the graph hands back the hop
+    it just served.
+    """
+    from core import engine, sources, walks
+
+    class Stub:
+        def __init__(self):
+            self.calls = 0
+            self.resets = 0
+
+        def step(self, _n: int = 1):
+            self.calls += 1
+            return ["jog → motion · took its far edge"] if self.calls < 3 else ["motion → gait · took its far edge"]
+
+        def reset(self) -> None:
+            self.resets += 1
+            self.calls = 3
+
+    stub = Stub()
+    monkeypatch.setattr(walks, "get", lambda _name, *_a, **_k: stub)
+    monkeypatch.setattr(engine, "watch_state",
+                        lambda: {"active": {"walk": "outer",
+                                            "shown": [sources._hop_key("jog (n) → motion (n) · took its far edge")]}})
+
+    out = sources.walk_text(1)
+
+    assert stub.resets == 1, "a repeated hop must make the walk set out again"
+    assert out and "motion → gait" in out[0], out

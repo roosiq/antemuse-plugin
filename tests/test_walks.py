@@ -373,3 +373,46 @@ def test_the_corpus_is_opened_once_for_the_process():
     for t in threads:
         t.join()
     assert not failures, failures
+
+
+def test_a_two_hop_cycle_does_not_stall_the_walk(tmp_path):
+    """The walk took one edge and could not leave it: `served` climbed, the cursor froze.
+
+    A six-hop walk ended at 2 of 6 as `dry` — "nothing new arrived" — because `step()` handed back
+    the same pair forever. A pair already walked is a cycle, not distance: the walk restarts, and
+    a node with no edge out steps back rather than printing the same sentence again.
+    """
+    class Cycle:
+        """A ↔ B, and one exit through C that a restart can reach."""
+
+        name = "cycle"
+        capabilities = {"far"}
+
+        def __init__(self):
+            self.nodes = {
+                "A": {"id": "A", "label": "alpha", "pos": "n", "gloss": "", "source": ""},
+                "B": {"id": "B", "label": "beta", "pos": "n", "gloss": "", "source": ""},
+                "C": {"id": "C", "label": "gamma", "pos": "n", "gloss": "", "source": ""},
+                "D": {"id": "D", "label": "delta", "pos": "n", "gloss": "", "source": ""},
+            }
+            self.turns = 0
+
+        def edges(self, node):
+            return [("hypernym", self.nodes["B" if node["id"] == "A" else "A"])]
+
+        def far_from(self, _node, samples=8, avoid=()):
+            return None
+
+        def random_node(self, _relations):
+            self.turns += 1
+            order = ["C", "D", "A", "B"]
+            return self.nodes[order[self.turns % len(order)]]
+
+        def resume(self, key):
+            return self.nodes.get(str(key).split(":")[-1]) if str(key) else None
+
+    walk = walks.GraphWalk({"name": "cycle", "graph": "wordnet", "jump": "far"}, tmp_path / "c.json")
+    walk.graph = Cycle()
+    lines = [(walk.step(1) or ["EMPTY"])[0] for _ in range(6)]
+    assert all(line != "EMPTY" for line in lines), lines
+    assert len(set(lines)) == 6, lines
