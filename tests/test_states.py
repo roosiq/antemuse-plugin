@@ -210,3 +210,35 @@ def test_daydream_keeps_its_count_and_names_nothing():
     said = engine.stop("S-DAY-QUIET", reason="dose") or ""
     assert "concepts: " not in said, said
     assert "harbor crane" not in said and "paper lantern" not in said, said
+
+
+def test_dream_enters_when_today_is_quiet_but_the_project_is_not(tmp_path):
+    """A quiet day is not an empty project.
+
+    dream used to read the last 24 hours only, so a chat in a repository whose last commit was
+    ten days old was refused at the door with "fewer than three local git commit subjects" —
+    which is a membership test for a dream, not a description of the work.
+    """
+    import subprocess
+
+    from core import sources
+
+    repo = tmp_path / "quiet-project"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    (repo / "a.txt").write_text("one\n")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+    for n in range(3):
+        (repo / "a.txt").write_text(f"{n}\n")
+        subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+        env = {
+            "GIT_AUTHOR_NAME": "e2e", "GIT_AUTHOR_EMAIL": "e2e@example.invalid",
+            "GIT_COMMITTER_NAME": "e2e", "GIT_COMMITTER_EMAIL": "e2e@example.invalid",
+            "GIT_AUTHOR_DATE": f"2026-11-{5 + n:02d}T10:00:00",
+            "GIT_COMMITTER_DATE": f"2026-11-{5 + n:02d}T10:00:00",
+        }
+        subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", f"quiet work {n}"],
+                       check=True, env={**os.environ, **env})
+
+    assert sources._git_subjects(repo) == [], "today is empty"
+    assert len(sources._recent_subjects(repo)) == 3, "the project is not"

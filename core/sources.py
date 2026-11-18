@@ -31,13 +31,14 @@ def ready(kind: str, graph_name: str = "wordnet") -> str | None:
             return "unavailable · doomscroll feed is disabled by settings"
         if not feed():
             return "unavailable · feed returned no items"
-    if kind == "dream" and sum(len(_git_subjects(root)) for root in projects()) < 3:
-        return "empty · fewer than three local git commit subjects are available for two recombinations"
+    if kind == "dream" and sum(len(_recent_subjects(root)) for root in projects()) < 3:
+        return ("empty · fewer than three commit subjects in the last month across the projects "
+                "this chat can see, so there is nothing to recombine")
     if kind == "unstuck":
         root = storage.project_root()
         if root is None:
             return "unavailable · no local project repository is available"
-        if not _git_subjects(root):
+        if not _recent_subjects(root):
             return "empty · local git history is unavailable"
         if not _graph_edge(root):
             return "unavailable · the concept map has no edge to point at yet"
@@ -129,9 +130,14 @@ def projects() -> List[Path]:
     return [root] if root is not None else []
 
 
-def _git_subjects(root: Path) -> List[str]:
+# Today first, then wider. A person who has not committed today still has work worth dreaming
+# over; refusing at the door because the last 24 hours were quiet turned a novelty into a dud.
+_SUBJECT_WINDOWS = ("24 hours ago", "7 days ago", "30 days ago")
+
+
+def _git_subjects(root: Path, since: str = "24 hours ago") -> List[str]:
     try:
-        run = subprocess.run(["git", "-C", str(root), "log", "--since=24 hours ago", "--pretty=%s"],
+        run = subprocess.run(["git", "-C", str(root), "log", "--since", since, "--pretty=%s"],
                              capture_output=True, text=True, timeout=8)
     except Exception:
         return []
@@ -140,9 +146,20 @@ def _git_subjects(root: Path) -> List[str]:
     return [_clip(line, 100) for line in run.stdout.splitlines() if line.strip()]
 
 
+def _recent_subjects(root: Path, want: int = 3) -> List[str]:
+    """The last ``want`` commit subjects: today if there are enough, otherwise further back."""
+    widened: List[str] = []
+    for window in _SUBJECT_WINDOWS:
+        subjects = _git_subjects(root, window)
+        widened = subjects
+        if len(subjects) >= want:
+            return subjects
+    return widened
+
+
 def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = False) -> List[Any]:
     """Recombine only local git commit subjects, never changed files or transcripts."""
-    subjects = [(root.name, subject) for root in projects() for subject in _git_subjects(root)]
+    subjects = [(root.name, subject) for root in projects() for subject in _recent_subjects(root)]
     if len(subjects) < 2:
         return ["dream empty · fewer than two local git commit subjects are available"]
     skip = skip or set()
@@ -259,7 +276,7 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
     root = storage.project_root()
     if root is None:
         return ["unstuck unavailable · no local project repository is available"]
-    subjects = _git_subjects(root)
+    subjects = _recent_subjects(root)
     edge = _graph_edge(root)
     if not subjects or not edge:
         missing = "history" if not subjects else "graph edge"

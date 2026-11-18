@@ -46,7 +46,7 @@ def test_every_state_declares_a_dose():
 def test_an_early_completion_is_a_completion_not_an_expiry():
     engine.enter("walk")
     out = engine.stop(engine.current_session(), reason="complete")
-    assert "finished" in out.lower()
+    assert "ended" in out.lower(), out   # one shape: every ending says "ended"
     report = [r for r in json.loads(_state_file().read_text())["journal"] if r.get("event") == "report"]
     assert report[-1]["reason"] == "complete"
 

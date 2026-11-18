@@ -71,10 +71,23 @@ def flush_say() -> int:
         if not text:
             continue
         try:
-            if _NOTIFY(text):
-                said += 1
+            if not _NOTIFY(text):
+                continue
         except Exception:
-            pass
+            continue
+        said += 1
+        # The account is "told" only once a line carrying it was accepted by the host. This
+        # used to be marked when the ending was *queued*, so a refused post left the person
+        # with nothing and the model with no instruction to say it either.
+        with _LOCK:
+            fresh = _load()
+            for entry in reversed(fresh.get("residue") or []):
+                if entry.get("kind") != "report" or entry.get("told"):
+                    continue
+                if str(entry.get("text") or "") and str(entry["text"]) in text:
+                    entry["told"] = True
+                    _save(fresh)
+                    break
     return said
 
 
@@ -647,14 +660,13 @@ def _expire(data: Dict[str, Any], now: float | None = None, foreign: bool = Fals
     # wants the person to hear nothing.
     if _NOTIFY:
         data.setdefault("say", []).append({
-            "text": f"{spec.get('label') or active['key']} · {report['text']}",
+            # The line a person reads when a state ends. It used to be "<LABEL> · <account>" —
+            # no verb — so a finished walk looked like a status readout, and `/return` said
+            # "finished" while the auto-post said nothing of the kind. One shape now.
+            "text": f"{spec.get('label') or active['key']} ended · {report['text']}",
             "session": str((active.get("origin") or {}).get("session_id") or ""),
         })
         data["say"] = data["say"][-5:]
-        for entry in reversed(data["residue"]):
-            if entry.get("kind") == "report" and not entry.get("told"):
-                entry["told"] = True
-                break
     _save(data)
     _record_finish(active, "complete", served)
     return True
@@ -978,7 +990,7 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
                             if reason == "failed"
                             else "The act is done, so the state is over. Carry what it gave you "
                                  "into the work.")
-                    return f"{label} finished · {entry.get('text', '')}\n{states.after(str(entry.get('state') or ''))}"
+                    return f"{label} ended · {entry.get('text', '')}\n{states.after(str(entry.get('state') or ''))}"
             return "not in a state."
         spec = states.spec(active["key"])
         # A state that ends dry having served nothing did not run dry — it never got anything.
@@ -1032,13 +1044,13 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
     # until they typed again — the pane showed a state vanish, and that was the whole of it.
     if _NOTIFY:
         try:
-            _NOTIFY(f"{spec['label']} · {report['text']}")
-            mark_reported(session_id or current_session())
+            if _NOTIFY(f"{spec['label']} ended · {report['text']}"):
+                mark_reported(session_id or current_session())
         except Exception:
             pass
     flush_say()      # anything an earlier reader queued goes out with this ending
     if reason == "complete":
-        return (f"{spec['label']} finished · {report['text']}\n"
+        return (f"{spec['label']} ended · {report['text']}\n"
                 f"The act is done, so the state is over. Carry what it gave you into the work.")
     if not _dose_of(spec, active)[0]:
         # An open-ended state ends with the person's own choices in it. Asking the agent to
@@ -1689,7 +1701,12 @@ def _left_phrase(active) -> str:
     dose = int(_dose_of(spec, active)[0]) if spec else int(active.get("dose") or 0)
     if not dose:
         return "open · you end it"
-    return f"{_dose_left(active)} {active.get('unit') or 'turn(s)'} left"
+    left = _dose_left(active)
+    if left <= 0:
+        # A spent state used to annotate a reply with "0 hops left · /return to come back",
+        # which reads as a walk still running. Nothing is owed, so say that.
+        return "done · this turn ends it"
+    return f"{left} {_unit_for(left, str(active.get('unit') or 'turn(s)'))} left"
 
 
 def _dose_left(active):

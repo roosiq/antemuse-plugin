@@ -57,7 +57,8 @@ def test_dream_recombines_local_commit_subjects_not_transcripts(tmp_path, monkey
 def test_dream_fails_at_entry_when_local_git_has_too_few_subjects(tmp_path, monkeypatch):
     root = _repo(tmp_path)
     monkeypatch.chdir(root)
-    monkeypatch.setattr(sources, "_git_subjects", lambda _root: ["only one subject", "another subject"])
+    monkeypatch.setattr(sources, "_git_subjects",
+                        lambda _root, _since="24 hours ago": ["only one subject", "another subject"])
 
     out = engine.enter("dream", session="dry-dream")
 
