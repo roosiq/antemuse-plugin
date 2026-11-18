@@ -1120,6 +1120,9 @@ def _spend(active: Dict[str, Any], n: int) -> int:
     "6 of 6 hops" over a list of seven. The cap belongs at the write, not in the report.
     """
     spent = int(active.get("served") or 0) + max(0, int(n))
+    if int(n) > 0:
+        # The turn that bought this unit, so a second door in the same turn cannot buy another.
+        active["last_turn"] = int(active.get("turns") or 0)
     dose = int(active.get("dose") or 0)
     active["served"] = min(spent, dose) if dose else spent
     return active["served"]
@@ -1160,6 +1163,12 @@ def deliver_if_due(source: str = "turn") -> int:
         if dose:
             turns = int(active.get("turns") or 0)
             if served >= turns + 1:
+                return 0
+            # A turn earns one hop, no matter how many doors ask inside it. The desktop app polls
+            # /state for the chip and again for the canvas, and each poll delivered: the pane
+            # showed `WALKING · 2/6 HOPS` before the person had typed anything, then the turns had
+            # nothing left to buy and the same hop came back until the walk closed `dry`.
+            if int(active.get("last_turn", -1)) >= turns:
                 return 0
         # One unit per call, and the call is the only clock there is. Pacing used to unlock a
         # unit a second, so a six-hop walk was really six seconds of waiting, and the ceiling

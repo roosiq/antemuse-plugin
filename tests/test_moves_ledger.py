@@ -36,7 +36,9 @@ def test_a_state_that_ends_dry_records_how_it_ended(monkeypatch):
         engine.enter("walk", session="moves-dry")
         engine.note_turn("moves-dry")
         engine.inject("moves-dry")
+        engine.note_turn("moves-dry")
         engine.deliver_if_due()
+        engine.note_turn("moves-dry")
         engine.deliver_if_due()
         assert engine.peek() is None
         row = _moves()[-1]

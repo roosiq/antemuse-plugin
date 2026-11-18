@@ -110,6 +110,9 @@ def test_a_turn_brings_material_the_dead_thread_missed(monkeypatch):
         engine.enter("walk", session="turn")
         engine.note_turn("turn")
         assert engine.deliver_if_due() == 1
+        # A second call inside the same turn buys nothing; the next turn buys the next hop.
+        assert engine.deliver_if_due() == 0
+        engine.note_turn("turn")
         assert engine.deliver_if_due() == 1
         lines = [e["text"] for e in engine._load()["journal"] if e.get("who") == "state"]
         assert lines == ["salt → brine", "brine → cure"]

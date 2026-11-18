@@ -98,7 +98,10 @@ def test_a_pane_poll_cannot_spend_a_state():
             engine.deliver_if_due(source="pane")
         active = engine.peek()
         assert active is not None
-        assert active["served"] == 2
+        # Eight polls inside one turn buy nothing: the entry hop is the only unit that turn earned.
+        # The pane used to take a second one here, and the desktop app showed `2/6 HOPS` before the
+        # person had typed anything.
+        assert active["served"] == 1
         engine.inject("pane")
         assert engine.peek() is not None
     finally:
@@ -131,7 +134,9 @@ def test_a_repeated_line_ends_dry_and_does_not_claim_nothing_arrived():
         engine.enter("walk", session="repeat")
         engine.note_turn("repeat")
         engine.inject("repeat")
+        engine.note_turn("repeat")
         engine.deliver_if_due()
+        engine.note_turn("repeat")
         engine.deliver_if_due()
         assert engine.peek() is None
         report = [r for r in state_home()["residue"] if r.get("kind") == "report"][0]
@@ -196,7 +201,7 @@ def test_an_abandoned_walk_waits_for_its_owner_instead_of_being_spent_for_them()
         for _ in range(10):
             engine.deliver_if_due(source="pane")
             engine.tick(None)
-        assert engine._load()["active"]["served"] == 2, "a poll may show what a turn earned, no more"
+        assert engine._load()["active"]["served"] == 1, "a poll may show what a turn earned, no more"
 
         # Another conversation walks in and gets nothing of A's state.
         engine.note_turn("B")
@@ -208,7 +213,7 @@ def test_an_abandoned_walk_waits_for_its_owner_instead_of_being_spent_for_them()
         engine.note_turn("A")
         block = engine.inject("A") or ""
         assert "WALKING" in block
-        assert engine._load()["active"]["served"] == 3
+        assert engine._load()["active"]["served"] == 2
     finally:
         sources.PROVIDERS["walk"] = original
 
