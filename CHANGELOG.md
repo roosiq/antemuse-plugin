@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.33 — 2026-11-18
+
+- state: claim the turn before the provider runs (2026-11-18)
+
 ## 0.11.32 — 2026-11-18
 
 - walk: set out from a random node when the same hop keeps coming back (2026-11-18)
