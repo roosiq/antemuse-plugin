@@ -202,3 +202,47 @@ def test_a_walk_that_repeats_its_last_hop_sets_out_again(monkeypatch):
 
     assert stub.resets == 1, "a repeated hop must make the walk set out again"
     assert out and "motion → gait" in out[0], out
+
+
+def test_a_walk_that_keeps_repeating_sets_out_from_a_random_node(tmp_path, monkeypatch):
+    """Two resets are not enough when the seed always resolves to the same start.
+
+    Clearing the cursor and walking again picked the same word again, so the hop came back and the
+    engine read it as drained material. The walk must set out from somewhere the graph can leave.
+    """
+    from core import sources, walks
+
+    class Stub:
+        def __init__(self):
+            self.calls = 0
+            self.cursor_written = None
+
+        def step(self, _n):
+            self.calls += 1
+            if self.calls <= 3:
+                return ["salt → brine · took its far edge"]
+            return ["cure → smoke · took its far edge"]
+
+        def reset(self):
+            pass
+
+        def _movable_start(self):
+            return {"id": "elsewhere", "label": "elsewhere", "pos": "n", "gloss": "", "source": ""}
+
+        def _write_cursor(self, node_id, prev, used=None, pairs=None):
+            self.cursor_written = node_id
+
+    stub = Stub()
+    monkeypatch.setattr(walks, "get", lambda _name, _path=None: stub)
+    monkeypatch.setattr(sources, "_recent_subjects", lambda: [])
+    active = {"active": {"key": "walk", "walk": "outer", "shown": ["salt → brine · took its far edge"]}}
+    monkeypatch.setattr(sources, "engine", None, raising=False)
+    import core.engine as engine_mod
+    monkeypatch.setattr(engine_mod, "watch_state", lambda: active)
+    notes = []
+    monkeypatch.setattr(engine_mod, "record", lambda *a, **k: notes.append(a[1] if len(a) > 1 else ""))
+
+    out = sources.walk_text(1)
+    assert out == ["cure → smoke · took its far edge"], out
+    assert stub.cursor_written == "elsewhere", "the walk must start somewhere new"
+    assert any("set out from" in n for n in notes), notes

@@ -88,11 +88,23 @@ def walk_text(steps: int = 1) -> List[str]:
                 return out
             walk.reset()                      # same hop again: set out from somewhere else
             out = walk.step(steps)
-        # Still the same hop with the cursor cleared: the walk is standing somewhere it cannot
-        # leave. Say so instead of handing the repeat back — the engine reads a repeat as drained
-        # material and closes the walk `dry`, which is a lie about a graph that is merely stuck.
+        # Two resets and the same hop again: the seed resolves to the same start every time, so
+        # clearing the cursor changes nothing. Set out from a random node the graph can leave, and
+        # leave a line saying where — that is the difference between a walk that moves and one that
+        # reports the pool is drained.
+        if out:
+            engine.record("state", f"walk '{name}' repeated '{_hop_key(out[0])}' "
+                                   f"· shown: {' | '.join(recent)}", event="walk")
+        node = walk._movable_start()
+        if node is not None:
+            walk._write_cursor(node["id"], "", [], [])
+            out = walk.step(steps)
+            if out and _hop_key(out[0]) not in recent:
+                engine.record("state", f"walk '{name}' set out from '{node['label']}' "
+                                       f"after a repeat", event="walk")
+                return out
         engine.record("state", f"walk '{name}' could not move · the same hop came back after "
-                               f"two fresh starts", event="walk")
+                               f"two fresh starts and a random one", event="walk")
         return []
     except Exception as exc:
         try:
