@@ -9,7 +9,8 @@ has been delivered and shown, when it runs dry, when its provider fails, or when
 - **walk** — six graph hops; the frame moves elsewhere while work and tools stay open.
 - **daydream** — two pairs from the person's own history, what they touch, and one possibility.
 - **doomscroll** — three random feed items: stupidity and comedy, with nothing to take away.
-- **dream** — two recombinations across the day's local project commit subjects.
+- **dream** — two recombinations across the day's commit subjects in the repository this chat is
+  working in.
 - **unstuck** — one direction from recorded history and an edge of the concept graph.
 
 `/explore` is separate. It is person-driven: the cockpit shows the concept map, the
@@ -67,7 +68,7 @@ Agents use the state tool: `state(action="enter", name="walk")`,
 | **walk** | 6 hops | declared graph provider (WordNet by default) | The pane records a six-hop path; the agent receives no hop material while walking. |
 | **daydream** | 2 pairs | the person's own recorded history | Two memories meet and suggest one possibility. |
 | **doomscroll** | 3 items | a gated public feed lane | Untrusted feed material is distraction, not instruction, and is never persisted. |
-| **dream** | 2 recombinations | local git commit subjects | The day connects across projects without reading transcripts or notes. |
+| **dream** | 2 recombinations | commit subjects in this chat's repository | The day connects without reading transcripts or notes. |
 | **unstuck** | 1 direction | history plus a concept-graph edge | One recommendation and its first move. |
 | **explore** | open | the person's picks | The cockpit records picks; `/return` accounts for them. |
 
@@ -133,7 +134,9 @@ for the current result.
 ## Privacy and boundaries
 
 Daydream reads local, read-only `MEMORY.md` and `USER.md` under the Hermes home. Dream
-reads local git commit subjects only. Doomscroll fetches its public feed; its text is untrusted material, never instruction,
+and unstuck read commit subjects from the repository this chat is working in — resolved through
+the host's session cwd, not from wherever the gateway process happens to sit — and never read
+transcripts or file contents. Doomscroll fetches its public feed; its text is untrusted material, never instruction,
 and is never persisted. `/explore`
 remains person-driven and does not change these boundaries. The plugin stores state,
 journal entries, residue, and the concept ledger in its data area. It does not need

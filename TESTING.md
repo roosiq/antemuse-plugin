@@ -39,6 +39,19 @@ The suite uses a temporary state home. It verifies state doses, delivery ownersh
 tool policy, ending accounts, residue, ledger rows, command surface, person-driven
 explore, and docs consistency.
 
+Two isolation rules matter when you add a test:
+
+- **A test's "project" is the one it makes.** The host exports its own working
+  directory, and `dream` and `unstuck` read a repository, so an autouse fixture
+  (`_no_inherited_working_directory`) closes both doors: the session-cwd provider and
+  `ANTEMUSE_PROJECT_ROOT` / `TERMINAL_CWD`. Inheriting them makes a test read this
+  machine's private history instead of its own tmp repo — six tests were failing that
+  way before the fixture existed.
+- **A test that wants git asks for the `git_repo` fixture.** It builds three recent
+  commits and hands the repository over as the session's cwd. Without it a state test
+  passes in a checkout (which is a repository) and fails in the extracted package
+  (which is not) — that is exactly how the 0.11.22 gate first went red.
+
 ## Additional checks
 
 ```bash
@@ -48,7 +61,29 @@ hermes plugins doctor antemuse
 ```
 
 `tools/examples.py` generates `docs/EXAMPLES.md` from the real engine. It includes
-one worked example for each agent state.
+one worked example for each agent state, and it gives `dream` and `unstuck` a
+throwaway repository with fixed subjects so the examples show those states working
+rather than refusing. `--check` reads the file and verifies each example's contract —
+the account reads as its own state, `dream` and `unstuck` name the concepts they
+served, and no worked example is a failure line. It used to look only for the five
+headings, which let the file describe endings the code had stopped producing.
+
+### The shipped package, not just the checkout
+
+The release gate runs the suite from the extracted tarball as well, because the two
+differ in exactly the ways above:
+
+```bash
+tar -xzf ~/.cache/antemuse/dist/antemuse-<version>.tar.gz -C /tmp/pkgcheck
+cd /tmp/pkgcheck/antemuse-<version> && \
+  env -u PYTHONPATH ANTEMUSE_STATES_HOME=$(mktemp -d) \
+  uvx --with-requirements requirements-test.txt --quiet pytest tests/ -q
+```
+
+The extracted package has no `.git` and no `docs/EXAMPLES.md` regeneration context, so
+git-dependent tests are the ones that break there first. Expect roughly 650 passed and
+20 skipped in the package against roughly 920 passed and 6 skipped in the checkout; the
+difference is the tests that need repository state or a browser.
 
 ## Where it writes
 

@@ -59,7 +59,7 @@ Vocabulary used below:
 ## 3 · `daydream` — DAYDREAMING
 
 **Inputs.** Entry: `/daydream`, `state(enter, name="daydream")`. Dose `{pairs, 2}`; turns 2; tools
-*closed*. Material: two of the person's own recorded turns, what they touch, one possibility. Provider
+*open* — as in every state, unless the entry asks with `block: true`. Material: two of the person's own recorded turns, what they touch, one possibility. Provider
 reads history read-only; `session_scan` off → `failed · unavailable` at entry.
 
 **Outputs.**
@@ -67,9 +67,10 @@ reads history read-only; `session_scan` off → `failed · unavailable` at entry
 - Entry (person): `DAYDREAMING · 2 pairs · two memories · what they touch · one possibility · /return ends it early`
 - Block, per turn: `[STATE: DAYDREAMING · 1 of 2 pairs]`, directive ("associative and generative … say the
   possibility as a thought worth considering, not as a task … When the two do not join, the possibility
-  comes from the gap instead"), `Tools closed in this state; /return ends it.`
+  comes from the gap instead"), `Tools are open in this state; /return ends it.`
 - Material, one pair per line: `  · PAIR · <memory A> ↔ <memory B> · touch: <what they share> · possibility: <one sentence>`
-- Closing account: `DAYDREAMING ended · daydream · 2 of 2 pairs · joined 1 · gap 1`
+- Closing account: `DAYDREAMING ended · daydream · 2 of 2 pairs · JOINED · joined ×2` — the count of
+  joins, never which memories joined
 - Closing instruction (state's own `after`): name the join or the gap, state the possibility in one
   sentence as a thought to consider, then return to the work — no task list, no plan.
 - Residue: `[RESIDUE: daydream · 2 of 2 pairs · joined 1]`.
@@ -116,26 +117,35 @@ with the named reason; skipped-work count appears in the account.
 
 ## 5 · `dream` — DREAMING
 
-**Inputs.** Entry: `/dream`. Dose `{recombinations, 2}`; turns 2; tools *closed*. Material: the day's
-local git commit subjects across projects, paired into recombinations; an invented recombination is the
-labelled fallback when the day is too thin. Reads git only — never transcripts.
+**Inputs.** Entry: `/dream`. Dose `{recombinations, 2}`; turns 2; tools *open* unless the entry asks
+with `block: true`. Material: the day's local git commit subjects from **the repository the calling
+session is working in** (`storage.project_root()` resolves it through the host's `ctx.session_cwd()`,
+then `ANTEMUSE_PROJECT_ROOT`, then `TERMINAL_CWD`, then the process cwd), paired into recombinations; an
+invented recombination is the labelled fallback when the day is too thin. Reads git only — never
+transcripts. Reading the *host process's* cwd instead made the state unreachable from a real chat: the
+gateway sits in the operator's home, so a chat inside a repository got "fewer than three local git
+commit subjects" about the wrong repository.
 
 **Outputs.**
 
 - Entry: `DREAMING · 2 recombinations · the day across projects · connections between tasks · /return ends it early`
 - Block: `[STATE: DREAMING · 1 of 2 recombinations]`, directive ("long, slow, unconstrained … each line
   names both sides and what they share … an invented recombination stands in and says that is what it
-  is"), `Tools closed in this state; /return ends it.`
+  is"), `Tools are open in this state; /return ends it.`
 - Material: `  · <project A>: <subject> ↔ <project B>: <subject> · shares: <one clause>`; invented lines
   end with `· invented`.
-- Closing account: `DREAMING ended · dream · 2 of 2 recombinations · found 1 · invented 1`
+- Closing account: `DREAMING ended · dream · 2 of 2 recombinations · connection · concepts: connection,
+  example-project, sessions, reading…` — the labels are the state's own output, taken from the ledger's
+  served rows, never from the model's prose ("found 1 · invented 1" appears only when the fallback fired)
 - Closing instruction: name the connection, both sides, and whether it was found or invented; then the
   one thing it suggests doing next, or say there is none.
 - Residue: `[RESIDUE: dream · 2 of 2 recombinations]`.
 - Pane: label, count, the two project names as anchors.
 
-**Failures.** `failed · unavailable` (no git, not a repository), `empty` (no commits in window),
-`returned`.
+**Failures.** Refused at entry, before any state is recorded:
+`cannot enter dream · empty · fewer than three local git commit subjects are available for two
+recombinations` (no repository, or fewer than three subjects in the last 24 hours); `returned` when the
+person ends it early.
 
 **Acceptance.** `tests/test_state_dream.py`: exactly 2; invented lines labelled; commit subjects only
 (no transcript content); account separates found from invented; no repo path in the account.
@@ -154,15 +164,22 @@ the graph says nothing here has touched.
 - Block: `[STATE: UNSTUCK · 0 of 1 directions]`, directive ("Recommend ONE new thing … a menu moves the
   decision back to the person, which is what this state exists to prevent"), `Tools open here: read_file,
   search_files. /return ends it.`
-- Material: one line `  · DIRECTION · <the one thing> · rests on: <what was done> · path: <adjacent concept> · first move: <one step>`
-- Closing account: `UNSTUCK ended · unstuck · 1 of 1 directions · direction named`
+- Material: one line `  · direction · continue the last change: <commit subject> · graph edge: <a> → <b>
+  (<relation>) · first: write the smallest test for that next change` — the subject comes from **the
+  repository the calling session is working in**, the edge from the concept ledger over concepts the
+  person actually has (folder terms are the last resort, and resolve to nothing in WordNet)
+- Closing account: `UNSTUCK ended · unstuck · 1 of 1 directions · direction · concepts: direction,
+  continue, change, sessions…` — the labels behind the direction, from the ledger's served rows
 - Closing instruction: restate the direction in one sentence, its first move, and stop — do not plan,
   do not offer alternatives.
 - Residue: `[RESIDUE: unstuck · 1 of 1 directions]`.
 - Pane: label, `1 of 1 directions`, the adjacent concept as the anchor.
 
-**Failures.** `failed · unavailable` (no history and no graph), `dry` (no adjacent untouched concept),
-`returned`.
+**Failures.** Refused at entry, before any state is recorded, with the reason named:
+`cannot enter unstuck · unavailable · no local project repository is available` (the session is not in a
+repository), `cannot enter unstuck · empty · local git history is unavailable` (a repository with no
+commits in the last 24 hours), `cannot enter unstuck · unavailable · the concept map has no edge to point
+at yet` (no ledger concepts). `returned` when the person ends it early.
 
 **Acceptance.** `tests/test_state_unstuck.py`: exactly one direction; it names both grounds; a menu is a
 failure (assert a single recommendation string); no `seed=` or graph id in the account.

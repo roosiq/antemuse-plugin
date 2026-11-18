@@ -18,9 +18,26 @@ provider or dose, the person selects concepts, and only `/return` ends it.
 | `/walk` | 6 hops | open by default | none; its graph path is pane scenery | its own hop trail (`record→clock out [far] → …`) | complete, dry, failed, or returned |
 | `/daydream` | 2 pairs | open | two memories from the person's own history, what they touch, one possibility | how many joined, never which — the material is the person's own turns | complete, dry, failed, or returned |
 | `/doomscroll` | 3 items | `web_search`, `web_extract`, `read_file`, `search_files`, `browser_exec` | a gated random feed lane, labelled untrusted material | the count only; feed text is untrusted and never spoken or stored | complete, dry, failed, or returned |
-| `/dream` | 2 recombinations | open | local git commit subjects only, never transcripts or notes | the concept labels it served | complete, dry, failed, or returned |
-| `/unstuck` | 1 direction | `read_file`, `search_files` | one recommendation from history and one concept-graph edge | the concept labels behind the direction | complete, dry, failed, or returned |
+| `/dream` | 2 recombinations | open | local git commit subjects only, from the repository this chat is working in, never transcripts or notes | the concept labels it served | complete, returned, or refused at entry |
+| `/unstuck` | 1 direction | `read_file`, `search_files` | one recommendation from the history of the repository this chat is working in, and one concept-graph edge | the concept labels behind the direction | complete, returned, or refused at entry |
 | `/explore` | open | open | the person's picks are accounted, not injected | the count of picks | returned |
+
+A state that cannot start says so at the door, names the reason, and records nothing. These are the
+lines a person reads, not internal states:
+
+| command | refusal |
+|---|---|
+| `/daydream` | `cannot enter daydream · empty · fewer than three recorded turns are available for two pairs` |
+| `/doomscroll` | `cannot enter doomscroll · unavailable · doomscroll feed is disabled by settings` · `… feed returned no items` |
+| `/dream` | `cannot enter dream · empty · fewer than three local git commit subjects are available for two recombinations` |
+| `/unstuck` | `… unavailable · no local project repository is available` · `… empty · local git history is unavailable` · `… unavailable · the concept map has no edge to point at yet` |
+
+"Which repository" means **the repository the calling session is working in**, resolved through the
+host's `ctx.session_cwd()`, then `ANTEMUSE_PROJECT_ROOT`, then `TERMINAL_CWD`, then the process cwd. The
+host process (gateway, desktop main) usually sits in the operator's home, so a plugin that read the
+process cwd instead answered "fewer than three local git commit subjects" about a dotfiles repository
+while the chat sat inside a checkout with fourteen commits; `/dream` and `/unstuck` were unreachable
+from a real chat until that was fixed.
 
 Walk moves on its declared graph provider: the bundled provider is WordNet; a corpus
 graph moves on the user's own material and its path is only as meaningful as that

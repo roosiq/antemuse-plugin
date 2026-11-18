@@ -42,6 +42,37 @@ def _seed_history(recall) -> None:
     recall.remember("The deployment notes are scattered across the project.")
 
 
+def _seed_project(home: Path) -> None:
+    """Give the states that read a repository one to read, with fixed subjects.
+
+    `dream` and `unstuck` read the repository the calling session is working in, so an
+    example generated from whatever directory happens to be current would either be a
+    failure ("fewer than three local git commit subjects") or would quote this machine's
+    private commit history into a published document. Both are wrong for a worked example.
+    """
+    import subprocess
+
+    from core import history, storage
+
+    root = home / "example-project"
+    root.mkdir()
+    run = lambda *args: subprocess.run(["git", "-C", str(root), *args],
+                                       capture_output=True, text=True, check=True)
+    run("init", "-q")
+    run("config", "user.email", "example@example.invalid")
+    run("config", "user.name", "Example")
+    for subject in ("steady the release gate's second run",
+                    "gate the release on the shipped suite",
+                    "read the session's repository before reading its history"):
+        run("commit", "-q", "--allow-empty", "-m", subject)
+    storage.set_session_cwd_provider(lambda: str(root))
+
+    # `unstuck` also needs one edge over concepts this person actually has; the ledger is
+    # what a working home has and a throwaway one does not.
+    for term in ("design", "harbor", "lantern", "rope", "gate"):
+        history.notice(term, move="walk", session="example")
+
+
 def run(key: str) -> tuple[list[str], str]:
     """Run one state against a throwaway home and return its material and account."""
     home = tempfile.mkdtemp(prefix="example-")
@@ -49,8 +80,10 @@ def run(key: str) -> tuple[list[str], str]:
     os.environ["ANTEMUSE_STATES_HOME"] = home
     _purge()
     try:
-        from core import engine, recall, states, walks
+        from core import engine, history, recall, states, walks
 
+        if key in ("dream", "unstuck"):
+            _seed_project(Path(home))
         if key == "walk":
             _seed_walk(engine, walks, Path(home))
         else:
@@ -92,16 +125,57 @@ def build() -> str:
     return "\n".join(lines)
 
 
+def _contract_problems(text: str) -> list[str]:
+    """What a reader must be able to see in each example, checked against the file.
+
+    `--check` used to look only for the five headings, so a file could describe endings the
+    code had stopped producing — a `/dream` account with no concepts, a `/unstuck` block whose
+    only example was the state failing — and still report `ok`. The material is machine- and
+    day-dependent by nature, so this compares shape, not bytes: the account must be the state's
+    own, dream and unstuck must name the concepts they served, and no example may be a failure.
+    """
+    problems: list[str] = []
+    for _title, _command, key in SCENARIOS:
+        blocks = text.split(f"Command: `/{key}`")
+        if len(blocks) < 2:
+            problems.append(f"/{key}: no example")
+            continue
+        tail = blocks[1]
+        if "```text" not in tail:
+            problems.append(f"/{key}: no material block")
+            continue
+        after = tail.split("Account:", 1)
+        if len(after) < 2:
+            problems.append(f"/{key}: no account")
+            continue
+        import re
+
+        found = re.search(r"^\s*```(?:text)?\n(.*?)```", after[1], re.S | re.M)
+        account = found.group(1).strip() if found else ""
+        if not account or not account.startswith(key):
+            problems.append(f"/{key}: the account does not read as its own ({account[:40]!r})")
+            continue
+        if key in ("dream", "unstuck") and "concepts: " not in account:
+            problems.append(f"/{key}: the account names no concepts")
+        for failure in (" empty · ", " unavailable · "):
+            if failure in tail.split("Account:", 1)[0]:
+                problems.append(f"/{key}: the worked example is a failure ({failure.strip()})")
+                break
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     if args.check:
         text = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
-        expected = [f"## {n}. {title}" for n, (title, _command, _key) in enumerate(SCENARIOS, 1)]
-        if all(item in text for item in expected):
-            print(f"ok: docs/EXAMPLES.md ({len(SCENARIOS)} state examples)")
+        problems = _contract_problems(text) if text else ["docs/EXAMPLES.md is missing"]
+        if not problems:
+            print(f"ok: docs/EXAMPLES.md ({len(SCENARIOS)} state examples honour their contracts)")
             return 0
+        for problem in problems:
+            print(f"stale: {problem}")
         print("docs/EXAMPLES.md is missing or stale: run tools/examples.py")
         return 1
     OUT.parent.mkdir(parents=True, exist_ok=True)

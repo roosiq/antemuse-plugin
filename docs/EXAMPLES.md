@@ -12,17 +12,17 @@ The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
 design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → programming (n) · took its hyponym · “creating a sequence of instructions to enable the computer to do something” · ↩ 1 hop from creating by mental acts: creating by mental acts → programming
-programming (n) → object-oriented programming (n) · took its hyponym · “creating a program that can use and support objects” · ↩ 1 hop from programming: programming → object-oriented programming
-object-oriented programming (n) → programming (n) · took its hypernym · “creating a sequence of instructions to enable the computer to do something” · ↩ 1 hop from object-oriented programming: object-oriented programming → programming · seen earlier today in 1 other session
-programming (n) → logic programming (n) · took its hyponym · “creating a program that enables the computer to reason logically” · ↩ 1 hop from programming: programming → logic programming
-logic programming (n) → programming (n) · took its hypernym · “creating a sequence of instructions to enable the computer to do something” · ↩ 1 hop from logic programming: logic programming → programming · seen earlier today in 1 other session
+creating by mental acts (n) → verbal creation (n) · took its hyponym · “creating something by the use of speech and language” · ↩ 1 hop from creating by mental acts: creating by mental acts → verbal creation
+verbal creation (n) → writing (n) · took its hyponym · “the act of creating written works” · ↩ 1 hop from verbal creation: verbal creation → writing
+writing (n) → fabrication (n) · took its hyponym · “writing in a fictional form” · ↩ 1 hop from writing: writing → fabrication
+fabrication (n) → writing (n) · took its hypernym · “the act of creating written works” · ↩ 1 hop from fabrication: fabrication → writing · seen earlier today in 1 other session
+writing (n) → redaction (n) · took its hyponym · “the act of putting something in writing” · ↩ 1 hop from writing: writing → redaction
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→programming [hyponym] → programming→object-oriented programming [hyponym] → object-oriented programming→programming [hypernym] → programming→logic programming [hyponym] → logic programming→programming [hypernym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→verbal creation [hyponym] → verbal creation→writing [hyponym] → writing→fabrication [hyponym] → fabrication→writing [hypernym] → writing→redaction [hyponym]
 ```
 
 ## 2. Two memories make a possibility
@@ -65,14 +65,14 @@ Command: `/dream`
 The `dream` material below is produced by its real provider:
 
 ```text
-connection · antemuse-plugin: catalog entry for cb44038894bf ↔ antemuse-plugin: walk: a cursor and a seed survive the namespacing · shared: the same unfinished shape
-connection · antemuse-plugin: catalog entry for cb44038894bf ↔ antemuse-plugin: 0.11.20: release · shared: the same unfinished shape
+connection · example-project: read the session's repository before reading its history ↔ example-project: gate the release on the shipped suite · shared: the same unfinished shape
+connection · example-project: read the session's repository before reading its history ↔ example-project: steady the release gate's second run · shared: the same unfinished shape
 ```
 
 Account:
 
 ```text
-dream · 2 of 2 recombinations · connection
+dream · 2 of 2 recombinations · connection · concepts: connection, example-project, sessions, reading…
 ```
 
 ## 5. One direction breaks the stall
@@ -82,11 +82,11 @@ Command: `/unstuck`
 The `unstuck` material below is produced by its real provider:
 
 ```text
-unstuck empty · graph edge is unavailable
+direction · continue the last change: read the session's repository before reading its history · graph edge: gate → movable barrier (hypernym) · first: write the smallest test for that next change
 ```
 
 Account:
 
 ```text
-unstuck · nothing arrived · graph edge is unavailable
+unstuck · 1 of 1 directions · direction · concepts: direction, continue, change, sessions…
 ```
