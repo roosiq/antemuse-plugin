@@ -402,6 +402,7 @@ def test_a_walk_that_died_names_what_killed_it():
     try:
         engine.enter("walk", session="died")
         for _ in range(2):
+            engine.note_turn("died")      # a turn earns one attempt; two failures need two turns
             engine.deliver_if_due(source="turn")
     finally:
         sources.PROVIDERS["walk"] = original
@@ -474,3 +475,27 @@ def test_a_repeat_and_a_poll_in_one_turn_dont_end_the_walk(tmp_path):
         assert engine.peek() is None
     finally:
         sources.PROVIDERS["walk"] = original
+
+
+def test_six_doors_arriving_together_buy_one_hop(tmp_path):
+    """The turn must be claimed before the provider runs, not after it answers.
+
+    The provider is called outside the lock. Two doors arriving together both read the old cursor,
+    both passed the guard, and both served: the app showed two hops in the same second and a walk
+    two hops spent before anyone spoke. Claiming the turn inside the lock makes the second door wait
+    for a turn of its own.
+    """
+    import threading
+    engine.enter("walk", session="together")
+    got = []
+
+    def knock():
+        got.append(engine.deliver_if_due(source="pane"))
+
+    threads = [threading.Thread(target=knock) for _ in range(6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sum(got) == 1, got
+    assert (engine.peek() or {}).get("served") == 1

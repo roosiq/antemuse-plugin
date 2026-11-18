@@ -1162,7 +1162,15 @@ def deliver_if_due(source: str = "turn") -> int:
         # is the only counter that means "the person came back".
         if dose:
             turns = int(active.get("turns") or 0)
-            if served >= turns + 1:
+            if served >= turns + 1 or int(active.get("last_turn", -1)) >= turns:
+                try:
+                    from . import storage
+                    with (storage.data_dir() / "delivery_trace.log").open("a") as fh:
+                        fh.write(f"{time.strftime('%H:%M:%S')} BLOCKED {source} turns={turns} "
+                                 f"last={int(active.get('last_turn', -1))} served={served} "
+                                 f"owner={active.get('session')!r}\n")
+                except Exception:
+                    pass
                 return 0
             # A turn earns one hop, no matter how many doors ask inside it. The desktop app polls
             # /state for the chip and again for the canvas, and each poll delivered: the pane
@@ -1170,6 +1178,13 @@ def deliver_if_due(source: str = "turn") -> int:
             # nothing left to buy and the same hop came back until the walk closed `dry`.
             if int(active.get("last_turn", -1)) >= turns:
                 return 0
+            # Claim the turn before the provider runs. The provider is called outside the lock, so
+            # two doors arriving together — the app's chip poll and its canvas poll, or a poll and
+            # the turn — both read the old cursor, both passed the guard, and both served: two hops
+            # landed in the same second and the walk was two hops spent before anyone spoke.
+            active["last_turn"] = turns
+            data["active"] = active
+            _save(data)
         # One unit per call, and the call is the only clock there is. Pacing used to unlock a
         # unit a second, so a six-hop walk was really six seconds of waiting, and the ceiling
         # could beat it. Serving the whole dose at once hides the walk — six hops land as one
@@ -1238,6 +1253,19 @@ def deliver_if_due(source: str = "turn") -> int:
         return (ident or _material_key(text)) not in shown_before
 
     repeated = [entry[1] for entry in lines if not _fresh(entry)]
+    # Delivery trace. Three walks closed `dry` at 2 of 6 in the app while the same cursor walked
+    # eight hops in a fresh process, and nothing in the journal said which door asked or what came
+    # back. This line answers both, from inside the delivery that made the decision.
+    try:
+        from . import storage
+        trace = storage.data_dir() / "delivery_trace.log"
+        with trace.open("a") as fh:
+            fh.write(f"{time.strftime('%H:%M:%S')} {source} turns={int(active.get('turns') or 0)} "
+                     f"last={int(active.get('last_turn', -1))} served={served} "
+                     f"got={len(lines)} fresh={len(lines) - len(repeated)} repeated={len(repeated)} · "
+                     + " || ".join(str(x)[:70] for _, x in lines) + "\n")
+    except Exception:
+        pass
     # The provider ran while the state was alive; by the time it answers, it may not be. Fifty
     # three ledger rows and twelve hops once landed after a walk had already ended, so `served`
     # described a walk nobody was in. Material belongs to the state that asked for it.
