@@ -132,7 +132,7 @@ def test_daydream_end_to_end():
     assert out["row"][1] in ("complete", "dry")
 
 
-def test_dream_end_to_end():
+def test_dream_end_to_end(git_repo):
     """Dream reads local git subjects, so give it a repository with subjects to read."""
     out = run("dream", "e-dream")
     _assert_entry("dream", out["entry"])

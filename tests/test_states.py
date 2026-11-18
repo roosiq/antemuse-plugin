@@ -179,7 +179,7 @@ def test_every_state_declares_a_contract_and_a_residue():
         assert spec["label"] and spec["dose"], key
 
 
-def test_a_dream_names_the_concepts_it_served():
+def test_a_dream_names_the_concepts_it_served(git_repo):
     """The landing line is what the person reads. A count of "2 recombinations" says something
     happened; the labels say what it was about, and they come from the ledger, not the prose."""
     for line in ("A recorded turn about a harbor crane and its rusted cable.",

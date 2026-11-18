@@ -139,3 +139,33 @@ def needs_symlinks():
     except (OSError, NotImplementedError):
         ok = False
     return pytest.mark.skipif(not ok, reason="symlinks need Developer Mode on Windows")
+
+
+@pytest.fixture
+def git_repo(tmp_path):
+    """A repository with three recent commits, handed over as the working directory.
+
+    `dream` and `unstuck` read local git history, and the suite refuses to inherit the
+    host's (see `_no_inherited_working_directory`). A test that wants those states must
+    therefore supply a repository — the same way a person's chat does. Without this the
+    states pass in a checkout and fail in the extracted package, which has no `.git`.
+    """
+    import subprocess
+    from core import storage
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    run = lambda *args: subprocess.run(["git", "-C", str(root), *args],
+                                       capture_output=True, text=True, check=True)
+    run("init", "-q")
+    run("config", "user.email", "t@example.com")
+    run("config", "user.name", "T")
+    for subject in ("tighten the release gate",
+                    "name the concepts a dream served",
+                    "read the calling session's repository"):
+        run("commit", "-q", "--allow-empty", "-m", subject)
+    storage.set_session_cwd_provider(lambda: str(root))
+    try:
+        yield root
+    finally:
+        storage.set_session_cwd_provider(None)
