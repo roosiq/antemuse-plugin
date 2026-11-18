@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.28 — 2026-11-18
+
+- walk: a seed the walk cannot leave is not a start (2026-11-18)
+
 ## 0.11.27 — 2026-11-18
 
 - walk: never land where it has already stood (2026-11-18)
