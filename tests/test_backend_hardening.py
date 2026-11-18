@@ -147,3 +147,45 @@ def test_flight_bounds_writes_and_discards_verdicts_outside_trail(monkeypatch):
     assert engine.flight_last()["kept"] == []
     assert engine.flight_last()["dropped"] == []
 
+
+
+def test_an_empty_active_dict_is_a_state_that_ended_not_a_broken_file():
+    """`active: {}` is how a walk got erased nine times in one second.
+
+    The writer saved `data["active"] or {}`; the validator demanded a dict with a string key,
+    so `{}` failed, `_load` quarantined the entire document (sixty journal entries and a moving
+    walk with it), and the next hop wrote it again. An empty dict means "no state", and it must
+    not cost the rest of the file.
+    """
+    engine.enter("walk", session="empty-active")
+    engine.note_turn("empty-active")
+    engine.inject("empty-active")
+    path = Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
+    stored = json.loads(path.read_text())
+    stored["active"] = {}
+    stored["residue"] = [{"kind": "report", "state": "walk", "text": "walk · 2 of 6 hops"}]
+    path.write_text(json.dumps(stored))
+
+    loaded = engine._load()
+
+    assert loaded["active"] is None, loaded["active"]
+    assert loaded["journal"], "the journal must survive an empty active"
+    assert loaded["residue"], "the ending account must survive an empty active"
+    assert not list(path.parent.glob("state.json.invalid-*")), "{} is not corruption"
+    assert json.loads(path.read_text())["active"] is None, "it should be rewritten in shape"
+
+
+def test_one_bad_field_does_not_cost_the_document():
+    """A wrong-shaped `active` is quarantined for forensics, but the journal beside it is kept."""
+    engine.enter("walk", session="salvage")
+    path = Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
+    stored = json.loads(path.read_text())
+    stored["active"] = "not-a-state"
+    path.write_text(json.dumps(stored))
+    before = len(stored.get("journal") or [])
+
+    loaded = engine._load()
+
+    assert loaded["active"] is None
+    assert list(path.parent.glob("state.json.invalid-*")), "the bytes are still quarantined"
+    assert len(loaded["journal"]) == before, "the readable part of the document survives"

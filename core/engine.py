@@ -87,6 +87,13 @@ def _blank() -> Dict[str, Any]:
 
 
 def _valid_active(active: Any) -> bool:
+    # `{}` is a recoverable "no state", not corruption. A writer that saved
+    # `data["active"] or {}` produced it repeatedly on this machine, and because it failed here
+    # the whole document was quarantined — sixty journal entries, the residue, and a walk that
+    # was still moving — then written again, read back, and quarantined again: nine files in
+    # one second, and a walk that stepped in the ledger with no state anyone could read.
+    if isinstance(active, dict) and not active:
+        return True
     return active is None or (isinstance(active, dict)
                               and isinstance(active.get("key"), str)
                               and bool(states.spec(active["key"])))
@@ -110,6 +117,30 @@ def _quarantine(path) -> None:
         pass
 
 
+_SALVAGE_FIELDS = {"residue": list, "journal": list, "mood": list, "breaks": list,
+                   "work": dict, "say": list}
+
+
+def _salvage(stored: Any) -> Any:
+    """The readable part of a document that is usable apart from one field.
+
+    A malformed field used to cost the whole file. `active: "not-a-state"` says nothing about
+    the sixty journal entries beside it, and losing those loses the account a state owes the
+    person. The bytes still go to quarantine for forensics; this keeps the work.
+    """
+    if not isinstance(stored, dict):
+        return None
+    kept = dict(stored)
+    if not _valid_active(kept.get("active")):
+        kept["active"] = None
+    if isinstance(kept.get("active"), dict) and not kept["active"]:
+        kept["active"] = None
+    for name, shape in _SALVAGE_FIELDS.items():
+        if name in kept and not isinstance(kept[name], shape):
+            kept.pop(name)
+    return kept
+
+
 def _load() -> Dict[str, Any]:
     path = storage.data_dir() / FILE
     good = path.with_name(f"{FILE}.last-good")
@@ -123,13 +154,20 @@ def _load() -> Dict[str, Any]:
     restored = False
     if not _valid_state(stored):
         _quarantine(path)
-        try:
-            stored = json.loads(good.read_text())
-        except Exception:
-            stored = None
+        stored = _salvage(stored)
         if not _valid_state(stored):
-            return data
-        restored = True
+            try:
+                stored = _salvage(json.loads(good.read_text()))
+            except Exception:
+                stored = None
+            if not _valid_state(stored):
+                return data
+            restored = True
+    else:
+        before = stored.get("active", "absent") if isinstance(stored, dict) else "absent"
+        stored = _salvage(stored)
+        if stored.get("active") != before:
+            restored = True      # `{}` reads as no state; write it back in the shape we use
     data.update(stored)
     if restored:
         _save(data)
