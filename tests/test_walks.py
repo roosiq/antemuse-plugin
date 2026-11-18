@@ -340,3 +340,36 @@ def test_the_outer_walk_never_falls_back_to_a_neighbour(cursor):
     for line in steps:
         assert "picks up again" in line or "the walk stops" in line, line
         assert "took its far edge" not in line, line
+
+
+def test_the_corpus_is_opened_once_for_the_process():
+    """Per-instance corpora meant every graph object re-entered the cold path.
+
+    NLTK's WordNet reader shares one zip handle and is not thread-safe: 24 raw threads on a cold
+    process produced WordNetError on this host, and on Windows `seek of closed file`,
+    `'NoneType' has no attribute 'close'` and a bare AssertionError. One corpus, one lock.
+    """
+    import threading
+
+    from core import walks as w
+
+    first = w.wordnet()
+    assert isinstance(first, w._SerialisedWordNet), "every call must go through the one lock"
+    assert w.wordnet() is first, "the corpus is opened once for the process"
+    assert w.WordNetGraph().wn() is first, "a graph object asks the process, not itself"
+
+    failures: list[str] = []
+
+    def hit():
+        try:
+            for _ in range(5):
+                w.wordnet().synsets("walk")
+        except Exception as exc:                     # noqa: BLE001 - the test is the collector
+            failures.append(f"{type(exc).__name__}: {exc}")
+
+    threads = [threading.Thread(target=hit) for _ in range(16)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert not failures, failures

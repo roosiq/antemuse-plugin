@@ -662,6 +662,16 @@ def register(ctx) -> None:
     # The account of a state is spoken when the state ends, not on the person's next turn.
     # `_post` goes through the host's message channel, so the finish line lands in the chat
     # that ran the state while the agent is still holding its reply.
+    # Open the corpus once, on the setup thread. The first walk after a restart used to hit a
+    # cold NLTK WordNet from a turn and a pane poll at the same moment, which is not
+    # thread-safe: `seek of closed file`, `'NoneType' has no attribute 'close'`, and a
+    # bare AssertionError, all reported as "WordNet data is unavailable".
+    try:
+        from .core import walks as _walks
+        _walks.warm()
+    except Exception:
+        pass
+
     engine.set_notifier(_post)
 
     ctx.register_hook("pre_llm_call", _pre_llm_call)

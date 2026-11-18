@@ -1195,15 +1195,32 @@ def deliver_if_due(source: str = "turn") -> int:
                 break
         lines = got[:remaining]
     except Exception as exc:  # a provider failing must not kill the turn
-        record("state", f"{key} provider failed · {exc}", event=key)
+        first = str(exc).splitlines()[0][:120] if str(exc).strip() else "no message"
+        cause = f"{key} · {type(exc).__name__}: {first}"
+        record("state", f"{key} provider failed · {cause}", event=key)
         with _LOCK:
             data = _load()
+            holder = data.get("active") or {}
+            failed_now = False
+            if holder.get("key") == key:
+                # Carry the cause onto the state, and count it like any other empty delivery.
+                # Without this the person read "walk produced nothing" while the journal held the
+                # actual exception: a state that died of a named failure told them nothing arrived.
+                holder["last_failure"] = cause
+                holder["empty"] = int(holder.get("empty") or 0) + 1
+                if int(holder["empty"]) >= 2:
+                    holder["failed"] = cause
+                    failed_now = True
+                data["active"] = holder
             work = data.setdefault("work", {})
             turns = int(work.get("turns") or 0)
             work["source_fail_turns"] = ([int(x) for x in (work.get("source_fail_turns") or [])][-7:]
                                          + [turns])
             _save(data)
-        return 1
+        if failed_now:
+            stop(current_session(), reason="failed")
+            flush_say()
+        return 0
     # A line this state already served is not new material. A thin pool makes a provider hand the
     # same pair back twice, re-worded; counting that as two of two closed a daydream "complete" on
     # one idea. Dropped lines are remembered so the state can say why it is dry.
@@ -1289,7 +1306,8 @@ def deliver_if_due(source: str = "turn") -> int:
                 # as one — a daydream with a dead feed used to close as "2 of 2 pairs" for material
                 # that never existed.
                 active["empty"] = int(active.get("empty") or 0) + 1
-                why = failures[0] if failures else f"{key} produced nothing"
+                why = (failures[0] if failures
+                       else (str(active.get("last_failure") or "") or f"{key} produced nothing"))
                 active["last_failure"] = why
                 failed = active["empty"] >= 2
                 if failed:

@@ -381,3 +381,28 @@ def test_a_delivery_that_arrives_after_the_state_ended_writes_nothing():
     assert stored["active"] is None
     assert not list((Path(os.environ["ANTEMUSE_STATES_HOME"])).glob("state.json.invalid-*"))
     assert "active" in json.loads((Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json").read_text())
+
+
+def test_a_walk_that_died_names_what_killed_it():
+    """The person read "walk produced nothing" while the journal held the exception.
+
+    The account is the only place a person looks, and it dropped the cause: a state that died of
+    a named failure reported that nothing arrived, which is true and useless.
+    """
+    def dead(_n=None, **_kw):
+        raise RuntimeError("WordNet data is unavailable · seek of closed file")
+
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = dead
+    try:
+        engine.enter("walk", session="died")
+        for _ in range(2):
+            engine.deliver_if_due(source="turn")
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+    state = engine.watch_state()
+    assert state["active"] is None, "two empty deliveries end the state"
+    text = [r.get("text") for r in state["residue"] if r.get("kind") == "report"][-1]
+    assert "nothing arrived" in text
+    assert "RuntimeError" in text and "seek of closed file" in text, text

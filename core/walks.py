@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 import random
 import time
 import re
@@ -197,6 +198,69 @@ def _content_words(text: str) -> set:
     return {w for w in re.findall(r"[a-z]{4,}", str(text).lower()) if w not in _GLOSS_STOP}
 
 
+_WN_LOCK = threading.RLock()
+_WN: Any = None
+
+
+class _SerialisedWordNet:
+    """NLTK's WordNet reader shares one zip handle across calls and is not thread-safe.
+
+    Two threads on a cold corpus produced `seek of closed file`, `'NoneType' object has no
+    attribute 'close'` and bare `AssertionError()` in one second — the corpus was present and
+    fine, the access raced. Every corpus call goes through one lock, and the corpus is opened
+    once for the process instead of once per graph object.
+    """
+
+    def __init__(self, wn: Any) -> None:
+        self._wn = wn
+
+    def __getattr__(self, name: str) -> Any:
+        attr = getattr(self._wn, name)
+        if not callable(attr):
+            return attr
+
+        def call(*args: Any, **kwargs: Any) -> Any:
+            with _WN_LOCK:
+                return attr(*args, **kwargs)
+
+        return call
+
+
+def wordnet() -> Any:
+    """The corpus, opened once, serialised, and named when it cannot be opened."""
+    global _WN
+    if _WN is not None:
+        return _WN
+    with _WN_LOCK:
+        if _WN is None:
+            try:
+                from nltk.corpus import wordnet as wn
+                # Force a real lookup here so missing corpus data has a named failure.
+                wn.synsets("walk")
+            except Exception as exc:
+                # `str(exc)` can be empty — a bare AssertionError is one of the shapes this race
+                # actually throws — so the detail must not assume a message exists.
+                first = str(exc).splitlines()[0][:120] if str(exc).strip() else "no message"
+                raise GraphLoadError("unavailable",
+                                     f"WordNet data is unavailable · {type(exc).__name__}: {first}") from exc
+            _WN = _SerialisedWordNet(wn)
+    return _WN
+
+
+def warm() -> bool:
+    """Open the corpus once, on one thread, before anything concurrent can race it.
+
+    The first walk after a restart is the one that failed, every time: cold corpus plus a turn
+    and a pane poll asking at the same moment. Called at plugin setup, where there is exactly
+    one thread.
+    """
+    try:
+        wordnet()
+        return True
+    except Exception:
+        return False
+
+
 class WordNetGraph(Graph):
     name = "wordnet"
     relations = {"hypernym": "general", "hyponym": "specific", "holonym": "whole",
@@ -212,18 +276,11 @@ class WordNetGraph(Graph):
         self.rng = _rng()
 
     def wn(self):
-        if self._wn is None:
-            try:
-                from nltk.corpus import wordnet as wn
-                # Force a real lookup here so missing corpus data has a named failure.
-                wn.synsets("walk")
-                self._wn = wn
-            except Exception as exc:
-                # Name the cause. Without it, a missing corpus, a blocked read, a cold import and
-                # an empty lookup all printed the same sentence, and a walk that failed on a real
-                # chat could not be diagnosed from its own account.
-                detail = f"{type(exc).__name__}: {str(exc).splitlines()[0][:120]}"
-                raise GraphLoadError("unavailable", f"WordNet data is unavailable · {detail}") from exc
+        # One corpus per process, one call at a time (see _SerialisedWordNet). An injected
+        # corpus still wins: tests hand in a stub, and a corpus graph may never want WordNet.
+        if self._wn is not None:
+            return self._wn
+        self._wn = wordnet()
         return self._wn
 
     def _from_synset(self, syn: Any) -> Dict[str, Any]:

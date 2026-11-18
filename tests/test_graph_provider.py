@@ -24,6 +24,8 @@ def test_a_wordnet_failure_names_its_cause(monkeypatch):
 
     fake_corpus.wordnet = Wordnet
     monkeypatch.setitem(sys.modules, "nltk.corpus", fake_corpus)
+    # The corpus is opened once per process now, so a fake import only takes effect cold.
+    monkeypatch.setattr(walks, "_WN", None, raising=False)
 
     provider = walks.WordNetGraph() if hasattr(walks, "WordNetGraph") else None
     if provider is None:
