@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.31 — 2026-11-18
+
+- state: a repeat is counted against its turn, not per door (2026-11-18)
+- walk: one can_move, on the class (2026-11-18)
+- walk: when every restart misses, set out from a fresh movable start (2026-11-18)
+
 ## 0.11.30 — 2026-11-18
 
 - state: a turn earns one hop, however many doors ask inside it (2026-11-18)
