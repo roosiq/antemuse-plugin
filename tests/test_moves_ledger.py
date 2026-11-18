@@ -51,10 +51,10 @@ def test_a_state_that_finishes_its_dose_records_a_different_ending(monkeypatch):
     sources.PROVIDERS["walk"] = _provider(*[f"hop {n}" for n in range(6)])
     try:
         engine.enter("walk", session="moves-dose")
-        engine.note_turn("moves-dose")
+        # One unit per turn: six hops take six turns, and the sixth closes it in its own block.
         for _ in range(6):
-            engine.deliver_if_due()
-        engine.inject("moves-dose")
+            engine.note_turn("moves-dose")
+            engine.inject("moves-dose")
         assert engine.peek() is None
         row = _moves()[-1]
         assert row[1] == "complete"

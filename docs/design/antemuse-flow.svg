@@ -66,7 +66,7 @@
 <text x="421" y="359" font-size="15.5" font-weight="600" fill="#efe9d8">inject() — once per turn</text>
 <text x="421" y="379" font-size="13" fill="#93a3b4">deliver_if_due(): serve the next unit for this state</text>
 <text x="421" y="397" font-size="13" fill="#93a3b4">_expire(): no clock — time passing is not a reason for anything</text>
-<text x="421" y="415" font-size="13" fill="#93a3b4">build the block, then complete_if_dosed()</text>
+<text x="421" y="415" font-size="13" fill="#93a3b4">close the spent state inside that block (the ending lands in the turn that spends it)</text>
 <rect x="408" y="449" width="780" height="122" rx="10" fill="#101823" stroke="#233041"/>
 <text x="421" y="477" font-size="15.5" font-weight="600" fill="#efe9d8">the dose is the whole promise</text>
 <text x="421" y="497" font-size="13" fill="#93a3b4">served = units fetched seen = units shown to a turn</text>

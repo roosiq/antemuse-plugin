@@ -135,10 +135,9 @@ def test_the_account_is_posted_when_the_dose_lands(monkeypatch):
     monkeypatch.setattr(engine, "_NOTIFY", lambda text: posted.append(text) or True)
     try:
         engine.enter("walk", session="say-now", platform="discord")
-        engine.note_turn("say-now")
         for _ in range(6):
-            engine.deliver_if_due()
-        engine.inject(session="say-now")
+            engine.note_turn("say-now")
+            engine.inject(session="say-now")
         assert engine.peek() is None
         assert posted
         assert "6 of 6 hops" in posted[-1]

@@ -173,13 +173,14 @@ def test_walk_dose_is_six_hops():
     assert states.STATES["walk"]["dose"] == {"unit": "hops", "n": 6}
 
 
-def test_a_state_whose_session_never_returns_does_not_hold_its_dose_open():
-    """Entered in A, the whole dose served by a pane poll, then A stops talking.
+def test_an_abandoned_walk_waits_for_its_owner_instead_of_being_spent_for_them():
+    """Entered in A, one hop served, then A stops talking.
 
-    `seen` can only be advanced by a block built for A, so it stayed at zero while `served`
-    climbed past the dose: the state hung at "0 hops left" forever, and because a state is
-    policy-global, every other conversation wore its annotation. A turn from B is proof A is
-    gone, and it must close the state rather than leave it open for nobody.
+    This used to be a stuck state: a pane poll could serve the whole dose, `seen` never caught
+    up (only A's block can advance it), and the state hung at "0 left" until a turn from another
+    conversation forced it closed. Delivery is one unit per turn now, and a turn belongs to one
+    conversation, so the dose cannot be spent behind the owner's back — the state simply waits,
+    and every other conversation gets no annotation from it.
     """
     lines = markers()
     original = sources.PROVIDERS["walk"]
@@ -187,21 +188,29 @@ def test_a_state_whose_session_never_returns_does_not_hold_its_dose_open():
     try:
         engine.enter("walk", session="A")
         engine.note_turn("A")
-        for _ in range(10):                      # a pane poll, serving ahead
-            engine.deliver_if_due()
-            engine.tick(None)
+        engine.inject("A")
         active = engine._load()["active"]
-        assert active["served"] >= active["dose"], active
-        assert int(active.get("seen") or 0) < active["served"], "the dose must be unseen"
+        assert active["served"] == 1, active
 
+        # The pane looks as many times as it likes: a look is not a turn.
+        for _ in range(10):
+            engine.deliver_if_due(source="pane")
+            engine.tick(None)
+        assert engine._load()["active"]["served"] == 2, "a poll may show what a turn earned, no more"
+
+        # Another conversation walks in and gets nothing of A's state.
         engine.note_turn("B")
         assert engine.inject("B") is None
+        assert engine.peek() is not None, "an unfinished walk waits for the conversation that owns it"
+        assert "WALKING" not in (engine._load().get("active") or {}).get("key", "")
+
+        # A's next turn carries on where it left off.
+        engine.note_turn("A")
+        block = engine.inject("A") or ""
+        assert "WALKING" in block
+        assert engine._load()["active"]["served"] == 3
     finally:
         sources.PROVIDERS["walk"] = original
-
-    assert engine.peek() is None, "a foreign turn left the state open"
-    reasons = [(r.get("reason"), r.get("kind")) for r in state_home()["residue"]]
-    assert ("complete", "report") in reasons, reasons
 
 
 def test_a_foreign_turn_does_not_close_a_state_that_still_has_units_to_serve():
@@ -274,3 +283,36 @@ def test_serving_stops_at_the_dose_even_when_a_provider_returns_a_batch():
     served = engine._spend(data["active"], 4)
 
     assert served == data["active"]["dose"], (served, data["active"]["dose"])
+
+
+def test_the_turn_that_spends_the_last_hop_carries_the_ending():
+    """A walk must say it is over in the turn it ends in.
+
+    The block used to be built while the state was still open and the close ran afterwards, so
+    the last turn printed "6 of 6 hops" with the walk's own directive still attached — reading
+    as a walk still in progress — and `WALKING ended · …` only appeared if the person typed
+    again. Reported from a live chat: the walk never said it was done.
+    """
+    lines = markers()
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(*lines)
+    try:
+        engine.enter("walk", session="ending")
+        blocks = []
+        for _ in range(6):
+            engine.note_turn("ending")
+            blocks.append(engine.inject("ending") or "")
+    finally:
+        sources.PROVIDERS["walk"] = original
+
+    last = blocks[-1]
+    assert "6 of 6 hops" in last, last
+    assert "this is the last one" in last, last
+    assert "YOU JUST CAME BACK" in last, "the ending must arrive with the last hop, not a turn later"
+    assert engine.peek() is None, "the state was still open after its last hop"
+
+    # The account is not announced twice to the person: one residue report, marked told when
+    # the host posted it. (The block may repeat it for a turn or two so a busy turn can still
+    # react — that is the model's copy, not a second announcement.)
+    reports = [r for r in engine._load()["residue"] if r.get("kind") == "report"]
+    assert len(reports) == 1, reports

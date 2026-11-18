@@ -228,7 +228,7 @@ def build() -> str:
     e_inject = Card("inject() — once per turn", [
         "deliver_if_due(): serve the next unit for this state",
         "_expire(): no clock — time passing is not a reason for anything",
-        "build the block, then complete_if_dosed()",
+        "close the spent state inside that block (the ending lands in the turn that spends it)",
     ])
     e_dose = Card("the dose is the whole promise", [
         "served = units fetched     seen = units shown to a turn",
