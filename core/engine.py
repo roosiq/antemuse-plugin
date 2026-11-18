@@ -1613,6 +1613,31 @@ def policy(tool_name: str) -> Dict[str, Any] | None:
     return None
 
 
+def _is_footer_line(line: str) -> bool:
+    """A line that is this plugin's own footer, not the model's prose.
+
+    A reply can arrive already ending with the footer — the shape gets echoed back through the
+    conversation, or the model copies the line it just read. Appending unconditionally then shows
+    it twice in the chat and records it twice in the journal.
+    """
+    body = line.strip()
+    if not body.startswith("—"):
+        return False
+    body = body.lstrip("—").strip()
+    return ("/return to come back" in body or "this turn ends it" in body
+            or " ended · " in body)
+
+
+def _strip_footer(text: str) -> str:
+    """Drop any footers already at the end of a reply, so exactly one is added."""
+    lines = str(text or "").rstrip().splitlines()
+    while lines and _is_footer_line(lines[-1]):
+        lines.pop()
+        while lines and not lines[-1].strip():
+            lines.pop()
+    return "\n".join(lines)
+
+
 def annotate(text: str) -> str | None:
     """transform_llm_output: make the state visible without rewriting the answer.
 
@@ -1639,9 +1664,9 @@ def annotate(text: str) -> str | None:
         if ended is None:
             return None
         label = (states.spec(str(ended.get("state") or "")).get("label") or "state").lower()
-        return f"{text}\n\n— {label} ended · {ended.get('text', '')}"
+        return f"{_strip_footer(text)}\n\n— {label} ended · {ended.get('text', '')}"
     spec = states.spec(active["key"])
-    return f"{text}\n\n— {spec['label'].lower()} · {_left_phrase(active)} · /return to come back"
+    return f"{_strip_footer(text)}\n\n— {spec['label'].lower()} · {_left_phrase(active)} · /return to come back"
 
 
 def status() -> str:

@@ -406,3 +406,33 @@ def test_a_walk_that_died_names_what_killed_it():
     text = [r.get("text") for r in state["residue"] if r.get("kind") == "report"][-1]
     assert "nothing arrived" in text
     assert "RuntimeError" in text and "seek of closed file" in text, text
+
+
+def test_a_reply_that_already_ends_with_the_footer_gets_one_not_two():
+    """The footer is this plugin's line, so it is added once.
+
+    Observed in a real chat (0.11.28, move 121): the model's reply already ended with
+    "— walking · 1 hop left · /return to come back" because the shape echoes through the
+    conversation, and `annotate()` appended a second copy. The journal recorded the hop text twice
+    before the plugin added a third.
+    """
+    engine.enter("walk", session="footer")
+    engine.note_turn("footer")
+    engine.deliver_if_due()
+    footer = "— walking · 5 hops left · /return to come back"
+
+    once = engine.annotate(f"An answer.\n\n{footer}")
+    assert once.count(footer) == 1, once
+    twice = engine.annotate(f"An answer.\n\n{footer}\n\n{footer}")
+    assert twice.count(footer) == 1, twice
+    assert twice.startswith("An answer."), twice
+
+
+def test_a_dash_line_in_the_middle_of_a_reply_is_prose_not_a_footer():
+    engine.enter("walk", session="footer2")
+    engine.note_turn("footer2")
+    engine.deliver_if_due()
+    body = "Two things:\n\n— one: the wall stops the ship\n— two: the pane polls /state"
+    out = engine.annotate(body) or ""
+    assert "— one: the wall stops the ship" in out, out
+    assert "— two: the pane polls /state" in out, out
