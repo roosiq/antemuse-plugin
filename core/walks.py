@@ -907,6 +907,12 @@ class GraphWalk:
                             if restart is not None:
                                 break
                     if restart is None:
+                        # Last resort: a fresh movable start. The gate caught this twice — from
+                        # "doddle" both restart passes exhausted and the walk stopped at hop 2.
+                        fresh_start = self._movable_start(can_move)
+                        if fresh_start is not None and fresh_start["id"] != node["id"]:
+                            restart = fresh_start
+                    if restart is None:
                         out.append(f"{node['label']} · nothing far from here — the walk stops")
                         break
                     hops += 1
