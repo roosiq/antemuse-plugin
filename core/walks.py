@@ -683,6 +683,10 @@ class GraphWalk:
         moved: List[str] = []
 
         def fresh_pair(a, b) -> bool:
+            # Never land where this walk has already stood: a node revisited inside one walk is a
+            # loop the person can see, and it reads as the walk failing to move.
+            if str(b.get("id") or "") in stood:
+                return False
             return f"{a['id']}→{b['id']}" not in taken and f"{b['id']}→{a['id']}" not in taken
         prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
         # The goal is distant *and connected*: distance without a path back is noise. The
@@ -894,10 +898,17 @@ class GraphWalk:
                         continue
                     restart = drew
                     break
-                if restart is None and prev_id:
-                    came_from = self.graph.resume(prev_id)
-                    if came_from is not None and came_from["id"] != node["id"]:
-                        restart = came_from
+                if restart is None:
+                    # Nothing fresh; take any node this walk has not stood on, even if the pair is
+                    # one it has walked. Landing where it already stood is worse than a repeat.
+                    for _ in range(8):
+                        drew = self.graph.random_node(self.relations)
+                        if drew is None or drew["id"] in stood:
+                            continue
+                        if not any(rel in self.relations for rel, _ in self.graph.edges(drew)):
+                            continue
+                        restart = drew
+                        break
                 if restart is None or restart["id"] == node["id"]:
                     out.append(f"{node['label']} · no {', '.join(self.relations)} edge — the walk stops")
                     break
