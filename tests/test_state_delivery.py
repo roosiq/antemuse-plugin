@@ -343,3 +343,41 @@ def test_the_reply_that_follows_a_finish_says_it_ended():
 
     second = engine.annotate("another answer")
     assert second is None, "the ending is said once, not on every reply after it"
+
+
+def test_a_delivery_that_arrives_after_the_state_ended_writes_nothing():
+    """A walk that died kept spending its dose into the ledger with `active: None`.
+
+    The provider ran while the state was alive; by the time it answered the state was gone, and
+    the function still wrote a serving row for every term and every hop — fifty-three rows and
+    twelve hops after one dead walk — then saved `data["active"] = {}`, because `active` had
+    become the empty dict it invented from None. That `{}` is the shape the validator rejected,
+    which quarantined the whole document.
+    """
+    import json
+    from pathlib import Path
+
+    from core import history
+
+    before = len([r for r in history.recent(days=1, limit=400) if r.get("move") == "walk"])
+    entered = engine.enter("walk", session="late")
+    assert "WALKING" in entered
+    key = engine.peek()["key"]
+
+    def provider(_n):
+        engine.stop("late", reason="failed")      # the state ends mid-call
+        return ["late hop → landing"]
+
+    original = sources.PROVIDERS[key]
+    sources.PROVIDERS[key] = provider
+    try:
+        assert engine.deliver_if_due() == 0, "material nobody asked for is not served"
+    finally:
+        sources.PROVIDERS[key] = original
+
+    after = len([r for r in history.recent(days=1, limit=400) if r.get("move") == "walk"])
+    assert after == before, "a dead state must not write serving rows"
+    stored = engine.watch_state()
+    assert stored["active"] is None
+    assert not list((Path(os.environ["ANTEMUSE_STATES_HOME"])).glob("state.json.invalid-*"))
+    assert "active" in json.loads((Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json").read_text())

@@ -1212,6 +1212,13 @@ def deliver_if_due(source: str = "turn") -> int:
         return (ident or _material_key(text)) not in shown_before
 
     repeated = [entry[1] for entry in lines if not _fresh(entry)]
+    # The provider ran while the state was alive; by the time it answers, it may not be. Fifty
+    # three ledger rows and twelve hops once landed after a walk had already ended, so `served`
+    # described a walk nobody was in. Material belongs to the state that asked for it.
+    with _LOCK:
+        stays = _load().get("active") or {}
+        if stays.get("key") != key:
+            return 0
     lines = [entry for entry in lines if _fresh(entry)]
     texts = [text for _, text in lines]
     # Doomscroll is the sole state whose payload comes from a live feed. Do not persist those
@@ -1253,6 +1260,8 @@ def deliver_if_due(source: str = "turn") -> int:
     material = [line for line in texts if not _is_failure_line(line)]
     failures = [line for line in texts if _is_failure_line(line)]
     with _LOCK:
+        # Read fresh: `record()` above wrote this turn's served lines into the same document, and
+        # saving the copy loaded before them would erase the very stream `seen` is counted from.
         data = _load()
         active = data.get("active") or {}
         failed = False
@@ -1286,8 +1295,12 @@ def deliver_if_due(source: str = "turn") -> int:
                 if failed:
                     active["failed"] = why
             active["started"] = active.get("started") or time.time()
-        data["active"] = active
-        _save(data)
+            data["active"] = active
+            _save(data)
+        # No `else: data["active"] = active` here. When the state had already ended, `active` was
+        # the `{}` this function invented from None, and writing it back persisted `"active": {}`
+        # — the shape the validator rejected, which quarantined the entire document. That is how
+        # a late delivery destroyed a live walk's journal nine times in one second.
     if failed:
         stop(current_session(), reason="failed")
         flush_say()

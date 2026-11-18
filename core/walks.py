@@ -219,7 +219,11 @@ class WordNetGraph(Graph):
                 wn.synsets("walk")
                 self._wn = wn
             except Exception as exc:
-                raise GraphLoadError("unavailable", "WordNet data is unavailable") from exc
+                # Name the cause. Without it, a missing corpus, a blocked read, a cold import and
+                # an empty lookup all printed the same sentence, and a walk that failed on a real
+                # chat could not be diagnosed from its own account.
+                detail = f"{type(exc).__name__}: {str(exc).splitlines()[0][:120]}"
+                raise GraphLoadError("unavailable", f"WordNet data is unavailable · {detail}") from exc
         return self._wn
 
     def _from_synset(self, syn: Any) -> Dict[str, Any]:
