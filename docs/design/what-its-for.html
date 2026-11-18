@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Antemuse — what it's used for</title>
+<style>
+  :root{
+    --ground:#0e0c0b; --panel:#151210; --panel2:#1b1714;
+    --line:#2b2521; --ink:#f0e9dd; --dim:#9a8f83;
+    --amber:#f2b25a; --teal:#4fa89c;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: Inter, "Helvetica Neue", Arial, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);
+       padding:64px 72px 56px;width:1600px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;
+         border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:30px}
+  .wordmark{font-size:15px;letter-spacing:.30em;font-weight:600;color:var(--ink)}
+  .wordmark span{color:var(--dim);font-weight:500}
+  h1{font-size:44px;line-height:1.1;font-weight:600;letter-spacing:-.01em;margin-top:16px}
+  h1 em{font-style:normal;color:var(--amber)}
+  .lede{max-width:620px;color:var(--dim);font-size:15px;line-height:1.55;margin-top:14px}
+  .lede b{color:var(--ink);font-weight:600}
+  .stamp{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+         text-transform:uppercase;color:var(--dim);text-align:right;line-height:1.9}
+  .stamp b{color:var(--teal);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:2px;
+        padding:18px 18px 16px;display:flex;flex-direction:column;min-height:206px}
+  .card .n{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.14em}
+  .card h3{font-size:19px;font-weight:600;line-height:1.25;margin:10px 0 8px}
+  .card p{font-size:13px;color:var(--dim);line-height:1.5;flex:1}
+  .cmd{display:inline-flex;align-items:center;gap:7px;margin-top:14px;
+       font-family:var(--mono);font-size:12px;color:var(--amber);
+       border:1px solid rgba(242,178,90,.35);border-radius:2px;padding:5px 9px;align-self:flex-start}
+  .cmd.teal{color:var(--teal);border-color:rgba(79,168,156,.38)}
+  .cmd .arrow{color:var(--dim)}
+  section.contract{margin-top:30px;border-top:1px solid var(--line);padding-top:22px}
+  .contract h2{font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+               color:var(--dim);font-weight:600;margin-bottom:14px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--dim);text-align:left;font-weight:500;padding:0 14px 8px 0;
+     border-bottom:1px solid var(--line)}
+  td{padding:9px 14px 9px 0;border-bottom:1px solid #1f1b18;color:var(--dim);
+     vertical-align:top;line-height:1.45}
+  td.state{font-family:var(--mono);color:var(--ink);white-space:nowrap}
+  td.dose{font-family:var(--mono);color:var(--amber);white-space:nowrap}
+  footer{display:flex;justify-content:space-between;gap:40px;margin-top:26px;
+         font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.8}
+  footer .right{text-align:right}
+  footer b{color:var(--ink);font-weight:600}
+  .caveat{border-left:2px solid var(--teal);padding-left:12px;max-width:900px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="wordmark">ANTEMUSE <span>· what it's used for</span></div>
+    <h1>Eight situations where the work<br>needs <em>a different frame</em>.</h1>
+    <p class="lede">
+      Antemuse gives the agent one of five bounded states while you keep working.
+      A state is not a place it goes and not a break: it changes the next replies and
+      what the agent brings back when it ends. <b>Each state has a dose, not a timer</b>,
+      and closes by saying what happened.
+    </p>
+  </div>
+  <div class="stamp">
+    5 agent states · walk daydream doomscroll dream unstuck<br>
+    <b>+ /explore</b> — the map you fly yourself<br>
+    no model calls on the five states' path
+  </div>
+</header>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="n">01 · NEW IDEA</div>
+    <h3>Everything you draft sounds like everything else</h3>
+    <p>Two things you already knew surface side by side, the line says what they touch, and the possibility follows from the join.</p>
+    <span class="cmd">/daydream <span class="arrow">→</span> 2 pairs</span>
+  </div>
+
+  <div class="card">
+    <div class="n">02 · STUCK</div>
+    <h3>Same problem for an hour, nothing moves</h3>
+    <p>It reads the repository's own history and names one thing to do next, with the evidence behind it — one direction, not a menu.</p>
+    <span class="cmd">/unstuck <span class="arrow">→</span> 1 direction</span>
+  </div>
+
+  <div class="card">
+    <div class="n">03 · FEATURES</div>
+    <h3>The roadmap is familiar ground</h3>
+    <p>Six hops away from the current frame, then the day's projects recombine. The path is scenery; the answer comes back changed.</p>
+    <span class="cmd">/walk <span class="arrow">→</span> /dream</span>
+  </div>
+
+  <div class="card">
+    <div class="n">04 · NAMING</div>
+    <h3>Naming a thing — product, feature, essay</h3>
+    <p>Roles from two different projects are laid over each other, so the name arrives from outside the vocabulary you were circling.</p>
+    <span class="cmd">/dream <span class="arrow">→</span> 2 recombinations</span>
+  </div>
+
+  <div class="card">
+    <div class="n">05 · TIE</div>
+    <h3>Two options, neither convincing</h3>
+    <p>The walk leaves the tie behind on purpose; the reply comes back with a third option rather than a vote between the two.</p>
+    <span class="cmd">/walk <span class="arrow">→</span> 6 hops</span>
+  </div>
+
+  <div class="card">
+    <div class="n">06 · RECKONING</div>
+    <h3>“What have I actually been doing all week?”</h3>
+    <p>Two projects are joined on a shared role, using only local commit subjects — never transcripts, never notes.</p>
+    <span class="cmd">/dream <span class="arrow">→</span> 2 recombinations</span>
+  </div>
+
+  <div class="card">
+    <div class="n">07 · DISTANCE</div>
+    <h3>Distance, no goal</h3>
+    <p>Three items from a gated public feed, labelled untrusted. Nothing from the page is carried back or turned into a plan.</p>
+    <span class="cmd">/doomscroll <span class="arrow">→</span> 3 items</span>
+  </div>
+
+  <div class="card">
+    <div class="n">08 · YOU DRIVE</div>
+    <h3>You want to fly the map yourself</h3>
+    <p>The concept graph as a cockpit: you pick, the plugin records your picks, and <b>/return</b> names them. No model in the loop.</p>
+    <span class="cmd teal">/explore <span class="arrow">→</span> no provider</span>
+  </div>
+
+</div>
+
+<section class="contract">
+  <h2>What each state actually does — read from the shipped contract</h2>
+  <table>
+    <thead>
+      <tr><th>state</th><th>dose</th><th>what reaches the model</th><th>what you see</th><th>tools</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="state">/walk</td><td class="dose">6 hops</td>
+          <td>a directive only — the path is scenery and none of it is injected</td>
+          <td>the hop trail, then a different first step on return</td><td>open by default</td></tr>
+      <tr><td class="state">/daydream</td><td class="dose">2 pairs</td>
+          <td>two of your own recorded turns, what they touch, one possibility</td>
+          <td>how many joined — never which</td><td>open</td></tr>
+      <tr><td class="state">/doomscroll</td><td class="dose">3 items</td>
+          <td>a gated random feed lane, labelled untrusted</td>
+          <td>the count only; feed text is never stored</td><td>narrowed set</td></tr>
+      <tr><td class="state">/dream</td><td class="dose">2 recombinations</td>
+          <td>local git commit subjects from the repository this chat is in</td>
+          <td>the concept labels it served</td><td>open</td></tr>
+      <tr><td class="state">/unstuck</td><td class="dose">1 direction</td>
+          <td>one recommendation from that repository's history plus a graph edge</td>
+          <td>the concept labels behind the direction</td><td>read-only</td></tr>
+      <tr><td class="state">/explore</td><td class="dose">open</td>
+          <td>nothing — your picks are accounted, not injected</td>
+          <td>the count of picks on <b>/return</b></td><td>open</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <div class="caveat">
+    <b>What this is not:</b> not a creativity scorer, not a game, not a generative model,
+    not a timer or an automatic break, and not a claim that the ideas are better.<br>
+    Experimental exploration methods are opt-in and off by default.<br>
+    Ends are <b>complete · dry · failed · returned</b>. Every ending writes one account and one ledger row.
+  </div>
+  <div class="right">
+    drawn from <b>core/states.py</b> · <b>specs/product/states.md</b> · <b>specs/product/examples.md</b><br>
+    antemuse-plugin · five states + explore
+  </div>
+</footer>
+
+</body>
+</html>
