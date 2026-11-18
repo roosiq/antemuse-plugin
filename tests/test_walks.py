@@ -416,3 +416,47 @@ def test_a_two_hop_cycle_does_not_stall_the_walk(tmp_path):
     lines = [(walk.step(1) or ["EMPTY"])[0] for _ in range(6)]
     assert all(line != "EMPTY" for line in lines), lines
     assert len(set(lines)) == 6, lines
+
+
+def test_a_seed_with_no_edge_is_not_a_start(tmp_path):
+    """A project word that resolves to a leaf walked nowhere.
+
+    "hermes" resolves in WordNet and has no hypernym, so the seed was a node the walk could not
+    leave: every step printed the same "no edge — the walk stops" line and the engine counted it
+    as drained material. A seed is only usable if the walk can leave it.
+    """
+    class G:
+        name = "stub"
+        capabilities = {"far"}
+
+        def __init__(self):
+            self.stub = {"id": "S", "label": "hermes", "pos": "n", "gloss": "", "source": ""}
+            self.nodes = {name: {"id": name, "label": label, "pos": "n", "gloss": "", "source": ""}
+                          for name, label in zip("ABCDEF", ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"))}
+            self.drawn = 0
+
+        def edges(self, node):
+            if node["id"] == "S":
+                return []
+            order = "ABCDEF"
+            return [("hypernym", self.nodes[order[(order.index(node["id"]) + 1) % len(order)]])]
+
+        def resolve(self, _word):
+            return self.stub
+
+        def far_from(self, _node, samples=8, avoid=()):
+            return None
+
+        def random_node(self, _relations):
+            self.drawn += 1
+            order = ["C", "A", "D", "B", "E", "F"]
+            return self.nodes[order[self.drawn % len(order)]]
+
+        def resume(self, _key):
+            return None
+
+    walk = walks.GraphWalk({"name": "stub", "graph": "wordnet", "jump": "far",
+                            "seed": {"mode": "fixed", "node": "hermes"}}, tmp_path / "c.json")
+    walk.graph = G()
+    lines = [(walk.step(1) or ["EMPTY"])[0] for _ in range(6)]
+    assert len(set(lines)) == 6, lines

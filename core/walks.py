@@ -587,6 +587,18 @@ class GraphWalk:
     def start_node(self) -> Optional[Dict[str, Any]]:
         if self.graph is None:
             return None
+        def can_move(node_) -> bool:
+            """A start node with no edge out is a walk that cannot take its first step.
+
+            A project word resolves happily in WordNet and then has nothing on it — "hermes" is a
+            proper noun with no hypernym in this graph — and the walk spent its whole dose printing
+            the same "no edge — the walk stops" line. A seed is only usable if the walk can leave it.
+            """
+            try:
+                return any(rel in self.relations for rel, _ in self.graph.edges(node_))
+            except Exception:
+                return True
+
         mode = (self.seed_spec or {}).get("mode", "continue")
         # a seed places the first step; after that the walk continues from its cursor
         cur = self._read_cursor().get("node")
@@ -596,10 +608,15 @@ class GraphWalk:
         stale = (time.time() - float(self._read_cursor().get("at") or 0)) > 12 * 3600
         if cur and not stale and mode in ("fixed", "word", "continue"):
             resumed = self.graph.resume(cur)
-            if resumed is not None:
+            if resumed is not None and can_move(resumed):
                 return resumed
         if mode == "fixed":
-            return self.graph.resolve(str(self.seed_spec.get("node", "")))
+            node_ = self.graph.resolve(str(self.seed_spec.get("node", "")))
+            if node_ is not None and can_move(node_):
+                return node_
+            # A named start the graph cannot leave is still a walk: set out from somewhere that
+            # can move rather than ending before the first hop.
+            return self._movable_start(can_move)
         if mode == "word":
             return (self.graph.resolve(str(self.seed_spec.get("word", "")))
                     or self.graph.random_node(self.roles))
@@ -611,6 +628,8 @@ class GraphWalk:
         for candidate in self._seed_candidates():
             resolved = candidate
             if resolved is not None:
+                if not can_move(resolved):
+                    continue
                 if "far" not in self.graph.capabilities or self.jump not in ("far", "vault", "orbit", "composite", "run:3"):
                     self._seed_marker = getattr(self, "_pending_marker", "")
                     return resolved
@@ -625,6 +644,15 @@ class GraphWalk:
         if first_usable is not None:
             self._seed_marker = getattr(self, "_pending_marker", "")
             return first_usable
+        # Nothing usable was seeded: draw a node the walk can actually leave.
+        return self._movable_start(can_move)
+
+    def _movable_start(self, can_move) -> Optional[Dict[str, Any]]:
+        """A node the walk can leave, or the plain draw when the graph has nothing better."""
+        for _ in range(12):
+            drew = self.graph.random_node(self.roles)
+            if drew is not None and can_move(drew):
+                return drew
         return self.graph.random_node(self.roles)
 
     def _seed_candidates(self):
