@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.23 — 2026-11-17
+
+- docs: say which repository, and stop the examples from describing an older build (2026-11-17)
+- tests: a walk that stepped, not a walk the vocabulary could draw (2026-11-17)
+- tests: give dream a repository instead of inventing one (2026-11-17)
+
 ## 0.11.22 — 2026-11-17
 
 - project: read the calling session's repository, not the host process's (2026-11-17)
