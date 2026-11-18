@@ -3,6 +3,20 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.22 — 2026-11-17
+
+- project: read the calling session's repository, not the host process's (2026-11-17)
+- states: dream and unstuck name their concepts, daydream and doomscroll do not (2026-11-17)
+- cockpit: leaving it sends the concepts to the chat (2026-11-17)
+- input: drive the map with a real mouse and keyboard, per state (2026-11-17)
+- graph: the memo stamp cannot collide with itself (2026-11-17)
+- activation: the lines were drawn at 10% opacity, which is no lines (2026-11-17)
+- live: say plainly that the harness captures the fallback kit, not the pane's picture (2026-11-17)
+- canvas: the ending frame is held, and the live harness now renders what the pane renders (2026-11-17)
+- live: five states driven in a real browser, and the two leaks that found (2026-11-17)
+- states: end-to-end proof of all five, and unstuck can finally be entered (2026-11-16)
+- canvas: the picture is chosen by the registry, and nothing fired has its own picture (2026-11-16)
+
 ## 0.11.21 — 2026-11-16
 
 - docs: regenerate the blocked-tool still for the five-state surface (2026-11-16)
