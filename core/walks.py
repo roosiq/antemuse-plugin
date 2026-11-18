@@ -890,6 +890,23 @@ class GraphWalk:
                             restart = drew
                             break
                     if restart is None:
+                        # `outer` promises distance: never a neighbour step (there is a test for
+                        # that). So the restart is drawn harder instead — first from nodes this walk
+                        # has not stood on, then from any other node at all. The extracted-package
+                        # gate caught this: from "doddle" every far draw landed on visited space and
+                        # the walk stopped at hop 2 of 3.
+                        for want_new in (True, False):
+                            for _ in range(24):
+                                drew = self.graph.random_node(self.relations)
+                                if drew is None or drew["id"] == node["id"]:
+                                    continue
+                                if want_new and drew["id"] in stood:
+                                    continue
+                                restart = drew
+                                break
+                            if restart is not None:
+                                break
+                    if restart is None:
                         out.append(f"{node['label']} · nothing far from here — the walk stops")
                         break
                     hops += 1
