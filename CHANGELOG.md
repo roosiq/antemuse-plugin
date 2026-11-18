@@ -3,6 +3,14 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.24 — 2026-11-17
+
+- states: the ending rides on the reply, because the poster is not a display (2026-11-17)
+- states: one ending shape a person can read, and a dream that survives a quiet day (2026-11-17)
+- state: an empty active is "no state", and one bad field is not a broken file (2026-11-17)
+- walk: end where a person can see it, and stop spending the dose on the tool loop (2026-11-17)
+- docs(design): what antemuse is used for — eight situations, rebuilt from the shipped contracts (2026-11-17)
+
 ## 0.11.23 — 2026-11-17
 
 - docs: say which repository, and stop the examples from describing an older build (2026-11-17)
