@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.30 — 2026-11-18
+
+- state: a turn earns one hop, however many doors ask inside it (2026-11-18)
+- walk: when the far search is empty, draw the restart harder instead of stopping (2026-11-18)
+
 ## 0.11.29 — 2026-11-18
 
 - chat: the footer is added once, because it is ours (2026-11-18)
