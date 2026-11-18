@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.11.27 — 2026-11-18
+
+- walk: never land where it has already stood (2026-11-18)
+- walk: always move — six hops are six hops, not two forever (2026-11-17)
+
 ## 0.11.26 — 2026-11-17
 
 - walk: one corpus, one lock, and a failure that names itself (2026-11-17)
