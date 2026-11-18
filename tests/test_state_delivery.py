@@ -441,3 +441,36 @@ def test_a_dash_line_in_the_middle_of_a_reply_is_prose_not_a_footer():
     out = engine.annotate(body) or ""
     assert "— one: the wall stops the ship" in out, out
     assert "— two: the pane polls /state" in out, out
+
+
+def test_a_repeat_and_a_poll_in_one_turn_dont_end_the_walk(tmp_path):
+    """One turn's repeat is one repeat, even when the pane also looked.
+
+    The desktop app closed a walk `dry` at 2 of 6 in one turn: the turn delivered a repeat, the
+    pane poll delivered the same repeat again, and two repeats with a served count ended the
+    state claiming "nothing new arrived". A repeat must be counted against the turn that saw it,
+    so a second door in that turn cannot count it twice.
+    """
+    engine, sources = _engine(tmp_path) if "_engine" in globals() else (None, None)
+    if engine is None:
+        import importlib
+        engine = importlib.import_module("core.engine")
+        sources = importlib.import_module("core.sources")
+
+    line = "WALK-MARKER"
+    original = sources.PROVIDERS["walk"]
+    sources.PROVIDERS["walk"] = provider(line, line, line, line)
+    try:
+        engine.enter("walk", session="repeat-poll")
+        engine.note_turn("repeat-poll")
+        engine.inject("repeat-poll")          # first hop
+        engine.note_turn("repeat-poll")
+        engine.inject("repeat-poll")          # repeat
+        assert engine.deliver_if_due(source="pane") == 0, "the poll bought nothing"
+        active = engine.peek()
+        assert active is not None, "one repeat in one turn is not drained material"
+        engine.note_turn("repeat-poll")
+        engine.deliver_if_due()               # the second turn's repeat is what ends it
+        assert engine.peek() is None
+    finally:
+        sources.PROVIDERS["walk"] = original

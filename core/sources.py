@@ -88,7 +88,12 @@ def walk_text(steps: int = 1) -> List[str]:
                 return out
             walk.reset()                      # same hop again: set out from somewhere else
             out = walk.step(steps)
-        return out
+        # Still the same hop with the cursor cleared: the walk is standing somewhere it cannot
+        # leave. Say so instead of handing the repeat back — the engine reads a repeat as drained
+        # material and closes the walk `dry`, which is a lie about a graph that is merely stuck.
+        engine.record("state", f"walk '{name}' could not move · the same hop came back after "
+                               f"two fresh starts", event="walk")
+        return []
     except Exception as exc:
         try:
             engine.record("state", f"walk '{name}' failed · "

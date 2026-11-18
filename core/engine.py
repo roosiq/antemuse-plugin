@@ -1293,6 +1293,11 @@ def deliver_if_due(source: str = "turn") -> int:
         failed = False
         end_dry = False
         if active.get("key") == key:
+            # Every delivery records its turn, not only the ones that spend. A repeat left
+            # `last_turn` behind, so the second poll in the same turn ran the provider again,
+            # counted a second repeat, and closed the walk `dry` at 2 of 6 — the ending the app
+            # showed three times.
+            active["last_turn"] = int(active.get("turns") or 0)
             if material:
                 _spend(active, len(material))
                 active["empty"] = 0
