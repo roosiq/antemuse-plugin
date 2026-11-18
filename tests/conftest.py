@@ -40,6 +40,24 @@ def _isolated_home(tmp_path, monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
+def _no_inherited_working_directory(monkeypatch):
+    """A test's "project" is the one it makes, not the host's.
+
+    In production the plugin asks the host for the calling session's cwd, and the host
+    here exports a terminal cwd pointing at the operator's home — a dotfiles
+    repository. Inheriting either
+    makes a test read this machine's history instead of its own tmp repo, so both doors
+    are closed unless a test opens one (`tests/test_project_root.py` does, deliberately).
+    """
+    from core import storage
+    storage.set_session_cwd_provider(None)
+    for name in ("ANTEMUSE_PROJECT_ROOT", "TERMINAL_CWD", "HERMES_TERMINAL_CWD"):
+        monkeypatch.delenv(name, raising=False)
+    yield
+    storage.set_session_cwd_provider(None)
+
+
+@pytest.fixture(autouse=True)
 def _no_automatic_scan():
     """Off by default: a scan that starts itself is not a test fixture.
 

@@ -37,11 +37,11 @@ _as_package = bool(__package__) and getattr(sys.modules.get(__package__), "__pat
 
 if _as_package:
     from .core import (engine, history, options, recall, runtime, session, settings,
-                       report, states, walks)  # noqa: F401
+                       report, states, storage, walks)  # noqa: F401
 else:  # flat load: this file is or is not on sys.path, but its directory is what `core` needs
     sys.path.insert(0, str(_here))
     from core import (engine, history, options, recall, runtime, session, settings,
-                      report, states, walks)  # type: ignore[no-redef]  # noqa: F401
+                      report, states, storage, walks)  # type: ignore[no-redef]  # noqa: F401
 
 __version__ = "0.11.21"
 
@@ -694,6 +694,14 @@ def register(ctx) -> None:
                 # plugin loading: nothing at runtime depends on the route yet.
                 # It is still logged, because a silent miss hides a real error.
                 logger.warning("antemuse: auxiliary task %s not registered: %s", key, exc)
+
+    # Which repository is "this project" must be the calling session's, not the host
+    # process's: the gateway sits in $HOME, so a dream read the wrong history and
+    # refused at entry while the chat was working inside a repository.
+    try:
+        storage.set_session_cwd_provider(ctx.session_cwd)
+    except Exception as exc:  # an older host without the door: fall back to the env
+        logger.warning("antemuse: session cwd unavailable, project reads fall back: %s", exc)
 
     ctx.register_tool(
         name="state",

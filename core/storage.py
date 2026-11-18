@@ -13,11 +13,50 @@ from pathlib import Path
 
 PLUGIN_NAME = "antemuse"
 ENV_HOME = "ANTEMUSE_STATES_HOME"
+# The host process (gateway, desktop main) does not necessarily sit in the directory the
+# agent is working in: its cwd is wherever it was launched from, often $HOME. The calling
+# session's cwd is the honest answer and the host can supply it (see
+# set_session_cwd_provider); the environment is the fallback for hosts that only export it.
+ENV_WORKDIR = ("ANTEMUSE_PROJECT_ROOT", "TERMINAL_CWD")
+_SESSION_CWD = None
+
+
+def set_session_cwd_provider(fn) -> None:
+    """Let the host hand us the *calling session's* cwd.
+
+    The plugin's own process is the gateway, and its cwd is wherever the gateway was
+    launched from — on this machine the operator's home, a dotfiles repository with no
+    commits, so `dream` refused with "fewer than three local git commit subjects"
+    while the chat sat inside a repository with fourteen. The host exposes
+    `ctx.session_cwd()` for exactly this; the plugin registers it here at setup.
+    """
+    global _SESSION_CWD
+    _SESSION_CWD = fn if callable(fn) else None
+
+
+def _workdir() -> Path:
+    candidates = []
+    if _SESSION_CWD is not None:
+        try:
+            candidates.append(_SESSION_CWD())
+        except Exception:
+            pass
+    candidates.extend(os.environ.get(name) or "" for name in ENV_WORKDIR)
+    for raw in candidates:
+        raw = (raw or "").strip()
+        if raw:
+            try:
+                candidate = Path(raw).expanduser()
+            except Exception:
+                continue
+            if candidate.is_dir():
+                return candidate
+    return Path.cwd()
 
 
 def project_root(start: Path | None = None) -> Path | None:
     """The repository the agent is working in: nearest ancestor holding .git."""
-    here = Path(start or Path.cwd()).resolve()
+    here = Path(start or _workdir()).resolve()
     for candidate in (here, *here.parents):
         if (candidate / ".git").exists():
             return candidate
