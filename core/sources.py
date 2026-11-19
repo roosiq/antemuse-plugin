@@ -17,6 +17,11 @@ FEEDS = (
     "https://www.reddit.com/r/BrandNewSentence/.rss",
     "https://hnrss.org/frontpage",
 )
+# The event words a material line leads with. The account tallies them, so they live here next
+# to the lines that emit them: when the copy pass renamed JOINED to LINKED, the engine kept
+# counting the old word and every daydream account silently lost its tally.
+MARKS = ("LINKED", "NO LINK", "link", "no link")
+
 STOP = {"a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "it",
         "of", "on", "or", "that", "the", "their", "this", "to", "was", "with", "you", "your"}
 

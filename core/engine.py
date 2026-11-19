@@ -558,9 +558,11 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
     if dose and len(trail) > dose:
         trail = trail[:dose]
     body = _trail_body(trail)
-    # A bare event word ("JOINED") says a thing happened but not how much of it; the tally is the
-    # part of the account that is safe to state.
-    for mark in ("JOINED", "adjacent"):
+    # A bare event word ("LINKED") says a thing happened but not how much of it; the tally is the
+    # part of the account that is safe to state. The words come from the providers, not from a
+    # copy here: hard-coding them meant a wording change emptied the tally and no test noticed.
+    from . import sources
+    for mark in sources.MARKS:
         n = sum(1 for e in steps if str(e.get("text") or "").startswith(mark))
         if n:
             body = f"{body} · {mark.lower()} ×{n}"

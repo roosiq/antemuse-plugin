@@ -717,7 +717,7 @@ class GraphWalk:
         def fresh_pair(a, b) -> bool:
             # Never land where this walk has already stood: a node revisited inside one walk is a
             # loop the person can see, and it reads as the walk failing to move.
-            if str(b.get("id") or "") in stood:
+            if str(b.get("id") or "") in stood or str(b.get("label") or "") in stood_labels:
                 return False
             return f"{a['id']}→{b['id']}" not in taken and f"{b['id']}→{a['id']}" not in taken
         prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
@@ -741,8 +741,15 @@ class GraphWalk:
         def far(node_, avoid=None):
             if not hasattr(self.graph, "far_from"):
                 return None
-            skip = list(dict.fromkeys(str(x) for x in [*(avoid or []), *visited_ids]))
-            return self.graph.far_from(node_, samples=self.samples, avoid=skip)
+            # Everything the walk has stood on, and the node it is standing on right now.
+            # `visited_ids` was only the starting node, so a far jump could land back on the
+            # current one and print `orchestration → orchestration` — a hop to yourself.
+            skip = list(dict.fromkeys(str(x) for x in [*(avoid or []), *visited_ids,
+                                                       node_.get("id"), *stood]))
+            cand = self.graph.far_from(node_, samples=self.samples, avoid=skip)
+            if cand is not None and str(cand.get("label") or "") in stood_labels:
+                return None
+            return cand
 
         def unseen(node_) -> bool:
             try:
@@ -790,11 +797,18 @@ class GraphWalk:
             return ""
 
         stood: List[str] = [node["id"]]
+        # WordNet has several synsets with the same word: `orchestration.n.01` and
+        # `orchestration.n.02` are different nodes, so an id-only no-repeat rule happily printed
+        # `orchestration → orchestration`. The person reads the word, not the id.
+        stood_labels: List[str] = [str(node.get("label") or "")]
 
         def remember(node_) -> None:
             ident = str(node_.get("id") or "")
             if ident and (not stood or stood[-1] != ident):
                 stood.append(ident)
+            label = str(node_.get("label") or "")
+            if label and label not in stood_labels:
+                stood_labels.append(label)
             try:
                 from . import engine, history
                 # The session the state belongs to, not an empty string: the pane asks
@@ -1011,7 +1025,18 @@ class GraphWalk:
                     prev_id, node = node["id"], restart
                     continue
             choice = pick([(r, n) for r, n in (fresh or pool)])
-            rel, nxt = choice if choice else self.rng.choice(forward or options)
+            if choice:
+                rel, nxt = choice
+            else:
+                # The last-resort draw used to skip `fresh_pair`, so it could hand back a node the
+                # walk had already stood on — including the node it was standing on, which printed
+                # as `orchestration → orchestration`. A hop to yourself is not a hop.
+                spare = [(r, n) for r, n in (forward or options)
+                         if str(n.get("id") or "") not in stood and n.get("id") != node["id"]
+                         and str(n.get("label") or "") not in stood_labels]
+                if not spare:
+                    continue
+                rel, nxt = self.rng.choice(spare)
             gloss = (nxt.get("gloss") or "").split(";")[0][:90]
             hops += 1
             if nxt["label"] not in trail:

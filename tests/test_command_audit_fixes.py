@@ -126,3 +126,25 @@ def test_walk_seeding_does_not_read_another_chats_words():
         assert "juniper" not in terms, terms
     finally:
         engine.stop(reason="reset")
+
+
+def test_the_account_tally_follows_the_words_the_provider_emits():
+    """The tally is derived from the material, so renaming the material must not empty it.
+
+    The copy pass renamed JOINED to LINKED and the engine kept counting the old word: every
+    daydream account lost its count and the whole suite still passed.
+    """
+    from core import sources
+    for line in ("LINKED · one: a · two: b", "NO LINK · one: a · two: b",
+                 "link · repo: a ↔ repo: b", "no link · repo: a ↔ repo: b"):
+        assert any(line.startswith(m) for m in sources.MARKS), line
+    recall.remember("the pricing page needs an annual discount line", "person", "tally")
+    recall.remember("the pricing page should explain the yearly discount", "person", "tally")
+    recall.remember("the pricing page and the signup flow share a discount", "person", "tally")
+    engine.enter("daydream", session="tally")
+    for _ in range(3):
+        engine.note_turn("tally")
+        engine.inject("tally")
+    account = engine.stop("tally", reason="returned")
+    assert "×" in account, account
+    assert "linked ×" in account.lower(), account

@@ -246,3 +246,39 @@ def test_a_walk_that_keeps_repeating_sets_out_from_a_random_node(tmp_path, monke
     assert out == ["cure → smoke · took its far edge"], out
     assert stub.cursor_written == "elsewhere", "the walk must start somewhere new"
     assert any("set out from" in n for n in notes), notes
+
+
+def test_a_walk_never_hops_to_the_same_word_under_a_different_synset():
+    """WordNet has several synsets for one word; the person reads the word, not the id.
+
+    `orchestration.n.01` and `orchestration.n.02` are different nodes, so an id-only no-repeat
+    rule printed `orchestration → orchestration` about 1.5% of walks. Forced here rather than
+    left to chance: the far jump is handed the same word under a second id, every time.
+    """
+    from nltk.corpus import wordnet as wn
+    syns = wn.synsets("orchestration")
+    if len(syns) < 2:
+        import pytest
+        pytest.skip("WordNet build has one synset for orchestration")
+    cursor = tempfile.mkdtemp()
+    path = os.path.join(cursor, "c.json")
+    with open(path, "w") as fh:
+        json.dump({"outer": {"node": syns[0].name(), "prev": "", "at": 0}}, fh)
+    spec = dict(walks.BUILTIN["outer"], name="outer",
+                seed={"mode": "fixed", "node": "orchestration"})
+    walk = walks.GraphWalk(spec, __import__("pathlib").Path(path))
+    twin = walk.graph.node(syns[1].name()) if hasattr(walk.graph, "node") else None
+    if twin is None:
+        import pytest
+        pytest.skip("graph cannot resolve a synset by name")
+    walk.graph.far_from = lambda node, samples=32, avoid=None: twin
+    labels = []
+    for line in walk.step(5):
+        head = line.split(" · ")[0]
+        if "→" not in head:
+            continue
+        left, right = (p.strip() for p in head.split("→", 1))
+        assert left != right, f"a hop to the same word: {line}"
+        labels += [left, right]
+    assert labels, "the walk produced no hops, so this test proved nothing"
+    assert len(labels) == len(set(labels)), labels

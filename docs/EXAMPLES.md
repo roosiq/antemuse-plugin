@@ -12,17 +12,17 @@ The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
 design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → formation (n) · took its hyponym · “creation by mental activity” · ↩ 1 hop from creating by mental acts: creating by mental acts → formation
-formation (n) → affixation (n) · took its hyponym · “formation of a word by means of an affix” · ↩ 1 hop from formation: formation → affixation
-affixation (n) → suffixation (n) · took its hyponym · “formation of a word by means of a suffix” · ↩ 1 hop from affixation: affixation → suffixation
-suffixation (n) → affixation (n) · took its hypernym · “formation of a word by means of an affix” · ↩ 1 hop from suffixation: suffixation → affixation · seen earlier today in 1 other session
-affixation (n) → prefixation (n) · took its hyponym · “formation of a word by means of a prefix” · ↩ 1 hop from affixation: affixation → prefixation
+creating by mental acts (n) → realization (n) · took its hyponym · “making real or giving the appearance of reality” · ↩ 1 hop from creating by mental acts: creating by mental acts → realization
+realization (n) → objectification (n) · took its hyponym · “the act of representing an abstraction as a physical thing” · ↩ 1 hop from realization: realization → objectification
+objectification (n) → embodiment (n) · took its hyponym · “giving concrete form to an abstract concept” · ↩ 1 hop from objectification: objectification → embodiment
+embodiment (n) → soul (n) · took its hyponym · “the human embodiment of something” · ↩ 1 hop from embodiment: embodiment → soul
+soul (n) → embodiment (n) · took its hypernym · “giving concrete form to an abstract concept” · ↩ 1 hop from soul: soul → embodiment · seen earlier today in 1 other session
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→formation [hyponym] → formation→affixation [hyponym] → affixation→suffixation [hyponym] → suffixation→affixation [hypernym] → affixation→prefixation [hyponym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→realization [hyponym] → realization→objectification [hyponym] → objectification→embodiment [hyponym] → embodiment→soul [hyponym] → soul→embodiment [hypernym]
 ```
 
 ## 2. Two memories make a possibility
@@ -39,7 +39,7 @@ NO LINK · one: The report is late because the dashboard is still hard to read. 
 Account:
 
 ```text
-daydream · 2 of 2 pairs · LINKED → NO LINK
+daydream · 2 of 2 pairs · LINKED → NO LINK · linked ×1 · no link ×1
 ```
 
 ## 3. Three useless things from the feed
@@ -72,7 +72,7 @@ no link · example-project: read the session's repository before reading its his
 Account:
 
 ```text
-dream · 2 of 2 links · no link · concepts: link, example-project, sessions, reading…
+dream · 2 of 2 links · no link · no link ×2 · concepts: link, example-project, sessions, reading…
 ```
 
 ## 5. One direction breaks the stall
