@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.2 — 2026-11-18
+
+- commands: privacy, ownership, one ending, and copy that matches the code (2026-11-18)
+
 ## 0.12.1 — 2026-11-18
 
 - state: a footer and an ending belong to the chat that ran the state (2026-11-18)
