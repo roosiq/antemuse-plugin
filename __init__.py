@@ -43,7 +43,7 @@ else:  # flat load: this file is or is not on sys.path, but its directory is wha
     from core import (engine, history, options, recall, runtime, session, settings,
                       report, states, storage, walks)  # type: ignore[no-redef]  # noqa: F401
 
-__version__ = "0.12.0"
+__version__ = "0.12.1"
 
 #: Every action this tool answers. The schema's enum and the rejection message are both
 #: built from it, because a typed-out list of actions in prose went stale: the message
