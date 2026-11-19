@@ -1023,16 +1023,12 @@ function createGraph3D(el, doc, ctx, host, win) {
     if (!(el.clientWidth || 0) || !(el.clientHeight || 0)) return
     const session = host && host.state && host.state.focusedSessionId
       ? host.state.focusedSessionId.get() : ''
-    // One route, asked for one more thing: the map rides along, so new data never waits on a
-    // host restart to mount a path.
-    const q = '/state?graph=1&stills=0' + (session ? '&session=' + encodeURIComponent(session) : '')
+        const q = '/state?graph=1&stills=0' + (session ? '&session=' + encodeURIComponent(session) : '')
     const askedAt = performance.now()
     const slow = new Promise((_, reject) => setTimeout(() => reject(new Error('graph timeout')), 12000))
     Promise.race([Promise.resolve(ctx.rest(q)), slow]).then((seed) => {
       inFlight = false
       if (stopped) return
-      // A live state serves one unit per delivery call, so polling fast is what makes each
-      // hop its own frame. There is no clock in the dose to race.
       pollDelay = (seed && seed.active) ? 350 : 4000
       const g = seed && seed.graph ? seed.graph : (seed && seed.nodes ? seed : null)
       report({ routeMs: Math.round(performance.now() - askedAt), fails: 0, session: session || '' })
@@ -1319,10 +1315,13 @@ function ArtSurface({ ctx }) {
       if (stopped || !ctx || typeof ctx.rest !== 'function') return
       const busy = host.state.busy.get() ? 1 : 0
       const session = host.state.focusedSessionId.get()
-      // The one delivery door: taking the earned unit is a write, so it is a POST. The other
-      // reads are looks and stay GET.
+      // The one delivery door: a write, so a POST. Other reads are looks and stay GET.
       const q = '/deliver?cols=48&rows=24&fit=cover&busy=' + busy + (session ? '&session=' + encodeURIComponent(session) : '')
-      Promise.resolve(ctx.rest(q, { method: 'POST' })).then((p) => {
+      Promise.resolve(ctx.rest(q, { method: 'POST' })).catch((e) => {
+        // An older backend has no /deliver: fall back to the look that carried delivery.
+        if (String((e && e.message) || e).indexOf('404') < 0) throw e
+        return ctx.rest(q.replace('/deliver', '/state'))
+      }).then((p) => {
         try {
           win.__antemuse = Object.assign(win.__antemuse || {}, {
             asked: q,

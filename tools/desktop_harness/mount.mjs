@@ -141,6 +141,14 @@ function makeCtx(state) {
       // Matching only /state let the pane ask a route this stub did not serve and still pass.
       if (path.startsWith('/deliver')) {
         calls.pollMethod = (opts && opts.method) || 'GET'
+        // A host older than this pane has no such route.
+        // The real host rejects with a plain STRING, not an Error. A stub that only throws
+        // Error objects let a fallback pass here and fail in the app.
+        if (state.noDeliver) {
+          return Promise.reject(state.noDeliver === 'string'
+            ? '404: {"detail":"Not Found"}'
+            : new Error('404: {"detail":"Not Found"}'))
+        }
       }
       if (path.startsWith('/graph')) return state.graph || { nodes: [] }
       // `failAfter` answers the first N polls, then fails: the pane has to behave on the
@@ -162,6 +170,7 @@ function makeCtx(state) {
 }
 
 const root = () => document.getElementById('root')
+
 
 function resetBody() {
   document.body.innerHTML = '<div id="root"></div>'
@@ -386,6 +395,17 @@ assert.doesNotMatch(exitProps, /\bEsc(?:ape)?\b[^\n]{0,100}\b(?:leave|exit|retur
 // ---- an active state, mounted ----------------------------------------------
 
 resetBody()
+// Version skew: a host older than this pane has no /deliver. The pane must fall back to the
+// look that used to carry delivery rather than blanking. This skew published itself once,
+// against a gateway that predated the route.
+{
+  const skew = await mountWith({ payload: PAYLOAD, noDeliver: 'string' })
+  assert.ok(skew.calls.rest.some((p) => p.startsWith('/deliver')), 'the pane tried the door')
+  assert.ok(skew.calls.rest.some((p) => p.startsWith('/state')),
+    'a 404 on /deliver must fall back to the older look, not blank the pane')
+  await act(async () => { skew.node.unmount() })
+}
+
 const active = await mountWith({ payload: PAYLOAD })
 const text = document.body.textContent
 assert.match(text, /WALKING/)
@@ -517,7 +537,8 @@ assert.deepEqual(keyWarnings, [], 'React emitted a key-related console error')
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
-console.log('harness: 14 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
+console.log('harness: 15 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
   'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean, ' +
+  'old-host fallback, ' +
   'cockpit door without ctx.navigate, palette route without ctx.navigate)')
 dom.window.close()
