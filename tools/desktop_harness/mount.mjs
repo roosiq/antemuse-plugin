@@ -98,6 +98,9 @@ document.defaultView.HTMLCanvasElement.prototype.getContext = function () {
 }
 
 const host = sdk.host
+// The real host routes by location hash. Give the stub the same observable effect so a test
+// of "did the door navigate" measures the route, not whether a stub was called.
+host.navigate = (path) => { dom.window.location.hash = `#${path}` }
 const sweepStrays = helpers.sweepStrays
 
 const PAYLOAD = {

@@ -1425,9 +1425,10 @@ function ArtSurface({ ctx }) {
   return jsx('div', { ref: box, style: { position: 'absolute', inset: 0, overflow: 'hidden' } })
 }
 
-/** Reach a route on any host: the desktop context has no `navigate`, the app routes by hash.
- *  Guarding on `ctx.navigate` alone made every door a dead button in the real app. */
+/** Reach a route: the router is `host.navigate`, never `ctx`. Hash is the last resort. */
 function goto(ctx, path) {
+  // `host.navigate` is the SDK's router; `ctx` never carried one.
+  if (host && typeof host.navigate === 'function') { host.navigate(path); return }
   if (ctx && typeof ctx.navigate === 'function') { ctx.navigate(path); return }
   try {
     if (typeof location !== 'undefined') location.hash = `#${path}`
