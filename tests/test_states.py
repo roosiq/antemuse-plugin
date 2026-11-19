@@ -245,3 +245,21 @@ def test_dream_enters_when_today_is_quiet_but_the_project_is_not(tmp_path):
 
     assert sources._git_subjects(repo) == [], "today is empty"
     assert len(sources._recent_subjects(repo)) == 3, "the project is not"
+
+
+def test_walk_takes_its_six_hops_in_the_call_that_asked():
+    """`/walk` is an act, not a meter the person fills.
+
+    Six hops used to be owed across six turns, so finishing one walk meant typing five messages
+    that said nothing. The command takes the whole dose there and then and answers with the path.
+    """
+    from core import engine
+    out = engine.perform("walk", session="one-call")
+    assert "6 of 6 hops" in out, out
+    assert out.count("→") >= 5, out
+    assert engine.peek() is None, "nothing is left running for the person to feed"
+    data = engine._load()
+    assert int((data.get("work") or {}).get("turns") or 0) == 0, "no turns were spent"
+    hops = [e for e in data["journal"] if e.get("who") == "state" and e.get("event") == "walk"]
+    assert len(hops) >= 6, hops
+    assert all(e.get("session") == "one-call" for e in hops[-6:]), hops[-6:]

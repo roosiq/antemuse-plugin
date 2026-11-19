@@ -38,10 +38,21 @@ def test_a_walk_command_files_the_state_under_the_chat_that_asked():
     """
     out = plugin._enter("walk")("", session_id="desk-42", platform="desktop")
     assert "WALKING" in out
+    # The walk completes inside the command, so its owner is read from the account and the hops it
+    # filed, not from a live row.
+    data = json.loads((storage.data_dir() / "state.json").read_text())
+    report = [r for r in data["residue"] if r.get("kind") == "report"][-1]
+    assert report["session"] == "desk-42", report
+    hops = [e for e in data["journal"] if e.get("state") == "walk" and e.get("event") == "walk"][-6:]
+    assert hops and all(e.get("session") == "desk-42" for e in hops), hops[-3:]
+    # The origin machinery itself is unchanged: an entered state still carries where it came from.
+    from core import engine
+    engine.enter("walk", session="desk-42", platform="desktop")
     origin = _active()["origin"]
     assert origin["session_id"] == "desk-42"
     assert origin["platform"] == "desktop"
     assert origin["project"]
+    engine.stop(reason="reset")
 
 
 def test_a_walk_command_without_context_still_enters():

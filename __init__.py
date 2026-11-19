@@ -192,7 +192,7 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
                     f"(got '{walk_name}')")
         if walk_name:
             walk_name = walks.normalise(str(walk_name))
-        return engine.enter(str(a.get("name") or ""), None, walk_name, opts or None)
+        return engine.perform(str(a.get("name") or ""), None, walk_name, opts or None)
     if action == "walks":
         return _walks_report()
     if action == "walk_new":
@@ -485,10 +485,10 @@ def _enter(key: str, minutes: int | None = None):
             if not walks.valid_name(arg):
                 return (f"walk names are lowercase letters, digits, '-' and '_' "
                         f"(got '{arg}')")
-            line = engine.enter(key, None, walk=walks.normalise(arg), **where)
-            return line + "\n" + _waiting_for(key, line)
-        line = engine.enter(key, minutes, **where)
-        return line + "\n" + _waiting_for(key, line)
+            line = engine.perform(key, None, walk=walks.normalise(arg), **where)
+            return line if states.spec(key).get("instant") else line + "\n" + _waiting_for(key, line)
+        line = engine.perform(key, minutes, **where)
+        return line if states.spec(key).get("instant") else line + "\n" + _waiting_for(key, line)
     return handler
 
 

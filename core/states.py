@@ -9,7 +9,10 @@ STATES: Dict[str, Dict] = {
         "label": "WALKING",
         "turns": 6,
         "dose": {"unit": "hops", "n": 6},
-        "waiting": "taking a stroll · hops arrive as you walk",
+        # A walk is an act, not a chore: `/walk` takes its six hops there and then and comes back
+        # with the path. Pacing it by turns meant typing five filler messages to finish one walk.
+        "instant": True,
+        "waiting": "taking a walk · six hops, then back with the path",
         "after": (
             "the walk is over and the frame you were in is gone. Do not resume the approach "
             "you were taking. First: state the goal in one line. Then: name the approach you "

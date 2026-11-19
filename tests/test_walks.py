@@ -255,7 +255,15 @@ def test_a_command_enters_the_normalised_name(cursor):
     engine.stop(reason="reset")
     out = ctx.commands["walk"]("outward sky", session_id="walk-name", platform="discord")
     assert "WALKING" in out.upper(), out
-    assert engine.peek()["walk"] == "outward-sky", engine.peek()
+    # `/walk` is an act now: it takes its six hops in the call and comes back with the path, so the
+    # name is checked on the cursor it wrote rather than on a state left running.
+    # This fixture's manual graph has one edge, so the walk takes what exists and says so: an act
+    # ends with the hops it could take, not with a promise it could not keep.
+    assert "WALKING ended" in out and "hops" in out, out
+    assert engine.peek() is None
+    import json as _json
+    saved = _json.loads(walks.cursor_path().read_text())
+    assert "outward-sky" in saved, saved
     engine.stop(reason="reset")
 
 

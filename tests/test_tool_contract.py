@@ -39,7 +39,9 @@ def test_a_real_walk_still_enters():
     out = plugin._handler({"action": "enter", "name": "walk", "walk": "outer"})
 
     assert out.startswith("WALKING"), out
-    assert (engine._load().get("active") or {}).get("walk") == "outer"
+    # The tool takes the walk too: six hops in the call, the path in the answer, nothing left open.
+    assert "6 of 6 hops" in out, out
+    assert engine._load().get("active") is None
 
 
 def test_the_walk_resolver_refuses_an_unknown_name():

@@ -958,6 +958,40 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
     return (f"{spec['label']} · {n} {unit} · {spec['contract']} · /return ends it early{note}")
 
 
+def perform(*args, **kwargs) -> str:
+    """Enter a state and, if it is an act rather than a meter, do the whole thing now.
+
+    `/walk` owes six hops and takes them in the call that asked for them; the person gets the path
+    back, not a counter to fill. States that are paced by conversation keep `enter()`.
+    """
+    line = enter(*args, **kwargs)
+    raw = str(args[0] if args else kwargs.get("key") or "").strip().lower()
+    key = "explore" if raw == "explore" else states.resolve(raw)
+    if key and states.spec(key).get("instant") and (peek() or {}).get("key") == key:
+        return _run_to_completion(key, str(kwargs.get("session") or ""))
+    return line
+
+
+def _run_to_completion(key: str, session_id: str = "") -> str:
+    """Take the whole dose now, close the state, and answer with what happened.
+
+    `/walk` used to owe six hops across six turns, so finishing one walk meant typing five
+    messages that said nothing. The walk is an act the agent performs, not a meter the person
+    fills: it runs, it ends, and the reply carries the path.
+    """
+    spec = states.spec(key)
+    dose = int((spec.get("dose") or {}).get("n") or 0)
+    for _ in range(max(dose, 1) * 4):
+        active = peek() or {}
+        if not active or active.get("key") != key:
+            break
+        if dose and int(active.get("served") or 0) >= dose:
+            break
+        if deliver_if_due(source="instant") == 0:
+            break
+    return stop(session_id or current_session(), reason="complete")
+
+
 def current_session() -> str:
     """The session the last turn came from: what `stop()` holds the account to."""
     with _LOCK:
@@ -1174,7 +1208,7 @@ def deliver_if_due(source: str = "turn") -> int:
         # landed in three seconds, so the countdown never ticked and the dose measured the tool
         # loop instead of the conversation. A poll is a look and a call is not a turn; `turns`
         # is the only counter that means "the person came back".
-        if dose:
+        if dose and source != "instant":
             turns = int(active.get("turns") or 0)
             if served >= turns + 1 or int(active.get("last_turn", -1)) >= turns:
                 try:
@@ -1787,7 +1821,12 @@ def record(who: str, text: str, event: str = "") -> None:
             "event": event or active["key"],
             "text": (text or "").strip()[:800],
             "at": time.time(),
-            "session": data.get("session_id") or "",
+            # The state's own owner, not the last turn's session. A command sets no `session_id`
+            # (no turn arrived), so every hop of a `/walk` was journalled with an empty session
+            # while the account carried the right one — the pane and the window then saw a walk
+            # that belonged to nobody.
+            "session": str((active.get("origin") or {}).get("session_id")
+                           or data.get("session_id") or ""),
         })
         try:
             from . import settings

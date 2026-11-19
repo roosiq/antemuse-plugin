@@ -245,8 +245,12 @@ def test_the_registered_handler_reads_the_host_it_was_registered_with():
     out = on_handle({"action": "enter", "name": "walk", "method": "spark", "seed": 3,
                      "budget": {"calls": 2}})
     assert "WALKING" in out, out
+    # The walk is an act: it finishes in the call, so the options it ran with are checked on an
+    # entered state, which is the same recording path the tool uses.
+    engine.enter("walk", options={"method": "spark", "seed": "3", "budget": {"calls": 2}})
     active = engine.watch_state()["active"]
     assert active["options"] == {"method": "spark", "seed": "3", "budget": {"calls": 2}}
+    engine.stop(reason="reset")
 
 
 def test_the_session_hooks_accept_the_hosts_documented_payload():
