@@ -1,6 +1,54 @@
 # PR readiness audit — 2026-11-19
 
-Verdict: **NOT READY FOR PR.**
+Verdict at audit time: **NOT READY FOR PR.** Current status: see the resolution log below.
+The findings are kept as written so the record shows what was believed and what was measured.
+
+## Resolution log — 2026-11-19, after the audit
+
+Eleven commits later: **970 passed / 1 skipped**, harness 14 properties PASS, pane 199,969
+bytes, `examples --check` ok, stills `--check` ok.
+
+**Closed, each with a test that fails without the fix:**
+
+| finding | commit | what changed |
+|---|---|---|
+| Act reset cleared the wrong cursor | `6271122` | `walks.get(name).forget_stood()` resolves the project/custom cursor the provider uses |
+| Act test had no teeth (`>= 6`) | `6271122` | engine-level test asserts the exact dose, no ordinary revisit, project-cursor memory, no cross-act inheritance |
+| Sessionless `POST /picks` bypassed ownership | `032fbc3` | an unnamed caller is refused; the pane sends `focusedSessionId` |
+| Subagent prompts recorded as the person's messages | `2aa8315` | the hook records nothing for `platform="subagent"` |
+| `/daydream` unreachable in the app | `cebbca7` | the host names one chat by key and by stored id; the gate accepts either |
+| Unstamped rows read by every chat | `ee2219e` | a session id reads only that chat's rows |
+| `mark_move` swallowed its write failure | `ee2219e` | it raises into the caller's existing diagnostic path |
+| Foreign poll spent and read another chat's state | `241cf4c` | delivery and projection are both gated on the owner |
+| Manifest/README/spec claims that were false | `b81fff7` | daydream's sources, optional git, walk-as-act, a real measured example, a version-derived User-Agent |
+
+**Refuted — finding 1 was a measurement artifact.** The probe counted every `who: state`
+journal line containing an arrow. The account line (`walk · 6 of 6 hops · …`) is also
+`who: state` and also contains arrows. Counting hops only: six provider calls, six real hops,
+one account line, ten runs out of ten. There is no over-delivery race. A threaded test now
+guards the real invariant and counts hops rather than the report of them. The audit's own
+"correction" of an earlier claim was itself wrong; both are recorded here rather than erased.
+
+**Also does not reproduce:** a restarted doomscroll losing its counted item. `shown` is
+persisted; a fresh interpreter serves the next item. Kept as a guard test.
+
+**Still open — needs a product decision, not a patch:**
+
+1. **Raw chat/model text in `state.json`.** The accounts are built from that text, so stripping
+   the journal to digests would gut the feature. Recommended: keep bounded text and disclose
+   the fields in `plugin.yaml` and `SECURITY.md`.
+2. **Ownership model.** A foreign enter supersedes the running state (documented "one at a
+   time", with an accountable ending), while a foreign `/return` is refused. Either allow both
+   or refuse both; the asymmetry is the finding, and the choice is user-visible.
+3. **Feed text in model context.** The `[UNTRUSTED FEED TEXT]` label is a mitigation, not a
+   boundary. Minimising to quoted titles trades away material quality.
+4. **`GET /state` writes.** The owner's poll is the pane's delivery door for paced states —
+   three poll-pacing tests encode it. A pure-GET refactor means moving delivery to an explicit
+   POST the pane calls; that is a design change, not a bug fix.
+
+**Still open — mechanical, needs release authorization:** version is `0.12.4` in
+`plugin.yaml` and `__init__.py` while the fixes are unreleased; the tarball and catalog entry
+still pin `086c74b`. Cut `0.12.5`, rebuild, regenerate the catalog entry.
 
 Scope: the four commits `origin/main..7affe2f` plus the shipped behaviour of all six
 surfaces (`/walk`, `/daydream`, `/doomscroll`, `/dream`, `/unstuck`, `/explore`), the
