@@ -8,6 +8,7 @@ instant path claimed nothing.
 """
 import json
 import os
+import pytest
 import pathlib
 import threading
 
@@ -128,3 +129,55 @@ def test_daydream_starts_when_the_chat_named_its_turns_by_another_id():
     out = handler("", session_id=stored, session_key=key, platform="cli")
     assert "can't start" not in out, out
     assert (engine.peek() or {}).get("key") == "daydream", out
+
+
+def test_an_unattributed_turn_is_not_every_chats_material():
+    """A row with no session belongs to no chat, so no chat may read it as its own.
+
+    New writes are stamped, but migrated, restored or partially written rows are not, and
+    `recent()` deliberately included them — so one chat's private text became another chat's
+    daydream material.
+    """
+    import json
+    import os
+    import pathlib
+    from core import recall
+
+    ring = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "recent_turns.json"
+    ring.write_text(json.dumps([
+        {"who": "person", "text": "LEGACY compensation details should not cross chats",
+         "at": 1.0, "session": ""},
+        {"who": "person", "text": "mine: the parser keeps failing on nested quotes",
+         "at": 2.0, "session": "bob"},
+    ]))
+    got = recall.recent(recall.CAP, who="person", session="bob")
+    assert not any("LEGACY" in t for t in got), got
+    assert any("parser" in t for t in got), got
+    # A caller with no chat context still reads the whole ring.
+    assert any("LEGACY" in t for t in recall.recent(recall.CAP, who="person", session=None))
+
+
+def test_a_move_that_cannot_be_written_says_so(monkeypatch):
+    """History is the audit trail; a write that vanishes without a word is not an audit trail.
+
+    `mark_move` caught its own exception and returned None, so the caller that meant to note
+    the failure never learned there was one.
+    """
+    from core import history
+
+    class Broken:
+        def __enter__(self):
+            raise RuntimeError("disk is on fire")
+
+        def __exit__(self, *a):
+            return False
+
+        def execute(self, *a, **k):
+            raise RuntimeError("disk is on fire")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(history, "_connect", lambda: Broken())
+    with pytest.raises(Exception):
+        history.mark_move("walk", 1.0, 2.0, "completed", 6)

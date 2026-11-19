@@ -49,7 +49,7 @@ def test_every_state_survives_the_hook_paths(key):
     for line in ("A recorded turn with enough words for one memory.",
                  "Another recorded turn with enough words for another memory.",
                  "A third recorded turn lets two memory pairs remain distinct."):
-        recall.remember(line)
+        recall.remember(line, session=f"s-{key}")
     said = engine.enter(key, session=f"s-{key}")
     if "can't start" in said:
         # The state refused for a named reason (its material is not in this environment).

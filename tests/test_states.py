@@ -188,7 +188,7 @@ def test_a_dream_names_the_concepts_it_served(git_repo):
     for line in ("A recorded turn about a harbor crane and its rusted cable.",
                  "Another turn about a ticket queue and a paper lantern.",
                  "A third turn about a diesel generator and a coil of rope."):
-        recall.remember(line)
+        recall.remember(line, session="S-DREAM-NAMES")
     engine.enter("dream", session="S-DREAM-NAMES")
     for _ in range(2):
         engine.note_turn("S-DREAM-NAMES")
@@ -205,7 +205,7 @@ def test_daydream_keeps_its_count_and_names_nothing():
     for line in ("A recorded turn about a harbor crane and its rusted cable.",
                  "Another turn about a ticket queue and a paper lantern.",
                  "A third turn about a diesel generator and a coil of rope."):
-        recall.remember(line)
+        recall.remember(line, session="S-DAY-QUIET")
     engine.enter("daydream", session="S-DAY-QUIET")
     for _ in range(2):
         engine.note_turn("S-DAY-QUIET")

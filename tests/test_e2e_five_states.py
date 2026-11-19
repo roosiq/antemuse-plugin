@@ -29,8 +29,15 @@ SEED = (
 
 
 def _seed_recall() -> None:
-    for line in SEED:
-        recall.remember(line)
+    # Stamped with each chat that reads them: an unattributed row belongs to no chat, and
+    # letting every chat read one was how one conversation's text became another's material.
+    # Only daydream and unstuck read the person's own turns, and the ring holds 24 rows:
+    # seeding every chat overflowed it and evicted the first chat's material.
+    chats = [f"{prefix}-{key}" for prefix in ("e", "e-policy", "e-pane")
+             for key in ("daydream", "unstuck")]
+    for chat in chats:
+        for line in SEED:
+            recall.remember(line, session=chat)
 
 
 def _moves() -> list:

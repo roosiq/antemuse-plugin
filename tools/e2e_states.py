@@ -97,7 +97,7 @@ def run_state(key: str) -> dict:
     # behind it; these lines stand in for one, so the run measures the state rather than the
     # emptiness of a temporary directory.
     for line in E2E_TURNS:
-        recall.remember(line)
+        recall.remember(line, session="e2e")
 
     out = {"state": key, "home": home, "turns": [], "problems": []}
     entered = engine.enter(key, session="e2e")

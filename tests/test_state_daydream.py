@@ -26,9 +26,9 @@ def _drive(key: str, session: str) -> tuple[str, str]:
 
 
 def test_daydream_pairs_own_recorded_turns_and_delivers_its_dose():
-    recall.remember("I keep postponing the migration because its boundary is unclear.")
-    recall.remember("The release checklist keeps the same deployment boundary visible.")
-    recall.remember("A small test can make the deployment boundary explicit before release.")
+    recall.remember("I keep postponing the migration because its boundary is unclear.", session="daydream-owner")
+    recall.remember("The release checklist keeps the same deployment boundary visible.", session="daydream-owner")
+    recall.remember("A small test can make the deployment boundary explicit before release.", session="daydream-owner")
 
     assert states.STATES["daydream"]["dose"] == {"unit": "pairs", "n": 2}
     text, closing = _drive("daydream", "daydream-owner")

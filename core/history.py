@@ -414,8 +414,10 @@ def mark_move(state: str, started: float, ended: Optional[float] = None,
         with conn:
             conn.execute("""INSERT INTO moves(state, started, ended, ending, dose_done)
                             VALUES(?,?,?,?,?)""", (state, started, ended, ending, dose_done))
-    except Exception:
-        pass
+    except Exception as exc:
+        # The caller notes a failure it is told about. Swallowing it here meant the audit trail
+        # could lose a move with no diagnostic anywhere: `_record_finish` never saw an exception.
+        raise RuntimeError(f"move not written: {type(exc).__name__}: {exc}") from exc
     finally:
         conn.close()
 

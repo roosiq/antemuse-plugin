@@ -71,14 +71,14 @@ def recent(limit: int = 6, who: str | None = None, session: str | None = None) -
     """What was said, optionally only in one chat.
 
     `session=None` reads the whole ring (a caller that has no chat context). A session id
-    reads that chat's turns plus unattributed ones, and never another chat's.
+    reads only that chat's turns. An unattributed row belongs to no chat: including it let
+    migrated or partially written text from one conversation become another's material.
     """
     items = _load()
     if who:
         items = [item for item in items if item.get("who") == who]
     if session is not None:
-        items = [item for item in items
-                 if not item.get("session") or str(item.get("session")) == str(session)]
+        items = [item for item in items if str(item.get("session") or "") == str(session)]
     return [item["text"] for item in items[-limit:]]
 
 
