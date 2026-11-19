@@ -474,7 +474,21 @@ def _enter(key: str, minutes: int | None = None):
                 session_key: str | None = None, platform: str | None = None,
                 source: str | None = None) -> str:
         arg = (raw_args or "").strip()
-        where = {"session": session_id or session_key or None,
+        # The host names one chat two ways: a local turn is recorded under its session KEY
+        # (`local-<hex>`), while a command arrives with the stored session ID plus that key.
+        # Counting only the ID refused `/daydream` in a chat that had said plenty. Both ids
+        # come from the same source, so preferring the one the day record knows cannot reach
+        # another chat's turns.
+        ids = [str(s) for s in (session_id, session_key) if s]
+        chosen = ids[0] if ids else None
+        try:
+            for cand in ids:
+                if recall.recent(1, who="person", session=cand):
+                    chosen = cand
+                    break
+        except Exception:  # health: BLE001 -- an unreadable ring must not refuse a state
+            pass
+        where = {"session": chosen,
                  "platform": platform or source or None}
         if arg:
             # A number here used to mean "this many minutes". States have no duration any

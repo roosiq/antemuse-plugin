@@ -102,3 +102,29 @@ def test_a_subagents_task_prompt_is_not_the_persons_own_message():
     said = "I keep rewriting the same parser and it still fails"
     mod._pre_llm_call(platform="discord", session_id="real-chat", user_message=said)
     assert said in " ".join(recall.recent(recall.CAP, who="person", session="real-chat"))
+
+
+def test_daydream_starts_when_the_chat_named_its_turns_by_another_id():
+    """The host names one chat two ways, and the gate must recognise both.
+
+    A local desktop turn is recorded under its session KEY (`local-<hex>`), while a slash
+    command arrives with the stored session ID plus that key. The gate counted only the ID,
+    found no turns, and refused `/daydream` in a chat that had said plenty — the state was
+    unreachable in the app.
+    """
+    import importlib
+    from core import engine, recall
+
+    mod = importlib.import_module("__init__")
+    engine.clear()
+    key = "local-" + "c" * 56
+    stored = "20261119_120000_abcdef"
+    for text in ("the parser keeps failing on nested quotes",
+                 "the coffee shop closed after twenty years",
+                 "I want the walk to feel like wandering"):
+        recall.remember(text, "person", key)
+
+    handler = mod._enter("daydream")
+    out = handler("", session_id=stored, session_key=key, platform="cli")
+    assert "can't start" not in out, out
+    assert (engine.peek() or {}).get("key") == "daydream", out
