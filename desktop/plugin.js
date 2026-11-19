@@ -33,19 +33,19 @@ const copy = {
   cockpit: 'Cockpit',
   cockpitOpen: 'Open concept cockpit',
   state: 'State',
-  idle: 'no state',
+  idle: 'nothing running',
   // The empty pane is a dead end without this: a person who opens it and finds a dark map has
   // nothing to act on. One command, not five — the label above this line already says there is
   // no state, so the note says how to get one.
-  start: '/walk starts one',
+  start: '/walk to start',
   // Written into the corner the moment a poll fails after a run of failures. Deliberately not
   // "backend unavailable": the backend did answer, it refused, and saying which is the whole
   // difference between looking at the plugin and looking at your session.
   reconnecting: 'reconnecting',
-  unavailable: 'backend unavailable',
-  unreachable: 'the plugin backend is not mounted',
+  unavailable: 'plugin unavailable',
+  unreachable: 'the plugin is not loaded',
   signin: 'sign-in required',
-  silent: 'the backend did not answer',
+  silent: 'the plugin went quiet',
   watch: 'show antemuse'
 }
 
@@ -146,7 +146,7 @@ export function viewModel(payload, error) {
     note: error || active
       ? ''
       : flight && flight.concepts
-        ? `last flight \u00b7 ${flight.concepts} concept(s)` +
+        ? `last flight \u00b7 ${flight.concepts} ${flight.concepts === 1 ? 'concept' : 'concepts'}` +
           (flight.kept && flight.kept.length ? ` \u00b7 kept ${flight.kept.length}` : '')
         : (last && last.state ? `${last.state} ended \u00b7 /walk again` : copy.start),
     // A count is a claim about now. Under a failed poll it is a claim about the last time the
@@ -3377,7 +3377,7 @@ function createCockpit({ ctx, el, callbacks }) {
       alpha(0.9)
       c2d.font = `400 11px ${FONT.data}`
       tracked('0.02em')
-      c2d.fillText('no projected concepts yet · /walk starts one', 18, view.h * 0.2)
+      c2d.fillText('nothing on the map yet · /walk puts some there', 18, view.h * 0.2)
       c2d.restore()
     }
   }

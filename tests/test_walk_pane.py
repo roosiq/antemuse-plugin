@@ -85,7 +85,7 @@ def test_every_state_reports_the_same_dose_to_the_chat_and_the_pane():
     """/state, the entry line and the pane must agree on the dose and its unit.
 
     An unstuck owes one direction. The entry line said so while /state said three, because the
-    active record stored spec["turns"] — three — beside a unit of "directions".
+    active record stored spec["turns"] — three — beside a unit of "moves".
     """
     from core import states
 
@@ -99,7 +99,7 @@ def test_every_state_reports_the_same_dose_to_the_chat_and_the_pane():
         engine.stop(reason="dose")
         line = mod_line(key)
         said = engine.enter(key, session=f"dose-{key}", platform="discord")
-        if "cannot enter" in said:
+        if "can't start" in said:
             # Named refusal (material absent in this environment) — the dose claim cannot be
             # checked for this state here, and pretending otherwise would be the bug.
             assert key not in said or "·" in said, said

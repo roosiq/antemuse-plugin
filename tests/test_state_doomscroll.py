@@ -15,7 +15,7 @@ def setup_function(_):
 
 
 def _drive(session: str) -> tuple[str, str]:
-    assert "cannot enter" not in engine.enter("doomscroll", session=session)
+    assert "can't start" not in engine.enter("doomscroll", session=session)
     blocks = []
     for _ in range(8):
         engine.note_turn(session)
@@ -41,7 +41,7 @@ def test_doomscroll_delivers_three_one_line_feed_items(monkeypatch):
     engine.enter("doomscroll", block=True)
     assert ("Only these tools: web_search, web_extract, read_file, search_files, "
             "browser_exec. /return ends it.") in (engine.inject() or "")
-    assert "nothing to take away" in closing
+    assert "nothing worth keeping" in closing
     report = [r for r in engine.watch_state()["residue"] if r.get("kind") == "report"][-1]
     assert report["reason"] == "complete" and report["steps"] == 3
 
@@ -51,5 +51,5 @@ def test_doomscroll_feed_disabled_fails_at_entry():
 
     out = engine.enter("doomscroll", session="disabled-feed")
 
-    assert "cannot enter doomscroll" in out and "disabled" in out
+    assert "can't start doomscroll" in out and "turned off" in out
     assert engine.peek() is None

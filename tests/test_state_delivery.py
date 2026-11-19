@@ -142,7 +142,7 @@ def test_a_repeated_line_ends_dry_and_does_not_claim_nothing_arrived():
         report = [r for r in state_home()["residue"] if r.get("kind") == "report"][0]
         assert report["reason"] == "dry"
         assert "nothing arrived" not in report["text"]
-        assert "nothing new arrived" in report["text"]
+        assert "nothing new came up" in report["text"]
     finally:
         sources.PROVIDERS["walk"] = original
 
@@ -312,7 +312,7 @@ def test_the_turn_that_spends_the_last_hop_carries_the_ending():
 
     last = blocks[-1]
     assert "6 of 6 hops" in last, last
-    assert "this is the last one" in last, last
+    assert "last one" in last, last
     assert "YOU JUST CAME BACK" in last, "the ending must arrive with the last hop, not a turn later"
     assert engine.peek() is None, "the state was still open after its last hop"
 
@@ -418,14 +418,14 @@ def test_a_reply_that_already_ends_with_the_footer_gets_one_not_two():
     """The footer is this plugin's line, so it is added once.
 
     Observed in a real chat (0.11.28, move 121): the model's reply already ended with
-    "— walking · 1 hop left · /return to come back" because the shape echoes through the
+    "— walking · 1 hop left · /return to stop" because the shape echoes through the
     conversation, and `annotate()` appended a second copy. The journal recorded the hop text twice
     before the plugin added a third.
     """
     engine.enter("walk", session="footer")
     engine.note_turn("footer")
     engine.deliver_if_due()
-    footer = "— walking · 5 hops left · /return to come back"
+    footer = "— walking · 5 hops left · /return to stop"
 
     once = engine.annotate(f"An answer.\n\n{footer}")
     assert once.count(footer) == 1, once
@@ -449,7 +449,7 @@ def test_a_repeat_and_a_poll_in_one_turn_dont_end_the_walk(tmp_path):
 
     The desktop app closed a walk `dry` at 2 of 6 in one turn: the turn delivered a repeat, the
     pane poll delivered the same repeat again, and two repeats with a served count ended the
-    state claiming "nothing new arrived". A repeat must be counted against the turn that saw it,
+    state claiming "nothing new came up". A repeat must be counted against the turn that saw it,
     so a second door in that turn cannot count it twice.
     """
     engine, sources = _engine(tmp_path) if "_engine" in globals() else (None, None)

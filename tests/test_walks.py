@@ -386,7 +386,7 @@ def test_the_corpus_is_opened_once_for_the_process():
 def test_a_two_hop_cycle_does_not_stall_the_walk(tmp_path):
     """The walk took one edge and could not leave it: `served` climbed, the cursor froze.
 
-    A six-hop walk ended at 2 of 6 as `dry` — "nothing new arrived" — because `step()` handed back
+    A six-hop walk ended at 2 of 6 as `dry` — "nothing new came up" — because `step()` handed back
     the same pair forever. A pair already walked is a cycle, not distance: the walk restarts, and
     a node with no edge out steps back rather than printing the same sentence again.
     """

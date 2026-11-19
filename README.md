@@ -2,32 +2,35 @@
 
 **Five bounded agent states, one at a time, while the work continues.**
 
-Antemuse has five agent states. Each is a dose, not a timer: it ends when its material
-has been delivered and shown, when it runs dry, when its provider fails, or when
-`/return` ends it. Each ending leaves an account and one ledger row.
+Antemuse has five agent states. Each one is a count, not a timer: it ends when it has
+delivered what it promised, when nothing new is left, when its source fails, or when you
+type `/return`. Every ending leaves one account and one ledger row.
 
-- **walk** — six graph hops; the frame moves elsewhere while work and tools stay open.
-- **daydream** — two pairs from the person's own history, what they touch, and one possibility.
-- **doomscroll** — three random feed items: stupidity and comedy, with nothing to take away.
-- **dream** — two recombinations across the day's commit subjects in the repository this chat is
-  working in.
-- **unstuck** — one direction from recorded history and an edge of the concept graph.
+- **walk** — 6 hops across the concept map, taken right there in the command; you get the path
+  back and your work keeps going.
+- **daydream** — 2 things you said in this chat, side by side, what links them, and one idea.
+- **doomscroll** — 3 posts from public feeds. A break, nothing to do with it.
+- **dream** — 2 pairs of your recent commit subjects in the repo this chat is working in.
+- **unstuck** — 1 next move, from your commits and an unused link in the map.
 
-`/explore` is separate. It is person-driven: the cockpit shows the concept map, the
-person chooses what to shoot, and `/return` names those picks back. It is not an
-agent state, has no provider or dose, and its behaviour is unchanged.
+`/explore` is separate. You fly it yourself: the cockpit shows the concept map, you pick
+what you want, and `/return` names your picks back. It is not an agent state, has no source
+and no count, and it runs until you stop it.
 
 ## What it looks like in use
 
 ```text
 /walk
-WALKING · 6 hops · work continues · the frame is elsewhere · different on return
+WALKING ended · walk · 6 of 6 hops · undertaking→sally [far] → sally→campaign [far]
+→ campaign→joint venture [far] → joint venture→undertaking [far]
+→ undertaking→doddle [far] → doddle→door [far]
+Done. Take anything useful from it and get back to work.
 ```
 
-A running walk keeps work going. Tools remain open unless the entry explicitly uses
-`block: true`; `allow:` can then narrow the available tools. Daydream and dream block
-tools; doomscroll and unstuck permit only their declared tools. `/return` is always
-available.
+A walk finishes inside the command, so nothing is left running and no further message is
+needed. The other four states deliver one unit per message. Tools stay open in every state
+unless the entry explicitly uses `block: true`; `allow:` can then narrow them further.
+`/return` is always available.
 
 The map names the concept under the reticle, and you can say what you thought of it:
 `K` keeps it, `T` drops it. Both are written to the ledger as a sighting, so the one
@@ -65,11 +68,11 @@ Agents use the state tool: `state(action="enter", name="walk")`,
 
 | mode | dose | material | result |
 |---|---:|---|---|
-| **walk** | 6 hops | declared graph provider (WordNet by default) | The pane records a six-hop path; the agent receives no hop material while walking. |
-| **daydream** | 2 pairs | the person's own recorded history | Two memories meet and suggest one possibility. |
-| **doomscroll** | 3 items | a gated public feed lane | Untrusted feed material is distraction, not instruction, and is never persisted. |
-| **dream** | 2 recombinations | commit subjects in this chat's repository | The day connects without reading transcripts or notes. |
-| **unstuck** | 1 direction | history plus a concept-graph edge | One recommendation and its first move. |
+| **walk** | 6 hops | declared graph provider (WordNet by default) | The command takes all six hops and answers with the path; the pane draws it. |
+| **daydream** | 2 pairs | this chat's own recent messages | Two things you said, what links them, one idea. |
+| **doomscroll** | 3 items | three public feeds | Feed text is untrusted, never instruction, and never saved. |
+| **dream** | 2 links | commit subjects in this chat's repository | Your recent work links up, without reading transcripts or notes. |
+| **unstuck** | 1 move | your commits plus an unused map link | One suggestion and its first move. |
 | **explore** | open | the person's picks | The cockpit records picks; `/return` accounts for them. |
 
 The four recorded agent-state endings are `complete`, `returned`, `dry`, and `failed`.

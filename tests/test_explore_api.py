@@ -31,7 +31,7 @@ def _client():
 
 
 def test_the_pane_sees_an_open_ended_state_without_a_countdown():
-    assert "cannot enter" not in engine.enter("explore", session="s-api")
+    assert "can't start" not in engine.enter("explore", session="s-api")
     client = _client()
 
     body = client.get("/api/plugins/antemuse/state?session=s-api").json()
@@ -45,7 +45,7 @@ def test_the_pane_sees_an_open_ended_state_without_a_countdown():
 
 
 def test_the_cockpit_body_files_picks_and_the_pane_counts_them():
-    assert "cannot enter" not in engine.enter("explore", session="s-api")
+    assert "can't start" not in engine.enter("explore", session="s-api")
     client = _client()
 
     posted = client.post("/api/plugins/antemuse/picks",
@@ -62,7 +62,7 @@ def test_the_cockpit_body_files_picks_and_the_pane_counts_them():
 
 def test_an_explore_survives_the_pane_polling_it():
     """The pane polls every four seconds; a poll is not a turn and must not end the state."""
-    assert "cannot enter" not in engine.enter("explore", session="s-api")
+    assert "can't start" not in engine.enter("explore", session="s-api")
     client = _client()
     for _ in range(6):
         assert client.get("/api/plugins/antemuse/state?session=s-api").json()["active"]["key"] == "explore"
@@ -70,7 +70,7 @@ def test_an_explore_survives_the_pane_polling_it():
 
 
 def test_picks_stop_being_recorded_once_the_explore_ends():
-    assert "cannot enter" not in engine.enter("explore", session="s-api")
+    assert "can't start" not in engine.enter("explore", session="s-api")
     client = _client()
     client.post("/api/plugins/antemuse/picks", json={"picks": ["bookshelf"]})
     engine.stop(session_id="s-api")

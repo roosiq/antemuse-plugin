@@ -173,7 +173,7 @@ def test_a_walk_that_repeats_its_last_hop_sets_out_again(monkeypatch):
     """The engine counts a repeat as drained material, so a walk must never repeat.
 
     A walk served `jog→motion`, then could not leave it: every later delivery handed back the same
-    line, `served` climbed to 2, and the state closed as `dry` — "nothing new arrived" — with four
+    line, `served` climbed to 2, and the state closed as `dry` — "nothing new came up" — with four
     hops unspent. `walk_text` now resets the walk and steps again when the graph hands back the hop
     it just served.
     """

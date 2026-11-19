@@ -270,7 +270,7 @@ def test_the_session_hooks_accept_the_hosts_documented_payload():
 def test_a_walk_in_one_chat_does_not_annotate_another_chats_reply():
     """The footer is the state's, not the profile's.
 
-    A walk entered in a CLI printed "— walking · 5 hops left · /return to come back" under every
+    A walk entered in a CLI printed "— walking · 5 hops left · /return to stop" under every
     answer in a Discord thread that had never walked, and the ending arrived there too as
     "[YOU JUST CAME BACK …]" with hops from somebody else's route.
     """

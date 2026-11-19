@@ -384,7 +384,7 @@ def test_the_pane_names_the_failure_it_actually_saw():
     """A failed poll is not automatically a missing route.
 
     An expired session, a slow server and an absent route all arrive as one rejected promise. The
-    pane used to print "the plugin backend is not mounted" for every one of them, which sent us
+    pane used to print "the plugin is not loaded" for every one of them, which sent us
     looking for a mount that was there. Each cause now answers with its own words, and only a 404
     is allowed to claim the route is missing.
     """
@@ -412,9 +412,9 @@ const cases = [
 const out = cases.map(([want, err]) => {
   const said = whyFailed(err)
   const ok = want === 'signin' ? said === 'sign-in required'
-    : want === 'mount' ? said === 'the plugin backend is not mounted'
-    : want === 'silent' ? said === 'the backend did not answer'
-    : said === 'backend unavailable'
+    : want === 'mount' ? said === 'the plugin is not loaded'
+    : want === 'silent' ? said === 'the plugin went quiet'
+    : said === 'plugin unavailable'
   return ok ? 'ok' : 'WRONG ' + said
 })
 console.log(out.join(','))
@@ -740,5 +740,5 @@ console.log([idleAlone.note, idleAfter.note, running.note, failed.note].join('|'
         # One command, not a menu: the label above the note already says there is no state, and
         # the copy's own comment gives that as the reason. The ended case names the state and
         # the one line that starts another.
-        "/walk starts one|walk ended · /walk again||"
+        "/walk to start|walk ended · /walk again||"
     ), done.stdout

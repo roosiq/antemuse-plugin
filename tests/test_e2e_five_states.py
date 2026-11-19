@@ -208,8 +208,8 @@ def test_doomscroll_feed_off_fails_by_name():
         settings._raw = original
     # With the feed off the state refuses at entry, by name, instead of entering and
     # pretending: no block, no journal event, no moves row, nothing lit.
-    assert out["entry"].startswith("cannot enter doomscroll"), out["entry"]
-    assert "doomscroll feed is disabled" in out["entry"], out["entry"]
+    assert out["entry"].startswith("can't start doomscroll"), out["entry"]
+    assert "the feed is turned off" in out["entry"], out["entry"]
     assert out["blocks"] == [], "a refused state must not deliver a block"
     assert _active_key() == ""
     assert out["row"] is None, "a refused state leaves no moves row"
@@ -218,7 +218,7 @@ def test_doomscroll_feed_off_fails_by_name():
 def test_unstuck_end_to_end():
     """Unstuck needs history *and* a graph edge; that is the hardest material to have."""
     out = run("unstuck", "e-unstuck")
-    if "cannot enter" in out["entry"]:
+    if "can't start" in out["entry"]:
         # A named refusal at entry is the state working, and it is also the finding: unstuck
         # needs a graph edge, so on a fresh install it is advertised and unreachable until a
         # walk has run. Reported rather than smoothed over.
@@ -237,7 +237,7 @@ def test_unstuck_works_once_the_map_has_an_edge():
     walked = run("walk", "e-unstuck-walk")
     assert walked["row"], "the walk that seeds the map did not run"
     out = run("unstuck", "e-unstuck")
-    if "cannot enter" in out["entry"]:
+    if "can't start" in out["entry"]:
         pytest.skip(f"still no edge after a walk: {out['entry']}")
     _assert_entry("unstuck", out["entry"])
     _assert_block("unstuck", out["blocks"][0])
@@ -267,7 +267,7 @@ def test_a_walk_line_from_a_seeded_start_keeps_its_badge_out_of_the_account():
 def test_a_tool_call_meets_the_states_real_policy(key):
     session = f"e-policy-{key}"
     said = engine.enter(key, session=session)
-    if "cannot enter" in said:
+    if "can't start" in said:
         pytest.skip(said)
     try:
         assert engine.policy("web_search") is None, "tools stay open unless the entry asks"
@@ -289,7 +289,7 @@ def test_the_pane_sees_the_same_dose_the_chat_does(key):
 
     session = f"e-pane-{key}"
     said = engine.enter(key, session=session)
-    if "cannot enter" in said:
+    if "can't start" in said:
         pytest.skip(said)
     try:
         engine.inject(session)

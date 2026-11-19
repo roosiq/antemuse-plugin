@@ -15,7 +15,7 @@ def setup_function(_):
 
 
 def _drive(key: str, session: str) -> tuple[str, str]:
-    assert "cannot enter" not in engine.enter(key, session=session)
+    assert "can't start" not in engine.enter(key, session=session)
     blocks = []
     for _ in range(8):
         engine.note_turn(session)
@@ -33,15 +33,15 @@ def test_daydream_pairs_own_recorded_turns_and_delivers_its_dose():
     assert states.STATES["daydream"]["dose"] == {"unit": "pairs", "n": 2}
     text, closing = _drive("daydream", "daydream-owner")
 
-    assert "memory one:" in text and "memory two:" in text and "touch:" in text
-    assert "possibility:" in text
+    assert "one:" in text and "two:" in text and "shared:" in text
+    assert "idea:" in text
     assert "Tools are open in this state" in text, "tools are open unless the entry asks"
     engine.stop()
     engine.enter("daydream", block=True)
     text = engine.inject() or ""
     assert "Tools are closed in this state; /return ends it." in text
     assert "2 of 2 pairs" in text
-    assert "two things that surfaced" in closing
+    assert "two things that came up" in closing
     report = [r for r in engine.watch_state()["residue"] if r.get("kind") == "report"][-1]
     assert report["reason"] == "complete" and report["steps"] == 2
 
@@ -49,5 +49,5 @@ def test_daydream_pairs_own_recorded_turns_and_delivers_its_dose():
 def test_daydream_refuses_entry_when_own_turns_are_empty():
     out = engine.enter("daydream", session="empty-daydream")
 
-    assert "cannot enter daydream" in out and "empty" in out
+    assert "can't start daydream" in out and "need at least" in out
     assert engine.peek() is None

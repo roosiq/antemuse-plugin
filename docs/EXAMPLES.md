@@ -11,18 +11,18 @@ Command: `/walk`
 The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
-design (n) → planning (n) · took its hyponym · “the act or process of drawing up plans or layouts for some project or enterprise” · ↩ 1 hop from design: design → planning
-planning (n) → city planning (n) · took its hyponym · “determining and drawing up plans for the future physical arrangement and condition of a co” · ↩ 1 hop from planning: planning → city planning
-city planning (n) → zoning (n) · took its meronym · “dividing an area into zones or sections reserved for different purposes such as residence ” · ↩ 1 hop from city planning: city planning → zoning
-zoning (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from zoning: zoning → division
-division (n) → separation (n) · took its hypernym · “the act of dividing or disconnecting” · ↩ 1 hop from division: division → separation
-separation (n) → disconnection (n) · took its hyponym · “the act of breaking a connection” · ↩ 1 hop from separation: separation → disconnection
+design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
+creating by mental acts (n) → formation (n) · took its hyponym · “creation by mental activity” · ↩ 1 hop from creating by mental acts: creating by mental acts → formation
+formation (n) → affixation (n) · took its hyponym · “formation of a word by means of an affix” · ↩ 1 hop from formation: formation → affixation
+affixation (n) → suffixation (n) · took its hyponym · “formation of a word by means of a suffix” · ↩ 1 hop from affixation: affixation → suffixation
+suffixation (n) → affixation (n) · took its hypernym · “formation of a word by means of an affix” · ↩ 1 hop from suffixation: suffixation → affixation · seen earlier today in 1 other session
+affixation (n) → prefixation (n) · took its hyponym · “formation of a word by means of a prefix” · ↩ 1 hop from affixation: affixation → prefixation
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→planning [hyponym] → planning→city planning [hyponym] → city planning→zoning [meronym] → zoning→division [hypernym] → division→separation [hypernym] → separation→disconnection [hyponym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→formation [hyponym] → formation→affixation [hyponym] → affixation→suffixation [hyponym] → suffixation→affixation [hypernym] → affixation→prefixation [hyponym]
 ```
 
 ## 2. Two memories make a possibility
@@ -32,14 +32,14 @@ Command: `/daydream`
 The `daydream` material below is produced by its real provider:
 
 ```text
-JOINED · memory one: The report is late because the dashboard is still hard to read. · memory two: The new layout prototype still has an unclear deployment boundary. · touch: still · possibility: try treating still as the subject
-APART · memory one: The report is late because the dashboard is still hard to read. · memory two: The deployment notes are scattered across the project. · touch: nothing in common · possibility: none — say what the gap was
+LINKED · one: The report is late because the dashboard is still hard to read. · two: The new layout prototype still has an unclear deployment boundary. · shared: still · idea: try still as the topic
+NO LINK · one: The report is late because the dashboard is still hard to read. · two: The deployment notes are scattered across the project. · shared: nothing · idea: none, these do not connect
 ```
 
 Account:
 
 ```text
-daydream · 2 of 2 pairs · JOINED → APART · joined ×1
+daydream · 2 of 2 pairs · LINKED → NO LINK
 ```
 
 ## 3. Three useless things from the feed
@@ -55,7 +55,7 @@ The `doomscroll` material below is produced by its real provider:
 Account:
 
 ```text
-doomscroll · 3 of 3 items · nothing to take away
+doomscroll · 3 of 3 items · nothing worth keeping
 ```
 
 ## 4. The day recombines within the project
@@ -65,14 +65,14 @@ Command: `/dream`
 The `dream` material below is produced by its real provider:
 
 ```text
-adjacent · example-project: read the session's repository before reading its history ↔ example-project: gate the release on the shipped suite · shared: nothing yet · these two have not touched
-adjacent · example-project: read the session's repository before reading its history ↔ example-project: steady the release gate's second run · shared: nothing yet · these two have not touched
+no link · example-project: read the session's repository before reading its history ↔ example-project: gate the release on the shipped suite · shared: nothing yet · these two do not connect
+no link · example-project: read the session's repository before reading its history ↔ example-project: steady the release gate's second run · shared: nothing yet · these two do not connect
 ```
 
 Account:
 
 ```text
-dream · 2 of 2 recombinations · adjacent · adjacent ×2 · concepts: adjacent, example-project, sessions, reading…
+dream · 2 of 2 links · no link · concepts: link, example-project, sessions, reading…
 ```
 
 ## 5. One direction breaks the stall
@@ -82,11 +82,11 @@ Command: `/unstuck`
 The `unstuck` material below is produced by its real provider:
 
 ```text
-direction · not another pass at read the session's repository before reading its history · take gate the release on the shipped suite from a different angle · graph edge: gate → movable barrier (hypernym) · first: write the smallest test for that different angle
+next move · skip another pass at read the session's repository before reading its history · try gate the release on the shipped suite a different way · map link: gate → movable barrier (hypernym) · first: write the smallest test for that different way
 ```
 
 Account:
 
 ```text
-unstuck · 1 of 1 directions · direction · concepts: direction, pass, sessions, reading…
+unstuck · 1 of 1 moves · next move · concepts: move, skip, pass, sessions…
 ```

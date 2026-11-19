@@ -243,7 +243,7 @@ def wordnet() -> Any:
                 # actually throws — so the detail must not assume a message exists.
                 first = str(exc).splitlines()[0][:120] if str(exc).strip() else "no message"
                 raise GraphLoadError("unavailable",
-                                     f"WordNet data is unavailable · {type(exc).__name__}: {first}") from exc
+                                     f"WordNet data could not be read · {type(exc).__name__}: {first}") from exc
             _WN = _SerialisedWordNet(wn)
     return _WN
 
@@ -579,9 +579,9 @@ class GraphWalk:
     # -- where we are
     def _failure(self) -> str:
         if self.graph_error is not None:
-            return f"walk unavailable · graph '{self.graph_name}' {self.graph_error.mode} · {self.graph_error.detail}"
+            return f"walk: graph '{self.graph_name}' failed ({self.graph_error.mode}) · {self.graph_error.detail}"
         if self.jump in {"far", "vault", "orbit", "composite"} and (self.graph is None or "far" not in self.graph.capabilities):
-            return f"walk unavailable · graph '{self.graph_name}' cannot jump (no_far) · use wander or supply far_from"
+            return f"walk: graph '{self.graph_name}' cannot jump far (no_far) · use wander or supply far_from"
         return ""
 
     def start_node(self) -> Optional[Dict[str, Any]]:
@@ -703,7 +703,7 @@ class GraphWalk:
             return [failure]
         node = self.start_node()
         if node is None:
-            return [f"walk unavailable · graph '{self.graph_name}' empty · has no starting node"]
+            return [f"walk: graph '{self.graph_name}' is empty, nowhere to start"]
         cur = self._read_cursor()
         prev_id = cur.get("prev", "")
         # What this walk has already walked. A two-hop cycle used to be re-served as "material",
@@ -1146,7 +1146,7 @@ def entry_error(name: str, cursor_path: Path | None = None) -> str:
         walk = get(name, cursor_path)
     except (ValueError, GraphLoadError) as exc:
         return str(exc)
-    return walk._failure().replace("walk unavailable · ", "")
+    return walk._failure().replace("walk: ", "")
 
 
 def save(spec: Dict[str, Any], cursor_path: Path | None = None, validate: bool = True) -> Dict[str, Any]:

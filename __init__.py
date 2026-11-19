@@ -175,20 +175,20 @@ def _handler(args: Dict[str, Any] | None = None, host: Any = None, **_kwargs: An
         try:
             opts = options.parse(a)
         except ValueError as exc:
-            return f"cannot enter · {exc}"
+            return f"can't start · {exc}"
         # Only the exploration options are experimental. `block` and `allow` are
         # ordinary state arguments, so they must not need that switch.
         if any(k in opts for k in ("method", "seed", "budget")) and not experimental_enabled(host):
-            return ("cannot enter with method, seed, or budget · experimental methods are off "
+            return ("can't start with method, seed, or budget · experimental methods are off "
                     "(plugins.entries.antemuse.settings.experimental.enabled: true)")
         walk_name = a.get("walk")
         name = str(a.get("name") or "").lower()
         # `/explore` is person-driven: no dose, no provider, and only the person can end it.
         # The schema says so; the handler used to enter it anyway on the agent's word.
         if name == "explore":
-            return "explore is person-driven · the person types /explore"
+            return "explore is yours to drive · type /explore yourself"
         if walk_name and not walks.valid_name(str(walk_name)):
-            return (f"cannot enter · walk names are lowercase letters, digits, '-' and '_' "
+            return (f"can't start · walk names use lowercase letters, numbers, '-' and '_' "
                     f"(got '{walk_name}')")
         if walk_name:
             walk_name = walks.normalise(str(walk_name))
@@ -495,10 +495,10 @@ def _enter(key: str, minutes: int | None = None):
 def _waiting_for(key: str, entered: str) -> str:
     """The line under a state's entry: what is happening, in the state's voice.
 
-    Nothing is added when the entry failed (`cannot enter …`), because a waiting line would be a
+    Nothing is added when the entry failed (`can't start …`), because a waiting line would be a
     promise the plugin has already said it cannot keep.
     """
-    if entered.startswith("cannot enter") or entered.startswith("no such state"):
+    if entered.startswith("can't start") or entered.startswith("no such state"):
         return ""
     return states.waiting(key if key in states.STATES else states.resolve(key) or key)
 
@@ -510,7 +510,7 @@ def _return(_raw: str, session_id: str | None = None,
     if not engine.peek():
         # Nothing is running: repeating the last ending made /return look like it had just
         # ended a state the person was not in.
-        return "not in a state."
+        return "nothing running."
     answer = engine.stop(who)
     # The person just read the account in the command's own answer; saying it again on the
     # next turn would be the plugin repeating itself.

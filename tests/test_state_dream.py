@@ -32,8 +32,8 @@ def test_dream_recombines_local_commit_subjects_not_transcripts(tmp_path, monkey
     root = _repo(tmp_path)
     monkeypatch.chdir(root)
 
-    assert states.STATES["dream"]["dose"] == {"unit": "recombinations", "n": 2}
-    assert "cannot enter" not in engine.enter("dream", session="dream-owner")
+    assert states.STATES["dream"]["dose"] == {"unit": "links", "n": 2}
+    assert "can't start" not in engine.enter("dream", session="dream-owner")
     blocks = []
     for _ in range(6):
         engine.note_turn("dream-owner")
@@ -50,8 +50,8 @@ def test_dream_recombines_local_commit_subjects_not_transcripts(tmp_path, monkey
     engine.enter("dream", block=True)
     text = engine.inject() or ""
     assert "Tools are closed in this state; /return ends it." in text
-    assert "2 of 2 recombinations" in text
-    assert "connection you found" in closing
+    assert "2 of 2 links" in text
+    assert "what linked up" in closing
 
 
 def test_dream_fails_at_entry_when_local_git_has_too_few_subjects(tmp_path, monkeypatch):
@@ -62,4 +62,4 @@ def test_dream_fails_at_entry_when_local_git_has_too_few_subjects(tmp_path, monk
 
     out = engine.enter("dream", session="dry-dream")
 
-    assert "cannot enter dream" in out and "empty" in out
+    assert "can't start dream" in out and "need at least" in out

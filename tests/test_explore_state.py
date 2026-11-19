@@ -53,7 +53,7 @@ def test_explore_surfaces_never_claim_a_countdown():
     _enter()
     engine.note_pick(["bookshelf"])
     assert "0/0" not in engine.status_line()
-    assert "open · you end it" in (engine.annotate("hello") or "")
+    assert "running · you stop it" in (engine.annotate("hello") or "")
 
 
 def test_the_pane_route_files_picks():

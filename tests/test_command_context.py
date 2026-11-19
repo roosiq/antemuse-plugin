@@ -73,7 +73,7 @@ def test_the_walk_name_argument_still_works_with_context():
 def test_return_with_nothing_running_does_not_repeat_the_last_ending():
     plugin._enter("walk")("", session_id="idle", platform="desktop")
     engine.stop(session_id="idle")
-    assert plugin._return("", session_id="idle") == "not in a state."
+    assert plugin._return("", session_id="idle") == "nothing running."
 
 
 def test_entry_line_names_the_walk_dose_not_minutes():

@@ -30,7 +30,7 @@ def _run(key: str, tmp_path: Path) -> dict:
 @pytest.mark.parametrize("key", STATES)
 def test_a_state_serves_its_own_material_and_records_its_ending(key, tmp_path):
     result = _run(key, tmp_path)
-    if "cannot enter" in str(result.get("entered", "")):
+    if "can't start" in str(result.get("entered", "")):
         # A state whose material is not in this environment refuses by name at entry. That is
         # the state working; the dose contract is checked where the material exists.
         pytest.skip(result["entered"])

@@ -208,4 +208,4 @@ def test_entry_refuses_far_provider_in_state_voice(corpus, tmp_path):
     walks.save({"name": "corpus-vault", "graph": "corpus", "corpus": "onboarding", "jump": "vault"},
                tmp_path / "walk_cursor.json", validate=False)
     message = walks.entry_error("corpus-vault", tmp_path / "walk_cursor.json")
-    assert message == "graph 'corpus' cannot jump (no_far) · use wander or supply far_from"
+    assert message == "graph 'corpus' cannot jump far (no_far) · use wander or supply far_from"

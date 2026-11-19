@@ -24,24 +24,23 @@ STOP = {"a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "i
 def ready(kind: str, graph_name: str = "wordnet", session: str | None = None) -> str | None:
     """Why a provider cannot start, before an active state is recorded."""
     if kind == "daydream" and len(_own_turns(session)) < 3:
-        return "empty · fewer than three recorded turns are available for two pairs"
+        return "need at least 3 messages from you in this chat"
     if kind == "doomscroll":
         from . import settings
         if not bool(settings._raw("doomscroll_feed", True)):
-            return "unavailable · doomscroll feed is disabled by settings"
+            return "the feed is turned off in settings"
         if not feed():
-            return "unavailable · feed returned no items"
+            return "the feed came back empty"
     if kind == "dream" and sum(len(_recent_subjects(root)) for root in projects()) < 3:
-        return ("empty · fewer than three commit subjects in the last month across the projects "
-                "this chat can see, so there is nothing to recombine")
+        return "need at least 3 commits in this repo from the last month"
     if kind == "unstuck":
         root = storage.project_root()
         if root is None:
-            return "unavailable · no local project repository is available"
+            return "this chat is not inside a git repo"
         if not _recent_subjects(root):
-            return "empty · local git history is unavailable"
+            return "no commits to read here"
         if not _graph_edge(root):
-            return "unavailable · the concept map has no edge to point at yet"
+            return "the map has no links to point at yet"
     if kind != "walk" or graph_name != "wordnet":
         return None
     if importlib.util.find_spec("nltk") is None:
@@ -144,7 +143,7 @@ def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
     """Two recorded turns from this chat, what they touch, and one possibility."""
     pool = _own_turns(session)
     if len(pool) < 2:
-        return ["daydream empty · fewer than two recorded turns are available"]
+        return ["daydream: need at least 2 messages from you in this chat"]
     skip = skip or set()
     choices = []
     for left in range(len(pool)):
@@ -156,17 +155,17 @@ def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
             shared = sorted(_words(a) & _words(b))
             if shared:
                 touch = ", ".join(shared[:3])
-                line = (f"JOINED · memory one: {_clip(a, 96)} · memory two: {_clip(b, 96)} "
-                        f"· touch: {touch} · possibility: try treating {touch} as the subject")
+                line = (f"LINKED · one: {_clip(a, 96)} · two: {_clip(b, 96)} "
+                        f"· shared: {touch} · idea: try {touch} as the topic")
             else:
                 # Two unrelated turns are not a connection. Calling every pair JOINED and
                 # inventing a possibility from "the gap between them" manufactured an insight
                 # the material did not support, against the state's own exit instruction.
-                line = (f"APART · memory one: {_clip(a, 96)} · memory two: {_clip(b, 96)} "
-                        f"· touch: nothing in common · possibility: none — say what the gap was")
+                line = (f"NO LINK · one: {_clip(a, 96)} · two: {_clip(b, 96)} "
+                        f"· shared: nothing · idea: none, these do not connect")
             choices.append((ident, line))
     if not choices:
-        return ["daydream empty · no unused pair remains"]
+        return ["daydream: no new pairs left"]
     selected = choices[:max(1, int(steps))]
     return selected if keyed else [line for _, line in selected]
 
@@ -208,7 +207,7 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
     """Recombine only local git commit subjects, never changed files or transcripts."""
     subjects = [(root.name, subject) for root in projects() for subject in _recent_subjects(root)]
     if len(subjects) < 2:
-        return ["dream empty · fewer than two local git commit subjects are available"]
+        return ["dream: need at least 2 commits in this repo"]
     skip = skip or set()
     choices = []
     for left in range(len(subjects)):
@@ -221,13 +220,13 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
             shared = sorted(_words(a) & _words(b))
             if shared:
                 bridge = ", ".join(shared[:3])
-                choices.append((ident, f"connection · {project_a}: {a} ↔ {project_b}: {b} "
+                choices.append((ident, f"link · {project_a}: {a} ↔ {project_b}: {b} "
                                        f"· shared: {bridge}"))
             else:
-                choices.append((ident, f"adjacent · {project_a}: {a} ↔ {project_b}: {b} "
-                                       f"· shared: nothing yet · these two have not touched"))
+                choices.append((ident, f"no link · {project_a}: {a} ↔ {project_b}: {b} "
+                                       f"· shared: nothing yet · these two do not connect"))
     if not choices:
-        return ["dream empty · no unused recombination remains"]
+        return ["dream: no new pairs left"]
     selected = choices[:max(1, int(steps))]
     return selected if keyed else [line for _, line in selected]
 
@@ -266,10 +265,10 @@ def scroll_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fals
     """One-line feed items. The engine treats these as untrusted and never persists them."""
     from . import settings
     if not bool(settings._raw("doomscroll_feed", True)):
-        return ["doomscroll unavailable · doomscroll feed is disabled by settings"]
+        return ["doomscroll: the feed is turned off in settings"]
     items = feed()
     if not items:
-        return ["doomscroll unavailable · feed returned no items"]
+        return ["doomscroll: the feed came back empty"]
     skip = skip or set()
     out = []
     for item in items:
@@ -280,7 +279,7 @@ def scroll_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fals
         if len(out) >= max(1, int(steps)):
             break
     if not out:
-        return ["doomscroll empty · no unused feed item remains"]
+        return ["doomscroll: no new posts left"]
     return out if keyed else [line for _, line in out]
 
 
@@ -327,12 +326,12 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
     """One direction grounded in recent history plus one graph edge."""
     root = storage.project_root()
     if root is None:
-        return ["unstuck unavailable · no local project repository is available"]
+        return ["unstuck: this chat is not inside a git repo"]
     subjects = _recent_subjects(root)
     edge = _graph_edge(root)
     if not subjects or not edge:
-        missing = "history" if not subjects else "graph edge"
-        return [f"unstuck empty · {missing} is unavailable"]
+        missing = "commits" if not subjects else "map links"
+        return [f"unstuck: no {missing} to read here"]
     # The point of being stuck is that the last change is the obvious next move and it is not
     # working. Recommending `subjects[0]` — the newest commit, the thing just finished — told the
     # person to continue exactly what they had done. The direction is grounded in earlier work
@@ -341,13 +340,13 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
     earlier = next((s for s in subjects[1:] if s != last), "")
     ident = f"{earlier or last}|{edge}"
     if ident in (skip or set()):
-        return ["unstuck empty · no unused direction remains"]
+        return ["unstuck: no new move left"]
     if earlier:
-        line = (f"direction · not another pass at {last} · take {earlier} from a different angle "
-                f"· graph edge: {edge} · first: write the smallest test for that different angle")
+        line = (f"next move · skip another pass at {last} · try {earlier} a different way "
+                f"· map link: {edge} · first: write the smallest test for that different way")
     else:
-        line = (f"direction · only one change in history ({last}), so there is nothing earlier to "
-                f"return to · graph edge: {edge} · first: write the smallest test that approaches "
+        line = (f"next move · only one commit here ({last}), so there is nothing earlier to "
+                f"go back to · map link: {edge} · first: write the smallest test that comes at "
                 f"{last} from that side instead")
     result = [(ident, line)]
     return result if keyed else [line]

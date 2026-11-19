@@ -84,7 +84,7 @@ def test_the_agent_cannot_enter_the_person_driven_map():
 
     out = plugin._handler({"action": "enter", "name": "explore"})
 
-    assert out.startswith("explore is person-driven"), out
+    assert out.startswith("explore is yours to drive"), out
 
 
 def test_the_command_still_enters_the_person_driven_map():

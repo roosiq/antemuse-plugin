@@ -21,10 +21,10 @@ provider or dose, the person selects concepts, and only `/return` ends it.
 | command | dose | tools | material in model turn | what the chat is told | ending |
 |---|---:|---|---|---|---|
 | `/walk` | 6 hops, taken in the command | open by default | none; its graph path is pane scenery | its own hop trail (`record→clock out [far] → …`) in the command's reply | complete, dry, failed, or returned |
-| `/daydream` | 2 pairs | open | two of **this chat's** recorded turns, what they touch, one possibility | how many joined, never which — the material is the person's own turns | complete, dry, failed, or returned |
-| `/doomscroll` | 3 items | `web_search`, `web_extract`, `read_file`, `search_files`, `browser_exec` | three fixed feed lanes (The Onion, r/BrandNewSentence, Hacker News front page), labelled untrusted | the count only; feed text is untrusted and never spoken or stored | complete, dry, failed, or returned |
-| `/dream` | 2 recombinations | open | local git commit subjects only, from the repository this chat is working in, never transcripts or notes | the concept labels it served | complete, returned, or refused at entry |
-| `/unstuck` | 1 direction | `read_file`, `search_files` | one direction grounded in **earlier** history plus one concept-graph edge, naming the last change as the thing to step away from | the concept labels behind the direction | complete, returned, or refused at entry |
+| `/daydream` | 2 pairs | open | two of **this chat's** recorded turns, what they touch, one possibility | how many linked up, never which — the material is the person's own turns | complete, dry, failed, or returned |
+| `/doomscroll` | 3 items | `web_search`, `web_extract`, `read_file`, `search_files`, `browser_exec` | three fixed feed lanes (The Onion, r/BrandNewSentence, Hacker News front page), labelled untrusted | the count only; feed text is untrusted and never spoken or saved | complete, dry, failed, or returned |
+| `/dream` | 2 links | open | local git commit subjects only, from the repository this chat is working in, never transcripts or notes | the concept labels it served | complete, returned, or refused at entry |
+| `/unstuck` | 1 move | `read_file`, `search_files` | one direction grounded in **earlier** history plus one concept-graph edge, naming the last change as the thing to step away from | the concept labels behind the direction | complete, returned, or refused at entry |
 | `/explore` | open | open | the person's picks are accounted, not injected | the count of picks | returned |
 
 A state that cannot start says so at the door, names the reason, and records nothing. These are the
@@ -32,10 +32,10 @@ lines a person reads, not internal states:
 
 | command | refusal |
 |---|---|
-| `/daydream` | `cannot enter daydream · empty · fewer than three recorded turns are available for two pairs` |
-| `/doomscroll` | `cannot enter doomscroll · unavailable · doomscroll feed is disabled by settings` · `… feed returned no items` |
-| `/dream` | `cannot enter dream · empty · fewer than three commit subjects in the last month across the projects this chat can see` |
-| `/unstuck` | `… unavailable · no local project repository is available` · `… empty · local git history is unavailable` · `… unavailable · the concept map has no edge to point at yet` |
+| `/daydream` | `can't start daydream · need at least 3 messages from you in this chat` |
+| `/doomscroll` | `can't start doomscroll · the feed is turned off in settings` · `… the feed came back empty` |
+| `/dream` | `can't start dream · need at least 3 commits in this repo from the last month` |
+| `/unstuck` | `… this chat is not inside a git repo` · `… no commits to read here` · `… the map has no links to point at yet` |
 
 "Which repository" means **the repository the calling session is working in**, resolved through the
 host's `ctx.session_cwd()`, then `ANTEMUSE_PROJECT_ROOT`, then `TERMINAL_CWD`, then the process cwd. The
@@ -81,11 +81,11 @@ person's turns or a feed headline on disk.
 
 ## Honesty of the material
 
-- A daydream pair with no shared terms is `APART · touch: nothing in common · possibility: none`,
-  not `JOINED` with an invented possibility. The state's exit instruction asks for the gap.
-- A dream recombination with no shared terms is `adjacent · shared: nothing yet`, not a
+- A daydream pair with no shared terms is `NO LINK · shared: nothing · idea: none`,
+  not `LINKED` with an invented idea. The state's exit instruction asks for the gap.
+- A dream recombination with no shared terms is `no link · shared: nothing yet`, not a
   `connection` with a manufactured bridge.
-- `/unstuck` never recommends the newest commit as "continue the last change": that is the change
+- `/unstuck` never recommends the newest commit as "continue the last change" (the old wording): that is the change
   the person just finished and the reason they are stuck. With earlier history it proposes taking
   an earlier change from a different angle; with only one commit it says there is nothing earlier
   to return to and approaches that commit from the graph's side instead.

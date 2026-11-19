@@ -30,7 +30,7 @@ def _provider(*lines):
 def test_a_walk_leaves_every_tool_open():
     engine.enter("walk")
     directive = engine.inject() or ""
-    assert "walking while you work" in directive
+    assert "taking a walk while you work" in directive
     assert "No tools in this state" not in directive
     assert engine.policy("terminal") is None
     assert engine.policy("web_search") is None
@@ -132,7 +132,7 @@ def test_a_walk_ends_by_taking_the_frame_away():
     engine.enter("walk")
     engine.record("state", "hand (n) → palm (n) · took its far edge", event="walk")
     engine.inject()
-    assert "different first step" in engine.stop()
+    assert "start somewhere different" in engine.stop()
 
 
 def test_a_state_records_where_it_was_started():
@@ -164,7 +164,7 @@ def test_the_account_counts_material_not_the_agents_own_words():
 
 def test_the_account_never_quotes_the_material_it_was_given():
     engine.enter("walk", session="CHAT-A", platform="discord")
-    engine.record("state", "JOINED · my private material · possibility · something", event="walk")
+    engine.record("state", "LINKED · my private material · possibility · something", event="walk")
     engine.stop("CHAT-A")
     said = engine.unreported("CHAT-A")
     assert said

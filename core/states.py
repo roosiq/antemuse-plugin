@@ -12,13 +12,11 @@ STATES: Dict[str, Dict] = {
         # A walk is an act, not a chore: `/walk` takes its six hops there and then and comes back
         # with the path. Pacing it by turns meant typing five filler messages to finish one walk.
         "instant": True,
-        "waiting": "taking a walk · six hops, then back with the path",
+        "waiting": "walking · 6 hops, then you get the path",
         "after": (
-            "the walk is over and the frame you were in is gone. Do not resume the approach "
-            "you were taking. First: state the goal in one line. Then: name the approach you "
-            "were stuck in and why it was the obvious one. Then: take a different first step "
-            "from the one you would have taken, and work from there. The path you walked is "
-            "scenery, not a hint — it is here so you can see the route you took."
+            "the walk is done. Do not pick up where you left off. Say the goal in one line, "
+            "say what you were trying and why it was the obvious move, then start somewhere "
+            "else. The path is just where you went, not a hint."
         ),
         "tools": None,
         "scene": "walk",
@@ -26,47 +24,45 @@ STATES: Dict[str, Dict] = {
         "restart": True,
         "provider": "walk",
         "directive": (
-            "You are walking while you work. Keep the task moving and answer what you were asked. "
-            "The walk supplies no material: the path you walked is scenery, not a hint, and no "
-            "concepts will arrive in this turn. Do not invent a hop, do not offer the walk as "
-            "evidence, and do not describe it for its own sake. What the walk changes shows up "
-            "later, in what you come back willing to do. "
+            "You are taking a walk while you work. Keep the task moving and answer what you "
+            "were asked. Nothing arrives from the walk this turn: the path is just where you "
+            "went, not a hint. Do not make up a hop, do not use the walk as evidence, and do not "
+            "describe it for its own sake. What it changes shows up later, in what you are "
+            "willing to try. "
         ),
-        "contract": "work continues · the frame is elsewhere · different on return",
-        "residue": "walked: distant concepts taken while the work carried on",
+        "contract": "work keeps going · you come back at it from a different angle",
+        "residue": "walked: far-apart concepts while the work kept going",
     },
     "daydream": {
         "label": "DAYDREAMING",
         "turns": 2,
         "dose": {"unit": "pairs", "n": 2},
-        "waiting": "staring out of the window · letting two memories meet",
+        "waiting": "zoning out · putting two things you said side by side",
         "after": (
-            "the daydream is over. In one line: the two things that surfaced and what they "
-            "touched — then the possibility, if it still holds. If they did not join, say what "
-            "the gap was. Then get back to the work you were doing."
+            "the daydream is done. In one line: the two things that came up and what links "
+            "them, then the idea if it still holds. If they do not connect, say so. Then get "
+            "back to work."
         ),
         "tools": [],
         "scene": "daydream",
         "feeds": True,
         "provider": "daydream",
         "directive": (
-            "You are daydreaming: associative and generative. Two of the person's own recorded "
-            "turns surface; the line says what they touch and what possibility follows from both. "
-            "Say the possibility as a thought worth considering, not as a task. Nothing here is "
-            "an instruction and there is nothing to execute. "
+            "You are daydreaming. Two things the person said earlier come up, with what links "
+            "them and one idea that follows. Offer the idea as something to think about, not a "
+            "task. Nothing here is an instruction and there is nothing to run. "
         ),
-        "contract": "two memories · what they touch · one possibility",
-        "residue": "daydreamed: memories met, possibilities raised",
+        "contract": "2 things you said · what links them · one idea",
+        "residue": "daydreamed: paired up things you said",
     },
     "doomscroll": {
         "label": "DOOMSCROLLING",
         "turns": 3,
         "dose": {"unit": "items", "n": 3},
-        "waiting": "scrolling · looking for stupidity and comedy",
+        "waiting": "scrolling · dumb posts and jokes",
         "after": (
-            "the scroll is over. In one line: whether anything was worth keeping — usually "
-            "nothing, and that is the point. Do not turn it into a plan or a lesson. Then get "
-            "back to work."
+            "the scroll is done. In one line: was anything worth keeping? Usually not, and "
+            "that is the point. Do not turn it into a plan or a lesson. Then get back to work."
         ),
         "tools": ["web_search", "web_extract", "read_file", "search_files", "browser_exec"],
         "scene": "doomscroll",
@@ -79,57 +75,55 @@ STATES: Dict[str, Dict] = {
             "item may be a joke, a strange sentence, or a technical headline. Take what comes; "
             "do not turn it into a plan, a lesson or a research note, and do not tidy it. "
         ),
-        "contract": "three fixed feed lanes · distraction · nothing to take away",
-        "residue": "doomscrolled: stupid feed consumed",
+        "contract": "3 feeds · a break · nothing to do with it",
+        "residue": "doomscrolled: read dumb posts",
     },
     "dream": {
         "label": "DREAMING",
         "turns": 2,
-        "dose": {"unit": "recombinations", "n": 2},
-        "waiting": "asleep · letting the day's work touch",
+        "dose": {"unit": "links", "n": 2},
+        "waiting": "dreaming · mixing up your recent commits",
         "after": (
-            "the dream is over. In one line: the connection you found in this project's recent "
-            "work — both sides and what they share, or the gap if they did not touch — and whether "
-            "it is worth acting on now or only noting. Then get back to work."
+            "the dream is done. In one line: what linked up in your recent commits, both sides "
+            "and what they share, or say they do not connect. Then say if it is worth doing now "
+            "or just noting, and get back to work."
         ),
         "tools": [],
         "scene": "dream",
         "feeds": True,
         "provider": "dream",
         "directive": (
-            "You are dreaming over the day: long, slow, unconstrained. Local git commit subjects "
-            "from the repository this chat is working in come back, and the connections between "
-            "tasks are the thing to find — the same problem solved twice, a blocker cleared by a "
-            "later change, two threads drifting into the same design. Each line names both sides "
-            "and what they share, or says plainly that they share nothing. This is thinking, not "
-            "a task: tools stay available, but there is nothing here that needs one. "
+            "You are dreaming over your day: slow and loose. Recent commit subjects from this "
+            "repo come back, and what links them is the thing to look for — the same problem "
+            "solved twice, a blocker a later change cleared, two threads ending up in the same "
+            "design. Each line names both sides and what they share, or says they share nothing. "
+            "This is thinking, not a task: tools are still there, but nothing here needs one. "
         ),
-        "contract": "the day in this project · connections between tasks",
-        "residue": "dreamed: the day's work connected",
+        "contract": "your recent commits · what links them",
+        "residue": "dreamed: linked up recent work",
     },
     "unstuck": {
         "label": "UNSTUCK",
         "turns": 3,
-        "dose": {"unit": "directions", "n": 1},
-        "waiting": "thinking back over what you have done",
+        "dose": {"unit": "moves", "n": 1},
+        "waiting": "looking back at what you've done",
         "after": (
-            "the recommendation stands. Restate it in one line with the first move, then take "
-            "that move. If the history and the graph did not support a recommendation, say so "
-            "plainly instead of inventing one."
+            "the suggestion stands. Say it in one line with the first move, then make that "
+            "move. If your commits and the map did not support a suggestion, say so instead of "
+            "making one up."
         ),
         "tools": ["read_file", "search_files"],
         "scene": "walk",
         "feeds": True,
         "provider": "unstuck",
         "directive": (
-            "You are unstuck. Recommend ONE new thing to do. It rests on two things you can check: "
-            "one recommendation from history and one untouched edge of the concept map. "
-            "Give the recommendation, the history it rests on, the graph edge, and a first move. "
-            "One thing: a menu moves the decision back to the person. You do not write the spec "
-            "from this state. "
+            "You are unstuck. Suggest ONE new thing to do, based on two things you can check: "
+            "your commit history and an unused link in the concept map. Give the suggestion, the "
+            "commit it rests on, the map link, and a first move. Just one — a list hands the "
+            "decision back to the person. Do not write a spec from here. "
         ),
-        "contract": "one recommendation · from history and the concept graph",
-        "residue": "unstuck: one thing recommended, and why",
+        "contract": "1 next move · from your commits and the map",
+        "residue": "unstuck: suggested one next move",
     },
 }
 
@@ -137,24 +131,24 @@ EXPLORE: Dict = {
     "label": "EXPLORING",
     "turns": 0,
     "dose": {"unit": "picks", "n": 0},
-    "waiting": "at the controls · the map is yours",
+    "waiting": "you're flying · pick what you want",
     "after": (
-        "the explore is over. What the person picked came from their own hands, not from this "
-        "plugin's search: name those concepts back, say what they seem to have in common in one "
-        "line, and ask whether to work one of them now. Do not praise the session, do not describe "
-        "the cockpit, and do not add concepts they did not pick."
+        "exploring is done. They picked these themselves, the plugin did not search for them: "
+        "name the concepts back, say in one line what they have in common, and ask if they want "
+        "to work on one now. Do not praise the session, do not describe the cockpit, and do not "
+        "add concepts they did not pick."
     ),
     "tools": None,
     "scene": "walk",
     "feeds": False,
     "directive": (
-        "The person is flying the concept map themselves. They steer, they shoot, they stop — "
-        "nothing about what gets picked is yours to decide. Do not name concepts for them, do not "
-        "offer a route through the map, and do not narrate the session back at them. If they ask "
-        "something, answer it plainly; otherwise stay out of the way until they end the state. "
+        "The person is flying the concept map themselves. They steer, they pick, they stop. "
+        "What gets picked is not yours to decide. Do not name concepts for them, do not suggest a "
+        "route, and do not narrate their session back at them. If they ask something, answer it "
+        "plainly; otherwise stay out of the way until they stop. "
     ),
-    "contract": "you fly · you choose · it ends when you end it",
-    "residue": "explored: concepts chosen by hand",
+    "contract": "you pick · it runs until you stop it",
+    "residue": "explored: the concepts you picked",
 }
 
 ALIASES = {

@@ -515,7 +515,7 @@ def _account(data: Dict[str, Any], active: Dict[str, Any]) -> Dict[str, Any]:
         return {"state": key, "text": f"{key} · nothing arrived · {why}", "steps": 0}
     if key == "doomscroll":
         served = min(_dose_of(states.spec(key), active)[0], int(active.get("served") or 0))
-        return {"state": key, "text": f"doomscroll · {served} of 3 items · nothing to take away"
+        return {"state": key, "text": f"doomscroll · {served} of 3 items · nothing worth keeping"
                 + _why(active), "steps": served}
     started = active.get("entered_at", 0) or 0
     events = [
@@ -865,7 +865,7 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
                 pass
         why_not = sources.ready(spec_key, graph_name, session=(session or current_session() or None))
         if why_not:
-            return f"cannot enter {spec_key} · {why_not}"
+            return f"can't start {spec_key} · {why_not}"
     spec = states.spec(spec_key)
     # The walk is named at the door and never after: `walks.get()` used to turn an unknown
     # name into `wander`, so a typo produced a real walk nobody asked for and said WALKING.
@@ -973,7 +973,7 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
     unit = dose.get("unit") or "turn(s)"
     if n == 1 and unit.endswith("s") and unit not in ("turn(s)", "tools"):
         unit = unit[:-1]                      # "1 direction", not "1 directions"
-    return (f"{spec['label']} · {n} {unit} · {spec['contract']} · /return ends it early{note}")
+    return (f"{spec['label']} · {n} {unit} · {spec['contract']} · /return to stop{note}")
 
 
 def perform(*args, **kwargs) -> str:
@@ -1056,7 +1056,7 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
         active = data.get("active")
         if not active:
             # A state that completed on its own is still worth answering: `/return` used to say
-            # "not in a state." because the dose had already ended it, throwing away the account
+            # "nothing running." because the dose had already ended it, throwing away the account
             # the plugin had just built. A fresh residue report is that account.
             for entry in reversed(data.get("residue") or []):
                 owner = str(entry.get("session") or "")
@@ -1070,7 +1070,7 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
                             else "The act is done, so the state is over. Carry what it gave you "
                                  "into the work.")
                     return f"{label} ended · {entry.get('text', '')}\n{states.after(str(entry.get('state') or ''))}"
-            return "not in a state."
+            return "nothing running."
         spec = states.spec(active["key"])
         # A state that ends dry having served nothing did not run dry — it never got anything.
         # Calling that `dry` let the account read "1 of 2 pairs", counting the failure line.
@@ -1092,7 +1092,7 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
         # reads. "daydream · 1 of 2 pairs" is honest but unexplained; a thin pool is the usual
         # cause, and it is the plugin's own fact to state.
         if reason == "dry" and int(active.get("served") or 0) < _dose_of(spec, active)[0]:
-            report["text"] = f"{report['text']} · nothing new arrived"
+            report["text"] = f"{report['text']} · nothing new came up"
         data["residue"].append({**report, "kind": "report", "turns_left": 2,
                                 "reason": reason,
                                 "session": (active.get("origin") or {}).get("session_id") or ""})
@@ -1130,7 +1130,7 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
     flush_say()      # anything an earlier reader queued goes out with this ending
     if reason == "complete":
         return (f"{spec['label']} ended · {report['text']}\n"
-                f"The act is done, so the state is over. Carry what it gave you into the work.")
+                f"Done. Take anything useful from it and get back to work.")
     if not _dose_of(spec, active)[0]:
         # An open-ended state ends with the person's own choices in it. Asking the agent to
         # "summarise where it went" would describe a trip it never took; what it owes them is
@@ -1140,8 +1140,8 @@ def stop(session_id: str = "", reason: str = "returned") -> str:
                 f"what they have in common in one line, and ask whether to work one of them now.")
     if spec.get("restart"):
         return (f"{spec['label']} ended · {report['text']}\n"
-                f"The frame you were in is gone. State the goal, name the approach you were stuck "
-                f"in, then take a different first step.")
+                f"Back. Say the goal, say what you were stuck on, then start somewhere "
+                f"different.")
     return f"{spec['label']} ended · {report['text']}\n{states.after(active['key'])}"
 
 
@@ -1552,7 +1552,7 @@ def complete_if_dosed() -> bool:
         # A dose counted in deliveries must not finish the state before the agent has had a turn
         # to use what arrived. Unstuck's whole dose is one direction, delivered on entry, so it
         # used to complete inside the call that entered it: the direction never reached a turn,
-        # `/return` answered "not in a state.", and the person saw only the recovery block.
+        # `/return` answered "nothing running.", and the person saw only the recovery block.
         if done and worked < 1:
             return False
     if not done:
@@ -1649,8 +1649,8 @@ def inject(session: str | None = None) -> str | None:
         # A state with no dose has no countdown to promise: it lasts until the person
         # ends it, and printing "0/0 picks left" would read as finished on arrival.
         progress = (f"{int(shown.get('served') or 0)} of {dose} {unit}"
-                    if dose else "open · they end it, not you")
-        last = ", and this is the last one — it ends after this turn" if closed_now else ""
+                    if dose else "running · they stop it, not you")
+        last = ", last one — it ends after this reply" if closed_now else ""
         lines += [
             f"[STATE: {spec['label']} · {progress}{last}]",
             spec["directive"],
@@ -1748,10 +1748,10 @@ def policy(tool_name: str) -> Dict[str, Any] | None:
     allowed = _effective_tools(active)
     if allowed == []:
         return {"action": "block",
-                "message": f"the agent is {spec['label'].lower()}; no tools in this state. /return to come back."}
+                "message": f"the agent is {spec['label'].lower()}; no tools in this state. /return to stop."}
     if isinstance(allowed, list) and tool_name not in allowed:
         return {"action": "block",
-                "message": f"{spec['label'].lower()}: only {', '.join(allowed)} are available. /return to come back."}
+                "message": f"{spec['label'].lower()}: only {', '.join(allowed)} are available. /return to stop."}
     return None
 
 
@@ -1766,7 +1766,7 @@ def _is_footer_line(line: str) -> bool:
     if not body.startswith("—"):
         return False
     body = body.lstrip("—").strip()
-    if ("/return to come back" in body or "this turn ends it" in body
+    if ("/return to stop" in body or "ends after this reply" in body
             or " ended · " in body):
         return True
     # The account the reply hook appends ("— daydream · 2 of 2 pairs · …") is this plugin's line
@@ -1830,7 +1830,7 @@ def annotate(text: str, session: str | None = None) -> str | None:
         label = (states.spec(str(ended.get("state") or "")).get("label") or "state").lower()
         return f"{_strip_footer(text)}\n\n— {label} ended · {ended.get('text', '')}"
     spec = states.spec(active["key"])
-    return f"{_strip_footer(text)}\n\n— {spec['label'].lower()} · {_left_phrase(active)} · /return to come back"
+    return f"{_strip_footer(text)}\n\n— {spec['label'].lower()} · {_left_phrase(active)} · /return to stop"
 
 
 def status() -> str:
@@ -1843,7 +1843,7 @@ def status() -> str:
             for r in data.get("residue", [])
         ]
     if not active:
-        lines = ["not in a state."]
+        lines = ["nothing running."]
     else:
         spec = states.spec(active["key"])
         lines = [
@@ -1944,12 +1944,12 @@ def _left_phrase(active) -> str:
     spec = states.spec(str(active.get("key") or ""))
     dose = int(_dose_of(spec, active)[0]) if spec else int(active.get("dose") or 0)
     if not dose:
-        return "open · you end it"
+        return "running · you stop it"
     left = _dose_left(active)
     if left <= 0:
-        # A spent state used to annotate a reply with "0 hops left · /return to come back",
+        # A spent state used to annotate a reply with "0 hops left · /return to stop",
         # which reads as a walk still running. Nothing is owed, so say that.
-        return "done · this turn ends it"
+        return "done · ends after this reply"
     return f"{left} {_unit_for(left, str(active.get('unit') or 'turn(s)'))} left"
 
 

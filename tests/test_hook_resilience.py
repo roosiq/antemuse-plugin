@@ -51,7 +51,7 @@ def test_every_state_survives_the_hook_paths(key):
                  "A third recorded turn lets two memory pairs remain distinct."):
         recall.remember(line)
     said = engine.enter(key, session=f"s-{key}")
-    if "cannot enter" in said:
+    if "can't start" in said:
         # The state refused for a named reason (its material is not in this environment).
         # That is the state working; skipping keeps this test honest about what it exercised.
         assert "·" in said, said
@@ -72,7 +72,7 @@ def test_every_state_survives_the_hook_paths(key):
 def test_an_open_ended_state_cannot_wedge_the_tool_channel():
     """The exact shape of the shipped failure: explore running, a tool call attempted."""
     plugin = _plugin()
-    assert "cannot enter" not in engine.enter("explore", session="s-wedge")
+    assert "can't start" not in engine.enter("explore", session="s-wedge")
     # whatever the decision is, it is a decision — not an exception
     for tool in ("terminal", "read_file", "write_file", "execute_code"):
         assert plugin._pre_tool_call(tool) is None

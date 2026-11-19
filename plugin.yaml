@@ -8,7 +8,7 @@ homepage: https://antemuse.com
 license: MIT
 tags: [state, cognition, workflow, creativity]
 platforms: [linux, macos, windows]
-description: "Five bounded agent states, one at a time: walk, daydream, doomscroll, dream, and unstuck. /walk takes six graph hops while work continues; /daydream pairs the person's own memories; /doomscroll delivers three gated public feed items; /dream recombines local git commit subjects; /unstuck gives one direction from history and the concept graph. /explore remains the separate person-driven map. No model calls on the state path. Disclosure — daydream reads local read-only MEMORY.md and USER.md; dream reads local git subjects only; doomscroll feed text is untrusted material, never instruction, and is never persisted. The bounded read-only session scan of the last 14 days is controlled by the `session_scan` setting."
+description: "Five short agent states, one at a time: walk, daydream, doomscroll, dream, unstuck. /walk takes 6 hops across the concept map and comes back with the path while your work keeps going. /daydream puts two things you said side by side. /doomscroll pulls 3 posts from public feeds. /dream mixes up your recent commits. /unstuck suggests one next move from your commits and the map. /explore is the map you fly yourself. No model calls on the state path. What it reads: daydream reads this chat's own recent messages, dream and unstuck read local git commit subjects only, doomscroll feed text is untrusted and never saved. A read-only scan of the last 14 days of sessions is controlled by the `session_scan` setting."
 requires_hermes: ">=0.21.6"
 python_dependencies:
   - "nltk>=3.8,<4"
@@ -21,17 +21,17 @@ config_schema:
     default: true
     label: Recommend states
     description: >-
-      Let the plugin suggest a state when the shape of the work has a name (a loop,
-      a data wall, a long stretch). Off means silence: nothing is suggested, ever.
+      Let the plugin suggest a state when your work looks stuck — going in circles,
+      hitting a wall, or grinding on too long. Off means it never suggests anything.
   show_recommendations:
     type: bool
     default: false
     label: Show recommendations
     description: >-
-      Display a suggested state when the shape of the work has a name (a loop, a
-      data wall, a long stretch). Off by default: states are measured either way,
-      but nothing is suggested to the person and nothing is offered to the agent.
-      state(action="break") still works and still names no state unless this is on.
+      Show a suggested state when your work looks stuck — going in circles, hitting a
+      wall, or grinding on too long. Off by default: it still keeps track either way,
+      but says nothing to you and offers nothing to the agent. state(action="break")
+      still works and still names no state unless this is on.
   recommend_cooling_turns:
     type: int
     default: 10
@@ -39,17 +39,17 @@ config_schema:
     max: 60
     label: Turns between recommendations
     description: >-
-      How many turns one recommendation holds before another may replace it, counted
-      in turns rather than minutes. Below 2 is clamped to 2, above 60 to 60: a plugin
-      that speaks every turn is a nag.
+      How many messages a suggestion stays up before another can replace it. Counted in
+      messages, not minutes. Below 2 is clamped to 2, above 60 to 60 — a plugin that
+      speaks every message is a nag.
   suggest_autofollow:
     type: bool
     default: false
     label: Follow suggestions automatically
     description: >-
-      When the plugin suggests a state, enter it instead of only saying so. Off by
-      default: a suggestion is advice, and the person decides whether to act on it.
-      A followed state still ends by its dose, and nothing about the move changes.
+      When the plugin suggests a state, start it instead of just saying so. Off by
+      default: a suggestion is advice and you decide. A state started this way still
+      ends the same way.
   long_stretch_turns:
     type: int
     default: 0
@@ -57,9 +57,9 @@ config_schema:
     max: 200
     label: Long-stretch threshold
     description: >-
-      Turns without a state before one is recommended. 0 keeps the measured threshold
-      (the 75th percentile of your own stretches, clamped 15-80). Any other value
-      overrides it, and the line says "fixed at N".
+      How many messages without a state before one gets suggested. 0 keeps the measured
+      threshold (the 75th percentile of your own stretches, clamped 15-80). Any other
+      number overrides it, and the line says "fixed at N".
   journal_cap:
     type: int
     default: 60
@@ -74,10 +74,10 @@ config_schema:
     default: true
     label: Read past sessions
     description: >-
-      One bounded scan of the last 14 days of session text, once per session, in a
-      background thread, so the walk steers away from concepts you have already met. It
-      does not light the map: `LIT` counts what the running state has served. Off means
-      the plugin never opens the session store, and the walk may revisit ground you know.
+      One limited read of the last 14 days of session text, once per session, in the
+      background, so the walk avoids concepts you have already seen. It does not light
+      up the map: `LIT` counts what the running state has served. Off means the plugin
+      never opens the session store, and the walk may revisit ground you know.
 provides_tools:
   - state
 provides_hooks:

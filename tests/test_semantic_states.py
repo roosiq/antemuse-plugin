@@ -36,8 +36,8 @@ def test_every_state_declares_a_dose():
         "walk": {"unit": "hops", "n": 6},
         "daydream": {"unit": "pairs", "n": 2},
         "doomscroll": {"unit": "items", "n": 3},
-        "dream": {"unit": "recombinations", "n": 2},
-        "unstuck": {"unit": "directions", "n": 1},
+        "dream": {"unit": "links", "n": 2},
+        "unstuck": {"unit": "moves", "n": 1},
     }
     for key, dose in want.items():
         assert states.STATES[key]["dose"] == dose, key

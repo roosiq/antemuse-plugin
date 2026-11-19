@@ -33,7 +33,7 @@ def test_daydream_reads_only_its_own_chats_turns():
         recall.remember(line, "person", "alice")
 
     refused = plugin._enter("daydream")("", session_id="bob", platform="discord")
-    assert "cannot enter daydream" in refused, refused
+    assert "can't start daydream" in refused, refused
     assert engine.peek() is None, "bob has no turns of his own, so the state must not start"
 
     for line in (
@@ -101,9 +101,9 @@ def test_a_pair_with_nothing_in_common_is_not_called_joined():
     recall.remember("Quartz badgers waltz silently upstairs.", "person", "apart")
     lines = sources.memory_pairs(2, session="apart")
     text = "\n".join(str(x[1] if isinstance(x, tuple) else x) for x in lines)
-    assert "APART" in text, text
-    assert "possibility: none" in text, text
-    assert "JOINED" not in text, text
+    assert "NO LINK" in text, text
+    assert "idea: none" in text, text
+    assert "LINKED" not in text, text
 
 
 def test_a_recombination_that_shares_nothing_says_so(monkeypatch):
@@ -112,7 +112,7 @@ def test_a_recombination_that_shares_nothing_says_so(monkeypatch):
     monkeypatch.setattr(sources, "_recent_subjects",
                         lambda root: ["Zephyrs quivered beneath fjords", "Bauxite lynxes gambol"])
     lines = sources.day_connections(1)
-    assert "adjacent" in lines[0] and "nothing yet" in lines[0], lines
+    assert "no link" in lines[0] and "nothing yet" in lines[0], lines
 
 
 def test_walk_seeding_does_not_read_another_chats_words():

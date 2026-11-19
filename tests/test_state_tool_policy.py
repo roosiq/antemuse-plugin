@@ -26,7 +26,7 @@ def _ready(*_a, **_k):
 def test_tools_stay_open_in_every_state_unless_the_entry_asks(monkeypatch):
     monkeypatch.setattr("core.sources.ready", _ready)
     for key in states.STATES:
-        assert "cannot enter" not in engine.enter(key), key
+        assert "can't start" not in engine.enter(key), key
         assert engine.policy("write_file") is None, f"{key} took a tool away unasked"
         assert engine.policy("terminal") is None, key
         assert "Tools are open in this state" in (engine.inject() or ""), key
@@ -60,7 +60,7 @@ def test_a_blocked_state_blocks_everything_when_asked(monkeypatch):
     recall.remember("A third recorded turn lets two memory pairs remain distinct.")
     monkeypatch.setattr("core.sources.ready", _ready)
     for key in ("daydream", "dream"):
-        assert "cannot enter" not in engine.enter(key, block=True), key
+        assert "can't start" not in engine.enter(key, block=True), key
         assert engine.policy("read_file")["action"] == "block", key
         assert key in engine.policy("read_file")["message"], key
         engine.stop()

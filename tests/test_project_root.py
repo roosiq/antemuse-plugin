@@ -7,7 +7,7 @@ inside a repository sees the wrong history and both `dream` and `unstuck` refuse
 entry with "fewer than three local git commit subjects".
 
 Found in a live CLI chat: `cd <the plugin checkout> && hermes chat --cli` then
-`/dream` answered `cannot enter dream · empty · fewer than three local git commit
+`/dream` answered `can't start dream · empty · fewer than three local git commit
 subjects are available for two recombinations`, because the host's cwd was not the
 repository the chat was working in (`$HOME` there, a dotfiles repo with none in a day).
 
