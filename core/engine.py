@@ -1008,9 +1008,11 @@ def _run_to_completion(key: str, session_id: str = "") -> str:
         try:
             from . import walks
             active = peek() or {}
-            walks.GraphWalk(dict(walks.BUILTIN.get(str(active.get("walk") or "wander"), {}),
-                                 name=str(active.get("walk") or "wander")),
-                            walks.cursor_path()).forget_stood()
+            # Resolve the walk the way the provider does: `get()` picks the project cursor when
+            # the chat is in a repository and loads a custom spec by name. Clearing the global
+            # cursor instead left a project-backed walk carrying its memory into the next act,
+            # which is the exact leak this reset exists to prevent.
+            walks.get(str(active.get("walk") or "wander")).forget_stood()
         except Exception:  # health: BLE001 -- a walk without a cleared memory still walks
             pass
     for _ in range(max(dose, 1) * 4):

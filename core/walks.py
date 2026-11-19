@@ -972,14 +972,6 @@ class GraphWalk:
                                 drew = self.graph.random_node(self.relations)
                                 if drew is None or drew["id"] == node["id"]:
                                     continue
-                                # Never restart onto ground this walk already covered: the
-                                # relaxed pass used to drop this check, and the person read
-                                # `door → rock` with rock three hops back. A short walk is
-                                # honest; a visible loop is not.
-                                # Never restart onto ground this walk already covered: the
-                                # relaxed pass used to drop this check, and the person read
-                                # `door → rock` with rock three hops back. A short walk is
-                                # honest; a visible loop is not.
                                 # Prefer ground this walk has not covered. The relaxed pass is
                                 # the fallback for a closed graph with nothing new left: there,
                                 # cycling and saying "picks up again" is honest, stalling is not.

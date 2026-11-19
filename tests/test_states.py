@@ -263,3 +263,62 @@ def test_walk_takes_its_six_hops_in_the_call_that_asked():
     hops = [e for e in data["journal"] if e.get("who") == "state" and e.get("event") == "walk"]
     assert len(hops) >= 6, hops
     assert all(e.get("session") == "one-call" for e in hops[-6:]), hops[-6:]
+
+
+def test_an_act_delivers_exactly_its_dose_and_forgets_its_ground(tmp_path, monkeypatch):
+    """The act drives one hop per call, so its memory has to cross calls and then be cleared.
+
+    Two regressions live here. A six-hop walk journalled seven hop lines because each
+    `walk_text(1)` call started with an empty memory and wandered back onto covered ground;
+    and the reset that clears that memory aimed at the global cursor, so a walk in a repository
+    kept its memory into the next act. `len(hops) >= 6` cannot see either one.
+    """
+    import json
+    from core import engine, walks, storage
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".antemuse").mkdir()
+    monkeypatch.setattr(storage, "project_dir", lambda: repo / ".antemuse")
+    monkeypatch.setattr(storage, "project_root", lambda: repo)
+
+    def delivered(data):
+        return [e for e in data["journal"]
+                if e.get("who") == "state" and e.get("event") == "walk"
+                and "→" in str(e.get("text") or "").split(" · ")[0]]
+
+    engine.perform("walk", session="act-one")
+    hops = delivered(engine._load())
+    assert len(hops) == 6, f"a six-hop act journalled {len(hops)} hops: {hops}"
+
+    def word(side):
+        base = side.split(" (")[0].strip()
+        return base.split(".")[0].replace("_", " ").lower()
+
+    stood = []
+    for e in hops:
+        head = str(e["text"]).split(" · ")[0]
+        left, right = [w.strip() for w in head.split("→", 1)]
+        lw, rw = word(left), word(right)
+        assert lw != rw, f"a hop to the same word: {e['text']}"
+        if "picks up again" not in str(e["text"]):
+            assert rw not in stood[:-1], f"back onto covered ground: {e['text']} (stood {stood})"
+        if not stood or stood[-1] != lw:
+            stood.append(lw)
+        stood.append(rw)
+
+    def memories():
+        data = json.loads((repo / ".antemuse" / "walk_cursor.json").read_text())
+        return {n: e["stood_words"] for n, e in data.items()
+                if isinstance(e, dict) and e.get("stood_words")}
+
+    first = memories()
+    assert first, "the act left no memory in the project cursor"
+
+    engine.perform("walk", session="act-two")
+    second = memories()
+    assert second, "the second act left no memory either"
+    for name, words in second.items():
+        assert len(words) <= 7, (
+            f"the second act inherited the first act's ground: {name} {words}"
+        )
