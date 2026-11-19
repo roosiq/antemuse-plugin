@@ -47,6 +47,15 @@ The suite uses a temporary state home. It verifies state doses, delivery ownersh
 tool policy, ending accounts, residue, ledger rows, command surface, person-driven
 explore, and docs consistency.
 
+**Drive an act the way the engine drives it.** `/walk` is instant: `engine.perform()`
+calls the provider once per unit until the dose is met, so a six-hop walk is six
+separate `walk_text(1)` calls, not one `step(6)`. Any memory a walk keeps inside a
+single call is invisible to the next one. A stress test built on `step(6)` reported
+200 clean walks while the shipped act ping-ponged (`campaign → youth movement →
+campaign`) and journalled seven lines for a dose of six. Test the act through
+`engine.perform()` and read the journal, and count hop lines against the dose — the
+account line caps its own list, so it hides an over-run rather than reporting it.
+
 Two isolation rules matter when you add a test:
 
 - **A test's "project" is the one it makes.** The host exports its own working
