@@ -12,17 +12,17 @@ The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
 design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → realization (n) · took its hyponym · “making real or giving the appearance of reality” · ↩ 1 hop from creating by mental acts: creating by mental acts → realization
-realization (n) → objectification (n) · took its hyponym · “the act of representing an abstraction as a physical thing” · ↩ 1 hop from realization: realization → objectification
-objectification (n) → embodiment (n) · took its hyponym · “giving concrete form to an abstract concept” · ↩ 1 hop from objectification: objectification → embodiment
-embodiment (n) → soul (n) · took its hyponym · “the human embodiment of something” · ↩ 1 hop from embodiment: embodiment → soul
-soul (n) → embodiment (n) · took its hypernym · “giving concrete form to an abstract concept” · ↩ 1 hop from soul: soul → embodiment · seen earlier today in 1 other session
+creating by mental acts (n) → conceptualization (n) · took its hyponym · “inventing or contriving an idea or explanation and formulating it mentally” · ↩ 1 hop from creating by mental acts: creating by mental acts → conceptualization
+conceptualization (n) → approach (n) · took its hyponym · “ideas or actions intended to deal with a problem or situation” · ↩ 1 hop from conceptualization: conceptualization → approach
+approach (n) → avenue (n) · took its hyponym · “a line of approach” · ↩ 1 hop from approach: approach → avenue
+avenue (n) → approach (n) · took its hypernym · “ideas or actions intended to deal with a problem or situation” · ↩ 1 hop from avenue: avenue → approach · seen earlier today in 1 other session
+approach (n) → conceptualization (n) · took its hypernym · “inventing or contriving an idea or explanation and formulating it mentally” · ↩ 1 hop from approach: approach → conceptualization · seen earlier today in 1 other session
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→realization [hyponym] → realization→objectification [hyponym] → objectification→embodiment [hyponym] → embodiment→soul [hyponym] → soul→embodiment [hypernym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→conceptualization [hyponym] → conceptualization→approach [hyponym] → approach→avenue [hyponym] → avenue→approach [hypernym] → approach→conceptualization [hypernym]
 ```
 
 ## 2. Two memories make a possibility

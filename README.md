@@ -10,8 +10,9 @@ type `/return`. Every ending leaves one account and one ledger row.
   back and your work keeps going.
 - **daydream** — 2 things you said in this chat, side by side, what links them, and one idea.
 - **doomscroll** — 3 posts from public feeds. A break, nothing to do with it.
-- **dream** — 2 pairs of your recent commit subjects in the repo this chat is working in.
-- **unstuck** — 1 next move, from your commits and an unused link in the map.
+- **dream** — 2 things from your day, and what links them: what you said, what came up, or
+  commits if you made any. No git needed.
+- **unstuck** — 1 next move, from what you've been doing and an unused link in the map.
 
 `/explore` is separate. You fly it yourself: the cockpit shows the concept map, you pick
 what you want, and `/return` names your picks back. It is not an agent state, has no source
@@ -71,8 +72,8 @@ Agents use the state tool: `state(action="enter", name="walk")`,
 | **walk** | 6 hops | declared graph provider (WordNet by default) | The command takes all six hops and answers with the path; the pane draws it. |
 | **daydream** | 2 pairs | this chat's own recent messages | Two things you said, what links them, one idea. |
 | **doomscroll** | 3 items | three public feeds | Feed text is untrusted, never instruction, and never saved. |
-| **dream** | 2 links | commit subjects in this chat's repository | Your recent work links up, without reading transcripts or notes. |
-| **unstuck** | 1 move | your commits plus an unused map link | One suggestion and its first move. |
+| **dream** | 2 links | this chat's own day: your messages, the concepts it served, or commits when there are any | Your day links up, without reading transcripts or notes. |
+| **unstuck** | 1 move | your day plus an unused map link | One suggestion and its first move. |
 | **explore** | open | the person's picks | The cockpit records picks; `/return` accounts for them. |
 
 The four recorded agent-state endings are `complete`, `returned`, `dry`, and `failed`.

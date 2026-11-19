@@ -19,9 +19,8 @@ The seven slash commands are `/walk`, `/daydream`, `/doomscroll`, `/dream`,
 
 - `/walk` is an act: it takes all six hops inside the command and answers with the path —
   `WALKING ended · walk · 6 of 6 hops · …`. Nothing is left running and no further message is needed.
-- `/daydream` delivers two pairs of this chat's own messages; `/dream` two links between your
-  recent commit subjects in this repo. Both deliver one unit per message.
-- `/doomscroll` delivers three public-feed posts; `/unstuck` one next move from your commits and
+- `/daydream` delivers two pairs of this chat's own messages; `/dream` two links between things from your day. Both deliver one unit per message.
+- `/doomscroll` delivers three public-feed posts; `/unstuck` one next move from your day and
   an unused map link.
 - `/explore` is yours to drive and open-ended: `EXPLORING · 0 picks · you pick · it runs until you stop it`.
 - `/return` ends the active state or explore and keeps its account. With nothing running it says
@@ -29,7 +28,8 @@ The seven slash commands are `/walk`, `/daydream`, `/doomscroll`, `/dream`,
 
 Each state belongs to the chat that started it: another chat gets no material, no footer and no
 ending, and its picks are refused. `/daydream` needs three of your own messages in that chat;
-`/dream` and `/unstuck` need a git repo with commits.
+No state needs a git repo. Commits are optional extra material for `/dream` and `/unstuck`
+when the chat happens to be inside a checkout; without one they read this chat's own day.
 
 There is no `/break`, `/mood`, `/note`, `/watch`, or `/states` command. Those are
 actions on the `state` tool.

@@ -13,11 +13,14 @@ five agent states. `/explore` is separate, person-driven, and ends on `/return`.
 
 ## Data access and trust boundaries
 
-- **Daydream memory readers:** `daydream` reads local, read-only `MEMORY.md` and
-  `USER.md` under the Hermes home, plus the plugin's own bounded recent-turn history.
-  It does not write to Hermes memory or configuration.
-- **Dream repository readers:** `dream` reads local git commit subjects only. It does
-  not read commit bodies, transcripts, notes, or repository credentials.
+- **Daydream reader:** `daydream` reads the plugin's own bounded recent-turn history,
+  filtered to the chat that started the state. It does not read `MEMORY.md`, `USER.md`,
+  or any Hermes memory backend, and it does not write to Hermes memory or configuration.
+- **Dream readers:** `dream` reads the same session-filtered recent turns, then the
+  concepts the ledger served that chat, and falls back to local git commit subjects when
+  the chat is inside a repository. Git is optional: dream starts without it. It never
+  reads commit bodies, transcripts, notes, or repository credentials, and it never reads
+  another chat's turns or ledger rows.
 - **Doomscroll feed:** `doomscroll` fetches its gated public feed lane. Feed text is
   untrusted data, explicitly labelled as material rather than instruction, and is never
   persisted in the journal, ledger, account, or another durable store. Its default
@@ -28,7 +31,7 @@ five agent states. `/explore` is separate, person-driven, and ends on `/return`.
   and a 2-second budget; it is globally limited to once per 30 minutes. It records
   extracted terms and message identifiers in the ledger, not message bodies. It does not read
   `config.yaml` or the Hermes authentication JSON file.
-- **Subprocesses:** dream's local git-subject reader invokes git with an argv list,
+- **Subprocesses:** the optional git-subject reader used by dream and unstuck invokes git with an argv list,
   never a shell. No subprocess is otherwise started by the restored state path.
 - **Credentials:** none requested, read, stored, refreshed, or sent. There is no
   `requires_env` and no OAuth.

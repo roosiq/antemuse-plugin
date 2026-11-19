@@ -30,7 +30,7 @@ def _repo(tmp_path: Path) -> Path:
 def test_unstuck_delivers_one_direction_from_history_and_graph(tmp_path, monkeypatch):
     root = _repo(tmp_path)
     monkeypatch.chdir(root)
-    monkeypatch.setattr(sources, "_graph_edge", lambda _root: "design → blueprint (hypernym)")
+    monkeypatch.setattr(sources, "_graph_edge", lambda _root=None, _session=None: "design → blueprint (hypernym)")
 
     assert states.STATES["unstuck"]["dose"] == {"unit": "moves", "n": 1}
     assert "can't start" not in engine.enter("unstuck", session="unstuck-owner")
@@ -38,9 +38,9 @@ def test_unstuck_delivers_one_direction_from_history_and_graph(tmp_path, monkeyp
     text = engine.inject("unstuck-owner") or ""
     closing = engine.stop("unstuck-owner")
 
-    # One commit means there is nothing earlier to return to, and the direction says so rather
+    # One thing in the record means there is nothing earlier to return to, and it says so rather
     # than telling the person to continue the change they just finished.
-    assert "only one commit here (add design boundary)" in text
+    assert "only one thing here (add design boundary)" in text
     assert "continue the last change" not in text
     assert "map link: design → blueprint (hypernym)" in text
     assert "Tools are open in this state" in text, "tools are open unless the entry asks"
@@ -51,12 +51,31 @@ def test_unstuck_delivers_one_direction_from_history_and_graph(tmp_path, monkeyp
     assert "suggestion stands" in closing and "first move" in closing
 
 
-def test_unstuck_fails_at_entry_without_a_project(monkeypatch):
+def test_unstuck_works_without_a_project(monkeypatch):
+    """No state may require a git repo: a chat outside one still has a day to go on."""
     monkeypatch.setattr(sources.storage, "project_root", lambda: None)
+    monkeypatch.setattr(sources, "_graph_edge",
+                        lambda _root=None, _session=None: "design → blueprint (hypernym)")
+    from core import recall
+    recall.remember("the pricing page needs an annual discount line", "person", "no-project")
+    recall.remember("the signup flow should explain the yearly discount", "person", "no-project")
 
     out = engine.enter("unstuck", session="no-project")
 
-    assert "can't start unstuck" in out and "not inside a git repo" in out
+    assert "can't start" not in out, out
+    line = sources.unstuck_text(1, session="no-project")[0]
+    assert "next move" in line and "map link:" in line
+    assert "git" not in line.lower() and "commit" not in line.lower()
+
+
+def test_unstuck_refuses_plainly_when_there_is_nothing_to_go_on(monkeypatch):
+    monkeypatch.setattr(sources.storage, "project_root", lambda: None)
+    monkeypatch.setattr(sources, "_day_threads", lambda session=None: [])
+
+    out = engine.enter("unstuck", session="empty-chat")
+
+    assert "can't start unstuck" in out and "nothing to go on yet" in out
+    assert "git" not in out.lower() and "commit" not in out.lower()
 
 
 def test_unstuck_steps_away_from_the_change_just_finished(tmp_path, monkeypatch):
@@ -70,7 +89,7 @@ def test_unstuck_steps_away_from_the_change_just_finished(tmp_path, monkeypatch)
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
     subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "finish design boundary"], check=True)
     monkeypatch.chdir(root)
-    monkeypatch.setattr(sources, "_graph_edge", lambda _root: "design → blueprint (hypernym)")
+    monkeypatch.setattr(sources, "_graph_edge", lambda _root=None, _session=None: "design → blueprint (hypernym)")
 
     line = sources.unstuck_text(1)[0]
     assert "skip another pass at finish design boundary" in line, line

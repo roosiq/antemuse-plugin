@@ -23,8 +23,8 @@ provider or dose, the person selects concepts, and only `/return` ends it.
 | `/walk` | 6 hops, taken in the command | open by default | none; its graph path is pane scenery | its own hop trail (`record→clock out [far] → …`) in the command's reply | complete, dry, failed, or returned |
 | `/daydream` | 2 pairs | open | two of **this chat's** own messages, what links them, one idea | how many linked up, never which — the material is the person's own turns | complete, dry, failed, or returned |
 | `/doomscroll` | 3 items | `web_search`, `web_extract`, `read_file`, `search_files`, `browser_exec` | three fixed feed lanes (The Onion, r/BrandNewSentence, Hacker News front page), labelled untrusted | the count only; feed text is untrusted and never spoken or saved | complete, dry, failed, or returned |
-| `/dream` | 2 links | open | local git commit subjects only, from the repository this chat is working in, never transcripts or notes | the concept labels it served | complete, returned, or refused at entry |
-| `/unstuck` | 1 move | `read_file`, `search_files` | one next move grounded in **earlier** commits plus one unused map link, naming the last change as the thing to step away from | the concept labels behind the move | complete, returned, or refused at entry |
+| `/dream` | 2 links | open | this chat's own day: its recorded messages, then the concepts the ledger served it, then commit subjects when the chat is in a repo — never transcripts or notes | the concept labels it served | complete, returned, or refused at entry |
+| `/unstuck` | 1 move | `read_file`, `search_files` | one next move grounded in **earlier** work from this chat's day (commits when the chat is in a repo) plus one unused map link, naming the last thing as what to step away from | the concept labels behind the move | complete, returned, or refused at entry |
 | `/explore` | open | open | the person's picks are accounted, not injected | the count of picks | returned |
 
 A state that cannot start says so at the door, names the reason, and records nothing. These are the
@@ -34,8 +34,8 @@ lines a person reads, not internal states:
 |---|---|
 | `/daydream` | `can't start daydream · need at least 3 messages from you in this chat` |
 | `/doomscroll` | `can't start doomscroll · the feed is turned off in settings` · `… the feed came back empty` |
-| `/dream` | `can't start dream · need at least 3 commits in this repo from the last month` |
-| `/unstuck` | `… this chat is not inside a git repo` · `… no commits to read here` · `… the map has no links to point at yet` |
+| `/dream` | `can't start dream · nothing from today yet · say a few things in this chat or run a state first` |
+| `/unstuck` | `… nothing to go on yet · say what you are working on, then try again` · `… the map has no links to point at yet` |
 
 "Which repository" means **the repository the calling session is working in**, resolved through the
 host's `ctx.session_cwd()`, then `ANTEMUSE_PROJECT_ROOT`, then `TERMINAL_CWD`, then the process cwd. The
@@ -54,6 +54,14 @@ taking tools away is a second decision the caller makes with `block: true` (and 
 further; with no `allow` the state's own recommended set applies). `/return` is always available.
 A state whose directive says there is nothing to do with a tool is describing the work, not
 enforcing a policy; only `block: true` closes tools.
+
+## No state requires a repository
+
+Git is optional enrichment, never a condition of entry. `/dream` and `/unstuck` read this chat's
+own day — its recorded messages, then the concepts the ledger served it — and use commit subjects
+only when the chat happens to sit inside a checkout. A chat in a plain directory gets both states.
+`tests/test_dream_without_git.py::test_no_state_ever_requires_a_git_repo` holds the whole set to
+this: no entry refusal may name git, a repo, a commit or a checkout.
 
 ## Ownership
 
@@ -85,7 +93,7 @@ person's turns or a feed headline on disk.
   not `LINKED` with an invented idea. The state's exit instruction asks for the gap.
 - A dream pair with no shared terms is `no link · shared: nothing yet`, not a
   `connection` with a manufactured bridge.
-- `/unstuck` never recommends the newest commit as "continue the last change" (the old wording): that is the change
+- `/unstuck` never recommends the newest thing as "continue the last change" (the old wording): that is the change
   the person just finished and the reason they are stuck. With earlier history it proposes taking
   an earlier change from a different angle; with only one commit it says there is nothing earlier
   to return to and approaches that commit from the graph's side instead.

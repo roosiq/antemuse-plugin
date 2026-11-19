@@ -7,7 +7,7 @@ import re
 import subprocess
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from . import recall, storage
 
@@ -36,15 +36,14 @@ def ready(kind: str, graph_name: str = "wordnet", session: str | None = None) ->
             return "the feed is turned off in settings"
         if not feed():
             return "the feed came back empty"
-    if kind == "dream" and sum(len(_recent_subjects(root)) for root in projects()) < 3:
-        return "need at least 3 commits in this repo from the last month"
+    if kind == "dream":
+        commits = sum(len(_recent_subjects(root)) for root in projects())
+        if commits < 3 and len(_day_threads(session)) < 2:
+            return "nothing from today yet · say a few things in this chat or run a state first"
     if kind == "unstuck":
-        root = storage.project_root()
-        if root is None:
-            return "this chat is not inside a git repo"
-        if not _recent_subjects(root):
-            return "no commits to read here"
-        if not _graph_edge(root):
+        if not _recent_work(session):
+            return "nothing to go on yet · say what you are working on, then try again"
+        if not _graph_edge(storage.project_root(), session):
             return "the map has no links to point at yet"
     if kind != "walk" or graph_name != "wordnet":
         return None
@@ -208,11 +207,40 @@ def _recent_subjects(root: Path, want: int = 3) -> List[str]:
     return widened
 
 
-def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = False) -> List[Any]:
-    """Recombine only local git commit subjects, never changed files or transcripts."""
+def _day_threads(session: str | None = None) -> List[Tuple[str, str]]:
+    """What this chat did today, with no git involved.
+
+    A day exists whether or not anyone committed anything. Git was the only source, so `/dream`
+    refused in every chat that was not inside a repository — which is most of them, including a
+    chat in the operator's home. The person's own turns come first; the concepts the plugin
+    served this chat come next, tagged with the state that surfaced them. Both are this chat's
+    own record, so nothing crosses chats.
+    """
+    turns = _own_turns(session)
+    if len(turns) >= 2:
+        return [("today", _clip(turn, 100)) for turn in turns]
+    from . import history
+    who = str(session or "")
+    rows = [r for r in history.recent(days=3, limit=60)
+            if not who or str(r.get("session") or "") == who]
+    seen, out = set(), []
+    for row in rows:
+        label = str(row.get("label") or "").strip()
+        if not label or label in seen:
+            continue
+        seen.add(label)
+        out.append((str(row.get("move") or "today"), label))
+    return out
+
+
+def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = False,
+                    session: str | None = None) -> List[Any]:
+    """Connect two things from the day: commits when there are any, otherwise the day's record."""
     subjects = [(root.name, subject) for root in projects() for subject in _recent_subjects(root)]
     if len(subjects) < 2:
-        return ["dream: need at least 2 commits in this repo"]
+        subjects = _day_threads(session)
+    if len(subjects) < 2:
+        return ["dream: nothing from today yet · say a few things in this chat or run a state first"]
     skip = skip or set()
     choices = []
     for left in range(len(subjects)):
@@ -288,7 +316,7 @@ def scroll_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fals
     return out if keyed else [line for _, line in out]
 
 
-def _graph_edge(root: Path) -> str:
+def _graph_edge(root: Path | None = None, session: str | None = None) -> str:
     """One edge from the active graph provider, over concepts this person actually has.
 
     The first version read the *folder name* — `antemuse-plugin` -> "antemuse", "plugin" — which
@@ -303,17 +331,15 @@ def _graph_edge(root: Path) -> str:
         try:
             from . import history
 
-            conn = history._connect()
-            if conn is not None:
-                try:
-                    terms = [str(row[0]) for row in conn.execute(
-                        "SELECT label FROM concepts ORDER BY times DESC, last_seen DESC LIMIT 24"
-                    )]
-                finally:
-                    conn.close()
+            who = str(session or "")
+            terms = [str(r.get("label") or "") for r in history.recent(days=7, limit=60)
+                     if not who or str(r.get("session") or "") == who]
         except Exception:
             terms = []
-        terms += [part.lower() for part in re.findall(r"[A-Za-z]{4,}", root.name)] or ["project"]
+        # Then the words this chat itself used, so a chat with no ledger still has ground.
+        terms += [w for turn in _own_turns(session) for w in sorted(_words(turn))][:24]
+        if root is not None:
+            terms += [part.lower() for part in re.findall(r"[A-Za-z]{4,}", root.name)]
         for term in terms:
             node = graph.resolve(term)
             if node is None:
@@ -327,16 +353,25 @@ def _graph_edge(root: Path) -> str:
     return ""
 
 
-def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = False) -> List[Any]:
-    """One direction grounded in recent history plus one graph edge."""
+def _recent_work(session: str | None = None) -> List[str]:
+    """What this chat has been doing: commits when there are any, otherwise its own day."""
     root = storage.project_root()
-    if root is None:
-        return ["unstuck: this chat is not inside a git repo"]
-    subjects = _recent_subjects(root)
-    edge = _graph_edge(root)
-    if not subjects or not edge:
-        missing = "commits" if not subjects else "map links"
-        return [f"unstuck: no {missing} to read here"]
+    if root is not None:
+        subjects = _recent_subjects(root)
+        if subjects:
+            return subjects
+    return [text for _, text in _day_threads(session)]
+
+
+def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = False,
+                 session: str | None = None) -> List[Any]:
+    """One next move grounded in what you have been doing plus one map link. No repo required."""
+    subjects = _recent_work(session)
+    edge = _graph_edge(storage.project_root(), session)
+    if not subjects:
+        return ["unstuck: nothing to go on yet · say what you are working on, then try again"]
+    if not edge:
+        return ["unstuck: the map has no links to point at yet"]
     # The point of being stuck is that the last change is the obvious next move and it is not
     # working. Recommending `subjects[0]` — the newest commit, the thing just finished — told the
     # person to continue exactly what they had done. The direction is grounded in earlier work
@@ -350,7 +385,7 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
         line = (f"next move · skip another pass at {last} · try {earlier} a different way "
                 f"· map link: {edge} · first: write the smallest test for that different way")
     else:
-        line = (f"next move · only one commit here ({last}), so there is nothing earlier to "
+        line = (f"next move · only one thing here ({last}), so there is nothing earlier to "
                 f"go back to · map link: {edge} · first: write the smallest test that comes at "
                 f"{last} from that side instead")
     result = [(ident, line)]

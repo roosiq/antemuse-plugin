@@ -82,9 +82,9 @@ STATES: Dict[str, Dict] = {
         "label": "DREAMING",
         "turns": 2,
         "dose": {"unit": "links", "n": 2},
-        "waiting": "dreaming · mixing up your recent commits",
+        "waiting": "dreaming · mixing up your day",
         "after": (
-            "the dream is done. In one line: what linked up in your recent commits, both sides "
+            "the dream is done. In one line: what linked up in your day, both sides "
             "and what they share, or say they do not connect. Then say if it is worth doing now "
             "or just noting, and get back to work."
         ),
@@ -93,14 +93,15 @@ STATES: Dict[str, Dict] = {
         "feeds": True,
         "provider": "dream",
         "directive": (
-            "You are dreaming over your day: slow and loose. Recent commit subjects from this "
-            "repo come back, and what links them is the thing to look for — the same problem "
-            "solved twice, a blocker a later change cleared, two threads ending up in the same "
-            "design. Each line names both sides and what they share, or says they share nothing. "
-            "This is thinking, not a task: tools are still there, but nothing here needs one. "
+            "You are dreaming over your day: slow and loose. Two things from today come back — "
+            "what you said, what came up, or commits if you made any — and what links them is "
+            "the thing to look for: the same problem twice, a blocker something later cleared, "
+            "two threads ending up in the same place. Each line names both sides and what they "
+            "share, or says they share nothing. This is thinking, not a task: tools are still "
+            "there, but nothing here needs one. "
         ),
-        "contract": "your recent commits · what links them",
-        "residue": "dreamed: linked up recent work",
+        "contract": "two things from your day · what links them",
+        "residue": "dreamed: linked up parts of your day",
     },
     "unstuck": {
         "label": "UNSTUCK",
@@ -109,7 +110,7 @@ STATES: Dict[str, Dict] = {
         "waiting": "looking back at what you've done",
         "after": (
             "the suggestion stands. Say it in one line with the first move, then make that "
-            "move. If your commits and the map did not support a suggestion, say so instead of "
+            "move. If your day and the map did not support a suggestion, say so instead of "
             "making one up."
         ),
         "tools": ["read_file", "search_files"],
@@ -118,11 +119,11 @@ STATES: Dict[str, Dict] = {
         "provider": "unstuck",
         "directive": (
             "You are unstuck. Suggest ONE new thing to do, based on two things you can check: "
-            "your commit history and an unused link in the concept map. Give the suggestion, the "
-            "commit it rests on, the map link, and a first move. Just one — a list hands the "
-            "decision back to the person. Do not write a spec from here. "
+            "what you have been doing today and an unused link in the concept map. Give the "
+            "suggestion, what it rests on, the map link, and a first move. Just one — a list "
+            "hands the decision back to the person. Do not write a spec from here. "
         ),
-        "contract": "1 next move · from your commits and the map",
+        "contract": "1 next move · from your day and the map",
         "residue": "unstuck: suggested one next move",
     },
 }

@@ -54,12 +54,21 @@ def test_dream_recombines_local_commit_subjects_not_transcripts(tmp_path, monkey
     assert "what linked up" in closing
 
 
-def test_dream_fails_at_entry_when_local_git_has_too_few_subjects(tmp_path, monkeypatch):
+def test_dream_refuses_only_when_the_whole_day_is_empty(tmp_path, monkeypatch):
+    """Too few commits is no longer a refusal on its own — the day has other records."""
     root = _repo(tmp_path)
     monkeypatch.chdir(root)
     monkeypatch.setattr(sources, "_git_subjects",
                         lambda _root, _since="24 hours ago": ["only one subject", "another subject"])
+    monkeypatch.setattr(sources, "_day_threads", lambda session=None: [])
 
     out = engine.enter("dream", session="dry-dream")
 
-    assert "can't start dream" in out and "need at least" in out
+    assert "can't start dream" in out and "nothing from today yet" in out
+    assert "commit" not in out.lower()
+
+    # The same thin repo, but the chat has a day of its own: dream starts.
+    monkeypatch.setattr(sources, "_day_threads",
+                        lambda session=None: [("today", "the pricing page"), ("today", "the signup flow")])
+    started = engine.enter("dream", session="thin-repo-with-a-day")
+    assert "can't start" not in started, started
