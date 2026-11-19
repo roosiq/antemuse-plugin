@@ -84,7 +84,7 @@ Every surface must have all five, and each has its own copy:
 
 | State | Copy | Where |
 | --- | --- | --- |
-| empty | `no state` / `nothing picked yet` | pane corner, cockpit pick panel |
+| empty | `nothing running` / `nothing picked yet` | pane corner, cockpit pick panel |
 | loading | `…` | pane corner |
 | active | state label + counts | pane corner, pane button |
 | unavailable | `backend unavailable`, `sign-in required`, `the backend did not answer`, `the plugin backend is not mounted` | `whyFailed()`, pane |

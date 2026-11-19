@@ -62,9 +62,10 @@ counts measure the machine; verdicts measure the idea.
                           residue (report) + next turn's opening
 ```
 
-- The five agent states are machine-led: `walk` delivers six hops; `daydream` two
-  memory pairs; `doomscroll` three feed items; `dream` two recombinations; and
-  `unstuck` one direction.
+- The five agent states are machine-led: `walk` takes six hops in the command itself and
+  answers with the path; `daydream` delivers two pairs of this chat's own messages;
+  `doomscroll` three feed posts; `dream` two links between recent commits; and `unstuck`
+  one next move. Only `walk` is instant — the other four deliver one unit per message.
 - It ends itself four ways — complete, dry, failed, or an explicit `/return` — and reports which
   one it was.
 - `explore` is person-led and ends one way, and its account names the person's own picks.

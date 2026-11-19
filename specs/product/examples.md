@@ -22,10 +22,10 @@ feed text is shown only in its labelled untrusted block and is never persisted.
 | # | Situation | Command | What it demonstrates |
 |---|---|---|---|
 | 1 | Distance while work continues | `/walk` | A six-hop path changes the frame while work continues. |
-| 2 | Two memories make a possibility | `/daydream` | Recorded personal turns meet and point at one possibility. |
+| 2 | Two things you said make an idea | `/daydream` | Two of this chat's own messages, what links them, one idea. |
 | 3 | Three useless things from the feed | `/doomscroll` | Gated public feed material is distraction, not instruction. |
 | 4 | The day recombines within the project | `/dream` | Local git subjects connect without reading transcripts. |
-| 5 | One direction breaks the stall | `/unstuck` | History and a graph edge ground one next move. |
+| 5 | One move breaks the stall | `/unstuck` | Your commits and an unused map link ground one next move. |
 
 ## Generation
 

@@ -6,7 +6,7 @@
 
 `walk` moves six WordNet hops while the agent keeps doing the task. `daydream` pairs
 recorded memories, `doomscroll` supplies a gated feed lane, `dream` recombines local
-git subjects, and `unstuck` names one history-and-graph direction. Each state has a
+git subjects, and `unstuck` names one next move from your commits and the map. Each state has a
 dose, not a timer, and ends with an account.
 
 `/explore` is separate and person-driven. It gives the person a concept map to fly;

@@ -17,11 +17,19 @@ hermes chat -q '/return'     # end it and keep the account
 The seven slash commands are `/walk`, `/daydream`, `/doomscroll`, `/dream`,
 `/unstuck`, `/explore`, and `/return`.
 
-- `/walk` enters the ambient six-hop state: `WALKING · 6 hops · work continues · the frame is elsewhere · different on return`.
-- `/daydream` enters two memory-pair deliveries; `/dream` enters two local-git-subject recombinations.
-- `/doomscroll` enters three gated public-feed deliveries; `/unstuck` enters one direction from history and the graph.
-- `/explore` is person-driven and open-ended: `EXPLORING · 0 picks · you fly · you choose · it ends when you end it`.
-- `/return` ends the active state or explore and preserves its account.
+- `/walk` is an act: it takes all six hops inside the command and answers with the path —
+  `WALKING ended · walk · 6 of 6 hops · …`. Nothing is left running and no further message is needed.
+- `/daydream` delivers two pairs of this chat's own messages; `/dream` two links between your
+  recent commit subjects in this repo. Both deliver one unit per message.
+- `/doomscroll` delivers three public-feed posts; `/unstuck` one next move from your commits and
+  an unused map link.
+- `/explore` is yours to drive and open-ended: `EXPLORING · 0 picks · you pick · it runs until you stop it`.
+- `/return` ends the active state or explore and keeps its account. With nothing running it says
+  `nothing running.`
+
+Each state belongs to the chat that started it: another chat gets no material, no footer and no
+ending, and its picks are refused. `/daydream` needs three of your own messages in that chat;
+`/dream` and `/unstuck` need a git repo with commits.
 
 There is no `/break`, `/mood`, `/note`, `/watch`, or `/states` command. Those are
 actions on the `state` tool.
