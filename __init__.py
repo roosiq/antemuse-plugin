@@ -363,7 +363,11 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
         engine.tick(session_id or None)
     except Exception as exc:  # health: BLE001 -- bookkeeping must not cost the turn
         logger.warning("antemuse: turn bookkeeping failed (%s): %s", type(exc).__name__, exc)
-    said = _person_text(kwargs)
+    # A delegated run's "user message" is its task prompt, not something the person said. The
+    # host marks those turns `platform="subagent"`; recording them filed agent-to-agent
+    # instructions in the person's day record, and at the ring's 24-row cap they pushed real
+    # messages out of it. Dream and daydream then read the plugin's own scaffolding as material.
+    said = "" if str(platform or "").lower() == "subagent" else _person_text(kwargs)
     if said:
         # Every provider hands a plugin the turn it is governing, so this is the one
         # memory-ish source that is the same under hindsight, honcho, mem0 or builtin.

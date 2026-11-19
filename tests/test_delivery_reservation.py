@@ -81,3 +81,24 @@ def test_a_pick_with_no_session_cannot_land_in_someone_elses_explore():
     mine = engine.note_pick(["router"], session="alice")
     assert mine.get("ok") is True, mine
     assert (engine.peek() or {}).get("picks") == {"router": 1}
+
+
+def test_a_subagents_task_prompt_is_not_the_persons_own_message():
+    """A delegated run's "user message" is its goal, not something the person said.
+
+    The pre-LLM hook records whatever the host hands it as the turn's user text. For a
+    subagent that text is the task prompt, so this plugin filed agent-to-agent instructions
+    in the person's day record — and at a 24-row cap they evicted real messages.
+    """
+    import importlib
+    from core import recall
+
+    mod = importlib.import_module("__init__")
+
+    goal = "Perform a rigorous code-quality review of a 4-commit diff"
+    mod._pre_llm_call(platform="subagent", session_id="delegated-run", user_message=goal)
+    assert goal not in " ".join(recall.recent(recall.CAP, who="person", session="delegated-run"))
+
+    said = "I keep rewriting the same parser and it still fails"
+    mod._pre_llm_call(platform="discord", session_id="real-chat", user_message=said)
+    assert said in " ".join(recall.recent(recall.CAP, who="person", session="real-chat"))
