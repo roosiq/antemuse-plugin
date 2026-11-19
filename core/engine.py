@@ -237,6 +237,20 @@ def _is_failure_line(line: str) -> bool:
     return bool(_FAILED_STATE_RE.match(low)) or any(word in head for word in _FAILURE_WORDS)
 
 
+def _cap_trace(path) -> None:
+    """The delivery trace is a diagnostic, not a ledger: keep the last 200 lines.
+
+    It answered why a walk closed dry at 2 of 6 — dozens of pane polls refused inside one turn,
+    one delivery per turn — and an unbounded log of that is a defect of its own.
+    """
+    try:
+        if path.stat().st_size > 64 * 1024:
+            lines = path.read_text().splitlines()[-200:]
+            path.write_text("\n".join(lines) + "\n")
+    except Exception:
+        pass
+
+
 def _material_key(line: str) -> str:
     """What makes two served lines the *same* material.
 
@@ -1264,6 +1278,7 @@ def deliver_if_due(source: str = "turn") -> int:
                      f"last={int(active.get('last_turn', -1))} served={served} "
                      f"got={len(lines)} fresh={len(lines) - len(repeated)} repeated={len(repeated)} · "
                      + " || ".join(str(x)[:70] for _, x in lines) + "\n")
+        _cap_trace(trace)
     except Exception:
         pass
     # The provider ran while the state was alive; by the time it answers, it may not be. Fifty
