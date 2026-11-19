@@ -272,13 +272,65 @@ def test_a_walk_never_hops_to_the_same_word_under_a_different_synset():
         import pytest
         pytest.skip("graph cannot resolve a synset by name")
     walk.graph.far_from = lambda node, samples=32, avoid=None: twin
-    labels = []
+    # A chain a→b, b→c names b twice by design, so "no label appears twice" is the wrong rule.
+    # What must never happen is a hop back to a word already stood on, other than the node the
+    # hop starts from. Compare the WORD, not the printed label: the same node is rendered
+    # `orchestration (n)` on one side and `orchestration.n.02 (thing)` on the other.
+    def word(side: str) -> str:
+        base = side.split(" (")[0].strip()
+        return base.split(".")[0].replace("_", " ").lower()
+
+    stood: list[str] = []
+    hops = 0
     for line in walk.step(5):
         head = line.split(" · ")[0]
         if "→" not in head:
             continue
         left, right = (p.strip() for p in head.split("→", 1))
-        assert left != right, f"a hop to the same word: {line}"
-        labels += [left, right]
-    assert labels, "the walk produced no hops, so this test proved nothing"
-    assert len(labels) == len(set(labels)), labels
+        lw, rw = word(left), word(right)
+        assert lw != rw, f"a hop to the same word: {line}"
+        assert rw not in stood[:-1], f"a hop back to an earlier word: {line} (stood {stood})"
+        if not stood or stood[-1] != lw:
+            stood.append(lw)
+        stood.append(rw)
+        hops += 1
+    assert hops, "the walk produced no hops, so this test proved nothing"
+
+
+def test_a_dead_end_restart_never_lands_on_ground_already_covered():
+    """The relaxed restart pass used to drop the visited check.
+
+    When the far search came back empty, the second draw pass accepted any node that was not
+    the current one — including a word the walk had stood on three hops earlier, printing
+    `door → rock` with rock already in the trail. A short walk is honest; a visible loop is not.
+    """
+    from nltk.corpus import wordnet as wn
+    syns = wn.synsets("orchestration")
+    if not syns:
+        import pytest
+        pytest.skip("WordNet build has no orchestration")
+    cursor = tempfile.mkdtemp()
+    path = os.path.join(cursor, "c.json")
+    with open(path, "w") as fh:
+        json.dump({"outer": {"node": syns[0].name(), "prev": "", "at": 0}}, fh)
+    spec = dict(walks.BUILTIN["outer"], name="outer",
+                seed={"mode": "fixed", "node": "orchestration"})
+    walk = walks.GraphWalk(spec, __import__("pathlib").Path(path))
+    start = walk.graph.node(syns[0].name())
+    other = walk.graph.node(wn.synsets("river")[0].name())
+    # One real hop, then every far search is a dead end and every draw offers the node the
+    # walk STARTED on — stood-on ground that is not the node it is standing on now. That is
+    # the exact shape the relaxed pass used to accept.
+    calls = {"n": 0}
+
+    def far(node, samples=32, avoid=None):
+        calls["n"] += 1
+        return other if calls["n"] == 1 else None
+
+    walk.graph.far_from = far
+    walk.graph.random_node = lambda relations=None: start
+    lines = list(walk.step(6))
+    joined = "\n".join(lines)
+    assert "→ orchestration" not in joined, (
+        "the restart hopped back onto the word the walk started from:\n" + joined
+    )

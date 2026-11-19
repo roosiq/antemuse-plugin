@@ -31,4 +31,4 @@ def test_the_shipped_harness_passes_on_a_clean_mount():
     )
     tail = (done.stdout or "") + (done.stderr or "")
     assert done.returncode == 0, "the shipped harness fails on a clean mount:\n" + tail[-3000:]
-    assert "12 properties PASS" in tail, "the harness ran but did not reach its summary"
+    assert "14 properties PASS" in tail, "the harness ran but did not reach its summary"

@@ -194,6 +194,21 @@ _GLOSS_STOP = {"the", "a", "an", "of", "or", "and", "to", "in", "by", "for", "wi
                "state", "quality", "being", "make", "makes", "making", "into", "its"}
 
 
+def _word_of(label: str) -> str:
+    """The word a node stands for, ignoring how it happens to be printed.
+
+    One WordNet word has several synsets, and a node's label is the word when the graph has
+    metadata for it and the raw synset id when it does not. Comparing labels therefore let
+    `orchestration` and `orchestration.n.02` pass as different places, and the walk printed
+    `orchestration → orchestration`. The person reads the word, so the word is the identity.
+    """
+    base = str(label or "").split(" (")[0].strip()
+    # A WordNet synset id is `word.pos.nn`; anything else is already a word or phrase.
+    if re.match(r"^[^\s]+\.[anvrs]\.\d+$", base):
+        base = base.split(".")[0]
+    return base.replace("_", " ").strip().lower()
+
+
 def _content_words(text: str) -> set:
     return {w for w in re.findall(r"[a-z]{4,}", str(text).lower()) if w not in _GLOSS_STOP}
 
@@ -717,7 +732,7 @@ class GraphWalk:
         def fresh_pair(a, b) -> bool:
             # Never land where this walk has already stood: a node revisited inside one walk is a
             # loop the person can see, and it reads as the walk failing to move.
-            if str(b.get("id") or "") in stood or str(b.get("label") or "") in stood_labels:
+            if str(b.get("id") or "") in stood or _word_of(b.get("label") or "") in stood_labels:
                 return False
             return f"{a['id']}→{b['id']}" not in taken and f"{b['id']}→{a['id']}" not in taken
         prefix = f"[{self._seed_marker}] " if getattr(self, "_seed_marker", "") else ""
@@ -747,7 +762,7 @@ class GraphWalk:
             skip = list(dict.fromkeys(str(x) for x in [*(avoid or []), *visited_ids,
                                                        node_.get("id"), *stood]))
             cand = self.graph.far_from(node_, samples=self.samples, avoid=skip)
-            if cand is not None and str(cand.get("label") or "") in stood_labels:
+            if cand is not None and _word_of(cand.get("label") or "") in stood_labels:
                 return None
             return cand
 
@@ -800,13 +815,13 @@ class GraphWalk:
         # WordNet has several synsets with the same word: `orchestration.n.01` and
         # `orchestration.n.02` are different nodes, so an id-only no-repeat rule happily printed
         # `orchestration → orchestration`. The person reads the word, not the id.
-        stood_labels: List[str] = [str(node.get("label") or "")]
+        stood_labels: List[str] = [_word_of(node.get("label") or "")]
 
         def remember(node_) -> None:
             ident = str(node_.get("id") or "")
             if ident and (not stood or stood[-1] != ident):
                 stood.append(ident)
-            label = str(node_.get("label") or "")
+            label = _word_of(node_.get("label") or "")
             if label and label not in stood_labels:
                 stood_labels.append(label)
             try:
@@ -918,7 +933,19 @@ class GraphWalk:
                                 drew = self.graph.random_node(self.relations)
                                 if drew is None or drew["id"] == node["id"]:
                                     continue
-                                if want_new and drew["id"] in stood:
+                                # Never restart onto ground this walk already covered: the
+                                # relaxed pass used to drop this check, and the person read
+                                # `door → rock` with rock three hops back. A short walk is
+                                # honest; a visible loop is not.
+                                # Never restart onto ground this walk already covered: the
+                                # relaxed pass used to drop this check, and the person read
+                                # `door → rock` with rock three hops back. A short walk is
+                                # honest; a visible loop is not.
+                                # Never restart onto ground this walk already covered: the
+                                # relaxed pass used to drop this check, and the person read
+                                # `door → rock` with rock three hops back. A short walk is
+                                # honest; a visible loop is not.
+                                if drew["id"] in stood or _word_of(drew.get("label") or "") in stood_labels:
                                     continue
                                 restart = drew
                                 break
@@ -928,7 +955,9 @@ class GraphWalk:
                         # Last resort: a fresh movable start. The gate caught this twice — from
                         # "doddle" both restart passes exhausted and the walk stopped at hop 2.
                         fresh_start = self._movable_start()
-                        if fresh_start is not None and fresh_start["id"] != node["id"]:
+                        if (fresh_start is not None and fresh_start["id"] != node["id"]
+                                and fresh_start["id"] not in stood
+                                and _word_of(fresh_start.get("label") or "") not in stood_labels):
                             restart = fresh_start
                     if restart is None:
                         out.append(f"{node['label']} · nothing far from here — the walk stops")

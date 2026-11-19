@@ -1425,7 +1425,16 @@ function ArtSurface({ ctx }) {
   return jsx('div', { ref: box, style: { position: 'absolute', inset: 0, overflow: 'hidden' } })
 }
 
-function StateView({ ctx }) {
+/** Reach a route on any host: the desktop context has no `navigate`, the app routes by hash.
+ *  Guarding on `ctx.navigate` alone made every door a dead button in the real app. */
+function goto(ctx, path) {
+  if (ctx && typeof ctx.navigate === 'function') { ctx.navigate(path); return }
+  try {
+    if (typeof location !== 'undefined') location.hash = `#${path}`
+  } catch (e) { /* no window: nothing to route */ }
+}
+
+function StateView({ ctx, onOpenCockpit }) {
   const { ref, cells } = useCells()
   const { payload, error } = useStatePayload(ctx, cells)
   const vm = viewModel(payload, error)
@@ -1470,7 +1479,8 @@ function StateView({ ctx }) {
       exploring
         ? jsx('button', {
             type: 'button',
-            onClick: () => { if (ctx.navigate) ctx.navigate(`/${ID}/cockpit`) },
+            // Flip the tab in place; the host may have no router call at all.
+            onClick: () => { if (onOpenCockpit) onOpenCockpit(); else goto(ctx, `/${ID}/cockpit`) },
             style: {
               position: 'absolute', left: 12, bottom: 66, zIndex: 2,
               background: 'transparent',
@@ -1501,8 +1511,7 @@ function StateChip({ ctx }) {
     type: 'button',
     title: exploring ? 'open the concept cockpit' : label,
     onClick: () => {
-      if (!ctx.navigate) return
-      ctx.navigate(exploring ? `/${ID}/cockpit` : pluginSettingsHref(ID))
+      goto(ctx, exploring ? `/${ID}/cockpit` : pluginSettingsHref(ID))
     },
     style: {
       background: 'transparent',
@@ -3778,14 +3787,11 @@ function createCockpit({ ctx, el, callbacks }) {
     if (aimed) nameNode(aimed, 'click')
     state.firing = true
     shootAt(ax, ay)
-    // Ask for the lock, and take the pointer either way. A refused lock used to leave the pane
-    // steerable only by right-drag, which is not a cockpit.
+    // Ask for the lock, take the pointer either way: a refused lock must still steer.
     if (el.requestPointerLock && !lockActive()) {
       try {
         const asked = el.requestPointerLock()
-        // Chromium returns a promise here and rejects it when the page is not allowed to
-        // lock (an Electron pane without the permission, a sandboxed frame). Recording the
-        // reason is what tells "disabled by the host" apart from "our request was wrong".
+        // Chromium rejects when the host disallows locking; record why.
         if (asked && typeof asked.catch === 'function') {
           asked.catch((err) => {
             pointerNote = `${(err && err.name) || 'Error'}: ${(err && err.message) || 'refused'}`
@@ -3795,10 +3801,8 @@ function createCockpit({ ctx, el, callbacks }) {
         pointerNote = `${(e && e.name) || 'Error'}: ${(e && e.message) || 'threw'}`
       }
     }
-    // The pointer is held by this pane's own accounting, not by an API: `setPointerCapture`
-    // raises InvalidStateError whenever the browser is not in the mood, and a pane that has
-    // asked and been refused is a pane where the mouse does nothing. Document-level moves are
-    // always delivered, which is all steering needs.
+    // Held by our own accounting, not setPointerCapture (it throws when refused).
+    // Document-level moves always arrive, which is all steering needs.
     engaged = true
     held = { x: ev.clientX, y: ev.clientY }
     el.style.cursor = 'none'
@@ -4231,7 +4235,7 @@ function AntemuseScreen({ ctx, start }) {
         style: { position: 'relative', flex: '1 1 auto', minHeight: 0 },
         children: tab === 'cockpit'
           ? jsx(CockpitPane, { ctx, onExit: () => setTab('state') }, 'cockpit')
-          : jsx(StateView, { ctx }, 'state')
+          : jsx(StateView, { ctx, onOpenCockpit: () => setTab('cockpit') }, 'state')
       }, 'body')
     ]
   })
@@ -4604,13 +4608,13 @@ export default {
       id: 'cockpit-open',
       area: PALETTE_AREA,
       title: copy.cockpitOpen,
-      run: () => { if (ctx.navigate) ctx.navigate(`/${ID}/cockpit`) }
+      run: () => goto(ctx, `/${ID}/cockpit`)
     })
     ctx.register({
       id: 'watch',
       area: PALETTE_AREA,
       title: copy.watch,
-      run: () => { if (ctx.navigate) ctx.navigate(`/${ID}`) }
+      run: () => goto(ctx, `/${ID}`)
     })
     // Settings are NOT a bespoke page: the host renders this plugin's manifest
     // `config_schema` as a form under Settings ▸ Plugins and saves it to

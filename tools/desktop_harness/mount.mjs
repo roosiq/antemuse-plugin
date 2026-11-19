@@ -41,6 +41,9 @@ const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></
 globalThis.window = dom.window
 globalThis.document = dom.window.document
 Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, configurable: true })
+// The app routes by location hash, so the pane's fallback door needs the same global the
+// browser gives it. Without this the harness would prove the fallback against nothing.
+Object.defineProperty(globalThis, 'location', { value: dom.window.location, configurable: true })
 globalThis.HTMLElement = dom.window.HTMLElement
 globalThis.Node = dom.window.Node
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -107,6 +110,12 @@ const PAYLOAD = {
   },
   frame: { cols: 44, rows: 3, lines: ['  .:-=+  ', ' :#%@     ', '   .:     '] },
   residue: { count: 2, kinds: ['walk'] }
+}
+
+// An exploring payload: the cockpit door only exists while /explore is the active state.
+const EXPLORE_PAYLOAD = {
+  ...PAYLOAD,
+  active: { ...PAYLOAD.active, key: 'explore', label: 'EXPLORING', dose: 0, served: 0, unit: 'picks' }
 }
 
 function makeCtx(state) {
@@ -458,6 +467,39 @@ assert.doesNotMatch(lostText, /picked ·/, 'the pane must not print a count besi
 assert.doesNotMatch(lostText, /join only if it holds/, 'nor a contract from the payload it could not refresh')
 await act(async () => { lostAgain.node.unmount() })
 
+// ---- the cockpit door works on a host that has no ctx.navigate ---------------
+//
+// The real desktop host does not put `navigate` on the plugin context at all. This harness
+// used to hand the pane a no-op `navigate: () => {}`, so every door looked wired while the
+// button did nothing in the app: a stub that answers a call the host never offers is worse
+// than no stub. Mount without it and click the actual door.
+
+resetBody()
+const noNav = await mountWith({ payload: EXPLORE_PAYLOAD })
+delete noNav.ctx.navigate
+const door = [...document.querySelectorAll('button')]
+  .find((b) => /open the cockpit/i.test(b.textContent || ''))
+assert.ok(door, 'the state pane offers a cockpit door while exploring')
+await act(async () => { door.click() })
+const cockpitTab = [...document.querySelectorAll('[role=tab]')]
+  .find((b) => /cockpit/i.test(b.textContent || ''))
+assert.ok(cockpitTab, 'the screen has a cockpit tab')
+assert.equal(cockpitTab.getAttribute('aria-selected'), 'true',
+  'clicking "open the cockpit" must land on the cockpit tab without ctx.navigate')
+await act(async () => { noNav.node.unmount() })
+
+// The palette command has no tab to flip, so it must reach the route the app actually uses.
+resetBody()
+const palNav = makeCtx({ payload: EXPLORE_PAYLOAD })
+delete palNav.ctx.navigate
+plugin.register(palNav.ctx)
+const opener = palNav.contributions.find((c) => c.id === 'cockpit-open')
+assert.ok(opener, 'the palette offers the cockpit')
+dom.window.location.hash = ''
+opener.run()
+assert.equal(dom.window.location.hash, '#/antemuse/cockpit',
+  'the palette command must navigate on a host without ctx.navigate')
+
 console.error = realConsoleError
 const keyWarnings = consoleErrors.filter((m) => /key/i.test(m))
 assert.deepEqual(keyWarnings, [], 'React emitted a key-related console error')
@@ -465,6 +507,7 @@ assert.deepEqual(keyWarnings, [], 'React emitted a key-related console error')
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
-console.log('harness: 12 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
-  'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean)')
+console.log('harness: 14 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
+  'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean, ' +
+  'cockpit door without ctx.navigate, palette route without ctx.navigate)')
 dom.window.close()
