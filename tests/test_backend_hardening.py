@@ -82,8 +82,10 @@ def test_wrong_shaped_state_file_does_not_break_state_route():
 
 
 def test_enter_supersedes_a_running_state_with_account_and_move():
+    # The owner replacing its own state. A foreign entry is refused instead: `stop` already
+    # refuses a bystander's /return, and superseding was the way around that.
     engine.enter("walk", session="owner")
-    answer = engine.enter("walk", session="replacement")
+    answer = engine.enter("walk", session="owner")
 
     assert "left walk" in answer and "account kept" in answer
     report = [r for r in engine._load()["residue"] if r.get("reason") == "superseded"]

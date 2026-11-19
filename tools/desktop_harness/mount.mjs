@@ -135,12 +135,17 @@ function makeCtx(state) {
       calls.liveIntervals.add(interval)
       return () => { interval.disposed += 1; calls.liveIntervals.delete(interval) }
     },
-    rest: async (path) => {
+    rest: async (path, opts) => {
       calls.rest.push(path)
+      // The poll takes the earned unit, which is a write, so it must be a POST to /deliver.
+      // Matching only /state let the pane ask a route this stub did not serve and still pass.
+      if (path.startsWith('/deliver')) {
+        calls.pollMethod = (opts && opts.method) || 'GET'
+      }
       if (path.startsWith('/graph')) return state.graph || { nodes: [] }
-      // `failAfter` answers the first N /state reads, then fails: the pane has to behave on the
+      // `failAfter` answers the first N polls, then fails: the pane has to behave on the
       // second poll, not only on a backend that was never there.
-      if (path.startsWith('/state')) {
+      if (path.startsWith('/deliver') || path.startsWith('/state')) {
         stateCalls += 1
         if (state.failAfter !== undefined && stateCalls > state.failAfter) {
           throw new Error(state.error || 'unreachable')
@@ -390,7 +395,9 @@ const art = document.querySelector('canvas[data-antemuse-art="pane"]')
 assert.ok(art, 'the pane paints the art on its own canvas')
 assert.equal(art.getAttribute('aria-hidden'), 'true', 'art is decoration, not content')
 assert.equal(document.querySelector('[data-antemuse-state]').getAttribute('data-antemuse-state'), 'active')
-assert.ok(active.calls.rest[0].startsWith('/state'), 'the page asks the backend for a frame')
+assert.ok(active.calls.rest[0].startsWith('/deliver'), 'the page asks the backend for a frame')
+assert.equal(active.calls.pollMethod, 'POST',
+  'taking the earned unit is a write: the poll must POST, not GET')
 // Two clocks, deliberately: 900 ms for the state words, 4 s for which scene to
 // paint. The picture does not need to re-ask a question that changes per turn.
 const every = active.calls.intervals.map((i) => i.ms).sort((a, b) => a - b)
@@ -424,7 +431,7 @@ const stills = document.querySelectorAll('img[data-antemuse-bake="still"]')
 assert.equal(stills.length, 2, 'two layers, so a dissolve is a cross-fade')
 assert.match(stills[0].getAttribute('style'), /object-fit:\s*cover/)
 assert.match(stills[0].getAttribute('style'), /transition:\s*opacity/, 'the dissolve is a CSS transition')
-assert.match(pane.calls.rest[0], /^\/state\?cols=\d+&rows=\d+&fit=cover&busy=0/,
+assert.match(pane.calls.rest[0], /^\/deliver\?cols=\d+&rows=\d+&fit=cover&busy=0/,
   'the pane asks the backend for the scene')
 
 // ---- idle -------------------------------------------------------------------

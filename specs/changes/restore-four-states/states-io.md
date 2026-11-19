@@ -52,7 +52,10 @@ message makes several model calls, each one calling `inject()`, and each call us
 so a paced state could be spent inside one message in about three seconds: the countdown never
 ticked and the dose measured the tool loop instead of the conversation. The owner's pane poll
 may show one unit more than the person has earned by talking, never more; a foreign poll
-neither delivers nor reads the state.
+neither delivers nor reads the state. Delivery is a write and lives on `POST /deliver` — the
+pane's state poll is that one door. `GET /state` is a pure look: it changes nothing, so it can
+be retried or prefetched safely. A foreign entry is refused rather than superseding the
+running state, matching the refusal a foreign `/return` already gets.
 
 For a paced state, the turn that receives the last unit closes it **inside its own block**: the
 block says

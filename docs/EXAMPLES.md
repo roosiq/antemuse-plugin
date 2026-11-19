@@ -11,18 +11,18 @@ Command: `/walk`
 The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
-design (n) → planning (n) · took its hyponym · “the act or process of drawing up plans or layouts for some project or enterprise” · ↩ 1 hop from design: design → planning
-planning (n) → city planning (n) · took its hyponym · “determining and drawing up plans for the future physical arrangement and condition of a co” · ↩ 1 hop from planning: planning → city planning
-city planning (n) → zoning (n) · took its meronym · “dividing an area into zones or sections reserved for different purposes such as residence ” · ↩ 1 hop from city planning: city planning → zoning
-zoning (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from zoning: zoning → division
-division (n) → separation (n) · took its hypernym · “the act of dividing or disconnecting” · ↩ 1 hop from division: division → separation
-separation (n) → withdrawal (n) · took its hyponym · “the act of ceasing to participate in an activity” · ↩ 1 hop from separation: separation → withdrawal
+design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
+creating by mental acts (n) → creation (n) · took its hypernym · “the human act of creating” · ↩ 1 hop from creating by mental acts: creating by mental acts → creation
+creation (n) → pornography (n) · took its hyponym · “creative activity (writing or pictures or films etc.) of no literary or artistic value oth” · ↩ 1 hop from creation: creation → pornography
+pornography (n) → child pornography (n) · took its hyponym · “the illegal use of children in pornographic pictures or films” · ↩ 1 hop from pornography: pornography → child pornography
+child pornography (n) → pornography (n) · took its hypernym · “creative activity (writing or pictures or films etc.) of no literary or artistic value oth” · ↩ 1 hop from child pornography: child pornography → pornography · seen earlier today in 1 other session
+pornography (n) → creation (n) · took its hypernym · “the human act of creating” · ↩ 1 hop from pornography: pornography → creation · seen earlier today in 1 other session
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→planning [hyponym] → planning→city planning [hyponym] → city planning→zoning [meronym] → zoning→division [hypernym] → division→separation [hypernym] → separation→withdrawal [hyponym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→creation [hypernym] → creation→pornography [hyponym] → pornography→child pornography [hyponym] → child pornography→pornography [hypernym] → pornography→creation [hypernym]
 ```
 
 ## 2. Two memories make a possibility

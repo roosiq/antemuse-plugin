@@ -269,6 +269,32 @@ def _strip_xml(text: str) -> str:
     return " ".join(re.sub(r"<[^>]+>", "", text or "").split())
 
 
+#: Openers that make third-party text read as an instruction once it is inside a model's
+#: context. The `[UNTRUSTED FEED TEXT]` header is a mitigation, not a boundary, so the text
+#: itself is neutralised rather than trusted to the label.
+_DIRECTIVE_OPENER = re.compile(
+    r"^\s*(?:\[[^\]]{0,40}\]\s*)?"
+    r"(?:ignore\b|disregard\b|forget\b|override\b|system\s*:|assistant\s*:|user\s*:|"
+    r"you\s+are\b|act\s+as\b|new\s+instructions?\b|instruction\s*:)",
+    re.I)
+
+
+def _defang_title(text: str) -> str:
+    """An imperative feed title arrives marked as reported speech, not as an address.
+
+    Nothing is dropped: a hostile headline is still material the person may find interesting.
+    It just cannot present itself as something addressed to the model. An ordinary headline
+    passes through with its whitespace normalised.
+    """
+    clean = " ".join(str(text or "").split())
+    if not clean:
+        return ""
+    if _DIRECTIVE_OPENER.match(clean):
+        # Keep the words, remove the address. The prefix says whose voice this is.
+        return f"headline says: {clean}"
+    return clean
+
+
 def _user_agent() -> str:
     """Name the version we actually are. A hardcoded one went stale at 0.11 and stayed there."""
     try:
@@ -294,7 +320,7 @@ def _fetch_feed(url: str, limit: int = 12) -> List[Dict[str, str]]:
             continue  # a channel name ("The Onion") is not an item
         if title.lower() == source.lower() or title.lower().startswith(source.lower()):
             continue
-        out.append({"source": source, "title": _clip(title, 120)})
+        out.append({"source": source, "title": _clip(_defang_title(title), 120)})
     return out[:limit]
 
 

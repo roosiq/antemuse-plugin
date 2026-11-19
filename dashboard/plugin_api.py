@@ -491,22 +491,37 @@ def state(request: Request = None, session: str | None = None,
     first successful poll. ``cols``/``rows``/``fit``/``busy``/``stills`` are still accepted so a
     pane built against the old shape is not answered with a 422; they change nothing.
     """
+    return _state_payload(session, with_graph, deliver=False)
+
+
+@router.post("/deliver")
+def deliver(request: Request = None, session: str | None = None,
+            with_graph: int = Query(0, alias="graph")) -> Dict[str, Any]:
+    """The pane's turn of the handle: take the unit this chat has earned, then answer.
+
+    Delivery is a write, so it is a POST. It used to happen inside `GET /state`, which made a
+    read-only poll spend the dose and write state.json about once a second. The pacing is
+    unchanged — one unit per turn taken, never per call — only the verb is honest now.
+    """
+    return _state_payload(session, with_graph, deliver=True)
+
+
+def _state_payload(session: str | None, with_graph: int, deliver: bool) -> Dict[str, Any]:
     proj = projection()
     watch = plugin().core.engine.watch_state()
     active = (watch or {}).get("active") or {}
     owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
     foreign = bool(session and owner and str(session) != owner)
-    # A poll is the pane's delivery door, gated by turns so it cannot outrun the person. That
-    # door belongs to the owner: a foreign poll used to both advance this chat's dose and read
-    # back its state and pick count. It now does neither.
-    if not foreign:
+    # The door belongs to the owner: a foreign call neither advances this chat's dose nor
+    # reads back its state and pick count.
+    if foreign:
+        watch = {**(watch or {}), "active": None}
+    elif deliver:
         try:
             plugin().core.engine.deliver_if_due(source="pane")
         except Exception:  # health: BLE001 -- a failed hop must not blank the pane
             pass
         watch = plugin().core.engine.watch_state()
-    else:
-        watch = {**(watch or {}), "active": None}
     payload = proj.project(watch, None)
     payload["picture"] = "pane"
     try:

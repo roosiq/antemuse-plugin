@@ -897,8 +897,17 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
         previous = data.get("active") or {}
         superseded = None
         if previous:
-            # Entry has historically replaced the profile-wide state. Preserve that UX, but close
-            # the old state as an accountable ending instead of silently dropping it.
+            # One state at a time means one state, owned by the chat that started it. `stop`
+            # already refuses a bystander's `/return` so nobody can end somebody else's walk;
+            # entry used to supersede the profile-wide state, which was the way around that.
+            # A foreign entry is now refused and told where the state lives.
+            prev_owner = str(((previous.get("origin") or {}) or {}).get("session_id") or "")
+            if session and prev_owner and str(session) != prev_owner:
+                label = (states.spec(str(previous.get("key") or ""))).get("label") or "A state"
+                return (f"{label} is running in the session that started it. Nothing was "
+                        f"started here — /return there to finish it first.")
+            # The owner replacing its own state closes the old one as an accountable ending
+            # instead of silently dropping it.
             report = _account(data, previous)
             data.setdefault("residue", []).append({
                 **report, "kind": "report", "turns_left": 2, "reason": "superseded",

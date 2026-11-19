@@ -1023,10 +1023,8 @@ function createGraph3D(el, doc, ctx, host, win) {
     if (!(el.clientWidth || 0) || !(el.clientHeight || 0)) return
     const session = host && host.state && host.state.focusedSessionId
       ? host.state.focusedSessionId.get() : ''
-    // One route, asked for one more thing. `/graph` is a separate path, and a path is only mounted
-    // when the host process boots — which is why this pane spent hours polling a route its backend
-    // did not have. The map now rides on `/state`, the one route every backend has had for months,
-    // so new data never again waits on a host restart.
+    // One route, asked for one more thing: the map rides along, so new data never waits on a
+    // host restart to mount a path.
     const q = '/state?graph=1&stills=0' + (session ? '&session=' + encodeURIComponent(session) : '')
     const askedAt = performance.now()
     const slow = new Promise((_, reject) => setTimeout(() => reject(new Error('graph timeout')), 12000))
@@ -1321,8 +1319,10 @@ function ArtSurface({ ctx }) {
       if (stopped || !ctx || typeof ctx.rest !== 'function') return
       const busy = host.state.busy.get() ? 1 : 0
       const session = host.state.focusedSessionId.get()
-      const q = '/state?cols=48&rows=24&fit=cover&busy=' + busy + (session ? '&session=' + encodeURIComponent(session) : '')
-      Promise.resolve(ctx.rest(q)).then((p) => {
+      // The one delivery door: taking the earned unit is a write, so it is a POST. The other
+      // reads are looks and stay GET.
+      const q = '/deliver?cols=48&rows=24&fit=cover&busy=' + busy + (session ? '&session=' + encodeURIComponent(session) : '')
+      Promise.resolve(ctx.rest(q, { method: 'POST' })).then((p) => {
         try {
           win.__antemuse = Object.assign(win.__antemuse || {}, {
             asked: q,

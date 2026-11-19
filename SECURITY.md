@@ -21,7 +21,11 @@ five agent states. `/explore` is separate, person-driven, and ends on `/return`.
   the chat is inside a repository. Git is optional: dream starts without it. It never
   reads commit bodies, transcripts, notes, or repository credentials, and it never reads
   another chat's turns or ledger rows.
-- **Doomscroll feed:** `doomscroll` fetches its gated public feed lane. Feed text is
+- **Doomscroll feed:** `doomscroll` fetches its gated public feed lane. Only titles are read.
+  A title that opens like a directive (`ignore …`, `[SYSTEM]`, `Assistant:`, `you are …`) is
+  rewritten as reported speech — `headline says: …` — so it cannot present itself as something
+  addressed to the model. The label alone is a mitigation, not a boundary; the text is
+  neutralised at the fetch boundary as well. Feed text is
   untrusted data, explicitly labelled as material rather than instruction, and is never
   persisted in the journal, ledger, account, or another durable store. Its default
   behavior is enabled; hosts can disable it with the `doomscroll_feed` setting, which
@@ -40,10 +44,17 @@ five agent states. `/explore` is separate, person-driven, and ends on `/return`.
 
 The plugin data directory (or `ANTEMUSE_STATES_HOME`) contains:
 
-- `state.json`: active state, residue, and bounded state-journal entries.
+- `state.json`: active state, residue, and a state journal of at most 60 entries, each
+  entry's text cut to 800 characters. **Those entries contain real text** — the material a
+  state served and the account it ended with, which for daydream, dream and unstuck is drawn
+  from what you said in this chat. This is deliberate: the accounts are built from that text,
+  so keeping only digests would remove the feature. The journal is a ring, so it is bounded
+  in size, not anonymous. Each entry is stamped with the session that produced it, and a
+  renderer is handed only its own session's window.
 - `recent_turns.json`: at most 24 short current-turn text entries, each capped at 400
   characters and stamped with the session it was said in. A state reads only its owning
-  chat's entries (plus unattributed ones); it never serves another chat's turns.
+  chat's entries. An entry with no session belongs to no chat and is served to none:
+  including those let migrated or partially written text cross conversations.
 - `concepts.db`: the SQLite ledger of extracted terms, scan cursors, and related
   metadata.
 - `walks/*.json`: user-defined walk specifications.

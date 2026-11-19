@@ -24,7 +24,8 @@ from dashboard import plugin_api  # noqa: E402
 
 # The route the pane polls. `router.get` is untyped, so this is the shortest honest way to name
 # the function in a test without a type-checker argument.
-route_state = getattr(plugin_api, "state")
+# The pane's poll is a POST: delivery is a write. `GET /state` is a pure look.
+route_state = getattr(plugin_api, "deliver")
 
 HOPS = ["morris dance→sea swallow [far]", "sea swallow→thalassemia [far]",
         "thalassemia→long-horned beetle [far]", "long-horned beetle→glasshouse [far]",
