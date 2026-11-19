@@ -1576,7 +1576,12 @@ def inject(session: str | None = None) -> str | None:
             data = _load()
             active = {}
             residue = list(data.get("residue", []))
-    reports = [r for r in residue if r.get("kind") == "report"]
+    # The ending belongs to the chat that ran it, exactly as the running state does. Unfiltered,
+    # a walk taken in another session arrived here as "[YOU JUST CAME BACK …]" with its hops, and
+    # this thread was told to change approach for a walk it never took.
+    reports = [r for r in residue if r.get("kind") == "report"
+               and not (str(r.get("session") or "") and str(session or "")
+                        and str(r.get("session")) != str(session))]
     residue = [r for r in residue if r.get("kind") != "report"]
     from . import mood
     with _LOCK:
@@ -1729,7 +1734,7 @@ def _strip_footer(text: str) -> str:
     return "\n".join(lines)
 
 
-def annotate(text: str) -> str | None:
+def annotate(text: str, session: str | None = None) -> str | None:
     """transform_llm_output: make the state visible without rewriting the answer.
 
     Two states to draw: one running, one that has just ended. The ending is drawn here, in the
@@ -1741,11 +1746,24 @@ def annotate(text: str) -> str | None:
         data = _load()
         _expire(data)
         active = data.get("active")
+        # A state belongs to the chat that entered it. The footer used to be drawn on every reply
+        # on the profile, so a walk started in a CLI printed "— walking · 5 hops left" under an
+        # answer in a Discord thread that had never walked.
+        who = str(session or data.get("session_id") or "")
+        if active:
+            owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
+            if owner and who and owner != who:
+                active = None
+                ended = None
+                return None
         ended = None
         if not active:
             for entry in reversed(data.get("residue") or []):
                 if (entry.get("kind") == "report" and not entry.get("annotated")
                         and int(entry.get("turns_left") or 0) > 0):
+                    owner = str(entry.get("session") or "")
+                    if owner and who and owner != who:
+                        continue      # another chat's ending is not this reply's footer
                     ended = entry
                     break
             if ended is not None:

@@ -265,3 +265,20 @@ def test_the_session_hooks_accept_the_hosts_documented_payload():
     session.bind("s2", {"b": 2})
     ctx.hooks["on_session_delete"](session_id="s2", reason="delete", profile="default")
     assert session.take("s2") is None
+
+
+def test_a_walk_in_one_chat_does_not_annotate_another_chats_reply():
+    """The footer is the state's, not the profile's.
+
+    A walk entered in a CLI printed "— walking · 5 hops left · /return to come back" under every
+    answer in a Discord thread that had never walked, and the ending arrived there too as
+    "[YOU JUST CAME BACK …]" with hops from somebody else's route.
+    """
+    from core import engine
+    engine.enter("walk", session="chat-a", platform="discord")
+    assert engine.annotate("an answer", session="chat-b") is None, "another chat's walk is not this footer"
+    assert "walking" in (engine.annotate("an answer", session="chat-a") or "")
+    # and the ending stays with the chat that took the walk
+    engine.stop("chat-a", reason="returned")
+    assert engine.inject("chat-b") is None or "YOU JUST CAME BACK" not in (engine.inject("chat-b") or "")
+    engine.stop(reason="reset")

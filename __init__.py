@@ -446,7 +446,7 @@ def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> 
         recall.remember(response_text, "agent")
     if engine.peek():
         engine.record("agent", response_text)   # the page shows both sides
-    out = engine.annotate(response_text)
+    out = engine.annotate(response_text, session_id or engine.current_session())
     if out is None and appended:
         out = response_text          # the appended account must survive an idle state
     # The person's account of any run this turn. Counts, never candidates.
