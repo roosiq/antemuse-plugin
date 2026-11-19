@@ -3,6 +3,15 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.3 — 2026-11-18
+
+- catalog: pin 0.12.3 to the regenerated-stills commit (2026-11-18)
+- docs: regenerate the stills for the plain-language copy (2026-11-18)
+- catalog: pin 0.12.3 (2026-11-18)
+- walk: no hop to the same word; account tally follows the provider's words (2026-11-18)
+- catalog: pin the 0.12.3 entry to the plain-language commit (2026-11-18)
+- copy: plain internet language everywhere a person reads (2026-11-18)
+
 ## 0.12.2 — 2026-11-18
 
 - commands: privacy, ownership, one ending, and copy that matches the code (2026-11-18)
