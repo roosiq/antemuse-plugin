@@ -289,7 +289,11 @@ def test_a_walk_never_hops_to_the_same_word_under_a_different_synset():
         left, right = (p.strip() for p in head.split("→", 1))
         lw, rw = word(left), word(right)
         assert lw != rw, f"a hop to the same word: {line}"
-        assert rw not in stood[:-1], f"a hop back to an earlier word: {line} (stood {stood})"
+        # A restart announces itself ("picks up again after a dead end") and is the fallback for
+        # a graph with nothing fresh left. An ordinary hop carries no such excuse: it must move
+        # onto ground this walk has not already covered.
+        if "picks up again" not in line:
+            assert rw not in stood[:-1], f"a hop back to an earlier word: {line} (stood {stood})"
         if not stood or stood[-1] != lw:
             stood.append(lw)
         stood.append(rw)
@@ -328,9 +332,17 @@ def test_a_dead_end_restart_never_lands_on_ground_already_covered():
         return other if calls["n"] == 1 else None
 
     walk.graph.far_from = far
-    walk.graph.random_node = lambda relations=None: start
+    # The draws offer covered ground first and somewhere new second. A closed graph with only
+    # covered ground may honestly cycle; when a fresh node IS on offer, taking the old one is
+    # the bug — the person reads `door → rock` with rock three hops back.
+    fresh = walk.graph.node(wn.synsets("juvenile")[0].name())
+    draws = iter([start, start, fresh, fresh, fresh, fresh, fresh, fresh])
+    walk.graph.random_node = lambda relations=None: next(draws, fresh)
     lines = list(walk.step(6))
     joined = "\n".join(lines)
+    assert "picks up again after a dead end" in joined, (
+        "the forcing did not reach the restart path:\n" + joined
+    )
     assert "→ orchestration" not in joined, (
-        "the restart hopped back onto the word the walk started from:\n" + joined
+        "the restart took covered ground while a fresh node was on offer:\n" + joined
     )

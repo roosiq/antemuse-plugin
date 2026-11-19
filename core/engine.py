@@ -1001,6 +1001,18 @@ def _run_to_completion(key: str, session_id: str = "") -> str:
     """
     spec = states.spec(key)
     dose = int((spec.get("dose") or {}).get("n") or 0)
+    if key == "walk":
+        # One act, one memory of covered ground. It is kept across the calls that make up this
+        # run and cleared before the next one, so hops avoid each other without the next walk
+        # inheriting a graph it can no longer move in.
+        try:
+            from . import walks
+            active = peek() or {}
+            walks.GraphWalk(dict(walks.BUILTIN.get(str(active.get("walk") or "wander"), {}),
+                                 name=str(active.get("walk") or "wander")),
+                            walks.cursor_path()).forget_stood()
+        except Exception:  # health: BLE001 -- a walk without a cleared memory still walks
+            pass
     for _ in range(max(dose, 1) * 4):
         active = peek() or {}
         if not active or active.get("key") != key:

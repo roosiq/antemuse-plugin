@@ -573,9 +573,18 @@ class GraphWalk:
         return cur if isinstance(cur, dict) else {}
 
     def _write_cursor(self, node_id: str, prev: str, used: Optional[List[str]] = None,
-                      pairs: Optional[List[str]] = None) -> None:
+                      pairs: Optional[List[str]] = None,
+                      stood_ids: Optional[List[str]] = None,
+                      stood_words: Optional[List[str]] = None) -> None:
         data = self._cursors()
         entry = {"node": node_id, "prev": prev, "at": time.time()}
+        # The act drives one hop per call, so ground already covered has to survive the call
+        # boundary. Without this each hop began with an empty memory and the walk ping-ponged
+        # (`campaign → youth movement → campaign`), which reads as going nowhere.
+        if stood_ids:
+            entry["stood_ids"] = [s for s in dict.fromkeys(stood_ids) if s][-12:]
+        if stood_words:
+            entry["stood_words"] = [s for s in dict.fromkeys(stood_words) if s][-12:]
         if used:
             # remembering what this walk has already started from is what keeps two
             # entries in the same repository from opening on the same word
@@ -585,6 +594,24 @@ class GraphWalk:
         data[self.name] = entry
         self.cursor_path.parent.mkdir(parents=True, exist_ok=True)
         self.cursor_path.write_text(json.dumps(data))
+
+    def forget_stood(self) -> None:
+        """Start an act with a clean memory of covered ground.
+
+        The memory exists so six hops driven one call at a time still avoid each other. It must
+        not leak into the NEXT walk: carrying it across outings starved the graph until a walk
+        could not take six hops at all.
+        """
+        data = self._cursors()
+        entry = data.get(self.name)
+        if isinstance(entry, dict):
+            entry.pop("stood_ids", None)
+            entry.pop("stood_words", None)
+            data[self.name] = entry
+            try:
+                self.cursor_path.write_text(json.dumps(data))
+            except Exception:
+                pass
 
     def reset(self) -> None:
         data = self._cursors()
@@ -811,11 +838,23 @@ class GraphWalk:
                 pass
             return ""
 
-        stood: List[str] = [node["id"]]
+        # Carry the ground this walk already covered, but only while it is the same walk: a
+        # cursor from hours ago is a new outing and starts with a clean memory.
+        carried = self._read_cursor()
+        # The memory belongs to a running walk, not to the cursor forever. The act drives one
+        # hop per call and needs its hops to avoid each other; a walk asked for outside a running
+        # state (a preview, a test, a paced turn) starts from where it stands, as it always did.
+        try:
+            from . import engine as _engine
+            fresh = str((_engine.watch_state().get("active") or {}).get("key") or "") == "walk"
+        except Exception:
+            fresh = False
+        stood: List[str] = [node["id"]] + ([str(s) for s in (carried.get("stood_ids") or [])] if fresh else [])
         # WordNet has several synsets with the same word: `orchestration.n.01` and
         # `orchestration.n.02` are different nodes, so an id-only no-repeat rule happily printed
         # `orchestration → orchestration`. The person reads the word, not the id.
-        stood_labels: List[str] = [_word_of(node.get("label") or "")]
+        stood_labels: List[str] = [_word_of(node.get("label") or "")] + (
+            [str(s) for s in (carried.get("stood_words") or [])] if fresh else [])
 
         def remember(node_) -> None:
             ident = str(node_.get("id") or "")
@@ -941,11 +980,11 @@ class GraphWalk:
                                 # relaxed pass used to drop this check, and the person read
                                 # `door → rock` with rock three hops back. A short walk is
                                 # honest; a visible loop is not.
-                                # Never restart onto ground this walk already covered: the
-                                # relaxed pass used to drop this check, and the person read
-                                # `door → rock` with rock three hops back. A short walk is
-                                # honest; a visible loop is not.
-                                if drew["id"] in stood or _word_of(drew.get("label") or "") in stood_labels:
+                                # Prefer ground this walk has not covered. The relaxed pass is
+                                # the fallback for a closed graph with nothing new left: there,
+                                # cycling and saying "picks up again" is honest, stalling is not.
+                                if want_new and (drew["id"] in stood
+                                                 or _word_of(drew.get("label") or "") in stood_labels):
                                     continue
                                 restart = drew
                                 break
@@ -955,9 +994,7 @@ class GraphWalk:
                         # Last resort: a fresh movable start. The gate caught this twice — from
                         # "doddle" both restart passes exhausted and the walk stopped at hop 2.
                         fresh_start = self._movable_start()
-                        if (fresh_start is not None and fresh_start["id"] != node["id"]
-                                and fresh_start["id"] not in stood
-                                and _word_of(fresh_start.get("label") or "") not in stood_labels):
+                        if fresh_start is not None and fresh_start["id"] != node["id"]:
                             restart = fresh_start
                     if restart is None:
                         out.append(f"{node['label']} · nothing far from here — the walk stops")
@@ -1053,7 +1090,15 @@ class GraphWalk:
                                f"picks up again" + back(jumped=True) + visited(restart))
                     prev_id, node = node["id"], restart
                     continue
-            choice = pick([(r, n) for r, n in (fresh or pool)])
+            # The near step must honour the same memory as the far one: climbing to a hypernym
+            # two different words share printed `housewifery → work … loose end → work`. Prefer
+            # unstood ground, but a graph with nowhere else must still move — an avoidable repeat
+            # is the bug, not a repeat a two-node graph has no alternative to.
+            nearby = [(r, n) for r, n in (fresh or pool)]
+            unstood = [(r, n) for r, n in nearby
+                       if str(n.get("id") or "") not in stood
+                       and _word_of(n.get("label") or "") not in stood_labels]
+            choice = pick(unstood or nearby)
             if choice:
                 rel, nxt = choice
             else:
@@ -1062,7 +1107,7 @@ class GraphWalk:
                 # as `orchestration → orchestration`. A hop to yourself is not a hop.
                 spare = [(r, n) for r, n in (forward or options)
                          if str(n.get("id") or "") not in stood and n.get("id") != node["id"]
-                         and str(n.get("label") or "") not in stood_labels]
+                         and _word_of(n.get("label") or "") not in stood_labels]
                 if not spare:
                     continue
                 rel, nxt = self.rng.choice(spare)
@@ -1081,7 +1126,8 @@ class GraphWalk:
         walked_pairs = [f"{a}→{b}" for a, b in zip(stood, stood[1:])]
         self._write_cursor(node["id"], prev_id,
                            used=self._used_terms() + ([self._seed_marker.split(":", 1)[1]] if getattr(self, "_seed_marker", "") else []),
-                           pairs=(recent_pairs + walked_pairs)[-16:])
+                           pairs=(recent_pairs + walked_pairs)[-16:],
+                           stood_ids=stood, stood_words=stood_labels)
         return out
 
     def describe(self) -> Dict[str, Any]:
