@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.4 — 2026-11-18
+
+- catalog: pin 0.12.4 (2026-11-18)
+- states: no state requires a git repo (2026-11-18)
+- docs: bring TESTING, the flow diagram and the product specs up to 0.12.3 (2026-11-18)
+
 ## 0.12.3 — 2026-11-18
 
 - catalog: pin 0.12.3 to the regenerated-stills commit (2026-11-18)
