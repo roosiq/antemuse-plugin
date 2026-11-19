@@ -491,15 +491,22 @@ def state(request: Request = None, session: str | None = None,
     first successful poll. ``cols``/``rows``/``fit``/``busy``/``stills`` are still accepted so a
     pane built against the old shape is not answered with a 422; they change nothing.
     """
-    # A poll is a look, not a turn: it may show the hop the person has earned
-    # (one on entry, one per turn taken) and no more. It used to take one per
-    # poll, which spent a six-hop walk while nobody was typing.
-    try:
-        plugin().core.engine.deliver_if_due(source="pane")
-    except Exception:  # health: BLE001 -- a failed hop must not blank the pane
-        pass
     proj = projection()
     watch = plugin().core.engine.watch_state()
+    active = (watch or {}).get("active") or {}
+    owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
+    foreign = bool(session and owner and str(session) != owner)
+    # A poll is the pane's delivery door, gated by turns so it cannot outrun the person. That
+    # door belongs to the owner: a foreign poll used to both advance this chat's dose and read
+    # back its state and pick count. It now does neither.
+    if not foreign:
+        try:
+            plugin().core.engine.deliver_if_due(source="pane")
+        except Exception:  # health: BLE001 -- a failed hop must not blank the pane
+            pass
+        watch = plugin().core.engine.watch_state()
+    else:
+        watch = {**(watch or {}), "active": None}
     payload = proj.project(watch, None)
     payload["picture"] = "pane"
     try:

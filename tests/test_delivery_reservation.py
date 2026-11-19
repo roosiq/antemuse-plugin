@@ -181,3 +181,34 @@ def test_a_move_that_cannot_be_written_says_so(monkeypatch):
     monkeypatch.setattr(history, "_connect", lambda: Broken())
     with pytest.raises(Exception):
         history.mark_move("walk", 1.0, 2.0, "completed", 6)
+
+
+def test_a_foreign_poll_neither_advances_nor_reads_another_chats_state(tmp_path):
+    """The pane's poll is the owner's delivery door, not every chat's.
+
+    A poll from bob advanced alice's `served` 0 -> 1 and returned her active state with its
+    pick count. The owner's own poll still delivers the unit its turns have earned — that
+    pacing is the shipped contract — but a foreign poll now does neither.
+    """
+    import json
+    import os
+    import pathlib
+    from core import engine
+    from dashboard import plugin_api
+
+    from core import recall
+    engine.clear()
+    for line in ("the parser keeps failing on nested quotes",
+                 "the coffee shop closed after twenty years",
+                 "I want the walk to feel like wandering"):
+        recall.remember(line, session="alice")
+    engine.enter("daydream", session="alice")
+    state_file = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
+    before = state_file.read_bytes()
+
+    plugin_api.state(None, session="bob")
+    assert state_file.read_bytes() == before, "a foreign poll wrote to state.json"
+
+    foreign = plugin_api.state(None, session="bob")
+    assert not (foreign or {}).get("active"), f"bob was shown alice's state: {foreign}"
+    assert int((engine.peek() or {}).get("served") or 0) == 0, "a foreign poll spent the dose"
