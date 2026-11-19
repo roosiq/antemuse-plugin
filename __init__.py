@@ -367,7 +367,7 @@ def _pre_llm_call(platform: str = "", session_id: str = "", **kwargs: Any) -> st
     if said:
         # Every provider hands a plugin the turn it is governing, so this is the one
         # memory-ish source that is the same under hindsight, honcho, mem0 or builtin.
-        recall.remember(said, "person")
+        recall.remember(said, "person", session_id or engine.current_session())
         if engine.peek():
             engine.record("person", said)
     parts = [
@@ -443,7 +443,7 @@ def _transform(response_text: str = "", session_id: str = "", **kwargs: Any) -> 
             engine.mark_reported(who or now)
             _PENDING_REPORT = None
     if response_text:
-        recall.remember(response_text, "agent")
+        recall.remember(response_text, "agent", session_id or engine.current_session())
     if engine.peek():
         engine.record("agent", response_text)   # the page shows both sides
     out = engine.annotate(response_text, session_id or engine.current_session())

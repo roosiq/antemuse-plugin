@@ -21,9 +21,9 @@ STOP = {"a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "i
         "of", "on", "or", "that", "the", "their", "this", "to", "was", "with", "you", "your"}
 
 
-def ready(kind: str, graph_name: str = "wordnet") -> str | None:
+def ready(kind: str, graph_name: str = "wordnet", session: str | None = None) -> str | None:
     """Why a provider cannot start, before an active state is recorded."""
-    if kind == "daydream" and len(_own_turns()) < 3:
+    if kind == "daydream" and len(_own_turns(session)) < 3:
         return "empty · fewer than three recorded turns are available for two pairs"
     if kind == "doomscroll":
         from . import settings
@@ -128,10 +128,10 @@ def _words(text: str) -> set[str]:
     return {word for word in re.findall(r"[a-z]{4,}", text.lower()) if word not in STOP}
 
 
-def _own_turns() -> List[str]:
-    """Only the person's recorded local conversation turns, never a memory backend."""
+def _own_turns(session: str | None = None) -> List[str]:
+    """Only the person's recorded turns from THIS chat, never a memory backend."""
     seen, out = set(), []
-    for raw in recall.recent(recall.CAP, who="person"):
+    for raw in recall.recent(recall.CAP, who="person", session=session):
         text = _clip(raw, 160)
         if text and text not in seen:
             seen.add(text)
@@ -139,9 +139,10 @@ def _own_turns() -> List[str]:
     return out
 
 
-def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = False) -> List[Any]:
-    """Two recorded turns, what they touch, and one possibility."""
-    pool = _own_turns()
+def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = False,
+                 session: str | None = None) -> List[Any]:
+    """Two recorded turns from this chat, what they touch, and one possibility."""
+    pool = _own_turns(session)
     if len(pool) < 2:
         return ["daydream empty · fewer than two recorded turns are available"]
     skip = skip or set()
@@ -153,9 +154,16 @@ def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
             if ident in skip:
                 continue
             shared = sorted(_words(a) & _words(b))
-            touch = ", ".join(shared[:3]) if shared else "the gap between them"
-            line = (f"JOINED · memory one: {_clip(a, 96)} · memory two: {_clip(b, 96)} "
-                    f"· touch: {touch} · possibility: try treating {touch} as the subject")
+            if shared:
+                touch = ", ".join(shared[:3])
+                line = (f"JOINED · memory one: {_clip(a, 96)} · memory two: {_clip(b, 96)} "
+                        f"· touch: {touch} · possibility: try treating {touch} as the subject")
+            else:
+                # Two unrelated turns are not a connection. Calling every pair JOINED and
+                # inventing a possibility from "the gap between them" manufactured an insight
+                # the material did not support, against the state's own exit instruction.
+                line = (f"APART · memory one: {_clip(a, 96)} · memory two: {_clip(b, 96)} "
+                        f"· touch: nothing in common · possibility: none — say what the gap was")
             choices.append((ident, line))
     if not choices:
         return ["daydream empty · no unused pair remains"]
@@ -211,8 +219,13 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
             if ident in skip:
                 continue
             shared = sorted(_words(a) & _words(b))
-            bridge = ", ".join(shared[:3]) if shared else "the same unfinished shape"
-            choices.append((ident, f"connection · {project_a}: {a} ↔ {project_b}: {b} · shared: {bridge}"))
+            if shared:
+                bridge = ", ".join(shared[:3])
+                choices.append((ident, f"connection · {project_a}: {a} ↔ {project_b}: {b} "
+                                       f"· shared: {bridge}"))
+            else:
+                choices.append((ident, f"adjacent · {project_a}: {a} ↔ {project_b}: {b} "
+                                       f"· shared: nothing yet · these two have not touched"))
     if not choices:
         return ["dream empty · no unused recombination remains"]
     selected = choices[:max(1, int(steps))]
@@ -320,11 +333,22 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
     if not subjects or not edge:
         missing = "history" if not subjects else "graph edge"
         return [f"unstuck empty · {missing} is unavailable"]
-    ident = f"{subjects[0]}|{edge}"
+    # The point of being stuck is that the last change is the obvious next move and it is not
+    # working. Recommending `subjects[0]` — the newest commit, the thing just finished — told the
+    # person to continue exactly what they had done. The direction is grounded in earlier work
+    # and names what to step away from.
+    last = subjects[0]
+    earlier = next((s for s in subjects[1:] if s != last), "")
+    ident = f"{earlier or last}|{edge}"
     if ident in (skip or set()):
         return ["unstuck empty · no unused direction remains"]
-    line = (f"direction · continue the last change: {subjects[0]} · graph edge: {edge} "
-            f"· first: write the smallest test for that next change")
+    if earlier:
+        line = (f"direction · not another pass at {last} · take {earlier} from a different angle "
+                f"· graph edge: {edge} · first: write the smallest test for that different angle")
+    else:
+        line = (f"direction · only one change in history ({last}), so there is nothing earlier to "
+                f"return to · graph edge: {edge} · first: write the smallest test that approaches "
+                f"{last} from that side instead")
     result = [(ident, line)]
     return result if keyed else [line]
 

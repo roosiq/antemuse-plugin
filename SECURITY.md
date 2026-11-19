@@ -39,11 +39,15 @@ The plugin data directory (or `ANTEMUSE_STATES_HOME`) contains:
 
 - `state.json`: active state, residue, and bounded state-journal entries.
 - `recent_turns.json`: at most 24 short current-turn text entries, each capped at 400
-  characters.
+  characters and stamped with the session it was said in. A state reads only its owning
+  chat's entries (plus unattributed ones); it never serves another chat's turns.
 - `concepts.db`: the SQLite ledger of extracted terms, scan cursors, and related
   metadata.
 - `walks/*.json`: user-defined walk specifications.
 - `walk_cursor.json`: walk continuation data.
+- `delivery_trace.log`: one line per delivery decision — counters and a 12-character digest
+  of each unit's material key. No material text is written: not the person's turns, and not
+  doomscroll's untrusted feed items. Capped at 200 lines once it passes 64 KB.
 
 When a project is detected, its `.antemuse/walk_cursor.json` holds the project-local
 walk cursor. Files are created with the process's normal filesystem permission

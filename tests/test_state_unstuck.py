@@ -38,7 +38,10 @@ def test_unstuck_delivers_one_direction_from_history_and_graph(tmp_path, monkeyp
     text = engine.inject("unstuck-owner") or ""
     closing = engine.stop("unstuck-owner")
 
-    assert "continue the last change: add design boundary" in text
+    # One commit means there is nothing earlier to return to, and the direction says so rather
+    # than telling the person to continue the change they just finished.
+    assert "only one change in history (add design boundary)" in text
+    assert "continue the last change" not in text
     assert "graph edge: design → blueprint (hypernym)" in text
     assert "Tools are open in this state" in text, "tools are open unless the entry asks"
     engine.stop()
@@ -54,3 +57,22 @@ def test_unstuck_fails_at_entry_without_a_project(monkeypatch):
     out = engine.enter("unstuck", session="no-project")
 
     assert "cannot enter unstuck" in out and "unavailable" in out
+
+
+def test_unstuck_steps_away_from_the_change_just_finished(tmp_path, monkeypatch):
+    """The bug this state existed to fix: it recommended the newest commit.
+
+    `subjects[0]` is the change the person just made. Rendering it as "continue the last change"
+    told someone who is stuck to keep doing the thing that stuck them.
+    """
+    root = _repo(tmp_path)
+    (root / "README.md").write_text("design, again")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "finish design boundary"], check=True)
+    monkeypatch.chdir(root)
+    monkeypatch.setattr(sources, "_graph_edge", lambda _root: "design → blueprint (hypernym)")
+
+    line = sources.unstuck_text(1)[0]
+    assert "not another pass at finish design boundary" in line, line
+    assert "take add design boundary from a different angle" in line, line
+    assert "continue the last change" not in line, line

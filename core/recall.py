@@ -50,22 +50,35 @@ def _save(items: List[Dict[str, Any]]) -> None:
         pass  # a full disk must not cost the turn
 
 
-def remember(text: str, who: str = "person") -> None:
-    """Keep one line of the conversation. Empty or whitespace is not a turn."""
+def remember(text: str, who: str = "person", session: str = "") -> None:
+    """Keep one line of the conversation, stamped with the chat it was said in.
+
+    The ring is one file per profile, so without the stamp a daydream in one chat served
+    another chat's private turns as its material. An empty session means "nobody in
+    particular" (a caller with no session id), which is the plugin's existing rule.
+    """
     clean = " ".join(str(text or "").split())[:MAX_CHARS]
     if len(clean) < 12:
         return
     items = _load()
     if items and items[-1].get("text") == clean and items[-1].get("who") == who:
         return
-    items.append({"who": who, "text": clean, "at": time.time()})
+    items.append({"who": who, "text": clean, "at": time.time(), "session": str(session or "")})
     _save(items)
 
 
-def recent(limit: int = 6, who: str | None = None) -> List[str]:
+def recent(limit: int = 6, who: str | None = None, session: str | None = None) -> List[str]:
+    """What was said, optionally only in one chat.
+
+    `session=None` reads the whole ring (a caller that has no chat context). A session id
+    reads that chat's turns plus unattributed ones, and never another chat's.
+    """
     items = _load()
     if who:
         items = [item for item in items if item.get("who") == who]
+    if session is not None:
+        items = [item for item in items
+                 if not item.get("session") or str(item.get("session")) == str(session)]
     return [item["text"] for item in items[-limit:]]
 
 

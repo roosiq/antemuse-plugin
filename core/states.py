@@ -74,23 +74,23 @@ STATES: Dict[str, Dict] = {
         "provider": "doomscroll",
         "untrusted": True,
         "directive": (
-            "You are doomscrolling: the point is distraction from the work — social-media "
-            "stupidity, jokes, absurdity, people being funny on purpose. Read it and do not turn "
-            "it into a plan, a lesson or a research note. Professional material is not in scope; "
-            "randomness is the point; do not tidy it. "
+            "You are doomscrolling: the point is distraction from the work. Three fixed lanes "
+            "supply it — The Onion, r/BrandNewSentence, and the Hacker News front page — so an "
+            "item may be a joke, a strange sentence, or a technical headline. Take what comes; "
+            "do not turn it into a plan, a lesson or a research note, and do not tidy it. "
         ),
-        "contract": "random feed · stupidity and comedy · nothing to take away",
+        "contract": "three fixed feed lanes · distraction · nothing to take away",
         "residue": "doomscrolled: stupid feed consumed",
     },
     "dream": {
         "label": "DREAMING",
         "turns": 2,
         "dose": {"unit": "recombinations", "n": 2},
-        "waiting": "asleep · letting the day's projects touch",
+        "waiting": "asleep · letting the day's work touch",
         "after": (
-            "the dream is over. In one line: the connection you found across projects — both "
-            "sides and what they share — and whether it is worth acting on now or only noting. "
-            "Then get back to work."
+            "the dream is over. In one line: the connection you found in this project's recent "
+            "work — both sides and what they share, or the gap if they did not touch — and whether "
+            "it is worth acting on now or only noting. Then get back to work."
         ),
         "tools": [],
         "scene": "dream",
@@ -98,13 +98,14 @@ STATES: Dict[str, Dict] = {
         "provider": "dream",
         "directive": (
             "You are dreaming over the day: long, slow, unconstrained. Local git commit subjects "
-            "from the day's projects come back, and the connections between tasks are the thing "
-            "to find — the same problem solved twice, one project's blocker already cleared in "
-            "another, two repos drifting into the same design. Each line names both sides and what "
-            "they share. Nothing to rank and nothing to do with a tool here. "
+            "from the repository this chat is working in come back, and the connections between "
+            "tasks are the thing to find — the same problem solved twice, a blocker cleared by a "
+            "later change, two threads drifting into the same design. Each line names both sides "
+            "and what they share, or says plainly that they share nothing. This is thinking, not "
+            "a task: tools stay available, but there is nothing here that needs one. "
         ),
-        "contract": "the day across projects · connections between tasks",
-        "residue": "dreamed: the day connected across projects",
+        "contract": "the day in this project · connections between tasks",
+        "residue": "dreamed: the day's work connected",
     },
     "unstuck": {
         "label": "UNSTUCK",

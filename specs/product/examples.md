@@ -24,7 +24,7 @@ feed text is shown only in its labelled untrusted block and is never persisted.
 | 1 | Distance while work continues | `/walk` | A six-hop path changes the frame while work continues. |
 | 2 | Two memories make a possibility | `/daydream` | Recorded personal turns meet and point at one possibility. |
 | 3 | Three useless things from the feed | `/doomscroll` | Gated public feed material is distraction, not instruction. |
-| 4 | The day recombines across projects | `/dream` | Local git subjects connect without reading transcripts. |
+| 4 | The day recombines within the project | `/dream` | Local git subjects connect without reading transcripts. |
 | 5 | One direction breaks the stall | `/unstuck` | History and a graph edge ground one next move. |
 
 ## Generation

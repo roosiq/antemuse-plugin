@@ -98,6 +98,15 @@ def project_terms(goal: str = "", limit: int = 24) -> List[str]:
     return out
 
 
+def _reading_session() -> str | None:
+    """Whose conversation this seeding may read. None only when the engine cannot be asked."""
+    try:
+        from . import engine
+        return engine.owner_session() or None
+    except Exception:
+        return None
+
+
 def memory_terms(limit: int = 16) -> List[str]:
     """Words from what the person has actually said or stored — memory first.
 
@@ -108,7 +117,7 @@ def memory_terms(limit: int = 16) -> List[str]:
         from . import sources  # lazy: sources imports this module inside its own calls
         pool = sources.memory_pool()
     except Exception:
-        pool = list(recall.recent(8))
+        pool = list(recall.recent(8, session=_reading_session()))
     seen: List[str] = []
     for line in pool:
         for word in _words(line):
@@ -121,7 +130,7 @@ def memory_terms(limit: int = 16) -> List[str]:
 
 def conversation_terms(limit: int = 16) -> List[str]:
     seen: List[str] = []
-    for line in recall.recent(8):
+    for line in recall.recent(8, session=_reading_session()):
         for word in _words(line):
             if word not in seen:
                 seen.append(word)

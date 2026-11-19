@@ -5,6 +5,7 @@ a chat window, and a slash command has no session id to hang it on.
 """
 from __future__ import annotations
 
+import hashlib
 import inspect
 import json
 import logging
@@ -251,6 +252,17 @@ def _cap_trace(path) -> None:
         pass
 
 
+def _trace_key(key: str | None, line: Any) -> str:
+    """A delivery's unit, named by a digest so the trace holds no material.
+
+    Comparing digests across lines still answers the question the trace was added for — did this
+    turn serve a fresh unit or hand back the one it already showed — without writing the person's
+    turns or an untrusted feed headline into a second file.
+    """
+    raw = str(key or _material_key(str(line)))
+    return hashlib.sha256(raw.encode("utf-8", "replace")).hexdigest()[:12]
+
+
 def _material_key(line: str) -> str:
     """What makes two served lines the *same* material.
 
@@ -335,6 +347,12 @@ def note_pick(labels: List[str], session: str = "") -> Dict[str, Any]:
         active = data.get("active")
         if not active or active.get("key") != "explore":
             return {"ok": False, "concepts": 0, "added": 0, "reason": "not exploring"}
+        # The picks are the person's own choices in THEIR explore. Any caller that could reach
+        # POST /picks could otherwise add concepts to another chat's account, and the ending
+        # would name choices its owner never made.
+        owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
+        if owner and session and str(session) != owner:
+            return {"ok": False, "concepts": 0, "added": 0, "reason": "another session is exploring"}
         seen = active.setdefault("picks", {})
         added = 0
         for raw in labels or []:
@@ -845,7 +863,7 @@ def enter(key: str, minutes: int | None = None, walk: str | None = None,
                 graph_name = str(walks.get(str(walk).strip().lower()).graph_name)
             except Exception:
                 pass
-        why_not = sources.ready(spec_key, graph_name)
+        why_not = sources.ready(spec_key, graph_name, session=(session or current_session() or None))
         if why_not:
             return f"cannot enter {spec_key} · {why_not}"
     spec = states.spec(spec_key)
@@ -996,6 +1014,19 @@ def current_session() -> str:
     """The session the last turn came from: what `stop()` holds the account to."""
     with _LOCK:
         return str(_load().get("session_id") or "")
+
+
+def owner_session() -> str:
+    """The chat that owns the running state, or the last turn's chat when none is running.
+
+    Read by the seeding pool, which draws words from the recorded turns: without an owner it
+    seeded one chat's walk from another chat's conversation.
+    """
+    with _LOCK:
+        data = _load()
+        active = data.get("active") or {}
+        owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
+        return owner or str(data.get("session_id") or "")
 
 
 def current_origin() -> Dict[str, str]:
@@ -1249,13 +1280,24 @@ def deliver_if_due(source: str = "turn") -> int:
     # already been served, `keyed` asks for (id, line) instead of a bare line. Every other
     # provider keeps returning strings and is keyed on its text.
     try:
-        keyed = "skip" in inspect.signature(provider).parameters
+        params = inspect.signature(provider).parameters
+        keyed = "skip" in params
+        # A provider that reads the person's own turns must read THIS chat's. The ring is one
+        # file per profile: without the owner's id, a daydream served another conversation's
+        # private turns as its material.
+        wants_session = "session" in params
     except (TypeError, ValueError):
         keyed = False
+        wants_session = False
     got: list[tuple[str | None, str]] = []
     try:
         for _ in range(min(remaining, 12)):        # bounded: a provider that never fills stops
-            batch = (provider(1, skip=set(shown_before), keyed=True) if keyed else provider(1))
+            extra = {}
+            if wants_session:
+                extra["session"] = str(((active.get("origin") or {}) or {}).get("session_id")
+                                       or current_session() or "") or None
+            batch = (provider(1, skip=set(shown_before), keyed=True, **extra) if keyed
+                     else provider(1, **extra))
             if not batch:
                 break
             for item in batch:
@@ -1311,7 +1353,11 @@ def deliver_if_due(source: str = "turn") -> int:
             fh.write(f"{time.strftime('%H:%M:%S')} {source} turns={int(active.get('turns') or 0)} "
                      f"last={int(active.get('last_turn', -1))} served={served} "
                      f"got={len(lines)} fresh={len(lines) - len(repeated)} repeated={len(repeated)} · "
-                     + " || ".join(str(x)[:70] for _, x in lines) + "\n")
+                     # Keys, never material. The trace exists to show which unit a delivery
+                     # decided about; writing the lines themselves put doomscroll's untrusted
+                     # feed text on disk, which the state's whole contract forbids, and put the
+                     # person's own turns in a second file nobody was told about.
+                     + " || ".join(_trace_key(k, x) for k, x in lines) + "\n")
         _cap_trace(trace)
     except Exception:
         pass
@@ -1720,8 +1766,17 @@ def _is_footer_line(line: str) -> bool:
     if not body.startswith("—"):
         return False
     body = body.lstrip("—").strip()
-    return ("/return to come back" in body or "this turn ends it" in body
-            or " ended · " in body)
+    if ("/return to come back" in body or "this turn ends it" in body
+            or " ended · " in body):
+        return True
+    # The account the reply hook appends ("— daydream · 2 of 2 pairs · …") is this plugin's line
+    # too. It carries none of the markers above, so it survived the strip and the ending was
+    # then drawn a second time underneath it: two near-identical accounts in one reply.
+    head = body.split(" · ", 1)[0].strip().lower()
+    names = {str(spec.get("label") or "").lower() for spec in states.STATES.values()}
+    names |= {str(key).lower() for key in states.STATES}
+    names |= {"exploring", "explore"}
+    return head in names
 
 
 def _strip_footer(text: str) -> str:

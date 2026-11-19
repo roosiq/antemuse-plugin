@@ -17,7 +17,7 @@ SCENARIOS = (
     ("Distance while the work continues", "/walk", "walk"),
     ("Two memories make a possibility", "/daydream", "daydream"),
     ("Three useless things from the feed", "/doomscroll", "doomscroll"),
-    ("The day recombines across projects", "/dream", "dream"),
+    ("The day recombines within the project", "/dream", "dream"),
     ("One direction breaks the stall", "/unstuck", "unstuck"),
 )
 

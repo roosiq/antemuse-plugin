@@ -11,18 +11,18 @@ Command: `/walk`
 The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
-design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → verbal creation (n) · took its hyponym · “creating something by the use of speech and language” · ↩ 1 hop from creating by mental acts: creating by mental acts → verbal creation
-verbal creation (n) → writing (n) · took its hyponym · “the act of creating written works” · ↩ 1 hop from verbal creation: verbal creation → writing
-writing (n) → fabrication (n) · took its hyponym · “writing in a fictional form” · ↩ 1 hop from writing: writing → fabrication
-fabrication (n) → writing (n) · took its hypernym · “the act of creating written works” · ↩ 1 hop from fabrication: fabrication → writing · seen earlier today in 1 other session
-writing (n) → redaction (n) · took its hyponym · “the act of putting something in writing” · ↩ 1 hop from writing: writing → redaction
+design (n) → planning (n) · took its hyponym · “the act or process of drawing up plans or layouts for some project or enterprise” · ↩ 1 hop from design: design → planning
+planning (n) → city planning (n) · took its hyponym · “determining and drawing up plans for the future physical arrangement and condition of a co” · ↩ 1 hop from planning: planning → city planning
+city planning (n) → zoning (n) · took its meronym · “dividing an area into zones or sections reserved for different purposes such as residence ” · ↩ 1 hop from city planning: city planning → zoning
+zoning (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from zoning: zoning → division
+division (n) → separation (n) · took its hypernym · “the act of dividing or disconnecting” · ↩ 1 hop from division: division → separation
+separation (n) → disconnection (n) · took its hyponym · “the act of breaking a connection” · ↩ 1 hop from separation: separation → disconnection
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→verbal creation [hyponym] → verbal creation→writing [hyponym] → writing→fabrication [hyponym] → fabrication→writing [hypernym] → writing→redaction [hyponym]
+walk · 6 of 6 hops · design→planning [hyponym] → planning→city planning [hyponym] → city planning→zoning [meronym] → zoning→division [hypernym] → division→separation [hypernym] → separation→disconnection [hyponym]
 ```
 
 ## 2. Two memories make a possibility
@@ -33,13 +33,13 @@ The `daydream` material below is produced by its real provider:
 
 ```text
 JOINED · memory one: The report is late because the dashboard is still hard to read. · memory two: The new layout prototype still has an unclear deployment boundary. · touch: still · possibility: try treating still as the subject
-JOINED · memory one: The report is late because the dashboard is still hard to read. · memory two: The deployment notes are scattered across the project. · touch: the gap between them · possibility: try treating the gap between them as the subject
+APART · memory one: The report is late because the dashboard is still hard to read. · memory two: The deployment notes are scattered across the project. · touch: nothing in common · possibility: none — say what the gap was
 ```
 
 Account:
 
 ```text
-daydream · 2 of 2 pairs · JOINED · joined ×2
+daydream · 2 of 2 pairs · JOINED → APART · joined ×1
 ```
 
 ## 3. Three useless things from the feed
@@ -58,21 +58,21 @@ Account:
 doomscroll · 3 of 3 items · nothing to take away
 ```
 
-## 4. The day recombines across projects
+## 4. The day recombines within the project
 
 Command: `/dream`
 
 The `dream` material below is produced by its real provider:
 
 ```text
-connection · example-project: read the session's repository before reading its history ↔ example-project: gate the release on the shipped suite · shared: the same unfinished shape
-connection · example-project: read the session's repository before reading its history ↔ example-project: steady the release gate's second run · shared: the same unfinished shape
+adjacent · example-project: read the session's repository before reading its history ↔ example-project: gate the release on the shipped suite · shared: nothing yet · these two have not touched
+adjacent · example-project: read the session's repository before reading its history ↔ example-project: steady the release gate's second run · shared: nothing yet · these two have not touched
 ```
 
 Account:
 
 ```text
-dream · 2 of 2 recombinations · connection · concepts: connection, example-project, sessions, reading…
+dream · 2 of 2 recombinations · adjacent · adjacent ×2 · concepts: adjacent, example-project, sessions, reading…
 ```
 
 ## 5. One direction breaks the stall
@@ -82,11 +82,11 @@ Command: `/unstuck`
 The `unstuck` material below is produced by its real provider:
 
 ```text
-direction · continue the last change: read the session's repository before reading its history · graph edge: gate → movable barrier (hypernym) · first: write the smallest test for that next change
+direction · not another pass at read the session's repository before reading its history · take gate the release on the shipped suite from a different angle · graph edge: gate → movable barrier (hypernym) · first: write the smallest test for that different angle
 ```
 
 Account:
 
 ```text
-unstuck · 1 of 1 directions · direction · concepts: direction, continue, change, sessions…
+unstuck · 1 of 1 directions · direction · concepts: direction, pass, sessions, reading…
 ```
