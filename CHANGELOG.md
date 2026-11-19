@@ -3,6 +3,10 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.0 — 2026-11-18
+
+- walk: the command takes its six hops and comes back with the path (2026-11-18)
+
 ## 0.11.34 — 2026-11-18
 
 - state: cap the delivery trace at 200 lines (2026-11-18)
