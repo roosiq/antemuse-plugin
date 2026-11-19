@@ -3,6 +3,26 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.5 — 2026-11-19
+
+- catalog entry travels with 0.12.5 (2026-11-19)
+- 0.12.5 (2026-11-19)
+- the fallback must read the rejection the way the host writes it (2026-11-19)
+- the four open decisions, resolved (2026-11-19)
+- audit: record what was closed, what was refuted, and what needs a decision (2026-11-19)
+- docs say what the code does, and the feed names the version it is (2026-11-19)
+- a foreign poll neither spends nor reads another chat's state (2026-11-19)
+- an unattributed turn belongs to no chat, and a lost move says it was lost (2026-11-19)
+- daydream recognises the chat however the host named it (2026-11-19)
+- a subagent's task prompt is not the person's own message (2026-11-19)
+- a pick must travel named, and a poll cannot deliver into an act (2026-11-19)
+- audit: PR readiness — not ready, 14 blocking findings with evidence (2026-11-19)
+- clear the memory of the walk that is actually running, and test the act itself (2026-11-19)
+- TESTING: drive an act the way the engine drives it (2026-11-19)
+- a walk driven one hop per call keeps its memory of covered ground (2026-11-19)
+- use host.navigate, the router the SDK actually exposes (2026-11-19)
+- cockpit door works without ctx.navigate; a walk never returns to a word it stood on (2026-11-19)
+
 ## 0.12.4 — 2026-11-18
 
 - catalog: pin 0.12.4 (2026-11-18)
