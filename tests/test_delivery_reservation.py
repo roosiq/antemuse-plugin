@@ -8,6 +8,8 @@ instant path claimed nothing.
 """
 import json
 import os
+import subprocess
+import sys
 import pytest
 import pathlib
 import threading
@@ -212,3 +214,62 @@ def test_a_foreign_poll_neither_advances_nor_reads_another_chats_state(tmp_path)
     foreign = plugin_api.state(None, session="bob")
     assert not (foreign or {}).get("active"), f"bob was shown alice's state: {foreign}"
     assert int((engine.peek() or {}).get("served") or 0) == 0, "a foreign poll spent the dose"
+
+
+def test_a_restart_does_not_replay_the_item_it_already_counted(monkeypatch):
+    """The audit reported a restarted doomscroll losing its counted item. It does not.
+
+    `shown` is persisted with the state, so a fresh process skips what was already served and
+    spends the next unit. Kept as a guard: the claim was plausible and the mechanism is easy
+    to break by trimming `shown` on restore.
+    """
+    import importlib
+    import json
+    import os
+    import pathlib
+    import sys
+    from core import engine, sources
+
+    items = [("s:A", "s · alpha headline about a thing"),
+             ("s:B", "s · beta headline about another thing"),
+             ("s:C", "s · gamma headline about a third thing")]
+
+    def fake(steps=1, skip=None, keyed=False, **kw):
+        skip = skip or set()
+        out = [(i, t) for i, t in items if i not in skip][:max(1, int(steps))]
+        return out if keyed else [t for _, t in out]
+
+    monkeypatch.setitem(sources.PROVIDERS, "doomscroll", fake)
+    engine.clear()
+    engine.enter("doomscroll", session="r1")
+    engine.note_turn("r1")
+    engine.inject("r1")
+    f = pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json"
+    first = json.loads(f.read_text())["active"]
+    assert first["served"] == 1 and first["shown"] == ["s:A"], first
+
+    # A real restart: a fresh interpreter, where the file is all that survives. Purging
+    # core.* from this process's sys.modules would poison every later test instead.
+    child = """
+import sys
+sys.path.insert(0, %r)
+from core import engine, sources
+items = [("s:A", "s · alpha headline about a thing"),
+         ("s:B", "s · beta headline about another thing"),
+         ("s:C", "s · gamma headline about a third thing")]
+def fake(steps=1, skip=None, keyed=False, **kw):
+    skip = skip or set()
+    out = [(i, t) for i, t in items if i not in skip][:max(1, int(steps))]
+    return out if keyed else [t for _, t in out]
+sources.PROVIDERS["doomscroll"] = fake
+engine.note_turn("r1")
+sys.stdout.write(engine.inject("r1") or "")
+""" % str(pathlib.Path(__file__).resolve().parents[1])
+    proc = subprocess.run([sys.executable, "-c", child], capture_output=True, text=True,
+                          timeout=120, env={**os.environ})
+    assert proc.returncode == 0, proc.stderr
+    block = proc.stdout
+    after = json.loads(f.read_text())["active"]
+    assert after["served"] == 2, after
+    assert after["shown"] == ["s:A", "s:B"], after
+    assert "beta" in block and "alpha" not in block, block

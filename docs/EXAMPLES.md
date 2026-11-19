@@ -11,18 +11,18 @@ Command: `/walk`
 The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
-design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → conceptualization (n) · took its hyponym · “inventing or contriving an idea or explanation and formulating it mentally” · ↩ 1 hop from creating by mental acts: creating by mental acts → conceptualization
-conceptualization (n) → approach (n) · took its hyponym · “ideas or actions intended to deal with a problem or situation” · ↩ 1 hop from conceptualization: conceptualization → approach
-approach (n) → avenue (n) · took its hyponym · “a line of approach” · ↩ 1 hop from approach: approach → avenue
-avenue (n) → approach (n) · took its hypernym · “ideas or actions intended to deal with a problem or situation” · ↩ 1 hop from avenue: avenue → approach · seen earlier today in 1 other session
-approach (n) → conceptualization (n) · took its hypernym · “inventing or contriving an idea or explanation and formulating it mentally” · ↩ 1 hop from approach: approach → conceptualization · seen earlier today in 1 other session
+design (n) → planning (n) · took its hyponym · “the act or process of drawing up plans or layouts for some project or enterprise” · ↩ 1 hop from design: design → planning
+planning (n) → city planning (n) · took its hyponym · “determining and drawing up plans for the future physical arrangement and condition of a co” · ↩ 1 hop from planning: planning → city planning
+city planning (n) → zoning (n) · took its meronym · “dividing an area into zones or sections reserved for different purposes such as residence ” · ↩ 1 hop from city planning: city planning → zoning
+zoning (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from zoning: zoning → division
+division (n) → separation (n) · took its hypernym · “the act of dividing or disconnecting” · ↩ 1 hop from division: division → separation
+separation (n) → withdrawal (n) · took its hyponym · “the act of ceasing to participate in an activity” · ↩ 1 hop from separation: separation → withdrawal
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→conceptualization [hyponym] → conceptualization→approach [hyponym] → approach→avenue [hyponym] → avenue→approach [hypernym] → approach→conceptualization [hypernym]
+walk · 6 of 6 hops · design→planning [hyponym] → planning→city planning [hyponym] → city planning→zoning [meronym] → zoning→division [hypernym] → division→separation [hypernym] → separation→withdrawal [hyponym]
 ```
 
 ## 2. Two memories make a possibility

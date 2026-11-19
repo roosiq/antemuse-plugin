@@ -45,13 +45,17 @@ Vocabulary used below:
 | pane | desktop | label, `served of n unit`, ending line for two turns, trail/path when the state carries one |
 | CLI/TUI | terminal | the same entry line and account, no palette, no legend, no countdown |
 
-**Pacing and the ending.** Delivery is one unit per turn — `turns`, not calls.
-A single user message makes several model calls, each one calling `inject()`, and each call
-used to deliver, so a six-hop walk could be spent inside one message in about three seconds:
-the countdown never ticked and the dose measured the tool loop instead of the conversation. A
-pane poll may show one unit more than the person has earned by talking, never more.
+**Pacing and the ending.** `/walk` is an **act**: it takes all six hops inside the command
+call that asked for it and returns the trail, so it needs no further turns and no typing. The
+other four states are paced: delivery is one unit per turn — `turns`, not calls. A single user
+message makes several model calls, each one calling `inject()`, and each call used to deliver,
+so a paced state could be spent inside one message in about three seconds: the countdown never
+ticked and the dose measured the tool loop instead of the conversation. The owner's pane poll
+may show one unit more than the person has earned by talking, never more; a foreign poll
+neither delivers nor reads the state.
 
-The turn that receives the last unit closes the state **inside its own block**: the block says
+For a paced state, the turn that receives the last unit closes it **inside its own block**: the
+block says
 `[STATE: <LABEL> · 6 of 6 <unit>, and this is the last one — it ends after this turn]`, carries
 that last unit's material, and is followed by `[YOU JUST CAME BACK — …]` with the account. It
 used to be built first and closed after, so the turn that spent the last hop still read as a

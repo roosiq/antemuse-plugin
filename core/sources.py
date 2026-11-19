@@ -5,6 +5,7 @@ import importlib.util
 import random
 import re
 import subprocess
+import pathlib
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -268,8 +269,21 @@ def _strip_xml(text: str) -> str:
     return " ".join(re.sub(r"<[^>]+>", "", text or "").split())
 
 
+def _user_agent() -> str:
+    """Name the version we actually are. A hardcoded one went stale at 0.11 and stayed there."""
+    try:
+        import re as _re
+        manifest = pathlib.Path(__file__).resolve().parents[1] / "plugin.yaml"
+        m = _re.search(r'^version:\s*"?([0-9][^"\s]*)"?', manifest.read_text(), _re.M)
+        if m:
+            return f"antemuse/{m.group(1)}"
+    except Exception:  # health: BLE001 -- a feed fetch must not fail over its own name
+        pass
+    return "antemuse"
+
+
 def _fetch_feed(url: str, limit: int = 12) -> List[Dict[str, str]]:
-    request = urllib.request.Request(url, headers={"User-Agent": "antemuse/0.11"})
+    request = urllib.request.Request(url, headers={"User-Agent": _user_agent()})
     with urllib.request.urlopen(request, timeout=8) as response:
         body = response.read().decode("utf-8", "replace")
     source = url.split("/")[2]

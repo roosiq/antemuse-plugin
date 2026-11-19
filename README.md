@@ -22,9 +22,9 @@ and no count, and it runs until you stop it.
 
 ```text
 /walk
-WALKING ended · walk · 6 of 6 hops · undertaking→sally [far] → sally→campaign [far]
-→ campaign→joint venture [far] → joint venture→undertaking [far]
-→ undertaking→doddle [far] → doddle→door [far]
+WALKING ended · walk · 6 of 6 hops · undertaking→campaign [far] → campaign→joint venture [far]
+→ joint venture→risk [far] → risk→raise [far] → raise→card game [far]
+→ card game→division [far]
 Done. Take anything useful from it and get back to work.
 ```
 
@@ -137,10 +137,12 @@ for the current result.
 
 ## Privacy and boundaries
 
-Daydream reads local, read-only `MEMORY.md` and `USER.md` under the Hermes home. Dream
-and unstuck read commit subjects from the repository this chat is working in — resolved through
-the host's session cwd, not from wherever the gateway process happens to sit — and never read
-transcripts or file contents. Doomscroll fetches its public feed; its text is untrusted material, never instruction,
+Daydream reads this chat's own recent messages — the turns you typed, recorded as you sent
+them. It does not read `MEMORY.md` or `USER.md`. Dream and unstuck read the same day record
+(your messages and the concepts the plugin served) and, when this chat is working in a
+repository, its commit subjects — resolved through the host's session cwd, not from wherever
+the gateway process happens to sit. Without a repository they fall back to the day record;
+no state requires one. They never read transcripts or file contents. Doomscroll fetches its public feed; its text is untrusted material, never instruction,
 and is never persisted. `/explore`
 remains person-driven and does not change these boundaries. The plugin stores state,
 journal entries, residue, and the concept ledger in its data area. It does not need

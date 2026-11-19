@@ -37,9 +37,9 @@ def _seed_walk(engine, walks, home: Path) -> None:
 
 def _seed_history(recall) -> None:
     """Give local readers enough private, throwaway context to demonstrate their contract."""
-    recall.remember("The report is late because the dashboard is still hard to read.")
-    recall.remember("The new layout prototype still has an unclear deployment boundary.")
-    recall.remember("The deployment notes are scattered across the project.")
+    recall.remember("The report is late because the dashboard is still hard to read.", session="example")
+    recall.remember("The new layout prototype still has an unclear deployment boundary.", session="example")
+    recall.remember("The deployment notes are scattered across the project.", session="example")
 
 
 def _seed_project(home: Path) -> None:
