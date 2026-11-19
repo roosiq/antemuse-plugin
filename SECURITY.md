@@ -51,8 +51,10 @@ The plugin data directory (or `ANTEMUSE_STATES_HOME`) contains:
   so keeping only digests would remove the feature. The journal is a ring, so it is bounded
   in size, not anonymous. Each entry is stamped with the session that produced it, and a
   renderer is handed only its own session's window.
-- `recent_turns.json`: at most 24 short current-turn text entries, each capped at 400
-  characters and stamped with the session it was said in. A state reads only its owning
+- `recent_turns.json`: at most 24 short current-turn text entries per chat, for the last 8
+  chats (192 rows overall), each capped at 400 characters and stamped with the session it was
+  said in. The quota is per chat because one file serves the whole profile: a single busy
+  conversation used to evict every other chat's material. A state reads only its owning
   chat's entries. An entry with no session belongs to no chat and is served to none:
   including those let migrated or partially written text cross conversations.
 - `concepts.db`: the SQLite ledger of extracted terms, scan cursors, and related

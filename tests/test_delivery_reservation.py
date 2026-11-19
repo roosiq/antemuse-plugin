@@ -372,3 +372,22 @@ def test_the_owner_get_is_a_look_and_the_post_is_the_door():
 
     plugin_api.deliver(None, session="door-owner")
     assert int((engine.peek() or {}).get("served") or 0) == 1, "the POST did not take the unit"
+
+
+def test_a_busy_chat_cannot_starve_another_chats_material():
+    """The ring is one file per profile, so a global cap lets one chat evict every other's.
+
+    Measured live: this Discord conversation held 18 of 24 rows and the desktop chat was left
+    with one person turn, so /daydream refused there with "need at least 3 messages from you".
+    The cap has to be per chat, with a bound on how many chats are kept.
+    """
+    from core import recall
+
+    recall.clear() if hasattr(recall, "clear") else None
+    for i in range(3):
+        recall.remember(f"quiet chat thought number {i} about the parser", session="quiet")
+    for i in range(60):
+        recall.remember(f"loud chat line number {i} filling the whole ring", session="loud")
+    mine = recall.recent(6, who="person", session="quiet")
+    assert len(mine) >= 3, f"the loud chat evicted the quiet one: {mine}"
+    assert all("quiet chat" in t for t in mine), mine
