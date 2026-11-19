@@ -2,15 +2,16 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: ffe8b1d6d8c77bc7da4972837efa0bcd6c54216c
+sha: 6bba3f104dfc21ac9d16461db1c0f2798d5ec088
 description: 'Five short agent states, one at a time: walk, daydream, doomscroll, dream, unstuck. /walk
   takes 6 hops across the concept map and comes back with the path while your work keeps going. /daydream
   puts two things you said side by side. /doomscroll pulls 3 posts from public feeds. /dream mixes up
-  your recent commits. /unstuck suggests one next move from your commits and the map. /explore is the
-  map you fly yourself. No model calls on the state path. What it reads: daydream reads this chat''s own
-  recent messages, dream and unstuck read local git commit subjects only, doomscroll feed text is untrusted
-  and never saved. A read-only scan of the last 14 days of sessions is controlled by the `session_scan`
-  setting.'
+  your day. /unstuck suggests one next move from your day and the map. /explore is the map you fly yourself.
+  No model calls on the state path. What it reads: daydream and dream read this chat''s own recent messages
+  and the concepts it was served, dream also reads local git commit subjects when the chat is in a repo,
+  unstuck reads the same day record, and both use local git commit subjects only when the chat is in a
+  repo, doomscroll feed text is untrusted and never saved. A read-only scan of the last 14 days of sessions
+  is controlled by the `session_scan` setting.'
 maintainer: roosiq
 tier: community
 category: desktop
@@ -42,9 +43,9 @@ known_issues:
   path, so the pane is expected to work but is unverified there.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/ffe8b1d6d8c77bc7da4972837efa0bcd6c54216c/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/6bba3f104dfc21ac9d16461db1c0f2798d5ec088/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/ffe8b1d6d8c77bc7da4972837efa0bcd6c54216c/docs/screenshots/pane-walk.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/ffe8b1d6d8c77bc7da4972837efa0bcd6c54216c/docs/screenshots/cockpit.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/ffe8b1d6d8c77bc7da4972837efa0bcd6c54216c/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/ffe8b1d6d8c77bc7da4972837efa0bcd6c54216c/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6bba3f104dfc21ac9d16461db1c0f2798d5ec088/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6bba3f104dfc21ac9d16461db1c0f2798d5ec088/docs/screenshots/cockpit.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6bba3f104dfc21ac9d16461db1c0f2798d5ec088/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/6bba3f104dfc21ac9d16461db1c0f2798d5ec088/docs/screenshots/blocked-tool.png
