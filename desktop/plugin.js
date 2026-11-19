@@ -2426,10 +2426,8 @@ function createCockpit({ ctx, el, callbacks }) {
     onName(label, source)
   }
 
-  // What the person shot is the only material /explore produces, so it is filed with the
-  // plugin instead of dying with this pane. Only the delta goes over — posting the whole
-  // cumulative list on every hit would multiply-count the same concept — and the backend
-  // ignores the whole thing unless an explore is open, so shooting while idle is free.
+  // /explore's only material, filed rather than dying here. Only the delta goes over: the
+  // whole cumulative list would multiply-count the same concept.
   const posted = Object.create(null)
   let pickTimer = 0
   function flushPicks() {
@@ -2443,7 +2441,9 @@ function createCockpit({ ctx, el, callbacks }) {
     try {
       // Same rule as a verdict: the packaged app cannot reach the gateway with a
       // relative fetch from a file:// origin, so the host's REST door posts it.
-      const payload = { picks: batch }
+      // A pick is the owner's choice, so it travels named; an unnamed one is refused.
+      const sid = host && host.state && host.state.focusedSessionId
+      const payload = { picks: batch, session: String((sid && sid.get ? sid.get() : sid) || '') }
       if (ctx && typeof ctx.rest === 'function') {
         Promise.resolve(ctx.rest('/picks', { method: 'POST', body: payload })).catch(() => {})
       } else if (typeof win.fetch === 'function') {

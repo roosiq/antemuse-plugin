@@ -351,8 +351,12 @@ def note_pick(labels: List[str], session: str = "") -> Dict[str, Any]:
         # POST /picks could otherwise add concepts to another chat's account, and the ending
         # would name choices its owner never made.
         owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
-        if owner and session and str(session) != owner:
-            return {"ok": False, "concepts": 0, "added": 0, "reason": "another session is exploring"}
+        if owner and str(session or "") != owner:
+            # An unnamed caller is not the owner. The guard used to require a session before it
+            # compared, so an empty one walked through — and the pane shipped `{picks: batch}`
+            # with no session, which made the normal client path the bypass.
+            return {"ok": False, "concepts": 0, "added": 0,
+                    "reason": "another session is exploring" if session else "no session"}
         seen = active.setdefault("picks", {})
         added = 0
         for raw in labels or []:

@@ -49,7 +49,7 @@ def test_the_cockpit_body_files_picks_and_the_pane_counts_them():
     client = _client()
 
     posted = client.post("/api/plugins/antemuse/picks",
-                         json={"picks": ["bookshelf", "bookshelf", "legacy"]})
+                         json={"picks": ["bookshelf", "bookshelf", "legacy"], "session": "s-api"})
     assert posted.status_code == 200, posted.text
     assert posted.json() == {"ok": True, "concepts": 2, "added": 3}
 
@@ -72,7 +72,7 @@ def test_an_explore_survives_the_pane_polling_it():
 def test_picks_stop_being_recorded_once_the_explore_ends():
     assert "can't start" not in engine.enter("explore", session="s-api")
     client = _client()
-    client.post("/api/plugins/antemuse/picks", json={"picks": ["bookshelf"]})
+    client.post("/api/plugins/antemuse/picks", json={"picks": ["bookshelf"], "session": "s-api"})
     engine.stop(session_id="s-api")
 
     late = client.post("/api/plugins/antemuse/picks", json={"picks": ["late"]})

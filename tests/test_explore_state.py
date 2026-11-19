@@ -43,7 +43,7 @@ def test_picks_are_ignored_unless_explore_is_running():
 
 def test_picks_are_counted_and_named_on_return():
     _enter()
-    engine.note_pick(["bookshelf", "bookshelf", "legacy"])
+    engine.note_pick(["bookshelf", "bookshelf", "legacy"], session="s-explore")
     assert engine.peek()["picks"]["bookshelf"] == 2
     said = engine.stop(session_id="s-explore")
     assert "bookshelf ×2" in said and "legacy ×1" in said
@@ -51,7 +51,7 @@ def test_picks_are_counted_and_named_on_return():
 
 def test_explore_surfaces_never_claim_a_countdown():
     _enter()
-    engine.note_pick(["bookshelf"])
+    engine.note_pick(["bookshelf"], session="s-explore")
     assert "0/0" not in engine.status_line()
     assert "running · you stop it" in (engine.annotate("hello") or "")
 
@@ -60,7 +60,7 @@ def test_the_pane_route_files_picks():
     from dashboard import plugin_api
 
     _enter()
-    out = plugin_api.picks({"picks": ["bookshelf", "bookshelf", "legacy"]})
+    out = plugin_api.picks({"picks": ["bookshelf", "bookshelf", "legacy"], "session": "s-explore"})
     assert out["ok"] and out["added"] == 3 and out["concepts"] == 2
     with pytest.raises(Exception):
         plugin_api.picks({"picks": "bookshelf"})
