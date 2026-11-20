@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.13 — 2026-11-19
+
+- short turns are material, and the newest turn is the one called last (2026-11-19)
+- three declines in a row were two bugs, not the decline branch doing its job (2026-11-19)
+
 ## 0.12.12 — 2026-11-19
 
 - states advance and end without opening the panel (2026-11-19)
