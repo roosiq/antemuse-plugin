@@ -174,35 +174,44 @@ person ends it early.
 
 ## 6 · `unstuck` — UNSTUCK
 
-**Inputs.** Entry: `/unstuck`. Dose `{directions, 1}`; turns 3; tools *`read_file`, `search_files`*.
-Material: one recommendation resting on (a) what has been done — history — and (b) an adjacent concept
-the graph says nothing here has touched.
+**Inputs.** Entry: `/unstuck`. Dose `{moves, 1}`; turns 3; tools *`read_file`, `search_files`*.
+Material: one next move resting on (a) this chat's own day — its recorded turns, then the concepts
+the ledger served it, then commit subjects when the chat happens to be in a repository — and (b) one
+unused edge from the concept map over concepts the person actually has. **No repository is required.**
 
 **Outputs.**
 
-- Entry: `UNSTUCK · 1 direction · one recommendation · from history and the concept graph · /return ends it early`
-- Block: `[STATE: UNSTUCK · 0 of 1 directions]`, directive ("Recommend ONE new thing … a menu moves the
-  decision back to the person, which is what this state exists to prevent"), `Tools open here: read_file,
-  search_files. /return ends it.`
-- Material: one line `  · direction · continue the last change: <commit subject> · graph edge: <a> → <b>
-  (<relation>) · first: write the smallest test for that next change` — the subject comes from **the
-  repository the calling session is working in**, the edge from the concept ledger over concepts the
-  person actually has (folder terms are the last resort, and resolve to nothing in WordNet)
-- Closing account: `UNSTUCK ended · unstuck · 1 of 1 directions · direction · concepts: direction,
-  continue, change, sessions…` — the labels behind the direction, from the ledger's served rows
-- Closing instruction: restate the direction in one sentence, its first move, and stop — do not plan,
-  do not offer alternatives.
-- Residue: `[RESIDUE: unstuck · 1 of 1 directions]`.
-- Pane: label, `1 of 1 directions`, the adjacent concept as the anchor.
+- Entry: `UNSTUCK · 1 move · 1 next move · from your day and the map · /return to stop`
+- Block: `[STATE: UNSTUCK · 0 of 1 moves]`, the directive, `Tools open here: read_file, search_files.
+  /return ends it.`
+- Material, when the day supports a move: `next move · skip another pass at <last> · try <earlier> a
+  different way · map link: <a> → <b> (<relation>) · first: write the smallest test for that different
+  way`. `last` and `earlier` are the two most recent things from the day; the sentence shape is fixed
+  and only those two nouns change.
+- Material, when it does not: `no move to suggest · the map link is real (<a> → <b> (<relation>)) but
+  one slot held a command you ran, not an attempt to vary · say what you were trying and what went
+  wrong, then ask again`. A command paste in either slot is not an attempt, and advising the person
+  to install a tarball "a different way" and write a test for it is busywork. `both slots` replaces
+  `one slot` when neither is usable.
+- Ending: the whole dose is delivered on entry, so the state **ends on the poll that finds it
+  complete** — it does not wait for another message. A pane delivery records that the person saw the
+  dose (`pane_seen`); a state with units still owed keeps waiting for turns.
+- Closing account: `UNSTUCK ended · unstuck · 1 of 1 moves · next move · concepts: tried, caching,
+  parser, results…` — concept-sized terms **declared by the provider** from the person's own material
+  plus the map edge's endpoints, never words mined out of the rendered sentence, and never tokens
+  from a pasted command.
+- Closing instruction: `[YOU JUST CAME BACK — the suggestion stands. Say it in one line with the first
+  move, then make that move. If your day and the map did not support a suggestion, say so instead of
+  making one up.]`
+- Residue: `unstuck · 1 of 1 moves · next move · concepts: …`.
+- Pane: label, `1 of 1 moves`, the map edge as the anchor.
 
-**Failures.** Refused at entry, before any state is recorded, with the reason named:
-`cannot enter unstuck · unavailable · no local project repository is available` (the session is not in a
-repository), `cannot enter unstuck · empty · local git history is unavailable` (a repository with no
-commits in the last 24 hours), `cannot enter unstuck · unavailable · the concept map has no edge to point
-at yet` (no ledger concepts). `returned` when the person ends it early.
+**Failures.** Refused at entry, before any state is recorded: `unstuck: nothing to go on yet · say
+what you are working on, then try again` (no material) and `unstuck: the map has no links to point at
+yet` (no usable edge). `unstuck: no new move left` when this pair was already suggested. The
+`no move to suggest` line above is **not** a failure: the state runs, delivers, and ends `complete`
+while honestly declining to invent a move. `returned` when the person ends it early.
 
-**Acceptance.** `tests/test_state_unstuck.py`: exactly one direction; it names both grounds; a menu is a
-failure (assert a single recommendation string); no `seed=` or graph id in the account.
 
 ---
 

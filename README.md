@@ -95,6 +95,20 @@ ln -s ~/antemuse-plugin ~/.hermes/plugins/antemuse
 hermes plugins enable antemuse
 ```
 
+From a release tarball, on any platform including Windows:
+
+```
+tar -xzf antemuse-<version>.tar.gz
+cd antemuse-<version>
+python scripts/install.py
+```
+
+`scripts/install.py` is pure standard library — no bash, no rsync, no symlinks. It copies the
+plugin into the active Hermes home, enables it, and warns rather than aborting when the CLI is
+not on `PATH`. On Windows the launcher is often `hermes.cmd`, which `CreateProcess` cannot
+resolve by name; the installer resolves it through `shutil.which`, which honours `PATHEXT`.
+The symlink route above is the POSIX developer path and needs Developer Mode on Windows.
+
 The plugin needs `nltk` and the WordNet corpus for walks. `plugin.yaml` declares the
 Python dependency; install WordNet for the interpreter Hermes uses:
 

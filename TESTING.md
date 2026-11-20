@@ -98,9 +98,13 @@ cd /tmp/pkgcheck/antemuse-<version> && \
 ```
 
 The extracted package has no `.git` and no `docs/EXAMPLES.md` regeneration context, so
-git-dependent tests are the ones that break there first. Expect roughly 650 passed and
-20 skipped in the package against roughly 920 passed and 6 skipped in the checkout; the
-difference is the tests that need repository state or a browser.
+git-dependent tests are the ones that break there first. Measured at 0.12.9: **720 passed,
+12 skipped** in the package against **988 passed, 1 skipped** in the checkout; the difference
+is the tests that need repository state or a browser.
+
+A test that reads this checkout's real commit subjects is not testing the plugin, it is testing
+whatever was committed last. Supply the material and patch the git seam (`sources.projects`,
+`sources._recent_work`) instead. Two defects of exactly that kind were found at 0.12.8.
 
 ## Where it writes
 

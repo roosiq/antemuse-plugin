@@ -11,7 +11,10 @@ account and one `moves` ledger row.
 `/walk` is an **act**: the command takes its six hops inside the call that asked for it,
 closes the state, and answers with the path. Nothing is left running and no further
 message is needed. The other four states are paced by the conversation, one unit per
-turn, because their material is something the person reacts to.
+turn, because their material is something the person reacts to. A state whose whole dose is
+delivered on entry — `/unstuck`, one move — ends on the poll that finds it complete: the person
+has already seen everything it had to give, so it does not wait for another message. A pane
+delivery records that the person saw it; a state with units still owed keeps waiting.
 
 `/explore` is not an agent state. It remains a person-driven cockpit mode: it has no
 provider or dose, the person selects concepts, and only `/return` ends it.
@@ -37,6 +40,16 @@ lines a person reads, not internal states:
 | `/dream` | `can't start dream · nothing from today yet · say a few things in this chat or run a state first` |
 | `/unstuck` | `… nothing to go on yet · say what you are working on, then try again` · `… the map has no links to point at yet` |
 
+`/unstuck` can also decline **after** entry, from the provider, when the material cannot support
+a suggestion. Its sentence is a fixed shape with two nouns in it, so a noun that is something
+the person *ran* rather than *attempted* makes nonsense ("install the tarball a different way,
+write a test for it"). When either slot holds a command paste it keeps the real map link and
+says so instead of inventing a move:
+
+```
+no move to suggest · the map link is real (imagination → creativity (hypernym)) but one slot held a command you ran, not an attempt to vary · say what you were trying and what went wrong, then ask again
+```
+
 "Which repository" means **the repository the calling session is working in**, resolved through the
 host's `ctx.session_cwd()`, then `ANTEMUSE_PROJECT_ROOT`, then `TERMINAL_CWD`, then the process cwd. The
 host process (gateway, desktop main) usually sits in the operator's home, so a plugin that read the
@@ -56,6 +69,13 @@ A state whose directive says there is nothing to do with a tool is describing th
 enforcing a policy; only `block: true` closes tools.
 
 ## No state requires a repository
+
+The concept labels a state names are **declared by its provider**, not mined out of the sentence
+it rendered. Mining the rendered line recorded the template's own words — `shared`, `connect`,
+`skip`, `pass` — as the person's concepts. Providers declare concept-sized terms from the
+person's own material; a pasted command contributes none, because a filename fragment is not
+something a reader would recognise. Pairs are ordered by coverage, so a two-pair dose compares
+different things instead of anchoring twice on the same left side.
 
 Git is optional enrichment, never a condition of entry. `/dream` and `/unstuck` read this chat's
 own day — its recorded messages, then the concepts the ledger served it — and use commit subjects

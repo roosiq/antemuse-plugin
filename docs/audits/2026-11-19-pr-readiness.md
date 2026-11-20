@@ -257,3 +257,40 @@ text is not persisted and the pane has no `innerHTML` path. The only runtime `su
 and `urllib` uses are in `core/sources.py`, both with `timeout=8`, git via an argv list, no
 `shell=True`, `eval`, `exec` or pickle. The cockpit routing tests have teeth: the pane test
 deletes `ctx.navigate` and the palette test asserts the observable route.
+## Resolution log — 0.12.5 through 0.12.9
+
+The blocking findings above are closed. What landed after the audit, with the evidence:
+
+- `4ee49e7` — the four open decisions. Journal retention measured and disclosed (60 entries × 800
+  chars, real text, ring, per-chat); the audit's "unbounded journal" claim was **refuted** by
+  measurement. Ownership reversed to strictly-owned: a foreign enter is refused, because
+  supersede was the way around the bystander refusal in `stop()`. Feed titles defanged to
+  reported speech at the fetch boundary. Delivery moved to `POST /deliver`; `GET /state` is a
+  pure look.
+- `1d5c152` — the old-host fallback must read the rejection the way the host writes it. The host
+  rejects with a plain string, so `e.message` was undefined and the 404 test rethrew. The harness
+  stub now rejects a string too, or the fallback passes in the stub and fails in the app.
+- `ebb3b91` — the recall quota is per chat (24 rows × 8 chats), not global. One busy conversation
+  held 18 of 24 rows and starved every other chat, so `/daydream` was unreachable in the app even
+  after the id fix. Proven live afterwards.
+- `5660c8c`, `8fbfe4e` — concepts are declared by the provider, concept-sized, from the person's
+  own material. The engine had been mining the rendered sentence, so the template's words
+  (`shared`, `connect`, `skip`, `pass`) became the person's concepts.
+- `a429827` — pairs ordered by coverage in both `/dream` and `/daydream`; a command paste
+  contributes no concepts.
+- 0.12.9 — `/unstuck` can decline when a slot holds something the person ran rather than
+  attempted, and a fully delivered dose ends on the poll that finds it complete.
+
+Two test-integrity defects were found while verifying the above, both mine, both fixed: a test
+that read this checkout's real commit subjects as its material (so its result depended on the
+last commit message), and a self-end assertion reading `watch_state()`, which has no `key` field
+and therefore passed regardless. The walk-dose test's `assert "min" not in line` matched the
+whole trail and failed at random on words like `feminist`; it now matches a duration token.
+
+Measured at 0.12.9: checkout **988 passed, 1 skipped**; extracted package **720 passed,
+12 skipped**; harness **15 properties PASS**; `examples --check` ok.
+
+Still open, named rather than hidden: the `/unstuck` suggestion is a fixed sentence shape with two
+nouns in it, so with two real attempts the advice is still the same scaffold. `/daydream`'s account
+names no concepts (`_concepts_said` is called only for `dream` and `unstuck`). Windows behaviour is
+verified by the operator's own runs, not by CI here.
