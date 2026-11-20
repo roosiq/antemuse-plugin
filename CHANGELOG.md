@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.9 — 2026-11-19
+
+- unstuck can decline, and a delivered dose ends itself (2026-11-19)
+- unstuck can decline, and a delivered dose ends on its own (2026-11-19)
+
 ## 0.12.8 — 2026-11-19
 
 - the walk dose test checks for a duration, not the letters 'min' (2026-11-19)
