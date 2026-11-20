@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.10 — 2026-11-19
+
+- pair coverage survives the one-unit-per-turn delivery path (2026-11-19)
+- coverage has to survive one unit per turn, which is how a dose is actually delivered (2026-11-19)
+- docs catch up with 0.12.5-0.12.9 before the PR (2026-11-19)
+
 ## 0.12.9 — 2026-11-19
 
 - unstuck can decline, and a delivered dose ends itself (2026-11-19)
