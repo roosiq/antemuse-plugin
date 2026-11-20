@@ -11,18 +11,18 @@ Command: `/walk`
 The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
-design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → formation (n) · took its hyponym · “creation by mental activity” · ↩ 1 hop from creating by mental acts: creating by mental acts → formation
-formation (n) → affixation (n) · took its hyponym · “formation of a word by means of an affix” · ↩ 1 hop from formation: formation → affixation
-affixation (n) → prefixation (n) · took its hyponym · “formation of a word by means of a prefix” · ↩ 1 hop from affixation: affixation → prefixation
-prefixation (n) → affixation (n) · took its hypernym · “formation of a word by means of an affix” · ↩ 1 hop from prefixation: prefixation → affixation · seen earlier today in 1 other session
-affixation (n) → suffixation (n) · took its hyponym · “formation of a word by means of a suffix” · ↩ 1 hop from affixation: affixation → suffixation
+design (n) → planning (n) · took its hyponym · “the act or process of drawing up plans or layouts for some project or enterprise” · ↩ 1 hop from design: design → planning
+planning (n) → city planning (n) · took its hyponym · “determining and drawing up plans for the future physical arrangement and condition of a co” · ↩ 1 hop from planning: planning → city planning
+city planning (n) → zoning (n) · took its meronym · “dividing an area into zones or sections reserved for different purposes such as residence ” · ↩ 1 hop from city planning: city planning → zoning
+zoning (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from zoning: zoning → division
+division (n) → subdivision (n) · took its hyponym · “the act of subdividing” · ↩ 1 hop from division: division → subdivision
+subdivision (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from subdivision: subdivision → division · seen earlier today in 1 other session
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→formation [hyponym] → formation→affixation [hyponym] → affixation→prefixation [hyponym] → prefixation→affixation [hypernym] → affixation→suffixation [hyponym]
+walk · 6 of 6 hops · design→planning [hyponym] → planning→city planning [hyponym] → city planning→zoning [meronym] → zoning→division [hypernym] → division→subdivision [hyponym] → subdivision→division [hypernym]
 ```
 
 ## 2. Two memories make a possibility

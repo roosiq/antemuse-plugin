@@ -664,11 +664,17 @@ def _expire(data: Dict[str, Any], now: float | None = None, foreign: bool = Fals
     dose, _unit = _dose_of(spec, active)
     served = int(active.get("served") or 0)
     worked = int(active.get("turns") or 0)
-    if not dose or worked < 1 or served < dose:
+    if not dose or served < dose:
+        return False
+    # The person has already seen the whole earned dose in the pane. Requiring a turn as well
+    # left a one-move state open until they spoke again: /unstuck delivered its single move on
+    # entry and then sat there, reporting "1 of 1 moves" with nothing left to give.
+    shown = int(active.get("pane_seen") or 0) >= served
+    if worked < 1 and not shown:
         return False
     # Served is not shown: this runs before the block is built, so closing here threw away the
     # last unit of every state and asked the model to react to material it had never seen.
-    if _unit != "turns" and int(active.get("seen") or 0) < served:
+    if _unit != "turns" and int(active.get("seen") or 0) < served and not shown:
         # The block that marks a dose seen can only be built for the session that owns the
         # state. A pane poll may serve the whole dose, and if the owning conversation never
         # speaks again, `seen` never catches up: the state stayed open at "0 hops left" while
@@ -1261,6 +1267,11 @@ def deliver_if_due(source: str = "turn") -> int:
         dose, _unit = _dose_of(spec, active)
         served = int(active.get("served") or 0)
         if dose and served >= dose:
+            # The dose is complete, so this door has nothing left to give — but it still has to
+            # try to close. Returning here without calling _expire meant only a turn could end a
+            # state: /unstuck delivered its single move on entry and then every poll returned 0
+            # and left it open, reporting "1 of 1 moves" until the person spoke again.
+            _expire(data)
             return 0
         # One unit per turn, whichever door called. This was the pane's rule alone, and the
         # consequence was a walk that spent all six hops inside one user message: a turn makes
@@ -1465,6 +1476,11 @@ def deliver_if_due(source: str = "turn") -> int:
             active["last_turn"] = int(active.get("turns") or 0)
             if material:
                 _spend(active, len(material))
+                # A pane delivery is the person looking at it. The model's `seen` counter only
+                # advances when the owning chat takes a turn, so a one-move state delivered on
+                # entry had no way to end until the person spoke again.
+                if source == "pane":
+                    active["pane_seen"] = int(active.get("served") or 0)
                 active["empty"] = 0
                 active["shown"] = ([str(x) for x in (active.get("shown") or [])]
                                    + [ident or _material_key(text)

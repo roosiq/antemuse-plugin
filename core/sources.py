@@ -476,6 +476,15 @@ def _recent_work(session: str | None = None) -> List[str]:
     return [text for _, text in _day_threads(session)]
 
 
+def _is_command(text: str) -> bool:
+    """True when the material is something the person ran, not something they were attempting."""
+    for line in str(text or "").splitlines():
+        s = line.strip()
+        if s and (_CMD_VERB.match(s) or _CMD_SHAPE.search(s)):
+            return True
+    return False
+
+
 def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = False,
                  session: str | None = None) -> List[Any]:
     """One next move grounded in what you have been doing plus one map link. No repo required."""
@@ -494,7 +503,17 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
     ident = f"{earlier or last}|{edge}"
     if ident in (skip or set()):
         return ["unstuck: no new move left"]
-    if earlier:
+    # The sentence shape is fixed and only the two nouns change, so a noun that is not an
+    # attempt makes nonsense: "install the tarball a different way, write a test for it".
+    # The state's own exit instruction says to decline when the material cannot support a
+    # suggestion; until now the only refusal branch was "this pair was already suggested".
+    unusable = [s for s in (last, earlier) if s and _is_command(s)]
+    if unusable:
+        line = (f"no move to suggest · the map link is real ({edge}) but "
+                f"{'both slots' if len(unusable) > 1 else 'one slot'} held a command you ran, "
+                f"not an attempt to vary · say what you were trying and what went wrong, "
+                f"then ask again")
+    elif earlier:
         line = (f"next move · skip another pass at {last} · try {earlier} a different way "
                 f"· map link: {edge} · first: write the smallest test for that different way")
     else:
