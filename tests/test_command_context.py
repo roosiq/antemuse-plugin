@@ -9,6 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+import re
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -78,5 +79,8 @@ def test_return_with_nothing_running_does_not_repeat_the_last_ending():
 
 def test_entry_line_names_the_walk_dose_not_minutes():
     line = plugin._enter("walk")("", session_id="dose-line", platform="desktop").splitlines()[0]
-    assert "min" not in line
+    # A duration, not the letters "min": the trail is drawn from the graph and legitimately
+    # serves words like "feminist" or "terminal", so a substring check failed at random
+    # whenever the walk happened to pass through one.
+    assert not re.search(r"\b\d+\s*min\b", line), line
     assert "6 hops" in line
