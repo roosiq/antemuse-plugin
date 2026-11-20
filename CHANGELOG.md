@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.11 — 2026-11-19
+
+- the ending note clears on polls (2026-11-19)
+- the ending note clears on polls, not on the person's next two messages (2026-11-19)
+
 ## 0.12.10 — 2026-11-19
 
 - pair coverage survives the one-unit-per-turn delivery path (2026-11-19)
