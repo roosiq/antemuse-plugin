@@ -2,7 +2,7 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: 40ca78b0dfb2c98579efdb49c39d3bb3f6111793
+sha: 048b6e9df34a955213fa69f5b57e1bdde60a0b8d
 description: 'Five short agent states, one at a time: walk, daydream, doomscroll, dream, unstuck. /walk
   takes 6 hops across the concept map and comes back with the path while your work keeps going. /daydream
   puts two things you said side by side. /doomscroll pulls 3 posts from public feeds. /dream mixes up
@@ -19,7 +19,7 @@ maintainer: roosiq
 tier: community
 category: desktop
 docs_url: https://github.com/roosiq/antemuse-plugin#readme
-version: "0.12.10"
+version: "0.12.11"
 requires_hermes: '>=0.21.6'
 platforms:
 - linux
@@ -46,9 +46,9 @@ known_issues:
   path, so the pane is expected to work but is unverified there.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/40ca78b0dfb2c98579efdb49c39d3bb3f6111793/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/048b6e9df34a955213fa69f5b57e1bdde60a0b8d/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/40ca78b0dfb2c98579efdb49c39d3bb3f6111793/docs/screenshots/pane-walk.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/40ca78b0dfb2c98579efdb49c39d3bb3f6111793/docs/screenshots/cockpit.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/40ca78b0dfb2c98579efdb49c39d3bb3f6111793/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/40ca78b0dfb2c98579efdb49c39d3bb3f6111793/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/048b6e9df34a955213fa69f5b57e1bdde60a0b8d/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/048b6e9df34a955213fa69f5b57e1bdde60a0b8d/docs/screenshots/cockpit.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/048b6e9df34a955213fa69f5b57e1bdde60a0b8d/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/048b6e9df34a955213fa69f5b57e1bdde60a0b8d/docs/screenshots/blocked-tool.png
