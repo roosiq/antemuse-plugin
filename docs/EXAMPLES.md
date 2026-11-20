@@ -12,17 +12,17 @@ The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
 design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → invention (n) · took its hyponym · “the act of inventing” · ↩ 1 hop from creating by mental acts: creating by mental acts → invention
-invention (n) → neologism (n) · took its hyponym · “the act of inventing a word or phrase” · ↩ 1 hop from invention: invention → neologism
-neologism (n) → invention (n) · took its hypernym · “the act of inventing” · ↩ 1 hop from neologism: neologism → invention · seen earlier today in 1 other session
-invention (n) → devisal (n) · took its hyponym · “the act of devising something” · ↩ 1 hop from invention: invention → devisal
-devisal (n) → invention (n) · took its hypernym · “the act of inventing” · ↩ 1 hop from devisal: devisal → invention · seen earlier today in 1 other session
+creating by mental acts (n) → formation (n) · took its hyponym · “creation by mental activity” · ↩ 1 hop from creating by mental acts: creating by mental acts → formation
+formation (n) → affixation (n) · took its hyponym · “formation of a word by means of an affix” · ↩ 1 hop from formation: formation → affixation
+affixation (n) → prefixation (n) · took its hyponym · “formation of a word by means of a prefix” · ↩ 1 hop from affixation: affixation → prefixation
+prefixation (n) → affixation (n) · took its hypernym · “formation of a word by means of an affix” · ↩ 1 hop from prefixation: prefixation → affixation · seen earlier today in 1 other session
+affixation (n) → suffixation (n) · took its hyponym · “formation of a word by means of a suffix” · ↩ 1 hop from affixation: affixation → suffixation
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→invention [hyponym] → invention→neologism [hyponym] → neologism→invention [hypernym] → invention→devisal [hyponym] → devisal→invention [hypernym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→formation [hyponym] → formation→affixation [hyponym] → affixation→prefixation [hyponym] → prefixation→affixation [hypernym] → affixation→suffixation [hyponym]
 ```
 
 ## 2. Two memories make a possibility

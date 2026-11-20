@@ -143,6 +143,28 @@ def _own_turns(session: str | None = None) -> List[str]:
     return out
 
 
+def _by_coverage(pool: List[Tuple[int, int, Any]]) -> List[Any]:
+    """Order pairs so a dose compares different things instead of one anchor twice.
+
+    Taking the first N pairs in index order gives (0,1) then (0,2): a 2-pair dose that
+    reused its left side and never reached the rest of the day. Least-used subject first,
+    so independent comparisons come before repeat anchors and every subject gets reached
+    as early as the material allows.
+    """
+    out: List[Any] = []
+    used: dict[int, int] = {}
+    remaining = list(pool)
+    while remaining:
+        pick = min(remaining, key=lambda c: (used.get(c[0], 0) + used.get(c[1], 0),
+                                             max(used.get(c[0], 0), used.get(c[1], 0)),
+                                             c[0], c[1]))
+        remaining.remove(pick)
+        out.append(pick[2])
+        used[pick[0]] = used.get(pick[0], 0) + 1
+        used[pick[1]] = used.get(pick[1], 0) + 1
+    return out
+
+
 def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = False,
                  session: str | None = None) -> List[Any]:
     """Two recorded turns from this chat, what they touch, and one possibility."""
@@ -170,10 +192,11 @@ def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
                         f"· shared: nothing · idea: none, these do not connect")
             # Declared, not mined: "LINKED", "shared", "idea", "topic" are the template's
             # words, and harvesting the sentence turned them into the person's concepts.
-            choices.append((ident, line, _terms_of(a) + _terms_of(b) + shared[:3]))
+            choices.append((left, right, (ident, line,
+                                          _terms_of(a) + _terms_of(b) + shared[:3])))
     if not choices:
         return ["daydream: no new pairs left"]
-    selected = choices[:max(1, int(steps))]
+    selected = _by_coverage(choices)[:max(1, int(steps))]
     return selected if keyed else [line for _, line, _ in selected]
 
 
@@ -236,6 +259,20 @@ def _day_threads(session: str | None = None) -> List[Tuple[str, str]]:
     return out
 
 
+#: A line the person ran rather than thought. Anchored at the start so prose that merely
+#: mentions a tool ("the git history is a mess") is still material.
+_CMD_VERB = re.compile(
+    r"^\s*(?:tar|cd|python3?|pip3?|npm|npx|node|git|curl|wget|uvx|uv|bash|sh|zsh|sudo"
+    r"|chmod|chown|mkdir|cp|mv|rm|ls|cat|echo|export|source|brew|winget|choco|py|dotnet"
+    r"|cargo|make|docker|kubectl|ssh|scp|hermes)\b", re.I)
+#: Flags, backslash paths and filenames: the shapes a shell paste has and a sentence does not.
+_CMD_SHAPE = re.compile(
+    r"\\|(?:^|\s)--?[A-Za-z][\w-]*"
+    r"|\.(?:py|gz|tar|zip|json|md|txt|exe|sh|yaml|yml|js|mjs|ts|toml|cfg|ini|lock)\b", re.I)
+#: `antemuse-0` is where the tokenizer stopped at the first dot of a version.
+_VERSIONISH = re.compile(r"^[A-Za-z][A-Za-z0-9]*-\d")
+
+
 def _terms_of(text: str) -> List[str]:
     """The concept-sized terms in one piece of the person's own material.
 
@@ -244,10 +281,22 @@ def _terms_of(text: str) -> List[str]:
     Extraction is sound here: it reads what the person said, not the template around it.
     """
     from . import history
+    prose = []
+    for line in str(text or "").splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        # A pasted command is something the person ran, not something they were thinking
+        # about. `tar -xzf antemuse-0.12.7.tar.gz` used to yield antemuse-0, python,
+        # scripts, install: single tokens, but filename fragments nobody would recognise.
+        if _CMD_VERB.match(s) or _CMD_SHAPE.search(s):
+            continue
+        prose.append(s)
     try:
-        return list(history.extract(str(text or ""), limit=4))
+        terms = list(history.extract(" ".join(prose), limit=6))
     except Exception:  # health: BLE001 -- material without terms is still material
         return []
+    return [w for w in terms if not _VERSIONISH.match(w)][:4]
 
 
 def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = False,
@@ -259,7 +308,7 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
     if len(subjects) < 2:
         return ["dream: nothing from today yet · say a few things in this chat or run a state first"]
     skip = skip or set()
-    choices = []
+    pool = []
     for left in range(len(subjects)):
         for right in range(left + 1, len(subjects)):
             project_a, a = subjects[left]
@@ -274,13 +323,17 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
             terms = _terms_of(a) + _terms_of(b) + shared[:3]
             if shared:
                 bridge = ", ".join(shared[:3])
-                choices.append((ident, f"link · {project_a}: {a} ↔ {project_b}: {b} "
-                                       f"· shared: {bridge}", terms))
+                pool.append((left, right, ident,
+                             f"link · {project_a}: {a} ↔ {project_b}: {b} "
+                             f"· shared: {bridge}", terms))
             else:
-                choices.append((ident, f"no link · {project_a}: {a} ↔ {project_b}: {b} "
-                                       f"· shared: nothing yet · these two do not connect", terms))
-    if not choices:
+                pool.append((left, right, ident,
+                             f"no link · {project_a}: {a} ↔ {project_b}: {b} "
+                             f"· shared: nothing yet · these two do not connect", terms))
+    if not pool:
         return ["dream: no new pairs left"]
+    choices = _by_coverage([(left, right, (ident, line, terms))
+                            for left, right, ident, line, terms in pool])
     selected = choices[:max(1, int(steps))]
     return selected if keyed else [line for _, line, _ in selected]
 
