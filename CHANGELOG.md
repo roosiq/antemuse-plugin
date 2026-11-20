@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.6 — 2026-11-19
+
+- the installer survives a Windows host (2026-11-19)
+- one busy chat must not starve another chat's material (2026-11-19)
+
 ## 0.12.5 — 2026-11-19
 
 - catalog entry travels with 0.12.5 (2026-11-19)
