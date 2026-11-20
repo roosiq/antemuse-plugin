@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.8 — 2026-11-19
+
+- the concepts test supplies its own material and only bans template words (2026-11-19)
+- dream compares different things; command pastes are not concepts (2026-11-19)
+- dream compares different things, and a command paste is not material (2026-11-19)
+
 ## 0.12.7 — 2026-11-19
 
 - concepts are the person's material, concept-sized (2026-11-19)
