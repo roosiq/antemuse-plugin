@@ -5,7 +5,7 @@ together; the catalog entry is generated from the manifest at release time.
 
 ## 0.12.14 — 2026-11-19
 
-- describe the hostile headline instead of quoting it (2026-11-19)
+- TESTING counts re-measured at 0.12.14 (2026-11-19)
 
 ## 0.12.13 — 2026-11-19
 
