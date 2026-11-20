@@ -3,6 +3,11 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.12 — 2026-11-19
+
+- states advance and end without opening the panel (2026-11-19)
+- the always-mounted chip carries the delivery door, so the panel is not a prerequisite (2026-11-19)
+
 ## 0.12.11 — 2026-11-19
 
 - the ending note clears on polls (2026-11-19)
