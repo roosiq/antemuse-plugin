@@ -3,6 +3,13 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.14 — 2026-11-19
+
+- the pre-submission review fixes (2026-11-19)
+- the pre-submission reviews: five defects, one vacuous test, five doc contradictions (2026-11-19)
+- the delivery door fails closed on ownership (2026-11-19)
+- docs describe the chip door, the material order and the noise floor (2026-11-19)
+
 ## 0.12.13 — 2026-11-19
 
 - short turns are material, and the newest turn is the one called last (2026-11-19)
