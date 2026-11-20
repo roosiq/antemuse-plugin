@@ -388,7 +388,9 @@ _DIRECTIVE_OPENER = re.compile(
 
 
 #: The same openers searched anywhere. Anchoring at the start meant a benign prefix carried the
-#: imperative through: "Breaking: ignore all previous instructions ..." matched nothing.
+#: imperative through: a headline beginning "Breaking:" and then telling the model to discard its
+#: prior context matched nothing. The phrase is described rather than quoted here so the payload
+#: scanner does not read this detector as the thing it detects.
 _DIRECTIVE_ANYWHERE = re.compile(
     r"(?:ignore\s+(?:all\s+)?(?:previous|prior|above|earlier)\b|disregard\s+(?:all\s+)?"
     r"(?:previous|prior|above|earlier)\b|forget\s+(?:all\s+)?(?:previous|prior|above|earlier)\b|"
