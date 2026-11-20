@@ -2,7 +2,7 @@
 name: antemuse
 title: Antemuse
 repo: https://github.com/roosiq/antemuse-plugin
-sha: 8fbfe4ed391a36afdf726fa8721dea4a872ecf8e
+sha: 48504c708d73e209230b70d289663fc2db566740
 description: 'Five short agent states, one at a time: walk, daydream, doomscroll, dream, unstuck. /walk
   takes 6 hops across the concept map and comes back with the path while your work keeps going. /daydream
   puts two things you said side by side. /doomscroll pulls 3 posts from public feeds. /dream mixes up
@@ -46,9 +46,9 @@ known_issues:
   path, so the pane is expected to work but is unverified there.'
 - The exploration library (spark, keep, collider, selection) is present but runtime-gated behind experimental.enabled
   and makes no quality claim.
-image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/8fbfe4ed391a36afdf726fa8721dea4a872ecf8e/docs/screenshots/banner.png
+image: https://raw.githubusercontent.com/roosiq/antemuse-plugin/48504c708d73e209230b70d289663fc2db566740/docs/screenshots/banner.png
 screenshots:
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8fbfe4ed391a36afdf726fa8721dea4a872ecf8e/docs/screenshots/pane-walk.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8fbfe4ed391a36afdf726fa8721dea4a872ecf8e/docs/screenshots/cockpit.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8fbfe4ed391a36afdf726fa8721dea4a872ecf8e/docs/screenshots/return-account.png
-- https://raw.githubusercontent.com/roosiq/antemuse-plugin/8fbfe4ed391a36afdf726fa8721dea4a872ecf8e/docs/screenshots/blocked-tool.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/48504c708d73e209230b70d289663fc2db566740/docs/screenshots/pane-walk.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/48504c708d73e209230b70d289663fc2db566740/docs/screenshots/cockpit.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/48504c708d73e209230b70d289663fc2db566740/docs/screenshots/return-account.png
+- https://raw.githubusercontent.com/roosiq/antemuse-plugin/48504c708d73e209230b70d289663fc2db566740/docs/screenshots/blocked-tool.png
