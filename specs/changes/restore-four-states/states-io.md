@@ -41,7 +41,7 @@ Vocabulary used below:
 | closing instruction | after the account | the state's own `after` text, one paragraph, state-specific |
 | residue | next turn's block | `[RESIDUE: <state> · <account text>]`, two turns, owner-session only |
 | moves row | ledger | one row per ending: `state`, `started`, `ended`, `ending`, `dose_done` |
-| state record | `state.json` | `active = {key, label, contract, directive, served, seen, turns, dose, started, session, block, allow, trail[], picks{}}` |
+| state record | `state.json` | measured at 0.12.13: `active = {key, walk, dose, unit, served_seen, entered_at, origin}` — ownership is `origin.session_id`, not a top-level `session`; label/contract/directive are looked up from the registry, and delivery counters are stamped as the dose is served |
 | pane | desktop | label, `served of n unit`, ending line for two turns, trail/path when the state carries one |
 | CLI/TUI | terminal | the same entry line and account, no palette, no legend, no countdown |
 
@@ -72,7 +72,9 @@ finished in silence.
 3. The header's numbers must equal the account's numbers at the moment each is printed.
 4. Never print a seed marker, graph id, file path, or state-file key in a person line.
 5. A state either delivers its dose or ends with a named reason; it never stalls silently.
-6. Material is not written into the journal, the account, or the ledger — only counts and labels.
+6. Feed text is never written into the journal, the account, or the ledger — only counts and
+   labels. The other four states DO journal their material text (bounded, per chat); README's
+   storage section is the authority on what is kept.
 
 ---
 
@@ -80,7 +82,8 @@ finished in silence.
 
 **Inputs.** Entry: `/daydream`, `state(enter, name="daydream")`. Dose `{pairs, 2}`; turns 2; tools
 *open* — as in every state, unless the entry asks with `block: true`. Material: two of the person's own recorded turns, what they touch, one possibility. Provider
-reads history read-only; `session_scan` off → `failed · unavailable` at entry.
+reads this chat's own recorded turns; fewer than three → refused at entry. `session_scan` gates
+historical-session scanning in `core/history.py`, not this provider.
 
 **Outputs.**
 

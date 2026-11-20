@@ -431,6 +431,21 @@ resetBody()
   await act(async () => { fin.node.unmount() })
 }
 
+// A remount must not resurrect the ending. The counter used to be a per-mount useRef, so the
+// chip could clear the note and a later pane mount draw it again from the same server residue.
+{
+  const done = { ...PAYLOAD, active: null, last: { state: 'daydream' },
+                 residue: { count: 1, kinds: ['report'] } }
+  const first = await mountWith({ payload: done }, 'chip')
+  const t1 = first.calls.intervals.find((i) => i.ms === 900)
+  await act(async () => { for (let i = 0; i < 4; i++) t1.fn() })
+  await act(async () => { first.node.unmount() })
+  const later = await mountWith({ payload: done }, 'page')
+  assert.doesNotMatch(document.body.textContent, /daydream ended/,
+    'a later mount resurrected an ending the chip had already cleared')
+  await act(async () => { later.node.unmount() })
+}
+
 const active = await mountWith({ payload: PAYLOAD })
 const text = document.body.textContent
 assert.match(text, /WALKING/)
@@ -562,8 +577,8 @@ assert.deepEqual(keyWarnings, [], 'React emitted a key-related console error')
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
-console.log('harness: 17 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
+console.log('harness: 18 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
   'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean, ' +
   'old-host fallback, ' +
-  'cockpit door without ctx.navigate, palette route without ctx.navigate, ending note clears, chip carries the door)')
+  'cockpit door without ctx.navigate, palette route without ctx.navigate, ending note clears, chip carries the door, ending stays cleared on remount)')
 dom.window.close()

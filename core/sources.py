@@ -149,6 +149,27 @@ def _own_turns(session: str | None = None) -> List[str]:
     return out
 
 
+def _covered_indexes(ident: Any) -> List[int]:
+    """The subject indexes an ident encodes, and nothing else.
+
+    Two forms: daydream's bare `<left>:<right>`, and dream's
+    `<project>:<left>|<project>:<right>`. Reading every digit in the string made a project named
+    `repo2` count as subject 2, so a shown pair forged coverage and the ordering re-anchored on
+    subject 0 — the exact defect the tally exists to prevent.
+    """
+    text = str(ident or "")
+    parts = text.split("|") if "|" in text else [text]
+    out: List[int] = []
+    for part in parts:
+        # In the project form the index is the tail after the last colon; in the bare form both
+        # sides are indexes. A name may contain digits, so only a wholly numeric tail counts.
+        pieces = part.split(":") if "|" not in text else [part.rsplit(":", 1)[-1]]
+        for piece in pieces:
+            if piece.isdigit() and len(piece) <= 6:
+                out.append(int(piece))
+    return out
+
+
 def _by_coverage(pool: List[Tuple[int, int, Any]],
                  skip: set[str] | None = None) -> List[Any]:
     """Order pairs so a dose compares different things instead of one anchor twice.
@@ -165,8 +186,7 @@ def _by_coverage(pool: List[Tuple[int, int, Any]],
     # ordering only worked when a single call asked for the whole dose, which is not how the
     # dose is delivered. What was already shown is what has already been covered.
     for ident in (skip or set()):
-        for part in re.findall(r"(\d+)", str(ident)):
-            n = int(part)
+        for n in _covered_indexes(ident):
             used[n] = used.get(n, 0) + 1
     remaining = list(pool)
     while remaining:
@@ -367,6 +387,17 @@ _DIRECTIVE_OPENER = re.compile(
     re.I)
 
 
+#: The same openers searched anywhere. Anchoring at the start meant a benign prefix carried the
+#: imperative through: "Breaking: ignore all previous instructions ..." matched nothing.
+_DIRECTIVE_ANYWHERE = re.compile(
+    r"(?:ignore\s+(?:all\s+)?(?:previous|prior|above|earlier)\b|disregard\s+(?:all\s+)?"
+    r"(?:previous|prior|above|earlier)\b|forget\s+(?:all\s+)?(?:previous|prior|above|earlier)\b|"
+    r"new\s+instructions?\b|instructions?\s*:|system\s*:|assistant\s*:|"
+    r"you\s+are\s+now\b|act\s+as\b|override\s+(?:all\s+)?(?:previous|prior|your)\b|"
+    r"^\s*(?:\[[^\]]{0,40}\]\s*)?(?:ignore|disregard|forget|override|user\s*:))",
+    re.I)
+
+
 def _defang_title(text: str) -> str:
     """An imperative feed title arrives marked as reported speech, not as an address.
 
@@ -377,7 +408,7 @@ def _defang_title(text: str) -> str:
     clean = " ".join(str(text or "").split())
     if not clean:
         return ""
-    if _DIRECTIVE_OPENER.match(clean):
+    if _DIRECTIVE_ANYWHERE.search(clean):
         # Keep the words, remove the address. The prefix says whose voice this is.
         return f"headline says: {clean}"
     return clean

@@ -93,7 +93,10 @@ def remember(text: str, who: str = "person", session: str = "") -> None:
     if len(clean) < 4:
         return
     items = _load()
-    if items and items[-1].get("text") == clean and items[-1].get("who") == who:
+    # Per chat. Comparing only text and who dropped Bob's "restarted" because Alice had just
+    # said it, which contradicts the ring's own one-chat contract now that short turns are kept.
+    if (items and items[-1].get("text") == clean and items[-1].get("who") == who
+            and str(items[-1].get("session") or "") == str(session or "")):
         return
     items.append({"who": who, "text": clean, "at": time.time(), "session": str(session or "")})
     _save(items)

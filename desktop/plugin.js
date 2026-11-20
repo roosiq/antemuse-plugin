@@ -158,15 +158,16 @@ export function viewModel(payload, error) {
 
 // ---------------------------------------------------------------- the surface
 
+// One ending, one count: a per-mount ref let the chip clear the note and a later pane mount draw
+// it again. Shared, and reset when a state runs.
+let ending = { key: '', n: 0 }
+
 function useStatePayload(ctx, cells) {
   const [payload, setPayload] = useState(null)
   const [error, setError] = useState(null)
   // One failed poll is not a broken backend: a restart mid-walk used to replace a live state
   // with "the backend did not answer". Surface the error only after a run of misses.
   const misses = useRef(0)
-  // The ending note ends on polls, like the picture. Residue decays on turns, so a state that
-  // ended by itself left "unstuck ended" up until two more messages.
-  const ended = useRef(0)
   // The grid is part of the request: a resize must re-ask, not stretch an old frame.
   const sid = host && host.state && host.state.focusedSessionId
     ? host.state.focusedSessionId.get() : ''
@@ -187,9 +188,10 @@ function useStatePayload(ctx, cells) {
           if (!alive) return
           misses.current = 0
           if (data && data.last && !data.active) {
-            ended.current += 1
-            if (ended.current > 2) data = { ...data, last: null }
-          } else ended.current = 0
+            const k = String(data.last.state || '')
+            ending = ending.key === k ? { key: k, n: ending.n + 1 } : { key: k, n: 1 }
+            if (ending.n > 2) data = { ...data, last: null }
+          } else if (data && data.active) ending = { key: '', n: 0 }
           setPayload(data)
           setError(null)
         },

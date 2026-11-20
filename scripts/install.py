@@ -115,6 +115,11 @@ def clear_pane_dir(path: Path) -> list:
     gone = []
     if not path.exists():
         return gone
+    # Never clear through a symlink. iterdir() walks the target, so a pane dir pointing elsewhere
+    # let this installer delete recognised names in a directory it does not own.
+    if path.is_symlink():
+        warn(f"left {path} alone (it is a symlink; this installer does not clear through one)")
+        return gone
     for child in sorted(path.iterdir()):
         if child.name in PANE_KEEP:
             continue
@@ -265,7 +270,10 @@ def main() -> int:
         # every stale-copy round before this one — old bytes sitting next to the file that
         # matters. Only the pane and the app's own marker belong here, so anything else goes.
         removed = clear_pane_dir(desktop_dir)
-        shutil.copy2(SRC / "desktop" / "plugin.js", desktop_dir / "plugin.js")
+        if desktop_dir.is_symlink():
+            warn(f"did not write the pane through the symlink at {desktop_dir}")
+        else:
+            shutil.copy2(SRC / "desktop" / "plugin.js", desktop_dir / "plugin.js")
         if removed:
             ok(f"cleared {len(removed)} file(s) left by an older release: "
                + ", ".join(removed[:6]) + ("…" if len(removed) > 6 else ""))
@@ -286,8 +294,11 @@ def main() -> int:
     default_desktop = Path.home() / ".hermes" / "desktop-plugins" / "antemuse"
     if default_desktop != desktop_dir and default_desktop.exists() and not dry:
         clear_pane_dir(default_desktop)
-        shutil.copy2(SRC / "desktop" / "plugin.js", default_desktop / "plugin.js")
-        ok(f"also refreshed {default_desktop / 'plugin.js'} (a second copy the app may read)")
+        if default_desktop.is_symlink():
+            warn(f"did not write the pane through the symlink at {default_desktop}")
+        else:
+            shutil.copy2(SRC / "desktop" / "plugin.js", default_desktop / "plugin.js")
+            ok(f"also refreshed {default_desktop / 'plugin.js'} (a second copy the app may read)")
 
     # -------------------------------------------------------------- 5. projection
     say("5. wordnet projection (where concepts sit on the picture)")

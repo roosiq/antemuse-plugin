@@ -29,7 +29,9 @@ Done. Take anything useful from it and get back to work.
 ```
 
 A walk finishes inside the command, so nothing is left running and no further message is
-needed. The other four states deliver one unit per message. Tools stay open in every state
+needed. The other four states deliver at most one unit per message, and the delivery poll can
+serve the first earned unit without a message — which is how `/unstuck` finishes on its own.
+Tools stay open in every state
 unless the entry explicitly uses `block: true`; `allow:` can then narrow them further.
 `/return` is always available.
 

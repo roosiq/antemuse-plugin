@@ -35,3 +35,22 @@ def test_a_missing_cli_warns_instead_of_aborting(monkeypatch, capsys):
     except (OSError, ValueError):
         already = False
     assert already is False
+
+
+def test_cleanup_never_follows_a_symlink_out_of_the_pane_dir(tmp_path):
+    """iterdir() walks a symlink's target, so a pane dir pointing elsewhere let the installer
+    delete recognised legacy names in a directory it does not own."""
+    import importlib.util
+    import pathlib
+    root = pathlib.Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("am_install", root / "scripts" / "install.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    victim = tmp_path / "elsewhere"
+    victim.mkdir()
+    (victim / "scene3d.js").write_text("someone else's file")
+    pane = tmp_path / "antemuse"
+    pane.symlink_to(victim, target_is_directory=True)
+    gone = mod.clear_pane_dir(pane)
+    assert gone == [], f"cleared through a symlink: {gone}"
+    assert (victim / "scene3d.js").exists(), "deleted a file outside the pane directory"

@@ -2045,7 +2045,9 @@ def watch_state() -> Dict[str, Any]:
     """Everything the shared page needs, with no secrets."""
     with _LOCK:
         data = _load()
-        _expire(data)
+        # No _expire here: this is the pure look behind GET /state, and it runs before the
+        # caller's ownership is known. Expiring here let a foreign or sessionless poll close the
+        # owner's state. Delivery expires; a look does not.
         active = data.get("active")
         journal = _journal_window(data)
         residue = [

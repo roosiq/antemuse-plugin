@@ -6,6 +6,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN = ("auth.json", "access_token")
+# config.yaml holds provider credentials too, so code must not name it either. Prose is exempt:
+# SECURITY.md and the state specs legitimately say where a SETTING lives, which is not a read.
+CODE_FORBIDDEN = ("config.yaml",)
+CODE_SUFFIXES = {".py", ".js", ".mjs", ".sh", ".ps1", ".bat", ".cmd", ".toml", ".cfg", ".ini"}
 
 
 def test_non_test_files_do_not_name_hermes_credential_storage():
@@ -17,6 +21,9 @@ def test_non_test_files_do_not_name_hermes_credential_storage():
             text = path.read_text()
         except UnicodeDecodeError:
             continue
-        if any(token in text for token in FORBIDDEN):
+        tokens = FORBIDDEN
+        if path.suffix in CODE_SUFFIXES:
+            tokens = FORBIDDEN + CODE_FORBIDDEN
+        if any(token in text for token in tokens):
             offenders.append(str(path.relative_to(ROOT)))
     assert not offenders, "credential-storage references outside tests: " + ", ".join(offenders)

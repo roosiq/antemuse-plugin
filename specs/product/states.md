@@ -11,9 +11,10 @@ account and one `moves` ledger row.
 `/walk` is an **act**: the command takes its six hops inside the call that asked for it,
 closes the state, and answers with the path. Nothing is left running and no further
 message is needed. The other four states are paced by the conversation, one unit per
-turn, because their material is something the person reacts to. A state whose whole dose is
-delivered on entry — `/unstuck`, one move — ends on the poll that finds it complete: the person
-has already seen everything it had to give, so it does not wait for another message. A pane
+turn, because their material is something the person reacts to. Entry itself delivers nothing: it records the
+state. A state whose whole dose is one unit — `/unstuck`, one move — is served by the next
+delivery poll and ends on the poll that finds it complete, so the person has already seen
+everything it had to give and it does not wait for another message. A pane
 delivery records that the person saw it; a state with units still owed keeps waiting.
 
 The poll that does this is the status-bar chip's, not the pane's. The chip is always mounted;

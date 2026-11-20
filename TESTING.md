@@ -19,7 +19,8 @@ The seven slash commands are `/walk`, `/daydream`, `/doomscroll`, `/dream`,
 
 - `/walk` is an act: it takes all six hops inside the command and answers with the path —
   `WALKING ended · walk · 6 of 6 hops · …`. Nothing is left running and no further message is needed.
-- `/daydream` delivers two pairs of this chat's own messages; `/dream` two links between things from your day. Both deliver one unit per message.
+- `/daydream` delivers two pairs of this chat's own messages; `/dream` two links between things from your day. Both deliver at most one unit per message; the
+  delivery poll may serve the first earned unit without one.
 - `/doomscroll` delivers three public-feed posts; `/unstuck` one next move from your day and
   an unused map link.
 - `/explore` is yours to drive and open-ended: `EXPLORING · 0 picks · you pick · it runs until you stop it`.
