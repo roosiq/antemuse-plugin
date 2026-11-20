@@ -22,6 +22,12 @@ a state to advance or end. Both surfaces ask the same door with the same chat sc
 one-unit-per-turn rule is what makes two askers safe. The ending note is the person's and clears
 on polls; the model's residue still decays on turns, so the agent keeps its chance to react.
 
+The door fails closed on ownership. A caller that cannot name itself as the state's chat gets a
+pure look at nothing: it neither spends the dose nor is shown the state. An empty session is not
+a wildcard — the chip sends one whenever no chat is focused, and treating it as the owner let an
+always-on poll spend another chat's dose and display its state. A state with no owning chat,
+entered from the CLI, has no owner to match and stays deliverable.
+
 Material is this chat's own turns, newest first, matching the order commit subjects arrive in.
 A turn is kept unless it is noise: the floor is four characters, so `restarted` is material and
 `ok` is not. Reading the ring oldest-first once put the first thing said in the slot the provider

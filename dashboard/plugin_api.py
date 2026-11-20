@@ -511,7 +511,11 @@ def _state_payload(session: str | None, with_graph: int, deliver: bool) -> Dict[
     watch = plugin().core.engine.watch_state()
     active = (watch or {}).get("active") or {}
     owner = str(((active.get("origin") or {}) or {}).get("session_id") or "")
-    foreign = bool(session and owner and str(session) != owner)
+    # Fail closed. An empty session used to pass straight through this gate, and the
+    # always-mounted chip sends one whenever no chat is focused — so a sessionless poll spent
+    # another chat's dose and was shown that chat's state. A caller that cannot name itself as
+    # the owner gets a pure look at nothing; an unowned state (entered from the CLI) still works.
+    foreign = bool(owner) and str(session or "") != owner
     # The door belongs to the owner: a foreign call neither advances this chat's dose nor
     # reads back its state and pick count.
     if foreign:
