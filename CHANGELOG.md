@@ -3,6 +3,12 @@
 All notable changes to Antemuse. The manifest version and this file move
 together; the catalog entry is generated from the manifest at release time.
 
+## 0.12.7 — 2026-11-19
+
+- concepts are the person's material, concept-sized (2026-11-19)
+- concepts are concept-sized, not whole sentences (2026-11-19)
+- concepts are the material, not the template's own words (2026-11-19)
+
 ## 0.12.6 — 2026-11-19
 
 - the installer survives a Windows host (2026-11-19)
