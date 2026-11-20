@@ -98,8 +98,8 @@ cd /tmp/pkgcheck/antemuse-<version> && \
 ```
 
 The extracted package has no `.git` and no `docs/EXAMPLES.md` regeneration context, so
-git-dependent tests are the ones that break there first. Measured at 0.12.9: **720 passed,
-12 skipped** in the package against **988 passed, 1 skipped** in the checkout; the difference
+git-dependent tests are the ones that break there first. Measured at 0.12.13: **724 passed,
+12 skipped** in the package against **992 passed, 1 skipped** in the checkout; the difference
 is the tests that need repository state or a browser.
 
 A test that reads this checkout's real commit subjects is not testing the plugin, it is testing

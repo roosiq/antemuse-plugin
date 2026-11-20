@@ -16,6 +16,17 @@ delivered on entry — `/unstuck`, one move — ends on the poll that finds it c
 has already seen everything it had to give, so it does not wait for another message. A pane
 delivery records that the person saw it; a state with units still owed keeps waiting.
 
+The poll that does this is the status-bar chip's, not the pane's. The chip is always mounted;
+the pane is not, so delivery on the pane's poll alone made opening the panel a prerequisite for
+a state to advance or end. Both surfaces ask the same door with the same chat scoping, and the
+one-unit-per-turn rule is what makes two askers safe. The ending note is the person's and clears
+on polls; the model's residue still decays on turns, so the agent keeps its chance to react.
+
+Material is this chat's own turns, newest first, matching the order commit subjects arrive in.
+A turn is kept unless it is noise: the floor is four characters, so `restarted` is material and
+`ok` is not. Reading the ring oldest-first once put the first thing said in the slot the provider
+calls `last`, and a chat that opened with a pasted command kept declining on that paste.
+
 `/explore` is not an agent state. It remains a person-driven cockpit mode: it has no
 provider or dose, the person selects concepts, and only `/return` ends it.
 
