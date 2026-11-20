@@ -68,6 +68,16 @@ def copytree(src: Path, dst: Path, dry: bool) -> None:
             shutil.copy2(item, target)
 
 
+def hermes_cmd() -> str:
+    """Resolve the CLI the way the platform does.
+
+    On Windows the launcher is often `hermes.cmd` or `hermes.bat`. CreateProcess only finds
+    `.exe`, so subprocess.run([hermes_cmd(), ...]) raises FileNotFoundError there even with Hermes
+    installed. shutil.which honours PATHEXT and finds the shim.
+    """
+    return shutil.which("hermes") or "hermes"
+
+
 def run(cmd, dry: bool, quiet: bool = False) -> bool:
     if dry:
         print("  would " + " ".join(str(c) for c in cmd))
@@ -134,7 +144,7 @@ def ensure_deps(py: str, dry: bool) -> None:
     # builds is *not* the interpreter this script just probed — a tools python can sit beside a
     # staged runtime venv. So its exit status proves nothing about `py`: the re-probe decides,
     # and if it still fails we install into `py` ourselves.
-    if run(["hermes", "plugins", "validate", str(SRC), "--install-deps"], dry, quiet=True):
+    if run([hermes_cmd(), "plugins", "validate", str(SRC), "--install-deps"], dry, quiet=True):
         warn("'hermes plugins validate --install-deps' ran; it may have used a different "
              "interpreter, so re-checking " + py)
     else:
@@ -227,12 +237,19 @@ def main() -> int:
     if no_cli:
         warn("--no-cli: skipped register/enable")
     else:
-        listed = subprocess.run(["hermes", "plugins", "list"], capture_output=True, text=True)
-        if "antemuse" in (listed.stdout or ""):
+        try:
+            listed = subprocess.run([hermes_cmd(), "plugins", "list"],
+                                    capture_output=True, text=True)
+            already = "antemuse" in (listed.stdout or "")
+        except (OSError, ValueError):
+            # No CLI on PATH is a warning, not a traceback that aborts the install.
+            already = False
+            warn("could not run 'hermes plugins list' - is the CLI on PATH?")
+        if already:
             ok("already registered")
         else:
-            run(["hermes", "plugins", "adopt", "antemuse"], dry, quiet=True)
-        if run(["hermes", "plugins", "enable", "antemuse"], dry, quiet=True):
+            run([hermes_cmd(), "plugins", "adopt", "antemuse"], dry, quiet=True)
+        if run([hermes_cmd(), "plugins", "enable", "antemuse"], dry, quiet=True):
             ok("enabled")
         else:
             warn("enable said no — check 'hermes plugins list'")
