@@ -406,6 +406,16 @@ resetBody()
   await act(async () => { skew.node.unmount() })
 }
 
+// The chip is always mounted; the pane is not. With delivery only on the pane's poll, a state
+// could not advance or end until the person opened the panel. The chip alone must carry the door.
+{
+  const chipOnly = await mountWith({ payload: PAYLOAD }, 'chip')
+  assert.ok(chipOnly.calls.rest.some((p) => p.startsWith('/deliver')),
+    'the always-mounted chip must ask the delivery door, not just look')
+  assert.equal(chipOnly.calls.pollMethod, 'POST', 'the chip door is a write too')
+  await act(async () => { chipOnly.node.unmount() })
+}
+
 // The ending note is the person's, so it clears on polls. Residue decays on turns, so a state
 // that ends by itself used to leave "unstuck ended" on screen until two more messages arrived.
 {
@@ -552,8 +562,8 @@ assert.deepEqual(keyWarnings, [], 'React emitted a key-related console error')
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
-console.log('harness: 16 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
+console.log('harness: 17 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
   'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean, ' +
   'old-host fallback, ' +
-  'cockpit door without ctx.navigate, palette route without ctx.navigate, ending note clears)')
+  'cockpit door without ctx.navigate, palette route without ctx.navigate, ending note clears, chip carries the door)')
 dom.window.close()

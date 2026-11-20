@@ -128,9 +128,8 @@ export function situation(payload, error) {
 export function viewModel(payload, error) {
   const active = (payload && payload.active) || null
   const frame = (payload && payload.frame) || {}
-  // What an idle pane is actually looking at. "no state" alone left the corner saying nothing
-  // about a map that was still drawing the last state's firings, and nothing about how to start
-  // one; the note answers whichever of those applies.
+  // What an idle pane is looking at: "no state" alone said nothing about a map still drawing the
+  // last state's firings, nor how to start one.
   const last = (payload && payload.last) || null
   // A flight is work, and the pane that took it is the one place a person can see it landed.
   // The cockpit says nothing after it closes, so this is the receipt: what was flown, and how
@@ -138,10 +137,8 @@ export function viewModel(payload, error) {
   const flight = (payload && payload.flight) || null
   return {
     situation: situation(payload, error),
-    // One honest string, not a category plus a footnote: the label is what a person reads at
-    // 11px in a corner, and "backend unavailable" for an expired session sends them looking at
-    // the server instead of at their sign-in. Before the first answer there is nothing to name —
-    // the pane used to print "no state" for a question it had not asked yet.
+    // One honest string at 11px: "backend unavailable" for an expired session sends them to the
+    // server instead of their sign-in. Before the first answer there is nothing to name.
     label: error ? whyFailed(error) : active ? String(active.label || '') : (payload ? copy.idle : ''),
     note: error || active
       ? ''
@@ -149,10 +146,8 @@ export function viewModel(payload, error) {
         ? `last flight \u00b7 ${flight.concepts} ${flight.concepts === 1 ? 'concept' : 'concepts'}` +
           (flight.kept && flight.kept.length ? ` \u00b7 kept ${flight.kept.length}` : '')
         : (last && last.state ? `${last.state} ended \u00b7 /walk again` : copy.start),
-    // A count is a claim about now. Under a failed poll it is a claim about the last time the
-    // pane could see, printed beside an error — the screenshot that says "the backend did not
-    // answer · 1:31 left" is the pane contradicting itself. Nothing is counted when the answer
-    // is missing.
+    // A count is a claim about now. Under a failed poll it describes the last time the pane
+    // could see, printed beside an error — the pane contradicting itself. Nothing is counted.
     clock: '',
     counts: error ? '' : counts(payload),
     contract: active && !error ? String(active.contract || '') : '',
@@ -172,13 +167,22 @@ function useStatePayload(ctx, cells) {
   // The ending note ends on polls, like the picture. Residue decays on turns, so a state that
   // ended by itself left "unstuck ended" up until two more messages.
   const ended = useRef(0)
-  // The grid is part of the request, so a resize must re-ask rather than stretch
-  // an old frame: the server renders at the size it is told.
-  const query = cells ? `?cols=${cells.cols}&rows=${cells.rows}&fit=cover` : ''
+  // The grid is part of the request: a resize must re-ask, not stretch an old frame.
+  const sid = host && host.state && host.state.focusedSessionId
+    ? host.state.focusedSessionId.get() : ''
+  const parts = cells ? [`cols=${cells.cols}`, `rows=${cells.rows}`, 'fit=cover'] : []
+  if (sid) parts.push('session=' + encodeURIComponent(sid))
+  const query = parts.length ? '?' + parts.join('&') : ''
   useEffect(() => {
     let alive = true
     const read = () => {
-      ctx.rest('/state' + query).then(
+      // The chip is always mounted; the pane is not. Delivery on the pane alone meant a state
+      // could not end until the panel was opened. The one-unit-per-turn guard makes two doors safe.
+      const door = '/deliver' + query
+      ctx.rest(door, { method: 'POST' }).catch((e) => {
+        if (String((e && e.message) || e).indexOf('404') < 0) throw e
+        return ctx.rest(door.replace('/deliver', '/state'))
+      }).then(
         (data) => {
           if (!alive) return
           misses.current = 0
@@ -298,13 +302,10 @@ function createGraph3D(el, doc, ctx, host, win) {
   canvas.setAttribute('data-antemuse-3d', 'pane')
   canvas.setAttribute('aria-hidden', 'true')
   canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:2;display:block;cursor:grab;touch-action:none;outline:none'
-    // preserveDrawingBuffer: the frame must still be there when something wants to copy it —
-  // a screenshot, a video capture, or a person pasting the pane into a bug report. Without it the
-  // buffer is discarded on composite and every capture of this surface comes back blank.
-  // Opaque, not transparent. This canvas has an additive blend into its own buffer, and a
-  // transparent canvas is composited *again* by the browser, which multiplied every ground point
-  // by its own alpha and left the cloud invisible — 1,373 points reading as two specks. An opaque
-  // surface with its own dark clear colour composites exactly once.
+    // preserveDrawingBuffer: without it the buffer is discarded on composite and every capture
+  // of this surface comes back blank. Opaque, not transparent: additive blend into its own buffer
+  // plus browser compositing multiplied every ground point by its own alpha and left 1,373 points
+  // reading as two specks. An opaque surface composites exactly once.
   const gl = canvas.getContext('webgl', { antialias: true, alpha: false,
     preserveDrawingBuffer: true })
     || canvas.getContext('experimental-webgl')
@@ -1505,8 +1506,7 @@ function StateView({ ctx, onOpenCockpit }) {
 function StateChip({ ctx }) {
   const { payload, error } = useStatePayload(ctx)
   const vm = viewModel(payload, error)
-  // A count is a claim about now. Under a failed poll it would describe the last time the pane
-  // could see, printed next to an error — the pane contradicting itself.
+  // A count under a failed poll describes the last time the pane could see: a contradiction.
   const dose = error ? '' : chip(payload)
   const label = [vm.label, dose].filter(Boolean).join(' · ')
   // While exploring, the chip is the way into the map rather than into settings: the state

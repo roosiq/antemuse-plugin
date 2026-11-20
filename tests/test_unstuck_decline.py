@@ -69,3 +69,21 @@ def test_a_multi_dose_state_still_waits_for_the_person():
     active = doc.get("active") or {}
     assert active.get("key") == "dream", "a 2-link dose must not close with no turns taken"
     assert int(active.get("served") or 0) == 1, f"the pane served ahead of the person: {active}"
+
+
+def test_two_pollers_in_one_turn_serve_one_unit():
+    """The chip and the pane both carry the delivery door now. The one-unit-per-turn guard is what
+    makes that safe: two polls in the same turn must not spend two units."""
+    from core import engine, recall
+    import json, os, pathlib
+    engine.clear()
+    for t in ("the parser keeps failing on nested quotes",
+              "the coffee shop closed after twenty years",
+              "I want the walk to feel like wandering"):
+        recall.remember(t, session="two-doors")
+    engine.enter("dream", session="two-doors")
+    for _ in range(6):
+        engine.deliver_if_due(source="pane")
+    doc = json.loads((pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json").read_text())
+    active = doc.get("active") or {}
+    assert int(active.get("served") or 0) == 1, f"two doors spent more than one unit: {active}"
