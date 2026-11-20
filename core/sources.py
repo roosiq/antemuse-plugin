@@ -170,7 +170,7 @@ def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
                         f"· shared: nothing · idea: none, these do not connect")
             # Declared, not mined: "LINKED", "shared", "idea", "topic" are the template's
             # words, and harvesting the sentence turned them into the person's concepts.
-            choices.append((ident, line, [a, b] + shared[:3]))
+            choices.append((ident, line, _terms_of(a) + _terms_of(b) + shared[:3]))
     if not choices:
         return ["daydream: no new pairs left"]
     selected = choices[:max(1, int(steps))]
@@ -236,6 +236,20 @@ def _day_threads(session: str | None = None) -> List[Tuple[str, str]]:
     return out
 
 
+def _terms_of(text: str) -> List[str]:
+    """The concept-sized terms in one piece of the person's own material.
+
+    A whole turn is a sentence, and recording it whole gave accounts like
+    "the parser keeps failing on ne" - truncated mid-word by the ledger's label cap.
+    Extraction is sound here: it reads what the person said, not the template around it.
+    """
+    from . import history
+    try:
+        return list(history.extract(str(text or ""), limit=4))
+    except Exception:  # health: BLE001 -- material without terms is still material
+        return []
+
+
 def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = False,
                     session: str | None = None) -> List[Any]:
     """Connect two things from the day: commits when there are any, otherwise the day's record."""
@@ -257,7 +271,7 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
             # The terms are declared, not mined back out of the sentence: the rendered line
             # contains "link", "shared", "connect", and harvesting it made the plugin's own
             # scaffolding into the person's concepts.
-            terms = [a, b] + shared[:3]
+            terms = _terms_of(a) + _terms_of(b) + shared[:3]
             if shared:
                 bridge = ", ".join(shared[:3])
                 choices.append((ident, f"link · {project_a}: {a} ↔ {project_b}: {b} "
@@ -435,7 +449,7 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
                 f"go back to · map link: {edge} · first: write the smallest test that comes at "
                 f"{last} from that side instead")
     edge_terms = [part.strip() for part in re.split(r"→|\(", edge) if part.strip()]
-    terms = [last] + ([earlier] if earlier else []) + edge_terms[:2]
+    terms = _terms_of(last) + (_terms_of(earlier) if earlier else []) + edge_terms[:2]
     result = [(ident, line, terms)]
     return result if keyed else [line]
 

@@ -12,17 +12,17 @@ The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
 design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
-creating by mental acts (n) → creation (n) · took its hypernym · “the human act of creating” · ↩ 1 hop from creating by mental acts: creating by mental acts → creation
-creation (n) → pornography (n) · took its hyponym · “creative activity (writing or pictures or films etc.) of no literary or artistic value oth” · ↩ 1 hop from creation: creation → pornography
-pornography (n) → child pornography (n) · took its hyponym · “the illegal use of children in pornographic pictures or films” · ↩ 1 hop from pornography: pornography → child pornography
-child pornography (n) → pornography (n) · took its hypernym · “creative activity (writing or pictures or films etc.) of no literary or artistic value oth” · ↩ 1 hop from child pornography: child pornography → pornography · seen earlier today in 1 other session
-pornography (n) → creation (n) · took its hypernym · “the human act of creating” · ↩ 1 hop from pornography: pornography → creation · seen earlier today in 1 other session
+creating by mental acts (n) → invention (n) · took its hyponym · “the act of inventing” · ↩ 1 hop from creating by mental acts: creating by mental acts → invention
+invention (n) → neologism (n) · took its hyponym · “the act of inventing a word or phrase” · ↩ 1 hop from invention: invention → neologism
+neologism (n) → invention (n) · took its hypernym · “the act of inventing” · ↩ 1 hop from neologism: neologism → invention · seen earlier today in 1 other session
+invention (n) → devisal (n) · took its hyponym · “the act of devising something” · ↩ 1 hop from invention: invention → devisal
+devisal (n) → invention (n) · took its hypernym · “the act of inventing” · ↩ 1 hop from devisal: devisal → invention · seen earlier today in 1 other session
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→creation [hypernym] → creation→pornography [hyponym] → pornography→child pornography [hyponym] → child pornography→pornography [hypernym] → pornography→creation [hypernym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→invention [hyponym] → invention→neologism [hyponym] → neologism→invention [hypernym] → invention→devisal [hyponym] → devisal→invention [hypernym]
 ```
 
 ## 2. Two memories make a possibility
@@ -72,7 +72,7 @@ no link · example-project: read the session's repository before reading its his
 Account:
 
 ```text
-dream · 2 of 2 links · no link · no link ×2 · concepts: link, example-project, sessions, reading…
+dream · 2 of 2 links · no link · no link ×2 · concepts: sessions, reading, history, gate…
 ```
 
 ## 5. One direction breaks the stall
@@ -88,5 +88,5 @@ next move · skip another pass at read the session's repository before reading i
 Account:
 
 ```text
-unstuck · 1 of 1 moves · next move · concepts: move, skip, pass, sessions…
+unstuck · 1 of 1 moves · next move · concepts: sessions, reading, history, gate…
 ```
