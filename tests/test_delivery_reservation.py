@@ -391,3 +391,33 @@ def test_a_busy_chat_cannot_starve_another_chats_material():
     mine = recall.recent(6, who="person", session="quiet")
     assert len(mine) >= 3, f"the loud chat evicted the quiet one: {mine}"
     assert all("quiet chat" in t for t in mine), mine
+
+
+def test_the_ledger_records_the_material_not_the_template_words():
+    """A provider knows its own terms; the engine used to mine its rendered sentence instead.
+
+    `unstuck` renders "next move · skip another pass at X · try Y a different way · map link: …"
+    and the extractor harvested "skip", "pass", "move", "link" as concepts. `dream` rendered
+    "· shared: nothing yet · these two do not connect" and harvested "shared" and "connect".
+    The picture then lit the plugin's own scaffolding rather than the person's material.
+    """
+    from core import engine, history, recall
+
+    engine.clear()
+    for line in ("the parser keeps failing on nested quotes",
+                 "the coffee shop closed after twenty years",
+                 "I want the walk to feel like wandering"):
+        recall.remember(line, session="clean-concepts")
+    for key in ("dream", "unstuck"):
+        engine.enter(key, session="clean-concepts")
+        for _ in range(4):
+            engine.deliver_if_due(source="pane")
+        rows = history._connect().execute(
+            "SELECT DISTINCT c.label FROM served s JOIN concepts c ON c.id = s.concept_id "
+            "WHERE s.move = ?", (key,)).fetchall()
+        labels = {str(r[0]).lower() for r in rows}
+        scaffolding = {"skip", "pass", "move", "link", "shared", "connect", "next",
+                       "different", "way", "first", "smallest", "test", "nothing", "yet"}
+        leaked = labels & scaffolding
+        assert not leaked, f"{key} recorded its own template words as concepts: {sorted(leaked)}"
+        engine.stop(session_id="clean-concepts")

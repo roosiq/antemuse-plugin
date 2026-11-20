@@ -1330,7 +1330,12 @@ def deliver_if_due(source: str = "turn") -> int:
             if not batch:
                 break
             for item in batch:
-                if isinstance(item, (tuple, list)) and len(item) == 2:
+                if isinstance(item, (tuple, list)) and len(item) == 3:
+                    # A provider that declares its own terms. Mining the rendered sentence
+                    # instead made the template's words into the person's concepts.
+                    got.append((str(item[0]) or None, str(item[1]),
+                                [str(x) for x in (item[2] or []) if str(x).strip()]))
+                elif isinstance(item, (tuple, list)) and len(item) == 2:
                     got.append((str(item[0]) or None, str(item[1])))
                 else:
                     got.append((None, str(item)))
@@ -1368,7 +1373,7 @@ def deliver_if_due(source: str = "turn") -> int:
     # same pair back twice, re-worded; counting that as two of two closed a daydream "complete" on
     # one idea. Dropped lines are remembered so the state can say why it is dry.
     def _fresh(entry: tuple) -> bool:
-        ident, text = entry
+        ident, text = entry[0], entry[1]
         return (ident or _material_key(text)) not in shown_before
 
     repeated = [entry[1] for entry in lines if not _fresh(entry)]
@@ -1386,7 +1391,7 @@ def deliver_if_due(source: str = "turn") -> int:
                      # decided about; writing the lines themselves put doomscroll's untrusted
                      # feed text on disk, which the state's whole contract forbids, and put the
                      # person's own turns in a second file nobody was told about.
-                     + " || ".join(_trace_key(k, x) for k, x in lines) + "\n")
+                     + " || ".join(_trace_key(entry[0], entry[1]) for entry in lines) + "\n")
         _cap_trace(trace)
     except Exception:
         pass
@@ -1398,7 +1403,11 @@ def deliver_if_due(source: str = "turn") -> int:
         if stays.get("key") != key:
             return 0
     lines = [entry for entry in lines if _fresh(entry)]
-    texts = [text for _, text in lines]
+    texts = [entry[1] for entry in lines]
+    declared = {}
+    for entry in lines:
+        if len(entry) == 3 and entry[2]:
+            declared[entry[1]] = entry[2]
     # Doomscroll is the sole state whose payload comes from a live feed. Do not persist those
     # strings: neither the journal, the concept ledger nor the account may carry untrusted text.
     if key != "doomscroll":
@@ -1415,7 +1424,11 @@ def deliver_if_due(source: str = "turn") -> int:
             for line in texts:
                 if _is_failure_line(line):
                     continue          # a provider failure is not material
-                for term in history.extract(line, limit=6):
+                # Declared terms are the material. Only a provider that declares nothing
+                # falls back to extraction, which reads the sentence and cannot tell the
+                # template from the thing it is talking about.
+                terms = declared.get(line) or history.extract(line, limit=6)
+                for term in terms:
                     history.notice(term, move=key, session=owner)
                 # The pane draws a path, and a serving row is a bag of every term the line
                 # mentioned — two hops of one walk produced "hypernym", "session" and a duplicated
@@ -1455,7 +1468,7 @@ def deliver_if_due(source: str = "turn") -> int:
                 active["empty"] = 0
                 active["shown"] = ([str(x) for x in (active.get("shown") or [])]
                                    + [ident or _material_key(text)
-                                      for ident, text in lines
+                                      for ident, text, *_ in lines
                                       if not _is_failure_line(text)])[-48:]
             elif repeated and not failures:
                 # Nothing NEW arrived, but something did arrive earlier: the pool is drained, not

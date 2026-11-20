@@ -168,11 +168,13 @@ def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
                 # the material did not support, against the state's own exit instruction.
                 line = (f"NO LINK · one: {_clip(a, 96)} · two: {_clip(b, 96)} "
                         f"· shared: nothing · idea: none, these do not connect")
-            choices.append((ident, line))
+            # Declared, not mined: "LINKED", "shared", "idea", "topic" are the template's
+            # words, and harvesting the sentence turned them into the person's concepts.
+            choices.append((ident, line, [a, b] + shared[:3]))
     if not choices:
         return ["daydream: no new pairs left"]
     selected = choices[:max(1, int(steps))]
-    return selected if keyed else [line for _, line in selected]
+    return selected if keyed else [line for _, line, _ in selected]
 
 
 def projects() -> List[Path]:
@@ -252,17 +254,21 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
             if ident in skip:
                 continue
             shared = sorted(_words(a) & _words(b))
+            # The terms are declared, not mined back out of the sentence: the rendered line
+            # contains "link", "shared", "connect", and harvesting it made the plugin's own
+            # scaffolding into the person's concepts.
+            terms = [a, b] + shared[:3]
             if shared:
                 bridge = ", ".join(shared[:3])
                 choices.append((ident, f"link · {project_a}: {a} ↔ {project_b}: {b} "
-                                       f"· shared: {bridge}"))
+                                       f"· shared: {bridge}", terms))
             else:
                 choices.append((ident, f"no link · {project_a}: {a} ↔ {project_b}: {b} "
-                                       f"· shared: nothing yet · these two do not connect"))
+                                       f"· shared: nothing yet · these two do not connect", terms))
     if not choices:
         return ["dream: no new pairs left"]
     selected = choices[:max(1, int(steps))]
-    return selected if keyed else [line for _, line in selected]
+    return selected if keyed else [line for _, line, _ in selected]
 
 
 def _strip_xml(text: str) -> str:
@@ -428,7 +434,9 @@ def unstuck_text(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
         line = (f"next move · only one thing here ({last}), so there is nothing earlier to "
                 f"go back to · map link: {edge} · first: write the smallest test that comes at "
                 f"{last} from that side instead")
-    result = [(ident, line)]
+    edge_terms = [part.strip() for part in re.split(r"→|\(", edge) if part.strip()]
+    terms = [last] + ([earlier] if earlier else []) + edge_terms[:2]
+    result = [(ident, line, terms)]
     return result if keyed else [line]
 
 
