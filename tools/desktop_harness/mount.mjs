@@ -406,6 +406,21 @@ resetBody()
   await act(async () => { skew.node.unmount() })
 }
 
+// The ending note is the person's, so it clears on polls. Residue decays on turns, so a state
+// that ends by itself used to leave "unstuck ended" on screen until two more messages arrived.
+{
+  const done = { ...PAYLOAD, active: null, last: { state: 'unstuck' },
+                 residue: { count: 1, kinds: ['report'] } }
+  const fin = await mountWith({ payload: done })
+  // The stub interval records but never fires, so the polls are driven by hand.
+  const ticker = fin.calls.intervals.find((i) => i.ms === 900)
+  assert.ok(ticker, 'the state poll must be on the 900ms interval')
+  await act(async () => { for (let i = 0; i < 4; i++) ticker.fn() })
+  assert.doesNotMatch(document.body.textContent, /unstuck ended/,
+    'the ending note must clear on polls, not wait for two more messages')
+  await act(async () => { fin.node.unmount() })
+}
+
 const active = await mountWith({ payload: PAYLOAD })
 const text = document.body.textContent
 assert.match(text, /WALKING/)
@@ -537,8 +552,8 @@ assert.deepEqual(keyWarnings, [], 'React emitted a key-related console error')
 console.log(`harness: desktop/plugin.js sha256:${digest}`)
 console.log('harness: areas      =', registered.contributions.map((c) => c.area).join(', '))
 console.log('harness: counts     =', helpers.viewModel(PAYLOAD, null).counts)
-console.log('harness: 15 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
+console.log('harness: 16 properties PASS (registration, settings page, helpers, DOM text, frame, ' +
   'aria, poll tick, idle, unavailable, layer/placement, conversation scope, chat left clean, ' +
   'old-host fallback, ' +
-  'cockpit door without ctx.navigate, palette route without ctx.navigate)')
+  'cockpit door without ctx.navigate, palette route without ctx.navigate, ending note clears)')
 dom.window.close()

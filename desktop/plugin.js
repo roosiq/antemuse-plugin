@@ -166,11 +166,12 @@ export function viewModel(payload, error) {
 function useStatePayload(ctx, cells) {
   const [payload, setPayload] = useState(null)
   const [error, setError] = useState(null)
-  // One failed poll is not a broken backend. The gateway drops a request while it is restarting,
-  // and the pane used to answer that single miss by throwing away the words and the counts of a
-  // state that was still running — so a 3-second hiccup replaced a live walk with "the backend
-  // did not answer". The error is only surfaced after a run of misses, and one answer clears it.
+  // One failed poll is not a broken backend: a restart mid-walk used to replace a live state
+  // with "the backend did not answer". Surface the error only after a run of misses.
   const misses = useRef(0)
+  // The ending note ends on polls, like the picture. Residue decays on turns, so a state that
+  // ended by itself left "unstuck ended" up until two more messages.
+  const ended = useRef(0)
   // The grid is part of the request, so a resize must re-ask rather than stretch
   // an old frame: the server renders at the size it is told.
   const query = cells ? `?cols=${cells.cols}&rows=${cells.rows}&fit=cover` : ''
@@ -181,6 +182,10 @@ function useStatePayload(ctx, cells) {
         (data) => {
           if (!alive) return
           misses.current = 0
+          if (data && data.last && !data.active) {
+            ended.current += 1
+            if (ended.current > 2) data = { ...data, last: null }
+          } else ended.current = 0
           setPayload(data)
           setError(null)
         },
