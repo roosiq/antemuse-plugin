@@ -87,3 +87,32 @@ def test_two_pollers_in_one_turn_serve_one_unit():
     doc = json.loads((pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json").read_text())
     active = doc.get("active") or {}
     assert int(active.get("served") or 0) == 1, f"two doors spent more than one unit: {active}"
+
+
+def test_a_short_turn_is_still_material():
+    """"restarted" is 9 characters and was dropped by a 12-character floor, so the chat's recent
+    turns never reached the ring and the state kept reading an hour-old paste."""
+    from core import recall
+    recall.clear()
+    for t in ("pull 12 12", "restarted", "i unstucked"):
+        recall.remember(t, session="short")
+    got = recall.recent(10, who="person", session="short")
+    assert len(got) == 3, f"short turns were discarded: {got}"
+    recall.remember("ok", session="short")
+    assert "ok" not in recall.recent(10, who="person", session="short"), "noise is still filtered"
+
+
+def test_the_newest_turn_is_the_one_called_last():
+    """The ring is chronological; git subjects are newest-first. Reading the ring straight put the
+    OLDEST turn in subjects[0], which unstuck calls `last`."""
+    from core import engine, recall, sources, storage
+    import unittest.mock as m
+    engine.clear()
+    recall.clear()
+    for t in ("tar -xzf antemuse-0.12.7.tar.gz", "what does daydream do",
+              "I tried caching the parser and it stalled"):
+        recall.remember(t, session="order")
+    with m.patch.object(storage, "project_root", lambda *a, **k: None):
+        got = sources._recent_work("order")
+    assert got[0] == "I tried caching the parser and it stalled", got
+    assert not sources._is_command(got[0]), f"the newest turn is a command again: {got[0]}"

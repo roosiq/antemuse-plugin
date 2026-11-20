@@ -87,7 +87,10 @@ def remember(text: str, who: str = "person", session: str = "") -> None:
     particular" (a caller with no session id), which is the plugin's existing rule.
     """
     clean = " ".join(str(text or "").split())[:MAX_CHARS]
-    if len(clean) < 12:
+    # A floor for noise, not for brevity. At 12 characters "restarted", "pull 12 12" and
+    # "i unstucked" were all discarded, so a chat's recent turns never became material and
+    # /unstuck kept declining on the one long paste that had survived from an hour earlier.
+    if len(clean) < 4:
         return
     items = _load()
     if items and items[-1].get("text") == clean and items[-1].get("who") == who:

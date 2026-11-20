@@ -133,9 +133,15 @@ def _words(text: str) -> set[str]:
 
 
 def _own_turns(session: str | None = None) -> List[str]:
-    """Only the person's recorded turns from THIS chat, never a memory backend."""
+    """Only the person's recorded turns from THIS chat, never a memory backend.
+
+    Newest first, matching `_recent_subjects`. The ring is chronological, so reading it straight
+    put the OLDEST turn in subjects[0] — which `unstuck` calls `last` and treats as the thing just
+    finished. A chat that began with a pasted install command declined forever on that paste and
+    never reached what the person said next.
+    """
     seen, out = set(), []
-    for raw in recall.recent(recall.CAP, who="person", session=session):
+    for raw in reversed(recall.recent(recall.CAP, who="person", session=session)):
         text = _clip(raw, 160)
         if text and text not in seen:
             seen.add(text)

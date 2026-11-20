@@ -11,18 +11,18 @@ Command: `/walk`
 The walk records a path for the pane but does not inject it into the agent turn:
 
 ```
-design (n) → planning (n) · took its hyponym · “the act or process of drawing up plans or layouts for some project or enterprise” · ↩ 1 hop from design: design → planning
-planning (n) → city planning (n) · took its hyponym · “determining and drawing up plans for the future physical arrangement and condition of a co” · ↩ 1 hop from planning: planning → city planning
-city planning (n) → zoning (n) · took its meronym · “dividing an area into zones or sections reserved for different purposes such as residence ” · ↩ 1 hop from city planning: city planning → zoning
-zoning (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from zoning: zoning → division
-division (n) → subdivision (n) · took its hyponym · “the act of subdividing” · ↩ 1 hop from division: division → subdivision
-subdivision (n) → division (n) · took its hypernym · “the act of dividing or partitioning” · ↩ 1 hop from subdivision: subdivision → division · seen earlier today in 1 other session
+design (n) → creating by mental acts (n) · took its hypernym · “the act of creating something by thinking” · ↩ 1 hop from design: design → creating by mental acts
+creating by mental acts (n) → realization (n) · took its hyponym · “making real or giving the appearance of reality” · ↩ 1 hop from creating by mental acts: creating by mental acts → realization
+realization (n) → objectification (n) · took its hyponym · “the act of representing an abstraction as a physical thing” · ↩ 1 hop from realization: realization → objectification
+objectification (n) → embodiment (n) · took its hyponym · “giving concrete form to an abstract concept” · ↩ 1 hop from objectification: objectification → embodiment
+embodiment (n) → soul (n) · took its hyponym · “the human embodiment of something” · ↩ 1 hop from embodiment: embodiment → soul
+soul (n) → embodiment (n) · took its hypernym · “giving concrete form to an abstract concept” · ↩ 1 hop from soul: soul → embodiment · seen earlier today in 1 other session
 ```
 
 Account:
 
 ```text
-walk · 6 of 6 hops · design→planning [hyponym] → planning→city planning [hyponym] → city planning→zoning [meronym] → zoning→division [hypernym] → division→subdivision [hyponym] → subdivision→division [hypernym]
+walk · 6 of 6 hops · design→creating by mental acts [hypernym] → creating by mental acts→realization [hyponym] → realization→objectification [hyponym] → objectification→embodiment [hyponym] → embodiment→soul [hyponym] → soul→embodiment [hypernym]
 ```
 
 ## 2. Two memories make a possibility
@@ -32,8 +32,8 @@ Command: `/daydream`
 The `daydream` material below is produced by its real provider:
 
 ```text
-LINKED · one: The report is late because the dashboard is still hard to read. · two: The new layout prototype still has an unclear deployment boundary. · shared: still · idea: try still as the topic
-NO LINK · one: The report is late because the dashboard is still hard to read. · two: The deployment notes are scattered across the project. · shared: nothing · idea: none, these do not connect
+LINKED · one: The deployment notes are scattered across the project. · two: The new layout prototype still has an unclear deployment boundary. · shared: deployment · idea: try deployment as the topic
+NO LINK · one: The deployment notes are scattered across the project. · two: The report is late because the dashboard is still hard to read. · shared: nothing · idea: none, these do not connect
 ```
 
 Account:
