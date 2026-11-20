@@ -143,7 +143,8 @@ def _own_turns(session: str | None = None) -> List[str]:
     return out
 
 
-def _by_coverage(pool: List[Tuple[int, int, Any]]) -> List[Any]:
+def _by_coverage(pool: List[Tuple[int, int, Any]],
+                 skip: set[str] | None = None) -> List[Any]:
     """Order pairs so a dose compares different things instead of one anchor twice.
 
     Taking the first N pairs in index order gives (0,1) then (0,2): a 2-pair dose that
@@ -153,6 +154,14 @@ def _by_coverage(pool: List[Tuple[int, int, Any]]) -> List[Any]:
     """
     out: List[Any] = []
     used: dict[int, int] = {}
+    # The engine asks for ONE unit per turn, so this runs again on every turn with the earlier
+    # pairs in `skip`. Starting the tally empty each time re-anchored on subject 0 forever: the
+    # ordering only worked when a single call asked for the whole dose, which is not how the
+    # dose is delivered. What was already shown is what has already been covered.
+    for ident in (skip or set()):
+        for part in re.findall(r"(\d+)", str(ident)):
+            n = int(part)
+            used[n] = used.get(n, 0) + 1
     remaining = list(pool)
     while remaining:
         pick = min(remaining, key=lambda c: (used.get(c[0], 0) + used.get(c[1], 0),
@@ -196,7 +205,7 @@ def memory_pairs(steps: int = 1, skip: set[str] | None = None, keyed: bool = Fal
                                           _terms_of(a) + _terms_of(b) + shared[:3])))
     if not choices:
         return ["daydream: no new pairs left"]
-    selected = _by_coverage(choices)[:max(1, int(steps))]
+    selected = _by_coverage(choices, skip)[:max(1, int(steps))]
     return selected if keyed else [line for _, line, _ in selected]
 
 
@@ -333,7 +342,7 @@ def day_connections(steps: int = 1, skip: set[str] | None = None, keyed: bool = 
     if not pool:
         return ["dream: no new pairs left"]
     choices = _by_coverage([(left, right, (ident, line, terms))
-                            for left, right, ident, line, terms in pool])
+                            for left, right, ident, line, terms in pool], skip)
     selected = choices[:max(1, int(steps))]
     return selected if keyed else [line for _, line, _ in selected]
 

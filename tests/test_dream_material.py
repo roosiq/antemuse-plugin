@@ -83,3 +83,33 @@ def test_daydream_also_compares_different_things(monkeypatch):
         used.add(one)
         used.add(two)
     assert len(used) == 4, f"a 2-pair daydream over 4 turns must cover all four, got {used}"
+
+
+def test_coverage_holds_across_real_turns_not_just_one_call(monkeypatch):
+    """The engine asks the provider for ONE unit per turn. Ordering the pool with an empty tally
+    on every call re-anchored on subject 0 forever, so the fix worked only when a single call
+    asked for the whole dose - which is not how a dose is delivered."""
+    from core import engine, sources
+    import json, os, pathlib, unittest.mock as m
+    turns = ["the parser keeps failing on nested quotes",
+             "the coffee shop closed after twenty years",
+             "I want the walk to feel like wandering",
+             "the budget review moved to thursday"]
+    _seed("real-turns", turns, monkeypatch)
+    doc = lambda: json.loads(
+        (pathlib.Path(os.environ["ANTEMUSE_STATES_HOME"]) / "state.json").read_text())
+    with m.patch.object(sources, "projects", lambda: []):
+        engine.enter("dream", session="real-turns")
+        for _ in range(2):
+            engine.note_turn(session="real-turns")
+            engine.deliver_if_due(source="turn")
+    lines = [e.get("text", "") for e in (doc().get("journal") or [])
+             if e.get("event") == "dream"][-2:]
+    assert len(lines) == 2, lines
+    subjects = set()
+    for line in lines:
+        body = line.split("·", 1)[1]
+        left, _, right = body.partition("↔")
+        subjects.add(left.strip())
+        subjects.add(right.split("·")[0].strip())
+    assert len(subjects) == 4, f"two delivered pairs must cover four things: {lines}"
